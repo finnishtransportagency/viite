@@ -1,11 +1,11 @@
 /* global dynamicLinkNetworkContent */
-/* global userManagementContent */
+/* global UserManagementContent */
 (function (root) {
 
     root.AdminPanel = function (backend) {
 
         const dynamicLinkNetwork = dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
-        const userManagement = userManagementContent();
+        const UserManagement = UserManagementContent();
 
         const showAdminPanelWindow = function () {
             $('.container').append(
@@ -35,7 +35,7 @@
                 dynamicLinkNetwork.getContent() +
                 '</div>' +
                 '<div id="tab2" class="tab-content">' +
-                userManagement.getContent() +
+                UserManagement.getContent() +
                 '</div>' +
                 '<div id="tab3" class="tab-content">' +
                 '<p>TODO Alkulatauksen käynnistys tapahtuu täältä</p>' +
@@ -54,8 +54,8 @@
             // Re-bind everything fresh
             dynamicLinkNetwork.addDatePickersToInputFields();
             dynamicLinkNetwork.bindEvents('.generic-window');
-            userManagement.bindEvents('.generic-window');
-            userManagement.loadUsers();
+            UserManagement.bindEvents('.generic-window');
+            UserManagement.loadUsers();
 
             bindEvents(); // binds tabs and close
         };
@@ -90,11 +90,11 @@
         const bindEvents = function () {
 
             $('.generic-window-header').on('click', '#closeAdminPanel', function () {
-                if (userManagement.hasUnsavedChanges && userManagement.hasUnsavedChanges()) {
-                    if (!confirm('Sinulla on tallentamattomia muutoksia. Haluatko varmasti sulkea?')) {
-                        return; // Abort close
-                    }
-                }
+                // if (UserManagement.hasUnsavedChanges && UserManagement.hasUnsavedChanges()) {
+                //     if (!confirm('Sinulla on tallentamattomia muutoksia. Haluatko varmasti sulkea?')) {
+                //         return; // Abort close
+                //     }
+                // }
                 hideAdminPanelWindow();
             });
 

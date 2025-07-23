@@ -1,60 +1,81 @@
-// Global utility functions for making API calls to backend for managing users via admin panel
-// Example usage: userManagementBackend.addUser
+// This file contains functions for communicating with the backend routes that handle user management (add,get, delete, update)
 (function(root) {
-    // Internal in-memory user store
-    const mockUsers = [
-        { email: 'admin@example.com', role: 'admin' },
-        { email: 'operator@example.com', role: 'operator' },
-        { email: 'viite@example.com', role: 'viite' }
-    ];
+
+    /** User data structure
+     * @typedef {Object} User
+     * @property {string} username - Unique identifier for the user (used instead of email).
+     * @property {string[]} roles - Array of roles assigned to the user (admin, dev, operator, viite).
+     * @property {number} [zoom] - Default zoom level for map-related views (optional).
+     * @property {number} [east] - East coordinate value (optional).
+     * @property {number} [north] - North coordinate value (optional).
+     * @property {string[]} [authorizedElys] - Array of ELY codes
+     */
 
     function getAllUsers(callback) {
-        setTimeout(() => {
-            if (typeof callback === 'function') return callback(JSON.parse(JSON.stringify(mockUsers))); // Deep clone to avoid bugs
-        }, 300);
+        $.get('api/viite/users', function(data) {
+            if (_.isFunction(callback)) callback(data.users);
+        }).fail(function(jqXHR) {
+            console.error('Virhe käyttäjien haussa:', jqXHR.responseText);
+        });
     }
 
     function addUser(newUser, success, failure) {
-        setTimeout(() => {
-            const exists = mockUsers.some((u) => u.email === newUser.email);
-            if (exists) {
-                if (typeof failure === 'function') failure('User already exists');
-            } else {
-                mockUsers.push(JSON.parse(JSON.stringify(newUser)));
-                if (typeof success === 'function') success(newUser);
+        $.ajax({
+            url: 'api/viite/users',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(newUser),
+            dataType: 'json',
+            success: success,
+            error: function(jqXHR) {
+                let errorMessage = 'Virhe käyttäjän luonnissa';
+                try {
+                    const response = JSON.parse(jqXHR.responseText);
+                    if (response && response.reason) {
+                        errorMessage = response.reason;
+                    }
+                } catch (e) {
+                    console.error("Odottamaton virhe", e);
+                }
+
+                if (_.isFunction(failure)) failure(errorMessage);
             }
-        }, 300);
+
+        });
     }
 
-    function deleteUser(email, success, failure) {
-        setTimeout(() => {
-            const index = mockUsers.findIndex((u) => u.email === email);
-            if (index === -1) {
-                if (typeof failure === 'function') failure('User not found');
-            } else {
-                mockUsers.splice(index, 1);
-                if (typeof success === 'function') success(email);
+    function deleteUser(id, success, failure) {
+
+        $.ajax({
+            url: `api/viite/users/${encodeURIComponent(id)}`,
+            type: 'DELETE',
+            success: function() {
+                if (_.isFunction(success)) success(id);
+            },
+            error: function(jqXHR) {
+                if (_.isFunction(failure)) failure(jqXHR.responseText || 'Virhe käyttäjän poistamisessa');
             }
-        }, 300);
+        });
     }
 
-    function updateUserRole(email, role, success, failure) {
-        setTimeout(() => {
-            const user = mockUsers.find((u) => u.email === email);
-            if (user) {
-                user.role = role;
-                if (typeof success === 'function') success(user);
-            } else {
-                if (typeof failure === 'function') failure('User not found');
+    function updateUsers(users, success, failure) {
+        $.ajax({
+            url: 'api/viite/users',
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify(users),
+            dataType: 'json',
+            success: success,
+            error: function(jqXHR) {
+                if (_.isFunction(failure)) failure(jqXHR.responseText || 'Virhe käyttäjien päivittämisessä');
             }
-        }, 300);
+        });
     }
 
-    // Attach all functions to a single namespace on the root (global) object
     root.userManagementBackend = {
         getAllUsers,
         addUser,
         deleteUser,
-        updateUserRole
+        updateUsers
     };
 })(this);

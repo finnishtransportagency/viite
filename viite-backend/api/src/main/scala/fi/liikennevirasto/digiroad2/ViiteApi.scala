@@ -17,6 +17,7 @@ import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
 import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
+import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.json4s._
 import org.scalatra._
@@ -1472,6 +1473,130 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       }
     }
   }
+
+  // -------------------------------------------- User management routes -----------------------------------------------------------//
+  private val getAllUsers: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("getAllUsers")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary "Hae kaikki käyttäjät"
+    )
+
+  get("/users", operation(getAllUsers)) {
+    time(logger, s"GET request for /users") {
+      try {
+        val users: Seq[User] = userProvider.getAllUsers
+
+        Map(
+          "success" -> true,
+          "users" -> users.map { user: User =>
+            Map(
+              "id" -> user.id,
+              "username" -> user.username,
+              "roles" -> user.configuration.roles,
+              "authorizedElys" -> user.configuration.authorizedElys,
+              "configuration" -> Map(
+                "zoom" -> user.configuration.zoom,
+                "east" -> user.configuration.east,
+                "north" -> user.configuration.north
+              )
+            )
+          }
+        )
+      } catch {
+        case ex: ViiteException =>
+          logger.error(s"Virhe käyttäjien haussa: ${ex.getMessage}")
+          halt(400, Map("success" -> false, "reason" -> ex.getMessage))
+        case ex: Exception =>
+          logger.error("Odottamaton virhe käyttäjien haussa", ex)
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+
+  private val deleteUser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("deleteUser")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary "Poista käyttäjä ID:n perusteella"
+      parameter pathParam[String]("id").description("Poistettavan käyttäjän ID")
+    )
+
+  delete("/users/:id", operation(deleteUser)) {
+    val id = params("id")
+    time(logger, s"DELETE request for /users/$id") {
+      try {
+        userProvider.deleteUser(id)
+        Map("success" -> true, "message" -> s"Käyttäjä '$id' poistettiin onnistuneesti")
+      } catch {
+        case ex: ViiteException =>
+          logger.error(s"Virhe poistettaessa käyttäjää '$id': ${ex.getMessage}")
+          halt(400, Map("success" -> false, "reason" -> ex.getMessage))
+        case ex: Exception =>
+          logger.error(s"Odottamaton virhe poistettaessa käyttäjää '$id'", ex)
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+
+  private val addUser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("addUser")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary "Lisää uusi käyttäjä"
+      parameter bodyParam[User]("newUser").description("Lisättävä käyttäjäobjekti")
+    )
+
+  post("/users", operation(addUser)) {
+    time(logger, s"POST request to /users") {
+      try {
+        val body = parsedBody.extract[User]
+        userProvider.addUser(body.username, body.configuration)
+
+        Map("success" -> true, "message" -> s"Käyttäjä '${body.username}' lisättiin onnistuneesti")
+      } catch {
+        case ex: org.postgresql.util.PSQLException if ex.getMessage.contains("duplicate key") =>
+          logger.warn(s"Duplikaattikäyttäjä '${parsedBody \ "username"}'", ex)
+          halt(409, Map("success" -> false, "reason" -> "Käyttäjä on jo olemassa"))
+        case ex: MappingException =>
+          logger.warn("Virheellinen pyyntödata", ex)
+          halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
+        case ex: ViiteException =>
+          logger.error(s"Viite-virhe lisättäessä käyttäjää: ${ex.getMessage}")
+          halt(400, Map("success" -> false, "reason" -> ex.getMessage))
+        case ex: Exception =>
+          logger.error("Odottamaton virhe lisättäessä käyttäjää", ex)
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+
+  private val updateUsers: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("updateUsers")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary("Päivitä olemassa olevat käyttäjät")
+      parameter bodyParam[List[User]]("updatedUsers").description("Päivitetyt käyttäjät")
+    )
+
+  put("/users", operation(updateUsers)) {
+    time(logger, s"PUT request to /users") {
+      try {
+        val usersToUpdate = parsedBody.extract[List[User]]
+        userProvider.updateUsers(usersToUpdate)
+
+        Map("success" -> true, "message" -> "Käyttäjät päivitettiin onnistuneesti.")
+      } catch {
+        case ex: MappingException =>
+          logger.warn("Virheellinen käyttäjädata", ex)
+          halt(400, Map("success" -> false, "message" -> "Virheellinen käyttäjädata"))
+        case ex: ViiteException =>
+          logger.error(s"Viite-virhe päivitettäessä käyttäjiä: ${ex.getMessage}")
+          halt(400, Map("success" -> false, "message" -> ex.getMessage))
+        case ex: Exception =>
+          logger.error("Odottamaton virhe päivitettäessä käyttäjiä", ex)
+          halt(500, Map("success" -> false, "message" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------------------------------------------------//
 
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): (Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink]) = {
     val boundingRectangle = constructBoundingRectangle(bbox)

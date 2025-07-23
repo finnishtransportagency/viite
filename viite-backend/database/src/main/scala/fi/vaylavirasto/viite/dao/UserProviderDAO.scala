@@ -1,15 +1,18 @@
 package fi.vaylavirasto.viite.dao
 
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.vaylavirasto.viite.postgis.SessionProvider.session
 import fi.vaylavirasto.viite.util.ViiteException
 import org.json4s._
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization.{read, write}
 import scalikejdbc._
 
-
 class UserProviderDAO extends BaseDAO with UserProvider {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
+
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
   object User extends SQLSyntaxSupport[User]{
     override val tableName = "service_user"
@@ -18,15 +21,6 @@ class UserProviderDAO extends BaseDAO with UserProvider {
       rs.string("username"),
       read[Configuration](rs.string("configuration"))
     )
-  }
-
-  def createUser(username: String, config: Configuration): Unit = {
-      runUpdateToDb(
-        sql"""
-        INSERT INTO service_user (id, username, configuration)
-        VALUES (nextval('service_user_seq'), ${username.toLowerCase}, ${write(config)})
-            """
-      )
   }
 
   /**
@@ -55,24 +49,75 @@ class UserProviderDAO extends BaseDAO with UserProvider {
     }
   }
 
-  def saveUser(user: User): User = {
+  def deleteUser(username: String): Unit = {
+    runWithTransaction {
       runUpdateToDb(
         sql"""
-           UPDATE service_user
-           SET configuration = ${write(user.configuration)}
-           WHERE lower(username) = ${user.username.toLowerCase}
-        """
+        DELETE FROM service_user
+        WHERE lower(username) = ${username.toLowerCase}
+      """
       )
-      user
+    }
   }
 
-  def deleteUser(username: String): Unit = {
+  override def modifyUser(user: User): Option[User] = {
+    try {
+      runWithTransaction {
+        val rowsUpdated = runUpdateToDb(
+          sql"""
+          UPDATE service_user
+          SET username = ${user.username.toLowerCase},
+              configuration = ${write(user.configuration)}
+          WHERE id = ${user.id}
+        """
+        )
+
+        if (rowsUpdated > 0) Some(user) else None
+      }
+    } catch {
+      case _: Exception => None
+    }
+  }
+
+  def getAllUsers: Seq[User] = {
+    val query = sql"""
+    SELECT id, username, configuration
+    FROM service_user
+    ORDER BY username
+  """
+
+    runWithTransaction {
+      query.map(User.apply).list.apply()
+    }
+  }
+
+  def addUser(username: String, config: Configuration): Unit = {
+    runWithTransaction {
       runUpdateToDb(
         sql"""
-             DELETE FROM service_user
-             WHERE lower(username) = ${username.toLowerCase}
-             """
+        INSERT INTO service_user (id, username, configuration)
+        VALUES (
+          nextval('service_user_seq'),
+          ${username.toLowerCase},
+          ${write(config)}
+        )
+      """
       )
+    }
+  }
+
+  def updateUsers(users: List[User]): Unit = {
+    runWithTransaction {
+      users.foreach { user =>
+        runUpdateToDb(
+          sql"""
+          UPDATE service_user
+          SET configuration = ${write(user.configuration)}
+          WHERE LOWER(username) = ${user.username.toLowerCase}
+        """
+        )
+      }
+    }
   }
 
 }

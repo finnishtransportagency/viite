@@ -14,13 +14,13 @@ class UserProviderDAOSpec extends AnyFunSuite with Matchers {
 
   val provider = new UserProviderDAO
 
-  test("Test UserProviderDAO.deleteUser(), UserProviderDAO.getUser() and UserProviderDAO.createUser() " +
+  test("Test UserProviderDAO.deleteUser(), UserProviderDAO.getUser() and UserProviderDAO.addUser() " +
     "When trying to find a specific user name and creating a user for that user name " +
     "Then getUser() should return 'None' before creating, and the created user after creating it.") {
     runWithRollback {
       provider.deleteUser(TestUserName)
       provider.getUser(TestUserName) shouldBe None
-      provider.createUser(TestUserName, Configuration(north = Some(1000)))
+      provider.addUser(TestUserName, Configuration(north = Some(1000)))
       val user = provider.getUser(TestUserName).get
       user.username should be(TestUserName.toLowerCase)
       user.configuration.north should be(Some(north))
