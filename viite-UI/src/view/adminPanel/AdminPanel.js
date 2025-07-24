@@ -57,7 +57,7 @@
             UserManagement.bindEvents('.generic-window');
             UserManagement.loadUsers();
 
-            bindEvents(); // binds tabs and close
+            bindEvents();
         };
 
         const hideAdminPanelWindow = function () {
@@ -65,7 +65,7 @@
         };
 
         const controlTabs = function (clickedButton, contentWrapper) {
-            // If the clicked button is already active, do nothing
+
             if (clickedButton.hasClass('active')) {
                 return;
             }
@@ -75,31 +75,25 @@
 
             // Deactivate all buttons and hide all content panes within this window
             tabButtons.removeClass('active');
-            tabContents.removeClass('active'); // Hides content with CSS rule
+            tabContents.removeClass('active');
 
-            // Activate the clicked button
             clickedButton.addClass('active');
 
             // Activate the corresponding content pane
             // Construct the ID selector (e.g., #tab1) and find it within the contentWrapper
-            const targetTabId = clickedButton.data('tab'); // Get the value of data-tab="xxx"
+            const targetTabId = clickedButton.data('tab');
             const targetTabContent = contentWrapper.find('#' + targetTabId);
-            targetTabContent.addClass('active'); // Makes content visible via CSS rule
+            targetTabContent.addClass('active');
         };
 
         const bindEvents = function () {
 
             $('.generic-window-header').on('click', '#closeAdminPanel', function () {
-                // if (UserManagement.hasUnsavedChanges && UserManagement.hasUnsavedChanges()) {
-                //     if (!confirm('Sinulla on tallentamattomia muutoksia. Haluatko varmasti sulkea?')) {
-                //         return; // Abort close
-                //     }
-                // }
                 hideAdminPanelWindow();
             });
 
             // Navbar Tab Button Event Binding
-            const contentWrapper = $('#adminPanelWindowContent'); // Get the main content container
+            const contentWrapper = $('#adminPanelWindowContent');
 
             // Use event delegation: listen for clicks on the contentWrapper,
             // but only trigger the function if the click happened on an element

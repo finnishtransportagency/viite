@@ -72,6 +72,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    user-select: none;
 }
 
 .dropdown-toggle.roles {
@@ -138,7 +139,6 @@
 }
 
 .user-table td {
-    text-align: center !important;
     vertical-align: middle !important;
     padding: 4px;
 }
@@ -185,7 +185,6 @@
     font-size: 14px;
     margin-right: 1px;
     vertical-align: middle;
-    //text-align: center;
 }
 
 .table-wrapper {
@@ -235,11 +234,10 @@
     gap: 8px;
 }
 
-/* And adjust the row alignment for better centering */
 .form-row.horizontal-row {
     gap: 24px;
     flex-wrap: nowrap;
-    align-items: flex-start; /* Optional: try 'center' if they differ slightly */
+    align-items: flex-start;
 }
 
 .coordinate-wrapper {
@@ -253,14 +251,12 @@ table > tbody > tr:first-child .coordinate-wrapper {
     border-top: 0 !important;
 }
 
-
 .coordinates-group > label {
     display: block;
     width: 100%;
     font-weight: 600;
 }
 
-/* Each coordinate input: label and input horizontally aligned */
 .coordinate-input {
     display: flex;
     align-items: center;
@@ -282,4 +278,11 @@ table > tbody > tr:first-child .coordinate-wrapper {
 
 .centered {
     text-align: center;
+}
+
+.row-has-error {
+    //border: 1px solid #dc3545;
+    background-color: #f8d7da;
+    padding: 0.5rem;
+    color: #721c24;
 }

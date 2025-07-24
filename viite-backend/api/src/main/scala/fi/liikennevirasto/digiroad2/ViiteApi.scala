@@ -1520,18 +1520,18 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       parameter pathParam[String]("id").description("Poistettavan käyttäjän ID")
     )
 
-  delete("/users/:id", operation(deleteUser)) {
-    val id = params("id")
-    time(logger, s"DELETE request for /users/$id") {
+  delete("/users/:username", operation(deleteUser)) {
+    val username = params("username")
+    time(logger, s"DELETE request for /users/$username") {
       try {
-        userProvider.deleteUser(id)
-        Map("success" -> true, "message" -> s"Käyttäjä '$id' poistettiin onnistuneesti")
+        userProvider.deleteUser(username)
+        Map("success" -> true, "message" -> s"Käyttäjä '$username' poistettiin onnistuneesti")
       } catch {
         case ex: ViiteException =>
-          logger.error(s"Virhe poistettaessa käyttäjää '$id': ${ex.getMessage}")
+          logger.error(s"Virhe poistettaessa käyttäjää '$username': ${ex.getMessage}")
           halt(400, Map("success" -> false, "reason" -> ex.getMessage))
         case ex: Exception =>
-          logger.error(s"Odottamaton virhe poistettaessa käyttäjää '$id'", ex)
+          logger.error(s"Odottamaton virhe poistettaessa käyttäjää '$username'", ex)
           halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
       }
     }
