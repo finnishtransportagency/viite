@@ -50,32 +50,18 @@ class UserProviderDAO extends BaseDAO with UserProvider {
   }
 
   def deleteUser(username: String): Unit = {
-    runWithTransaction {
-      runUpdateToDb(
-        sql"""
-        DELETE FROM service_user
-        WHERE lower(username) = ${username.toLowerCase}
-      """
-      )
-    }
-  }
-
-  override def modifyUser(user: User): Option[User] = {
     try {
       runWithTransaction {
-        val rowsUpdated = runUpdateToDb(
+        runUpdateToDb(
           sql"""
-          UPDATE service_user
-          SET username = ${user.username.toLowerCase},
-              configuration = ${write(user.configuration)}
-          WHERE id = ${user.id}
-        """
+        DELETE FROM service_user
+        WHERE username = $username
+      """
         )
-
-        if (rowsUpdated > 0) Some(user) else None
       }
     } catch {
-      case _: Exception => None
+      case e: Exception =>
+        logger.error(s"Failed to delete user: $username", e)
     }
   }
 
@@ -91,10 +77,11 @@ class UserProviderDAO extends BaseDAO with UserProvider {
     }
   }
 
-  def addUser(username: String, config: Configuration): Unit = {
-    runWithTransaction {
-      runUpdateToDb(
-        sql"""
+  override def addUser(username: String, config: Configuration): Unit = {
+    try {
+      runWithTransaction {
+        runUpdateToDb(
+          sql"""
         INSERT INTO service_user (id, username, configuration)
         VALUES (
           nextval('service_user_seq'),
@@ -102,22 +89,31 @@ class UserProviderDAO extends BaseDAO with UserProvider {
           ${write(config)}
         )
       """
-      )
-    }
-  }
-
-  def updateUsers(users: List[User]): Unit = {
-    runWithTransaction {
-      users.foreach { user =>
-        runUpdateToDb(
-          sql"""
-          UPDATE service_user
-          SET configuration = ${write(user.configuration)}
-          WHERE LOWER(username) = ${user.username.toLowerCase}
-        """
         )
       }
+    } catch {
+      case e: Exception =>
+        // Replace this with actual logging
+        logger.error(s"Failed to add user $username", e)
     }
   }
 
+  override def updateUsers(users: List[User]): Unit = {
+    try {
+      runWithTransaction {
+        users.foreach { user =>
+          runUpdateToDb(
+            sql"""
+            UPDATE service_user
+            SET configuration = ${write(user.configuration)}
+            WHERE LOWER(username) = ${user.username.toLowerCase}
+          """
+          )
+        }
+      }
+    } catch {
+      case e: Exception =>
+        logger.error("Failed to update users", e)
+    }
+  }
 }

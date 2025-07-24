@@ -1,4 +1,3 @@
-// This content is rendered inside AdminPanel and can be used to add, remove and modify user data.
 (function (root) {
 
     const DEFAULT_COORDINATES = {
@@ -7,13 +6,11 @@
         north: 7175360
     };
 
-    // Approximate area of Finland
     const COORD_LIMITS = {
         east: [50000, 750000],
-        north: [6600000, 7800000]
+        north: [6600000, 7800000],
+        zoom: [1, 10]
     };
-
-    let hasUnsavedChanges = false; // TODO
 
     root.UserManagementContent = function () {
         const roles = [
@@ -23,7 +20,7 @@
             { value: 'admin', label: 'Admin', desc: 'Käyttäjähallinta ja dynaamisen verko ajo' }
         ];
 
-        let elyOptions = []; // Array of objects like these: { value: 1, label: 'Uusimaa (UUD)', code: 'UUD' },
+        let elyOptions = [];
 
         if (ViiteEnumerations && ViiteEnumerations.ElyCodes) {
             elyOptions = Object.values(ViiteEnumerations.ElyCodes).map(function (ely) {
@@ -35,25 +32,62 @@
             });
         }
 
-        function handleSuccess(message) {
-            Toast.show(message, { type: 'success' });
-            loadUsers();
+        function validateUserFields(fields, options = {}) {
+            const {
+                checkUsername = true,
+                checkRoles = true,
+                checkElys = true,
+                checkCoordinates = true,
+            } = options;
+            const errors = {};
+
+            const { username, roles, elys, east, north, zoom } = fields;
+            console.log(fields)
+
+            if (checkUsername) {
+                if (!username || !/^[A-Za-z]/.test(username))
+                    errors.username = "Tunnuksen ensimmäisen merkin tulee olla kirjain.";
+                else if ((username.match(/\d/g) || []).length < 4)
+                    errors.username = "Tunnuksessa tulee olla vähintään 4 numeroa.";
+                else if (username.length > 10)
+                    errors.username = "Tunnus saa olla enintään 10 merkkiä pitkä.";
+            }
+
+            if (checkRoles && (!roles || roles.length === 0)) {
+                errors.roles = "Valitse vähintään yksi rooli.";
+            }
+
+            if (checkElys && (!elys || elys.length === 0)) {
+                errors.elys = "Valitse vähintään yksi sallittu ELY.";
+            }
+
+            if (checkCoordinates) {
+                if (east < COORD_LIMITS.east[0] || east > COORD_LIMITS.east[1]) {
+                    errors.east = `Itä-koordinaatin on oltava välillä ${COORD_LIMITS.east[0]} - ${COORD_LIMITS.east[1]}`;
+                }
+                if (north < COORD_LIMITS.north[0] || north > COORD_LIMITS.north[1]) {
+                    errors.north = `Pohjois-koordinaatin on oltava välillä ${COORD_LIMITS.north[0]} - ${COORD_LIMITS.north[1]}`;
+                }
+                if (!Number.isInteger(zoom) || zoom < COORD_LIMITS.zoom[0] || zoom > COORD_LIMITS.zoom[1]) {
+                    errors.zoom = `Zoomin on oltava kokonaisluku väliltä ${COORD_LIMITS.zoom[0]}–${COORD_LIMITS.zoom[1]}.`;
+                }
+            }
+
+            return errors;
         }
 
-        function validateNewUser({ username, roles, east, north }) {
-            // Username validation
-            if (!/^[A-Za-z]/.test(username)) return 'Tunnuksen ensimmäisen merkin tulee olla kirjain.';
-            if ((username.match(/\d/g) || []).length < 4) return 'Tunnuksessa tulee olla vähintään 4 numeroa.';
-            if (username.length > 10) return 'Tunnus saa olla enintään 10 merkkiä pitkä.';
+        function showFormErrors(errors) {
 
-            // Roles
-            if (!roles || roles.length === 0) return 'Valitse vähintään yksi rooli.';
+            // Toast once all together as summary
+            const messages = Object.values(errors);
+            if (messages.length) {
+                Toast.show(messages.join(" "), { type: 'warning' });
+            }
+        }
 
-            // Coordinates
-            if (east < COORD_LIMITS.east[0] || east > COORD_LIMITS.east[1]) return `Itä-koordinaatin on oltava välillä ${COORD_LIMITS.east[0]} - ${COORD_LIMITS.east[1]}`;
-            if (north < COORD_LIMITS.north[0] || north > COORD_LIMITS.north[1]) return `Pohjois-koordinaatin on oltava välillä ${COORD_LIMITS.north[0]} - ${COORD_LIMITS.north[1]}`;
-
-            return null; // Valid
+        function handleSuccess(message) {
+            Toast.show(message, { type: 'success' });
+            fetchUsers();
         }
 
         function resetForm() {
@@ -73,14 +107,17 @@
             const north = parseFloat(document.getElementById('newUserNorth').value || DEFAULT_COORDINATES.north);
             const elys = getSelectedElys('newUserElys'); // Array of integers
 
-            const validationError = validateNewUser({ username, roles, east, north });
-            if (validationError) {
-                Toast.show(validationError, { type: 'warning' });
+            const fields = { username, roles, elys, east, north, zoom };
+            const errors = validateUserFields(fields);
+
+            showFormErrors(errors);
+
+            if (Object.keys(errors).length) {
                 return;
             }
 
             const newUser = {
-                id: 0, // This will be replaced by backend
+                id: 0, // Will be replaced by backend
                 username,
                 configuration: {
                     roles,
@@ -93,16 +130,16 @@
 
             userManagementBackend.addUser(
                 newUser,
-                function(response) {
+                function (response) {
                     if (response && response.success === false) {
                         Toast.show(response.reason || "Virhe lisättäessä käyttäjää", { type: 'error' });
                     } else {
                         handleSuccess("Käyttäjä lisätty!");
-                        loadUsers();
+                        fetchUsers();
                         resetForm();
                     }
                 },
-                function(errorMessage) {
+                function (errorMessage) {
                     Toast.show(errorMessage, { type: 'error' });
                 }
             );
@@ -130,16 +167,15 @@
                 updateUsersButton.addEventListener('click', e => {
                     e.preventDefault();
                     const usersToUpdate = [];
+                    let hasErrors = false;
 
                     $(container).find('#userTableBody tr').each(function () {
                         const $row = $(this);
                         const id = $row.data('userid');
                         const username = $row.data('username');
 
-                        // Get the actual dropdown wrapper elements
                         const roleDropdownWrapper = $row.find('[data-role-dropdown-id]');
                         const elyDropdownWrapper = $row.find('[data-ely-dropdown-id]');
-
                         if (!roleDropdownWrapper.length || !elyDropdownWrapper.length) return;
 
                         const rolesId = roleDropdownWrapper.attr('data-role-dropdown-id');
@@ -148,23 +184,53 @@
                         const roles = getSelectedRoles(rolesId);
                         const elys = getSelectedElys(elysId);
 
-                        const zoom = parseInt($row.find('.zoom-input').val()) || DEFAULT_COORDINATES.zoom;
-                        const east = parseFloat($row.find('input[id^="userEast"]').val()) || DEFAULT_COORDINATES.east;
-                        const north = parseFloat($row.find('input[id^="userNorth"]').val()) || DEFAULT_COORDINATES.north;
+                        // Use the robust extraction as previously discussed
+                        const eastRaw = $row.find('input[id^="userEast"]').val();
+                        const northRaw = $row.find('input[id^="userNorth"]').val();
+                        const zoomRaw = $row.find('.zoom-input').val();
 
-                        usersToUpdate.push({
-                            id,
-                            username,
-                            configuration: {
-                                roles,
-                                zoom,
-                                east,
-                                north,
-                                authorizedElys: elys
-                            }
-                        });
+                        const east = !eastRaw ? DEFAULT_COORDINATES.east : parseFloat(eastRaw);
+                        const north = !northRaw ? DEFAULT_COORDINATES.north : parseFloat(northRaw);
+                        const zoom = !zoomRaw ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw, 10);
+
+                        const fixedEast = isNaN(east) ? DEFAULT_COORDINATES.east : east;
+                        const fixedNorth = isNaN(north) ? DEFAULT_COORDINATES.north : north;
+                        const fixedZoom = isNaN(zoom) ? DEFAULT_COORDINATES.zoom : zoom;
+
+                        const fields = { roles, elys, east: fixedEast, north: fixedNorth, zoom: fixedZoom };
+                        const validationOptions = {
+                            checkUsername: false,
+                            checkRoles: true,
+                            checkElys: true,
+                            checkCoordinates: true,
+                        };
+
+                        const errors = validateUserFields(fields, validationOptions);
+
+                        if (Object.keys(errors).length) {
+                            hasErrors = true;
+                            Toast.show('Virhe rivillä käyttäjä: ' + username + ': ' + Object.values(errors).join("; "), { type: 'error' });
+                            $row.addClass('row-has-error');
+                        } else {
+                            $row.removeClass('row-has-error');
+                            usersToUpdate.push({
+                                id,
+                                username,
+                                configuration: {
+                                    roles,
+                                    zoom: fixedZoom,
+                                    east: fixedEast,
+                                    north: fixedNorth,
+                                    authorizedElys: elys
+                                }
+                            });
+                        }
                     });
 
+                    // If any errors, DO NOT send update
+                    if (hasErrors) return;
+
+                    // Otherwise, send update
                     userManagementBackend.updateUsers(
                         usersToUpdate,
                         function (response) {
@@ -172,14 +238,14 @@
                                 Toast.show(response.reason || "Virhe käyttäjien päivityksessä", { type: 'error' });
                             } else {
                                 handleSuccess("Käyttäjät päivitetty!");
-                                loadUsers();
-                                resetForm();
+                                fetchUsers();
                             }
                         },
-                        function(errorMessage) {
+                        function (errorMessage) {
                             Toast.show(errorMessage, { type: 'error' });
                         }
                     );
+
                 });
             }
 
@@ -196,14 +262,26 @@
                 }
             });
 
-            // Toggle checkbox when the entire role row is clicked
             $(document).on('click', '.clickable-role', function (e) {
-                if (e.target.tagName.toLowerCase() === 'input') return;
+                const tag = e.target.tagName.toLowerCase();
 
+                // Let native input and label clicks toggle checkbox naturally, so do nothing here
+                if (tag === 'input' || tag === 'label') {
+                    // After native toggle, update the dropdown label to reflect new state
+                    const checkboxId = $(this).data('checkbox-id');
+                    const $checkbox = $('#' + checkboxId);
+                    const $wrapper = $checkbox.closest('[data-role-dropdown-id]');
+                    if ($wrapper.length) {
+                        // Slight delay to allow checkbox state to update
+                        setTimeout(() => updateRoleDropdownLabel($wrapper[0]), 0);
+                    }
+                    return;
+                }
+
+                // For clicks on other parts of the clickable-role div, toggle checkbox manually
                 const checkboxId = $(this).data('checkbox-id');
                 const $checkbox = $('#' + checkboxId);
                 const newState = !$checkbox.prop('checked');
-
                 $checkbox.prop('checked', newState).trigger('change');
 
                 const $wrapper = $checkbox.closest('[data-role-dropdown-id]');
@@ -212,119 +290,142 @@
                 }
             });
 
-            // Toggle checkbox when the ELY row is clicked
             $(document).on('click', '.clickable-ely', function (e) {
-                const tag = e.target.tagName.toLowerCase();
-                if (tag === 'input' || tag === 'label') return;
+                // Allow toggling when clicking anywhere in the row, including on label and input
+                // But prevent double toggling from label click because label naturally toggles checkbox when clicked
 
+                const tag = e.target.tagName.toLowerCase();
+
+                if (tag === 'input') {
+                    // Input clicks already toggle, so just update label
+                    const checkboxId = $(this).data('checkbox-id');
+                    const $checkbox = $('#' + checkboxId);
+                    const $wrapper = $checkbox.closest('[data-ely-dropdown-id]');
+                    if ($wrapper.length) {
+                        updateElyDropdownLabel($wrapper[0]);
+                    }
+                    return;
+                }
+
+                if (tag === 'label') {
+                    // Let label click toggle checkbox naturally, just update label after a short delay to allow checkbox state change
+                    const checkboxId = $(this).data('checkbox-id');
+                    const $checkbox = $('#' + checkboxId);
+                    const $wrapper = $checkbox.closest('[data-ely-dropdown-id]');
+                    setTimeout(() => {
+                        if ($wrapper.length) {
+                            updateElyDropdownLabel($wrapper[0]);
+                        }
+                    }, 0);
+                    return;
+                }
+
+                // For clicks in empty space or other elements inside clickable-ely - toggle manually
                 const checkboxId = $(this).data('checkbox-id');
                 const $checkbox = $('#' + checkboxId);
-
                 $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
+                const $wrapper = $checkbox.closest('[data-ely-dropdown-id]');
+                if ($wrapper.length) {
+                    updateElyDropdownLabel($wrapper[0]);
+                }
             });
+
         }
 
 
+        // --- HTML content rendering ---
         const getContent = () => `
             <div class="user-management-content-wrapper">
-                
+
                 <!-- Uusi käyttäjä -->
                 <h3>Uusi käyttäjä</h3>
                 <div class="user-management-form">
-                
+
                     <!-- Username and coordinates in same row -->
                     <div class="form-row horizontal-row">
                         <!-- Username -->
                         <div class="form-group username-group">
                           <label class="user-management-label" for="newUserUsername">Käyttäjätunnus</label>
                           <input type="text" id="newUserUsername" placeholder="LX123456" class="form-control" />
-                          <div id="newUserUsernameError" class="error-message hidden"></div>
                         </div>
-                
+
                         <!-- Coordinates -->
                         <div class="coordinates-group">
                             <label class="user-management-label">Oletus sijainti kartalla</label>
-         
                             <div class="coordinate-wrapper">
                                 <div class="coordinate-input">
                                     <label class="user-management-label" for="newUserNorth">P</label>
                                     <input
                                     id="newUserNorth"
-                                      class="coord-input form-control"
-                                      type="number"
-                                      min="${COORD_LIMITS.north[0]}"
-                                      max="${COORD_LIMITS.north[1]}"
-                                      value="${DEFAULT_COORDINATES.north}"
+                                    class="coord-input form-control"
+                                    type="number"
+                                    min="${COORD_LIMITS.north[0]}"
+                                    max="${COORD_LIMITS.north[1]}"
+                                    value="${DEFAULT_COORDINATES.north}"
                                     />
-                                    <div id="newUserNorthError" class="error-message hidden"></div>
                                 </div>
-                    
                                 <div class="coordinate-input">
                                     <label class="user-management-label" for="newUserEast">I</label>
                                     <input
-                                      class="coord-input form-control"
-                                      id="newUserEast"
-                                      type="number"
-                                      min="${COORD_LIMITS.east[0]}"
-                                      max="${COORD_LIMITS.east[1]}"
-                                      value="${DEFAULT_COORDINATES.east}"
+                                    class="coord-input form-control"
+                                    id="newUserEast"
+                                    type="number"
+                                    min="${COORD_LIMITS.east[0]}"
+                                    max="${COORD_LIMITS.east[1]}"
+                                    value="${DEFAULT_COORDINATES.east}"
                                     />
-                                    <div id="newUserEastError" class="error-message hidden"></div>
                                 </div>
-                    
                                 <div class="coordinate-input">
                                     <label class="user-management-label" for="newUserZoom">Zoom</label>
-                                    <input class="zoom-input form-control" type="number" id="newUserZoom" min="1" max="12" value="3" />
+                                    <input class="zoom-input form-control coord-input" type="number" id="newUserZoom" min="$COORD_LIMITS.zoom[0]" max="$COORD_LIMITS.zoom[1]" value="3" />
                                 </div>
                             </div>
                         </div>
                     </div>
-                
+
                     <!-- Roles and ELYs -->
                     <div class="form-row vertical-row">
                         <div class="form-group">
                             <label class="user-management-label">Roolit</label>
                             ${getRoleDropdownHtml('newUserRoles')}
                         </div>
-                    
                         <div class="form-group">
                             <label class="user-management-label">Sallitut ELYt</label>
                             ${getElyDropdownHtml('newUserElys', [12, 14])}
                         </div>
                     </div>
-                
+
                     <div class="form-actions">
                         <button id="addUserButton" class="btn btn-primary">Lisää käyttäjä</button>
                     </div>
-                    </div>
-                
-                    <!-- Existing users -->
-                    <h3>Nykyiset käyttäjät</h3>
-                    <div class="user-management-form">
-                        <div class="user-list-container">
+                </div>
+
+                <!-- Existing users -->
+                <h3>Nykyiset käyttäjät</h3>
+                <div class="user-management-form">
+                    <div class="user-list-container">
                         <table class="table user-table">
                             <thead>
                                 <tr>
                                   <th>Tunnus</th>
                                   <th>Roolit</th>
                                   <th>Zoom</th>
-                                    <th class="centered">Koordinaatit</th>
+                                  <th class="centered">Koordinaatit</th>
                                   <th>ELY</th>
                                   <th></th>
                                 </tr>
                             </thead>
-                          <tbody id="userTableBody"></tbody>
+                            <tbody id="userTableBody"></tbody>
                         </table>
-                      </div>
-                      
-                      <div class="form-actions">
+                    </div>
+                    <div class="form-actions">
                         <button id="updateUsersButton" class="btn btn-primary">Tallenna muutokset</button>
-                      </div>
-                      
+                    </div>
                 </div>
             </div>
         `;
 
+        // --- Dropdown helpers ---
         function getRoleDropdownHtml(id, selectedRoles) {
             if (selectedRoles === undefined) selectedRoles = [];
 
@@ -442,15 +543,15 @@
                 .join(', ') || 'Valitse ELYt';
         }
 
-        function loadUsers() {
-            userManagementBackend.getAllUsers(function(users) {
+        // --- Fetch & render existing users ---
+        function fetchUsers() {
+            userManagementBackend.getAllUsers(function (users) {
                 const tableBody = document.getElementById('userTableBody');
                 if (!tableBody) return;
 
                 tableBody.innerHTML = '';
 
                 users.forEach(function (user, index) {
-                    console.log(user.id)
                     let roleDropdownId = 'userRoles-' + index;
                     let elyDropdownId = 'userElys-' + index;
                     let row = document.createElement('tr');
@@ -460,38 +561,40 @@
                     row.innerHTML = `
                 <td>${user.username}</td>
                 <td>${getRoleDropdownHtml(roleDropdownId, user.roles)}</td>
-                <td><input class="zoom-input existing-user-input form-control" type="number" min="1" max="10" value="${user.configuration.zoom}"></td>
-                
+                <td>
+                    <input class="zoom-input existing-user-input form-control" type="number" min="1" max="10" value="${user.configuration.zoom}">
+                </td>
                 <td class="coordinate-wrapper">
                     <label class="user-management-label" for="userNorth-${index}">P:</label>
                     <input type="number" id="userNorth-${index}" class="coord-input existing-user-input form-control" value="${user.configuration.north}">
-
                     <label class="user-management-label" for="userEast-${index}">I:</label>
                     <input type="number" id="userEast-${index}" class="coord-input existing-user-input form-control" value="${user.configuration.east}">
                 </td>
-
                 <td>${getElyDropdownHtml(elyDropdownId, user.authorizedElys)}</td>
-                <td><button class="btn-secondary delete-user" data-username="${user.username}">Poista</button></td>
+                <td><button class="btn btn-danger" data-username="${user.username}">Poista</button></td>
             `;
                     tableBody.appendChild(row);
                 });
 
-                // Attach delete handlers
                 document.querySelectorAll('.delete-user').forEach(function (btn) {
                     btn.addEventListener('click', function () {
                         const username = this.dataset.username;
-                        const id = this.dataset.id;
+                        const currentUsername = applicationModel.getSessionUsername();
+                        if (username === currentUsername) {
+                            Toast.show("Et voi poistaa itseäsi.", { type: 'warning' })
+                            return
+                        }
                         if (confirm(`Poistetaanko käyttäjä ${username}?`)) {
-                            userManagementBackend.deleteUser(id,
-                                function(response) {
+                            userManagementBackend.deleteUser(username,
+                                function (response) {
                                     if (response && response.success === false) {
                                         Toast.show(response.reason || "Virhe poistettaessa käyttäjää", { type: 'error' });
                                     } else {
                                         handleSuccess("Käyttäjä poistettu!");
-                                        loadUsers();
+                                        fetchUsers();
                                     }
                                 },
-                                function(errorMessage) {
+                                function (errorMessage) {
                                     Toast.show(errorMessage, { type: 'error' });
                                 }
                             );
@@ -501,34 +604,25 @@
             });
         }
 
-        // Dropdown toggle handler
-        $(document).on('click', '.dropdown-toggle', function(event) {
+        // --- Dropdown JS event: toggle/show/hide ---
+        $(document).on('click', '.dropdown-toggle', function (event) {
             event.stopPropagation();
-
             const $wrapper = $(this).closest('[data-role-dropdown-id], [data-ely-dropdown-id]');
             const $content = $wrapper.find('.dropdown-content');
-
-            // Close other dropdowns first
             $('.dropdown-content').not($content).addClass('hidden');
-
             $content.toggleClass('hidden');
         });
-
-        // Keep dropdown open when clicking inside
-        $(document).on('click', '.dropdown-content', function(event) {
+        $(document).on('click', '.dropdown-content', function (event) {
             event.stopPropagation();
         });
-
-        // Close dropdowns when clicking anywhere outside
-        $(document).on('click', function() {
+        $(document).on('click', function () {
             $('.dropdown-content').addClass('hidden');
         });
 
         return {
             getContent: getContent,
             bindEvents: bindEvents,
-            loadUsers: loadUsers,
-            hasUnsavedChanges: function() { return hasUnsavedChanges; }
+            loadUsers: fetchUsers,
         };
     };
 }(this));

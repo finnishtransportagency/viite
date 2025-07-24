@@ -44,13 +44,13 @@
         });
     }
 
-    function deleteUser(id, success, failure) {
+    function deleteUser(username, success, failure) {
 
         $.ajax({
-            url: `api/viite/users/${encodeURIComponent(id)}`,
+            url: `api/viite/users/${encodeURIComponent(username)}`,
             type: 'DELETE',
             success: function() {
-                if (_.isFunction(success)) success(id);
+                if (_.isFunction(success)) success(username);
             },
             error: function(jqXHR) {
                 if (_.isFunction(failure)) failure(jqXHR.responseText || 'Virhe käyttäjän poistamisessa');

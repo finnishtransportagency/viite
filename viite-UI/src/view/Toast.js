@@ -1,5 +1,7 @@
+// Toast for a duration based on message length (4–8 seconds)
+// Useful for notifying user about success/failure events related to backend for example
 // Usage example: Toast.show("Message", { type: 'success' });
-// Do not add "." at the end of the message to maintain consistency
+// Add "." at the end of the message to maintain consistency
 
 (function (root) {
     root.Toast = (function () {
@@ -12,6 +14,7 @@
             error: '❌'
         };
 
+        // Create toast container if it doesn't exist
         function ensureContainer() {
             if (!container) {
                 container = document.createElement('div');
@@ -23,7 +26,12 @@
         function show(message, options = {}) {
             ensureContainer();
 
-            const { type = 'info', duration = 4500 } = options;
+            const { type = 'info' } = options;
+
+            // Calculate duration based on message length (e.g., 60ms per character)
+            const baseDuration = message.length * 60;
+            const duration = Math.min(Math.max(baseDuration, 4000), 8000); // Clamp between 4000 and 8000 ms
+
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
 
@@ -44,6 +52,7 @@
                 toast.addEventListener('animationend', () => toast.remove());
             }, duration);
         }
+
 
         return { show };
     })();
