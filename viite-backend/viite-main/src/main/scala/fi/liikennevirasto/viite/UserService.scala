@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import org.slf4j.LoggerFactory
 
@@ -10,7 +11,9 @@ class UserService(userProvider: UserProvider) {
   def createUser(username: String, config: Configuration): Either[String, Unit] = {
     if (Option(username).exists(_.trim.nonEmpty)) {
       try {
-        userProvider.addUser(username.trim.toLowerCase, config)
+        PostGISDatabaseScalikeJDBC.runWithTransaction {
+          userProvider.addUser(username.trim.toLowerCase, config)
+        }
         Right(())
       } catch {
         case e: Exception =>
@@ -22,9 +25,28 @@ class UserService(userProvider: UserProvider) {
     }
   }
 
+  def deleteUser(username: String): Either[String, Unit] = {
+    if (Option(username).exists(_.trim.nonEmpty)) {
+      try {
+        PostGISDatabaseScalikeJDBC.runWithTransaction {
+          userProvider.deleteUser(username.trim)
+        }
+        Right(())
+      } catch {
+        case e: Exception =>
+          logger.error(s"Failed to delete user '$username'", e)
+          Left(s"Käyttäjän '$username' poistaminen epäonnistui.")
+      }
+    } else {
+      Left("Käyttäjätunnus ei saa olla tyhjä.")
+    }
+  }
+
   def updateUsers(users: List[User]): Either[String, Unit] = {
     try {
-      userProvider.updateUsers(users)
+      PostGISDatabaseScalikeJDBC.runWithTransaction {
+        userProvider.updateUsers(users)
+      }
       Right(())
     } catch {
       case e: Exception =>
@@ -35,26 +57,13 @@ class UserService(userProvider: UserProvider) {
 
   def getAllUsers: Seq[User] = {
     try {
-      userProvider.getAllUsers
+      PostGISDatabaseScalikeJDBC.runWithReadOnlySession {
+        userProvider.getAllUsers
+      }
     } catch {
       case e: Exception =>
         logger.error("Failed to fetch all users", e)
         Seq.empty
-    }
-  }
-
-  def deleteUser(username: String): Either[String, Unit] = {
-    if (Option(username).exists(_.trim.nonEmpty)) {
-      try {
-        userProvider.deleteUser(username.trim)
-        Right(())
-      } catch {
-        case e: Exception =>
-          logger.error(s"Failed to delete user '$username'", e)
-          Left(s"Käyttäjän '$username' poistaminen epäonnistui.")
-      }
-    } else {
-      Left("Käyttäjätunnus ei saa olla tyhjä.")
     }
   }
 }

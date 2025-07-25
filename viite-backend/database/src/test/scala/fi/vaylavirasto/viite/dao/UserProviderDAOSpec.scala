@@ -5,8 +5,6 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-//TODO: This test doesn't pass since runWithTransaction is called within the runWithRollback
-
 class UserProviderDAOSpec extends AnyFunSuite with Matchers {
 
   val TestUserName = "userprovidertest"
