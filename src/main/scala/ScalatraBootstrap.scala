@@ -27,7 +27,9 @@ class ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService,
       Digiroad2Context.roadNameService, Digiroad2Context.nodesAndJunctionsService,
       Digiroad2Context.roadNetworkValidator, Digiroad2Context.userProvider,
-      Digiroad2Context.deploy_date, swagger),
+      Digiroad2Context.deploy_date, Digiroad2Context.userService,
+      swagger),
+
       "/api/viite/*")
     context.mount(new ResourcesApp, "/api-docs")
     context.mount(new RasterProxy, "/rasteripalvelu")
