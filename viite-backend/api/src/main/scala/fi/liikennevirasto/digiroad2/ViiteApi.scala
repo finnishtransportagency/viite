@@ -15,6 +15,7 @@ import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.liikennevirasto.viite.UserService
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
 import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
 import fi.vaylavirasto.viite.util.ViiteException
@@ -66,7 +67,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
                val roadAddressService: RoadAddressService,     val projectService: ProjectService,
                val roadNameService: RoadNameService,           val nodesAndJunctionsService: NodesAndJunctionsService,
                val roadNetworkValidator: RoadNetworkValidator, val userProvider: UserProvider = Digiroad2Context.userProvider,
-               val deploy_date: String = Digiroad2Context.deploy_date,
+               val deploy_date: String = Digiroad2Context.deploy_date, val userService: UserService,
                implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1484,11 +1485,11 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   get("/users", operation(getAllUsers)) {
     time(logger, s"GET request for /users") {
       try {
-        val users: Seq[User] = userProvider.getAllUsers
+        val users: Seq[User] = userService.getAllUsers
 
         Map(
           "success" -> true,
-          "users" -> users.map { user: User =>
+          "users" -> users.map { user =>
             Map(
               "id" -> user.id,
               "username" -> user.username,
@@ -1503,11 +1504,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           }
         )
       } catch {
-        case ex: ViiteException =>
-          logger.error(s"Virhe käyttäjien haussa: ${ex.getMessage}")
-          halt(400, Map("success" -> false, "reason" -> ex.getMessage))
         case ex: Exception =>
-          logger.error("Odottamaton virhe käyttäjien haussa", ex)
+          logger.error("Virhe käyttäjien haussa", ex)
           halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
       }
     }
@@ -1516,26 +1514,24 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   private val deleteUser: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("deleteUser")
       tags "ViiteAPI - Käyttäjähallinta"
-      summary "Poista käyttäjä ID:n perusteella"
-      parameter pathParam[String]("id").description("Poistettavan käyttäjän ID")
+      summary "Poista käyttäjä käyttäjänimellä"
+      parameter pathParam[String]("username").description("Poistettavan käyttäjän käyttäjätunnus")
     )
 
   delete("/users/:username", operation(deleteUser)) {
     val username = params("username")
+
     time(logger, s"DELETE request for /users/$username") {
-      try {
-        userProvider.deleteUser(username)
-        Map("success" -> true, "message" -> s"Käyttäjä '$username' poistettiin onnistuneesti")
-      } catch {
-        case ex: ViiteException =>
-          logger.error(s"Virhe poistettaessa käyttäjää '$username': ${ex.getMessage}")
-          halt(400, Map("success" -> false, "reason" -> ex.getMessage))
-        case ex: Exception =>
-          logger.error(s"Odottamaton virhe poistettaessa käyttäjää '$username'", ex)
-          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      userService.deleteUser(username) match {
+        case Right(_) =>
+          Map("success" -> true, "message" -> s"Käyttäjä '$username' poistettiin onnistuneesti")
+        case Left(reason) =>
+          logger.warn(s"Virhe poistettaessa käyttäjää '$username': $reason")
+          halt(400, Map("success" -> false, "reason" -> reason))
       }
     }
   }
+
 
   private val addUser: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("addUser")
@@ -1548,19 +1544,22 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"POST request to /users") {
       try {
         val body = parsedBody.extract[User]
-        userProvider.addUser(body.username, body.configuration)
 
-        Map("success" -> true, "message" -> s"Käyttäjä '${body.username}' lisättiin onnistuneesti")
+        userService.createUser(body.username, body.configuration) match {
+          case Right(_) =>
+            Map("success" -> true, "message" -> s"Käyttäjä '${body.username}' lisättiin onnistuneesti")
+          case Left(reason) if reason.contains("already exists") =>
+            logger.warn(s"Duplikaattikäyttäjä: '${body.username}'")
+            halt(409, Map("success" -> false, "reason" -> reason))
+          case Left(reason) =>
+            logger.warn(s"Virhe lisättäessä käyttäjää: $reason")
+            halt(400, Map("success" -> false, "reason" -> reason))
+        }
+
       } catch {
-        case ex: org.postgresql.util.PSQLException if ex.getMessage.contains("duplicate key") =>
-          logger.warn(s"Duplikaattikäyttäjä '${parsedBody \ "username"}'", ex)
-          halt(409, Map("success" -> false, "reason" -> "Käyttäjä on jo olemassa"))
         case ex: MappingException =>
-          logger.warn("Virheellinen pyyntödata", ex)
+          logger.warn("Virheellinen käyttäjädata", ex)
           halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
-        case ex: ViiteException =>
-          logger.error(s"Viite-virhe lisättäessä käyttäjää: ${ex.getMessage}")
-          halt(400, Map("success" -> false, "reason" -> ex.getMessage))
         case ex: Exception =>
           logger.error("Odottamaton virhe lisättäessä käyttäjää", ex)
           halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
@@ -1579,23 +1578,25 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"PUT request to /users") {
       try {
         val usersToUpdate = parsedBody.extract[List[User]]
-        userProvider.updateUsers(usersToUpdate)
 
-        Map("success" -> true, "message" -> "Käyttäjät päivitettiin onnistuneesti.")
+        userService.updateUsers(usersToUpdate) match {
+          case Right(_) =>
+            Map("success" -> true, "message" -> "Käyttäjät päivitettiin onnistuneesti.")
+          case Left(reason) =>
+            logger.warn(s"Virhe päivitettäessä käyttäjiä: $reason")
+            halt(400, Map("success" -> false, "reason" -> reason))
+        }
+
       } catch {
         case ex: MappingException =>
           logger.warn("Virheellinen käyttäjädata", ex)
-          halt(400, Map("success" -> false, "message" -> "Virheellinen käyttäjädata"))
-        case ex: ViiteException =>
-          logger.error(s"Viite-virhe päivitettäessä käyttäjiä: ${ex.getMessage}")
-          halt(400, Map("success" -> false, "message" -> ex.getMessage))
+          halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
         case ex: Exception =>
           logger.error("Odottamaton virhe päivitettäessä käyttäjiä", ex)
-          halt(500, Map("success" -> false, "message" -> "Palvelimen sisäinen virhe"))
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
       }
     }
   }
-
   // ---------------------------------------------------------------------------------------------------------------------//
 
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): (Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink]) = {

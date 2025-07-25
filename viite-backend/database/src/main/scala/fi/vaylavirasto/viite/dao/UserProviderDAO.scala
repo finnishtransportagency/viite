@@ -14,7 +14,7 @@ class UserProviderDAO extends BaseDAO with UserProvider {
 
   def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
 
-  object User extends SQLSyntaxSupport[User]{
+  object User extends SQLSyntaxSupport[User] {
     override val tableName = "service_user"
     def apply(rs: WrappedResultSet): User = new User(
       rs.long("id"),
@@ -42,9 +42,9 @@ class UserProviderDAO extends BaseDAO with UserProvider {
         runSelectSingleOption(query.map(User.apply))
       } catch {
         case e: TooManyRowsException =>
-          throw ViiteException(s"Multiple users found with username $username")
+          throw ViiteException(s"Käyttäjänimellä $username löytyi useampi käyttäjä.")
         case e: Exception =>
-          throw ViiteException(s"Database error while retrieving user $username: ${e.getMessage}")
+          throw ViiteException(s"Virhe haettaessa käyttäjää $username: ${e.getMessage}")
       }
     }
   }
@@ -61,59 +61,57 @@ class UserProviderDAO extends BaseDAO with UserProvider {
       }
     } catch {
       case e: Exception =>
-        logger.error(s"Failed to delete user: $username", e)
+        throw ViiteException(s"Käyttäjän $username poistaminen epäonnistui: ${e.getMessage}")
     }
   }
 
   def getAllUsers: Seq[User] = {
     val query = sql"""
-    SELECT id, username, configuration
-    FROM service_user
-    ORDER BY username
-  """
-
+      SELECT id, username, configuration
+      FROM service_user
+      ORDER BY username
+    """
     runWithTransaction {
       query.map(User.apply).list.apply()
     }
   }
 
-  override def addUser(username: String, config: Configuration): Unit = {
+  def addUser(username: String, config: Configuration): Unit = {
     try {
       runWithTransaction {
         runUpdateToDb(
           sql"""
-        INSERT INTO service_user (id, username, configuration)
-        VALUES (
-          nextval('service_user_seq'),
-          ${username.toLowerCase},
-          ${write(config)}
-        )
-      """
+            INSERT INTO service_user (id, username, configuration)
+            VALUES (
+              nextval('service_user_seq'),
+              ${username.toLowerCase},
+              ${write(config)}
+            )
+          """
         )
       }
     } catch {
       case e: Exception =>
-        // Replace this with actual logging
-        logger.error(s"Failed to add user $username", e)
+        throw ViiteException(s"Käyttäjän $username lisääminen epäonnistui: ${e.getMessage}")
     }
   }
 
-  override def updateUsers(users: List[User]): Unit = {
+  def updateUsers(users: List[User]): Unit = {
     try {
       runWithTransaction {
         users.foreach { user =>
           runUpdateToDb(
             sql"""
-            UPDATE service_user
-            SET configuration = ${write(user.configuration)}
-            WHERE LOWER(username) = ${user.username.toLowerCase}
-          """
+              UPDATE service_user
+              SET configuration = ${write(user.configuration)}
+              WHERE LOWER(username) = ${user.username.toLowerCase}
+            """
           )
         }
       }
     } catch {
       case e: Exception =>
-        logger.error("Failed to update users", e)
+        throw ViiteException("Käyttäjien päivittäminen epäonnistui.")
     }
   }
 }

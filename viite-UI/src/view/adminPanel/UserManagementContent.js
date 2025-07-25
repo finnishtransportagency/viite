@@ -42,7 +42,6 @@
             const errors = {};
 
             const { username, roles, elys, east, north, zoom } = fields;
-            console.log(fields)
 
             if (checkUsername) {
                 if (!username || !/^[A-Za-z]/.test(username))
@@ -571,7 +570,7 @@
                     <input type="number" id="userEast-${index}" class="coord-input existing-user-input form-control" value="${user.configuration.east}">
                 </td>
                 <td>${getElyDropdownHtml(elyDropdownId, user.authorizedElys)}</td>
-                <td><button class="btn btn-danger" data-username="${user.username}">Poista</button></td>
+                <td><button class="btn btn-danger delete-user" data-username="${user.username}">Poista</button></td>
             `;
                     tableBody.appendChild(row);
                 });
