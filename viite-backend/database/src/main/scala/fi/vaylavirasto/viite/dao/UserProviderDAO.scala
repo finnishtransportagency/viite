@@ -50,68 +50,46 @@ class UserProviderDAO extends BaseDAO with UserProvider {
   }
 
   def deleteUser(username: String): Unit = {
-    try {
-      runWithTransaction {
-        runUpdateToDb(
-          sql"""
-        DELETE FROM service_user
-        WHERE username = $username
-      """
-        )
-      }
-    } catch {
-      case e: Exception =>
-        throw ViiteException(s"Käyttäjän $username poistaminen epäonnistui: ${e.getMessage}")
-    }
+    runUpdateToDb(
+      sql"""
+      DELETE FROM service_user
+      WHERE username = $username
+    """
+    )
   }
 
   def getAllUsers: Seq[User] = {
     val query = sql"""
-      SELECT id, username, configuration
-      FROM service_user
-      ORDER BY username
-    """
-    runWithTransaction {
-      query.map(User.apply).list.apply()
-    }
+    SELECT id, username, configuration
+    FROM service_user
+    ORDER BY username
+  """
+    query.map(User.apply).list.apply()
   }
 
   def addUser(username: String, config: Configuration): Unit = {
-    try {
-      runWithTransaction {
-        runUpdateToDb(
-          sql"""
-            INSERT INTO service_user (id, username, configuration)
-            VALUES (
-              nextval('service_user_seq'),
-              ${username.toLowerCase},
-              ${write(config)}
-            )
-          """
-        )
-      }
-    } catch {
-      case e: Exception =>
-        throw ViiteException(s"Käyttäjän $username lisääminen epäonnistui: ${e.getMessage}")
-    }
+    runUpdateToDb(
+      sql"""
+      INSERT INTO service_user (id, username, configuration)
+      VALUES (
+        nextval('service_user_seq'),
+        ${username.toLowerCase},
+        ${write(config)}
+      )
+    """
+    )
   }
 
   def updateUsers(users: List[User]): Unit = {
-    try {
-      runWithTransaction {
-        users.foreach { user =>
-          runUpdateToDb(
-            sql"""
-              UPDATE service_user
-              SET configuration = ${write(user.configuration)}
-              WHERE LOWER(username) = ${user.username.toLowerCase}
-            """
-          )
-        }
-      }
-    } catch {
-      case e: Exception =>
-        throw ViiteException("Käyttäjien päivittäminen epäonnistui.")
+    users.foreach { user =>
+      runUpdateToDb(
+        sql"""
+        UPDATE service_user
+        SET configuration = ${write(user.configuration)}
+        WHERE LOWER(username) = ${user.username.toLowerCase}
+      """
+      )
     }
   }
+
 }
