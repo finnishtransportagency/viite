@@ -57,12 +57,19 @@
 
     function show() {
       $('.container').append(changeTable);
-      centerTableInViewport();
       resetInteractions();
       interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
       enableTableInteractions();
+
+      // Reset height and transform before positioning
+      changeTable.css({
+        height: 'auto',
+        transform: 'none',
+        'max-height': `${window.innerHeight * 0.9}px` // optional max height
+      });
+
       windowMaximized = true;
       resizeTable();
     }
@@ -170,6 +177,7 @@
           </div>
         `);
       }
+      centerTableInViewport();
     }
 
     function bindEvents() {
@@ -201,7 +209,7 @@
 
       // 1. Calculate intended frame width/height
       let frameWidth, calculatedWidth, frameHeight, top;
-      const tableMinWidth = 1050;
+      const tableMinWidth = 820;
 
       if (windowMaximized) {
         calculatedWidth = windowWidth * 0.6;
