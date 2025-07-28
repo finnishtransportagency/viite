@@ -23,29 +23,15 @@ class UserProviderDAO extends BaseDAO with UserProvider {
     )
   }
 
-  /**
-   * Get user by username
-   * @param username: String
-   * @return User if found, None if not found
-   * @throws ViiteException if multiple users found with the same username or database error
-   */
   def getUser(username: String): Option[User] = {
     if (username == null) None
     else {
       val query = sql"""
-         SELECT id, username, configuration
-         FROM service_user
-         WHERE lower(username) = ${username.toLowerCase}
-         """
-
-      try {
-        runSelectSingleOption(query.map(User.apply))
-      } catch {
-        case e: TooManyRowsException =>
-          throw ViiteException(s"Käyttäjänimellä $username löytyi useampi käyttäjä.")
-        case e: Exception =>
-          throw ViiteException(s"Virhe haettaessa käyttäjää $username: ${e.getMessage}")
-      }
+       SELECT id, username, configuration
+       FROM service_user
+       WHERE lower(username) = ${username.toLowerCase}
+       """
+      runSelectSingleOption(query.map(User.apply))
     }
   }
 
