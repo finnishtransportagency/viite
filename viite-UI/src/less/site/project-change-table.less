@@ -1,17 +1,22 @@
 /* General table wrapper */
 .change-table-frame {
   display: inline-block;
-  min-width: 820px;
   position: absolute;
+  overflow: hidden;
+  width: 80%;
+  max-width: 100%;
+  min-width: 908px;
+  min-height: 116px;
+  max-height: 565px;
   background-color: #e3e3e1;
-  z-index: 2020;
   border: 2px solid #282826;
   border-radius: 3px;
-  overflow-x: auto;
+  z-index: 2021;
 }
 
 /* Header Bar */
 .change-table-header {
+  min-width: 908px;
   position: sticky;
   top: 0;
   display: flex;
@@ -41,15 +46,11 @@
   justify-content: flex-end;
 }
 
-.btn-icon {
-  margin-left: 5px;
-  cursor: pointer;
-}
-
 .change-table-dimensions {
   width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
+  border-spacing: 0;
+  border-collapse: separate;
+  table-layout: auto;
 }
 
 /* Column headings */
@@ -59,11 +60,27 @@
 .project-change-table-dimension,
 .project-change-table-dimension-first {
   border: 1px solid #bbb;
-  padding: 4px;
+  padding: 4px 2px;
   text-align: center;
   white-space: nowrap;
 }
 
+// Make headers stay on top when scrolled
+.project-change-table-dimension-header:first-child th {
+  position: sticky;
+  top: 0;
+  z-index: 2020;
+  background-color: #e3e3e1;
+  border-bottom: 1px solid #282826;
+}
+.project-change-table-dimension-header:nth-child(2) th {
+  position: sticky;
+  top: 28px; /* Header first row height */
+  z-index: 2019;
+  background-color: #e3e3e1;
+}
+
+//Header Cell Styles
 .project-change-table-dimension-h {
   height: 28px;
   color: #5a5a57;
@@ -72,58 +89,77 @@
   text-overflow: clip;
 }
 
-// First column
 .project-change-table-dimension-first-h,
 .project-change-table-dimension-first {
+  font-weight: bold;
+  text-transform: uppercase;
   width: 100px;
   min-width: 100px;
   max-width: 100px;
-  font-weight: bold;
-  text-transform: uppercase;
 }
 
-// "Kääntö" column
+.wide-column {
+  white-space: nowrap;
+  width: auto;
+  min-width: 50px;
+}
+
 .dimension-reversed {
   width: 100px;
   min-width: 100px;
   max-width: 100px;
 }
 
-/* Alternating row color */
+// Row styling
 .white-row {
   background-color: #fff;
 }
 
-/* Scrollbar styles */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+// Utility
+.btn-icon {
+  margin-left: 5px;
+  cursor: pointer;
 }
 
-::-webkit-scrollbar-track {
-  background: #f0f0f0;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #1c7fdd;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #0f6ac4;
-}
-
-::-webkit-scrollbar-button {
-  display: none;
-}
-
-// Thinner header
-.left p {
+.left p,
+.warning {
   margin: 8px;
 }
 
 .warning {
   color: rgb(255, 255, 0);
-  margin: 8px;
+}
+
+// Scrollbar
+.change-table-dimension-headers {
+  max-height: 300px;
+  overflow: auto;
+
+  /* Firefox scrollbar */
+  scrollbar-width: auto;
+  scrollbar-color: #1c7fdd #f0f0f0;
+}
+
+/* Chrome & Webkit scrollbar */
+.change-table-dimension-headers::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-thumb {
+  background: #1c7fdd;
+  border-radius: 3px;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-thumb:hover {
+  background: #0f6ac4;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-button {
+  display: none;
 }
