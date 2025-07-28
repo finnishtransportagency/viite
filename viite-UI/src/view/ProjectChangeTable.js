@@ -1,16 +1,15 @@
 (function (root) {
   root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
     let changeTableOpen = false;
+    let windowMaximized = localStorage.getItem('changeTableWindowMaximized') !== 'true';
+    const formCommon = new FormCommon('');
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const ProjectStatus = ViiteEnumerations.ProjectStatus;
-    let windowMaximized = true;
-    const formCommon = new FormCommon('');
 
     const isChangeTableOpen = () => changeTableOpen;
 
     const changeTable = $(`
       <div class="change-table-frame">
-        <div class="change-table-fixed-header">
           <div class="change-table-header font-resize">Validointi OK.</div>
           <div class="change-table-dimension-headers">
             <table class="change-table-dimensions">
@@ -27,31 +26,30 @@
                 </tr>
                 <tr class="project-change-table-dimension-header">
                   <th class="project-change-table-dimension-h"></th>
-                  <th class="project-change-table-dimension-h">TIE</th>
+                  <th class="project-change-table-dimension-h wide-column">TIE</th>
                   <th class="project-change-table-dimension-h">AJR</th>
                   <th class="project-change-table-dimension-h">OSA</th>
                   <th class="project-change-table-dimension-h">AET</th>
                   <th class="project-change-table-dimension-h">LET</th>
                   <th class="project-change-table-dimension-h">PIT</th>
                   <th class="project-change-table-dimension-h">JATK</th>
-                  <th class="project-change-table-dimension-h">HALL</th>
+                  <th class="project-change-table-dimension-h wide-column">HALL</th>
                   <th class="project-change-table-dimension-h">ELY</th>
                   <th class="project-change-table-dimension-h dimension-reversed">KÄÄNNETTY</th>
-                  <th class="project-change-table-dimension-h">TIE</th>
+                  <th class="project-change-table-dimension-h wide-column">TIE</th>
                   <th class="project-change-table-dimension-h">AJR</th>
                   <th class="project-change-table-dimension-h">OSA</th>
                   <th class="project-change-table-dimension-h">AET</th>
                   <th class="project-change-table-dimension-h">LET</th>
                   <th class="project-change-table-dimension-h">PIT</th>
                   <th class="project-change-table-dimension-h">JATK</th>
-                  <th class="project-change-table-dimension-h">HALL</th>
+                  <th class="project-change-table-dimension-h wide-column">HALL</th>
                   <th class="project-change-table-dimension-h">ELY</th>
                 </tr>
               </thead>
               <tbody></tbody>
             </table>
           </div>
-        </div>
       </div>
     `);
 
@@ -70,8 +68,7 @@
         'max-height': `${window.innerHeight * 0.9}px` // optional max height
       });
 
-      windowMaximized = true;
-      resizeTable();
+      resizeTable(windowMaximized);
     }
 
     function hide() {
@@ -202,35 +199,35 @@
       $('.change-table-dimensions').css('font-size', fontSize);
     }
 
-    function resizeTable() {
+    // Change table width based on the screen width. Uses local storage to save user preference
+    function resizeTable(forceMaximized = null) {
       const $frame = $('.change-table-frame');
-      const windowWidth = window.innerWidth;
-      const windowHeight = window.innerHeight;
+      const $icon = $('#sizeIcon');
+      const $button = $('.wbtn-max');
 
-      // 1. Calculate intended frame width/height
-      let frameWidth, calculatedWidth, frameHeight, top;
-      const tableMinWidth = 820;
-
-      if (windowMaximized) {
-        calculatedWidth = windowWidth * 0.6;
-        frameWidth = calculatedWidth < tableMinWidth ? tableMinWidth : calculatedWidth;
-
-      } else {
-        calculatedWidth = windowWidth * 0.8;
-        frameWidth = calculatedWidth < tableMinWidth ? tableMinWidth : calculatedWidth;
-
-      }
+      // Determine what the next state should be
+      const isMaximized = forceMaximized !== null ? forceMaximized : !windowMaximized;
+      const widthPercent = isMaximized ? 0.6 : 0.8;
 
       $frame.css({
-        width: `${frameWidth}px`,
-        ...(typeof top !== 'undefined' ? { top: `${top}px` } : {})
+        width: `${widthPercent * 100}%`,
+        maxWidth: '100%',
       });
 
       updateTableFontSize();
 
-      // After toggle, flip maximized state
-      windowMaximized = !windowMaximized;
+      if (isMaximized) {
+        $icon.removeClass('fa-compress').addClass('fa-expand');
+        $button.attr('title', 'Suurenna taulukko');
+      } else {
+        $icon.removeClass('fa-expand').addClass('fa-compress');
+        $button.attr('title', 'Pienennä taulukko');
+      }
+
+      windowMaximized = isMaximized;
+      localStorage.setItem('changeTableWindowMaximized', windowMaximized);
     }
+
 
     function sortChanges(btn) {
       const $btn = $(btn);
@@ -263,12 +260,29 @@
 
     function getEmptySource(changeInfoSeq) {
       return `<td class="project-change-table-dimension-first">${getChangeType(changeInfoSeq.changetype)}</td>` +
-          '<td class="project-change-table-dimension" colspan="9"></td>';
+          '<td class="project-change-table-dimension"></td>' + // TIE
+          '<td class="project-change-table-dimension"></td>' + // AJR
+          '<td class="project-change-table-dimension"></td>' + // OSA
+          '<td class="project-change-table-dimension"></td>' + // AET
+          '<td class="project-change-table-dimension"></td>' + // LET
+          '<td class="project-change-table-dimension"></td>' + // PIT
+          '<td class="project-change-table-dimension"></td>' + // JATK
+          '<td class="project-change-table-dimension"></td>' + // HALL
+          '<td class="project-change-table-dimension"></td>';  // ELY
     }
 
     function getEmptyTarget() {
-      return '<td class="project-change-table-dimension" colspan="9"></td>';
+      return  '<td class="project-change-table-dimension"></td>' + // TIE
+          '<td class="project-change-table-dimension"></td>' + // AJR
+          '<td class="project-change-table-dimension"></td>' + // OSA
+          '<td class="project-change-table-dimension"></td>' + // AET
+          '<td class="project-change-table-dimension"></td>' + // LET
+          '<td class="project-change-table-dimension"></td>' + // PIT
+          '<td class="project-change-table-dimension"></td>' + // JATK
+          '<td class="project-change-table-dimension"></td>' + // HALL
+          '<td class="project-change-table-dimension"></td>';  // ELY
     }
+
 
     function getTargetInfo(changeInfoSeq) {
       const t = changeInfoSeq.target;
@@ -319,7 +333,7 @@
             restrict: { restriction: '.container', elementRect: { top: 0, left: 0, bottom: 1, right: 1 } }
           })
           .resizable({
-            edges: { left: true, right: true, bottom: true, top: true },
+            edges: { left: true, right: true, bottom: true, top: false }, // Disable top resize
             restrictEdges: { outer: '.container', endOnly: true },
             inertia: true
           })
@@ -352,20 +366,6 @@
     });
 
     eventbus.on('projectChangeTable:hide', hide);
-
-    // Table size toggle button
-    $(document).on('click', '.wbtn-max', function () {
-      const icon = $('#sizeIcon');
-      const button = $(this);
-
-      if (icon.hasClass('fa-expand')) {
-        icon.removeClass('fa-expand').addClass('fa-compress');
-        button.attr('title', 'Pienennä taulukko');
-      } else {
-        icon.removeClass('fa-compress').addClass('fa-expand');
-        button.attr('title', 'Suurenna taulukko');
-      }
-    });
 
     return { show, hide, bindEvents, isChangeTableOpen };
   };
