@@ -1,4 +1,4 @@
-.user-management-form {
+.user-management-content-wrapper .user-management-form {
     margin-bottom: 30px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;
@@ -24,28 +24,26 @@
 }
 
 /* Form fields */
-.form-group {
+.user-management-content-wrapper .form-group {
     margin-bottom: 14px;
     display: flex;
     flex-direction: column;
-    //min-width: 180px;
-    //max-width: 220px;
     gap: 8px;
 }
 
-.form-row.vertical-row {
+.user-management-content-wrapper .form-row.vertical-row {
     display: flex;
     gap: 14px;
 }
 
-.form-label {
+.user-management-content-wrapper .form-label {
     display: block;
     margin-bottom: 5px;
     font-weight: 500;
     color: #374151;
 }
 
-.form-control {
+.user-management-content-wrapper .form-control {
     width: 100%;
     padding: 8px 12px;
     font-size: 14px;
@@ -54,7 +52,7 @@
     box-sizing: border-box;
 }
 
-.error-message {
+.user-management-content-wrapper .error-message {
     color: #ef4444;
     font-size: 12px;
     margin-top: 4px;
@@ -62,7 +60,7 @@
 }
 
 /* Dropdowns */
-.dropdown-toggle {
+.user-management-content-wrapper .dropdown-toggle {
     width: 330px;
     border: 1px solid #d1d5db;
     padding: 8px 12px;
@@ -75,15 +73,15 @@
     user-select: none;
 }
 
-.dropdown-toggle.roles {
+.user-management-content-wrapper .dropdown-toggle.roles {
     width: 200px;
 }
 
-.dropdown-label {
+.user-management-content-wrapper .dropdown-label {
     font-size: 14px;
 }
 
-.dropdown-content {
+.user-management-content-wrapper .dropdown-content {
     position: absolute;
     z-index: 10;
     background: white;
@@ -97,17 +95,17 @@
     overflow-y: auto;
 }
 
-.hidden {
+.user-management-content-wrapper .hidden {
     display: none;
 }
 
-.dropdown-content div:hover {
+.user-management-content-wrapper .dropdown-content div:hover {
     background-color: #f3f4f6;
 }
 
 /* Role / ELY items */
-.role-item,
-.ely-item {
+.user-management-content-wrapper .role-item,
+.user-management-content-wrapper .ely-item {
     display: flex;
     align-items: flex-start;
     padding: 4px;
@@ -115,79 +113,96 @@
     cursor: pointer;
 }
 
-.role-item input,
-.ely-item input {
+.user-management-content-wrapper .role-item input,
+.user-management-content-wrapper .ely-item input {
     margin-right: 8px;
 }
 
-.role-item input {
+.user-management-content-wrapper .role-item input {
     margin-top: 2px;
 }
 
-.role-description {
+.user-management-content-wrapper .role-description {
     font-size: 12px;
     color: #6b7280;
     margin-top: 2px;
 }
 
 /* User table */
-.user-table {
+.user-management-content-wrapper .user-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
     border: 1px solid #e5e7eb;
 }
 
-.user-table td {
+.user-management-content-wrapper .user-table td {
     vertical-align: middle !important;
     padding: 4px;
 }
 
-.user-table thead {
+.user-management-content-wrapper .user-table thead {
     background: #f3f4f6;
     position: sticky;
     top: 0;
 }
 
-.user-table th {
+.user-management-content-wrapper .user-table th {
     text-align: left;
     padding: 12px 4px;
     border-bottom: 1px solid #e5e7eb;
     font-weight: 600;
 }
 
-.user-table td input[type="number"] {
+.user-management-content-wrapper .user-table td input[type="number"] {
     font-size: 12px;
     padding: 4px;
     border: 1px solid #d1d5db;
     border-radius: 4px;
 }
 
-.coord-input {
+/* First column (left) cells */
+.user-management-content-wrapper .user-table td:first-child,
+.user-management-content-wrapper .user-table th:first-child {
+    padding-left: 12px;
+}
+
+/* Last column (right) cells */
+.user-management-content-wrapper .user-table td:last-child,
+.user-management-content-wrapper .user-table th:last-child {
+    padding-right: 12px;
+}
+
+.user-management-content-wrapper .user-table td,
+.user-management-content-wrapper .user-table th {
+    vertical-align: middle !important;
+    padding: 12px 8px;
+}
+
+.user-management-content-wrapper .coord-input {
     width: 80px;
     padding: 2px 4px;
     border: 1px solid #d1d5db;
     border-radius: 3px;
-    margin-right: 10px;
     font-size: 14px !important;
 }
 
-.zoom-input {
+.user-management-content-wrapper .zoom-input {
     font-size: 14px !important;
     width: 50px;
 }
 
-.existing-user-input {
+.user-management-content-wrapper .existing-user-input {
     height: 37.33px;
 }
 
-.user-management-label {
+.user-management-content-wrapper .user-management-label {
     font-size: 14px;
     margin-right: 1px;
     vertical-align: middle;
 }
 
-.table-wrapper {
+.user-management-content-wrapper .table-wrapper {
     border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: white;
@@ -195,93 +210,92 @@
     overflow-y: auto;
 }
 
-.flex-end {
+.user-management-content-wrapper .flex-end {
     display: flex;
     justify-content: flex-end;
     margin-top: 15px;
 }
 
 /* Form row containers */
-.form-row {
+.user-management-content-wrapper .form-row {
     display: flex;
     gap: 16px;
     align-items: flex-start;
     flex-wrap: wrap;
 }
 
-.form-row.horizontal-row {
+.user-management-content-wrapper .form-row.horizontal-row {
     gap: 24px;
     flex-wrap: nowrap;
 }
 
-.form-row.roles-and-elys {
+.user-management-content-wrapper .form-row.roles-and-elys {
     gap: 16px;
     min-width: 350px;
 }
 
 /* Columns */
-.form-column {
+.user-management-content-wrapper .form-column {
     flex: 1;
     flex-direction: column;
     width: 250px;
 }
 
 /* Coordinates group */
-.coordinates-group {
+.user-management-content-wrapper .coordinates-group {
     display: flex;
     flex-direction: column;
     min-width: 320px;
     gap: 8px;
 }
 
-.form-row.horizontal-row {
+.user-management-content-wrapper .form-row.horizontal-row {
     gap: 24px;
     flex-wrap: nowrap;
     align-items: flex-start;
 }
 
-.coordinate-wrapper {
+.user-management-content-wrapper .coordinate-wrapper {
     display: flex;
     flex-direction: row;
     gap: 12px;
     align-items: center;
 }
 
-table > tbody > tr:first-child .coordinate-wrapper {
+.user-management-content-wrapper table > tbody > tr:first-child .coordinate-wrapper {
     border-top: 0 !important;
 }
 
-.coordinates-group > label {
+.user-management-content-wrapper .coordinates-group > label {
     display: block;
     width: 100%;
     font-weight: 600;
 }
 
-.coordinate-input {
+.user-management-content-wrapper .coordinate-input {
     display: flex;
     align-items: center;
     gap: 6px;
     min-width: 80px;
 }
 
-.coordinate-input label {
+.user-management-content-wrapper .coordinate-input label {
     min-width: 18px;
     font-weight: normal;
     margin: 0;
 }
 
-.form-actions {
+.user-management-content-wrapper .form-actions {
     align-self: flex-end;
     margin-left: auto;
     margin-top: 8px;
 }
 
-.centered {
+.user-management-content-wrapper .centered {
     text-align: center;
 }
 
-.row-has-error {
-    //border: 1px solid #dc3545;
+.user-management-content-wrapper .row-has-error {
     background-color: #f8d7da;
     padding: 0.5rem;
     color: #721c24;
