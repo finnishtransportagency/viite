@@ -1,11 +1,11 @@
 (function (root) {
   root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
     let changeTableOpen = false;
-    let windowMaximized = localStorage.getItem('changeTableWindowMaximized') !== 'true';
+    let windowMaximized = localStorage.getItem('changeTableWindowMaximized') === 'true';
+
     const formCommon = new FormCommon('');
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const ProjectStatus = ViiteEnumerations.ProjectStatus;
-
     const isChangeTableOpen = () => changeTableOpen;
 
     const changeTable = $(`
@@ -61,15 +61,24 @@
       getChanges();
       enableTableInteractions();
 
-      // Reset height and transform before positioning
+      // Dynamically calculate initial height based on content
+      const maxViewportHeight = $(window).height();
+      const headerHeight = $('.change-table-header').outerHeight(true);
+      const contentHeight = $('.change-table-dimensions').outerHeight(true);
+      const totalContentHeight = headerHeight + contentHeight + 30; // Add a little buffer
+
+      const desiredHeight = Math.min(totalContentHeight, maxViewportHeight * 0.9); // Fill up to 90% of screen
+
       changeTable.css({
-        height: 'auto',
         transform: 'none',
-        'max-height': `${window.innerHeight * 0.9}px` // optional max height
+        height: `${desiredHeight}px`,
+        maxHeight: `${maxViewportHeight * 0.95}px`, // Prevent it from exceeding the viewport
+        overflowY: 'auto' // Allow scrolling if necessary
       });
 
       resizeTable(windowMaximized);
     }
+
 
     function hide() {
       changeTableOpen = false;
@@ -174,6 +183,8 @@
           </div>
         `);
       }
+
+      resizeTable(windowMaximized);
       centerTableInViewport();
     }
 
@@ -205,29 +216,46 @@
       const $icon = $('#sizeIcon');
       const $button = $('.wbtn-max');
 
-      // Determine what the next state should be
-      const isMaximized = forceMaximized !== null ? forceMaximized : !windowMaximized;
-      const widthPercent = isMaximized ? 0.6 : 0.8;
+      // Current state
+      const currentState = windowMaximized;
+
+      // New state
+      const isMaximized = forceMaximized !== null ? forceMaximized : !currentState;
+      const widthPercent = isMaximized ? 0.8 : 0.6;
 
       $frame.css({
         width: `${widthPercent * 100}%`,
         maxWidth: '100%',
+
       });
 
       updateTableFontSize();
 
+      // Toggle resize icon
       if (isMaximized) {
         $icon.removeClass('fa-compress').addClass('fa-expand');
-        $button.attr('title', 'Suurenna taulukko');
+        $button.attr('title', 'Pienennä taulukko');
       } else {
         $icon.removeClass('fa-expand').addClass('fa-compress');
-        $button.attr('title', 'Pienennä taulukko');
+        $button.attr('title', 'Suurenna taulukko');
       }
 
       windowMaximized = isMaximized;
       localStorage.setItem('changeTableWindowMaximized', windowMaximized);
-    }
 
+      // Calculate and set correct table height
+      const maxViewportHeight = $(window).height();
+      const headerHeight = $('.change-table-header').outerHeight(true);
+      const tableContentHeight = $('.change-table-dimensions').outerHeight(true);
+      const totalContentHeight = headerHeight + tableContentHeight;
+      const desiredHeight = Math.min(totalContentHeight, maxViewportHeight * 0.9);
+
+      changeTable.css({
+        height: `${desiredHeight}px`,
+        maxHeight: `${maxViewportHeight * 0.95}px`,
+        overflowY: 'auto'
+      });
+    }
 
     function sortChanges(btn) {
       const $btn = $(btn);
@@ -342,7 +370,7 @@
             const currentHeight = parseFloat(target.style.height) || target.offsetHeight;
             const newHeight = currentHeight + event.deltaRect.height;
 
-            const minHeight = 100; // Optional: minimum height allowed
+            const minHeight = 100;
             const tableContentHeight = $('.change-table-dimensions').outerHeight(true) + $('.change-table-header').outerHeight(true);
 
             // Restrict resizing so height can't exceed content height

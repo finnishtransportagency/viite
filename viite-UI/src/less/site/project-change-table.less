@@ -1,13 +1,12 @@
 /* General table wrapper */
 .change-table-frame {
-  display: inline-block;
-  position: absolute;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   width: 80%;
   max-width: 100%;
-  min-width: 908px;
+  min-width: 922px;
   min-height: 116px;
-  max-height: 565px;
   background-color: #e3e3e1;
   border: 2px solid #282826;
   border-radius: 3px;
@@ -132,8 +131,8 @@
 
 // Scrollbar
 .change-table-dimension-headers {
-  max-height: 300px;
   overflow: auto;
+  flex-grow: 1;
 
   /* Firefox scrollbar */
   scrollbar-width: auto;
