@@ -19,7 +19,7 @@ trait UserProvider {
   }
 
   def addUser(username: String, config: Configuration): Unit
-  def deleteUser(id: String): Unit
+  def deleteUser(username: String): Unit
   def getUser(username: String): Option[User]
   def getAllUsers: Seq[User]
   def updateUsers(users: List[User]): Unit

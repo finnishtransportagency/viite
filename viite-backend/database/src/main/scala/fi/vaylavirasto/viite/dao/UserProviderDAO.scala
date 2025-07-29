@@ -12,8 +12,6 @@ import scalikejdbc._
 class UserProviderDAO extends BaseDAO with UserProvider {
   implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
-
   object User extends SQLSyntaxSupport[User] {
     override val tableName = "service_user"
     def apply(rs: WrappedResultSet): User = new User(
@@ -29,7 +27,7 @@ class UserProviderDAO extends BaseDAO with UserProvider {
       val query = sql"""
        SELECT id, username, configuration
        FROM service_user
-       WHERE lower(username) = ${username.toLowerCase}
+       WHERE username = ${username}
        """
       runSelectSingleOption(query.map(User.apply))
     }
@@ -59,7 +57,7 @@ class UserProviderDAO extends BaseDAO with UserProvider {
       INSERT INTO service_user (id, username, configuration)
       VALUES (
         nextval('service_user_seq'),
-        ${username.toLowerCase},
+        ${username},
         ${write(config)}
       )
     """
@@ -72,7 +70,7 @@ class UserProviderDAO extends BaseDAO with UserProvider {
         sql"""
         UPDATE service_user
         SET configuration = ${write(user.configuration)}
-        WHERE LOWER(username) = ${user.username.toLowerCase}
+        WHERE LOWER(username) = ${user.username}
       """
       )
     }
