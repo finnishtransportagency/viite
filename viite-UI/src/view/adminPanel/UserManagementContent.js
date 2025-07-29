@@ -144,140 +144,126 @@
             );
         }
 
-        let eventsBound = false;
-
         function bindEvents(containerSelector) {
-            if (eventsBound) return;
-            eventsBound = true;
+            const container = $(containerSelector);
+            if (!container.length) return;
 
-            const container = document.querySelector(containerSelector);
-            if (!container) return;
+            // Remove previously registered delegated handlers to avoid duplicates
+            container.off('click', '#addUserButton');
+            container.off('click', '#updateUsersButton');
+            container.off('change', 'input[type="checkbox"]');
 
-            const addUserButton = container.querySelector('#addUserButton');
-            if (addUserButton) {
-                addUserButton.addEventListener('click', e => {
-                    e.preventDefault();
-                    handleAddUser();
-                });
-            }
+            container.on('click', '#addUserButton', function (e) {
+                e.preventDefault();
+                handleAddUser();
+            });
 
-            const updateUsersButton = container.querySelector('#updateUsersButton');
-            if (updateUsersButton) {
-                updateUsersButton.addEventListener('click', e => {
-                    e.preventDefault();
-                    const usersToUpdate = [];
-                    let hasErrors = false;
+            container.on('click', '#updateUsersButton', function (e) {
+                e.preventDefault();
 
-                    $(container).find('#userTableBody tr').each(function () {
-                        const $row = $(this);
-                        const id = $row.data('userid');
-                        const username = $row.data('username');
+                const usersToUpdate = [];
+                let hasErrors = false;
 
-                        const roleDropdownWrapper = $row.find('[data-role-dropdown-id]');
-                        const elyDropdownWrapper = $row.find('[data-ely-dropdown-id]');
-                        if (!roleDropdownWrapper.length || !elyDropdownWrapper.length) return;
+                container.find('#userTableBody tr').each(function () {
+                    const $row = $(this);
+                    const id = $row.data('userid');
+                    const username = $row.data('username');
 
-                        const rolesId = roleDropdownWrapper.attr('data-role-dropdown-id');
-                        const elysId = elyDropdownWrapper.attr('data-ely-dropdown-id');
+                    const roleDropdownWrapper = $row.find('[data-role-dropdown-id]');
+                    const elyDropdownWrapper = $row.find('[data-ely-dropdown-id]');
+                    if (!roleDropdownWrapper.length || !elyDropdownWrapper.length) return;
 
-                        const roles = getSelectedRoles(rolesId);
-                        const elys = getSelectedElys(elysId);
+                    const rolesId = roleDropdownWrapper.attr('data-role-dropdown-id');
+                    const elysId = elyDropdownWrapper.attr('data-ely-dropdown-id');
 
-                        // Use the robust extraction as previously discussed
-                        const eastRaw = $row.find('input[id^="userEast"]').val();
-                        const northRaw = $row.find('input[id^="userNorth"]').val();
-                        const zoomRaw = $row.find('.zoom-input').val();
+                    const roles = getSelectedRoles(rolesId);
+                    const elys = getSelectedElys(elysId);
 
-                        const east = !eastRaw ? DEFAULT_COORDINATES.east : parseFloat(eastRaw);
-                        const north = !northRaw ? DEFAULT_COORDINATES.north : parseFloat(northRaw);
-                        const zoom = !zoomRaw ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw, 10);
+                    // Get coordinate and zoom inputs
+                    const eastRaw = $row.find('input[id^="userEast"]').val();
+                    const northRaw = $row.find('input[id^="userNorth"]').val();
+                    const zoomRaw = $row.find('.zoom-input').val();
 
-                        const fixedEast = isNaN(east) ? DEFAULT_COORDINATES.east : east;
-                        const fixedNorth = isNaN(north) ? DEFAULT_COORDINATES.north : north;
-                        const fixedZoom = isNaN(zoom) ? DEFAULT_COORDINATES.zoom : zoom;
+                    const east = !eastRaw ? DEFAULT_COORDINATES.east : parseFloat(eastRaw);
+                    const north = !northRaw ? DEFAULT_COORDINATES.north : parseFloat(northRaw);
+                    const zoom = !zoomRaw ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw, 10);
 
-                        const fields = { roles, elys, east: fixedEast, north: fixedNorth, zoom: fixedZoom };
-                        const validationOptions = {
-                            checkUsername: false,
-                            checkRoles: true,
-                            checkElys: true,
-                            checkCoordinates: true,
-                        };
+                    const fixedEast = isNaN(east) ? DEFAULT_COORDINATES.east : east;
+                    const fixedNorth = isNaN(north) ? DEFAULT_COORDINATES.north : north;
+                    const fixedZoom = isNaN(zoom) ? DEFAULT_COORDINATES.zoom : zoom;
 
-                        const errors = validateUserFields(fields, validationOptions);
+                    const fields = { roles, elys, east: fixedEast, north: fixedNorth, zoom: fixedZoom };
+                    const validationOptions = {
+                        checkUsername: false,
+                        checkRoles: true,
+                        checkElys: true,
+                        checkCoordinates: true,
+                    };
 
-                        if (Object.keys(errors).length) {
-                            hasErrors = true;
-                            Toast.show('Virhe rivillä käyttäjä: ' + username + ': ' + Object.values(errors).join("; "), { type: 'error' });
-                            $row.addClass('row-has-error');
-                        } else {
-                            $row.removeClass('row-has-error');
-                            usersToUpdate.push({
-                                id,
-                                username,
-                                configuration: {
-                                    roles,
-                                    zoom: fixedZoom,
-                                    east: fixedEast,
-                                    north: fixedNorth,
-                                    authorizedElys: elys
-                                }
-                            });
-                        }
-                    });
+                    const errors = validateUserFields(fields, validationOptions);
 
-                    // If any errors, DO NOT send update
-                    if (hasErrors) return;
-
-                    // Otherwise, send update
-                    userManagementBackend.updateUsers(
-                        usersToUpdate,
-                        function (response) {
-                            if (response && response.success === false) {
-                                Toast.show(response.reason || "Virhe käyttäjien päivityksessä", { type: 'error' });
-                            } else {
-                                handleSuccess("Käyttäjät päivitetty!");
-                                fetchUsers();
+                    if (Object.keys(errors).length) {
+                        hasErrors = true;
+                        Toast.show('Virhe rivillä käyttäjä: ' + username + ': ' + Object.values(errors).join("; "), { type: 'error' });
+                        $row.addClass('row-has-error');
+                    } else {
+                        $row.removeClass('row-has-error');
+                        usersToUpdate.push({
+                            id,
+                            username,
+                            configuration: {
+                                roles,
+                                zoom: fixedZoom,
+                                east: fixedEast,
+                                north: fixedNorth,
+                                authorizedElys: elys,
                             }
-                        },
-                        function (errorMessage) {
-                            Toast.show(errorMessage, { type: 'error' });
-                        }
-                    );
-
+                        });
+                    }
                 });
-            }
 
-            container.addEventListener('change', e => {
-                if (e.target.type === 'checkbox') {
-                    const wrapper = e.target.closest('[data-role-dropdown-id], [data-ely-dropdown-id]');
-                    if (wrapper) {
-                        if (wrapper.hasAttribute('data-role-dropdown-id')) {
-                            updateRoleDropdownLabel(wrapper);
+                if (hasErrors) return;
+
+                userManagementBackend.updateUsers(
+                    usersToUpdate,
+                    function (response) {
+                        if (response && response.success === false) {
+                            Toast.show(response.reason || "Virhe käyttäjien päivityksessä", { type: 'error' });
                         } else {
-                            updateElyDropdownLabel(wrapper);
+                            handleSuccess("Käyttäjät päivitetty!");
+                            fetchUsers();
                         }
+                    },
+                    function (errorMessage) {
+                        Toast.show(errorMessage, { type: 'error' });
+                    }
+                );
+            });
+
+            container.on('change', 'input[type="checkbox"]', function (e) {
+                const wrapper = e.target.closest('[data-role-dropdown-id], [data-ely-dropdown-id]');
+                if (wrapper) {
+                    if (wrapper.hasAttribute('data-role-dropdown-id')) {
+                        updateRoleDropdownLabel(wrapper);
+                    } else {
+                        updateElyDropdownLabel(wrapper);
                     }
                 }
             });
 
-            $(document).on('click', '.clickable-role', function (e) {
+            $(document).off('click', '.clickable-role').on('click', '.clickable-role', function (e) {
                 const tag = e.target.tagName.toLowerCase();
 
-                // Let native input and label clicks toggle checkbox naturally, so do nothing here
                 if (tag === 'input' || tag === 'label') {
-                    // After native toggle, update the dropdown label to reflect new state
                     const checkboxId = $(this).data('checkbox-id');
                     const $checkbox = $('#' + checkboxId);
                     const $wrapper = $checkbox.closest('[data-role-dropdown-id]');
                     if ($wrapper.length) {
-                        // Slight delay to allow checkbox state to update
                         setTimeout(() => updateRoleDropdownLabel($wrapper[0]), 0);
                     }
                     return;
                 }
 
-                // For clicks on other parts of the clickable-role div, toggle checkbox manually
                 const checkboxId = $(this).data('checkbox-id');
                 const $checkbox = $('#' + checkboxId);
                 const newState = !$checkbox.prop('checked');
@@ -289,14 +275,10 @@
                 }
             });
 
-            $(document).on('click', '.clickable-ely', function (e) {
-                // Allow toggling when clicking anywhere in the row, including on label and input
-                // But prevent double toggling from label click because label naturally toggles checkbox when clicked
-
+            $(document).off('click', '.clickable-ely').on('click', '.clickable-ely', function (e) {
                 const tag = e.target.tagName.toLowerCase();
 
                 if (tag === 'input') {
-                    // Input clicks already toggle, so just update label
                     const checkboxId = $(this).data('checkbox-id');
                     const $checkbox = $('#' + checkboxId);
                     const $wrapper = $checkbox.closest('[data-ely-dropdown-id]');
@@ -307,19 +289,15 @@
                 }
 
                 if (tag === 'label') {
-                    // Let label click toggle checkbox naturally, just update label after a short delay to allow checkbox state change
                     const checkboxId = $(this).data('checkbox-id');
                     const $checkbox = $('#' + checkboxId);
                     const $wrapper = $checkbox.closest('[data-ely-dropdown-id]');
                     setTimeout(() => {
-                        if ($wrapper.length) {
-                            updateElyDropdownLabel($wrapper[0]);
-                        }
+                        if ($wrapper.length) updateElyDropdownLabel($wrapper[0]);
                     }, 0);
                     return;
                 }
 
-                // For clicks in empty space or other elements inside clickable-ely - toggle manually
                 const checkboxId = $(this).data('checkbox-id');
                 const $checkbox = $('#' + checkboxId);
                 $checkbox.prop('checked', !$checkbox.prop('checked')).trigger('change');
@@ -328,9 +306,7 @@
                     updateElyDropdownLabel($wrapper[0]);
                 }
             });
-
         }
-
 
         // --- HTML content rendering ---
         const getContent = () => `
