@@ -1505,7 +1505,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         )
       } catch {
         case ex: Exception =>
-          logger.error("Virhe käyttäjien haussa", ex)
+          logger.error("Error fetching users", ex)
           halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
       }
     }
@@ -1524,14 +1524,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"DELETE request for /users/$username") {
       userService.deleteUser(username) match {
         case Right(_) =>
-          Map("success" -> true, "message" -> s"Käyttäjä '$username' poistettiin onnistuneesti")
+          Map("success" -> true, "message" -> s"User '$username' deleted succesfully")
         case Left(reason) =>
-          logger.warn(s"Virhe poistettaessa käyttäjää '$username': $reason")
+          logger.warn(s"Error deleting user: '$username': $reason")
           halt(400, Map("success" -> false, "reason" -> reason))
       }
     }
   }
-
 
   private val addUser: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("addUser")
@@ -1549,19 +1548,18 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           case Right(_) =>
             Map("success" -> true, "message" -> s"Käyttäjä '${body.username}' lisättiin onnistuneesti")
           case Left(reason) if reason.contains("already exists") =>
-            logger.warn(s"Duplikaattikäyttäjä: '${body.username}'")
+            logger.warn(s"Duplicate user: '${body.username}'")
             halt(409, Map("success" -> false, "reason" -> reason))
           case Left(reason) =>
-            logger.warn(s"Virhe lisättäessä käyttäjää: $reason")
+            logger.warn(s"Error adding user: $reason")
             halt(400, Map("success" -> false, "reason" -> reason))
         }
-
       } catch {
         case ex: MappingException =>
-          logger.warn("Virheellinen käyttäjädata", ex)
+          logger.warn("Invalid user data", ex)
           halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
         case ex: Exception =>
-          logger.error("Odottamaton virhe lisättäessä käyttäjää", ex)
+          logger.error("Unexpected error adding user", ex)
           halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
       }
     }
@@ -1583,16 +1581,16 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           case Right(_) =>
             Map("success" -> true, "message" -> "Käyttäjät päivitettiin onnistuneesti.")
           case Left(reason) =>
-            logger.warn(s"Virhe päivitettäessä käyttäjiä: $reason")
+            logger.warn(s"Error updating users: $reason")
             halt(400, Map("success" -> false, "reason" -> reason))
         }
 
       } catch {
         case ex: MappingException =>
-          logger.warn("Virheellinen käyttäjädata", ex)
+          logger.warn("Invalid user data", ex)
           halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
         case ex: Exception =>
-          logger.error("Odottamaton virhe päivitettäessä käyttäjiä", ex)
+          logger.error("Unexpected error updating users", ex)
           halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
       }
     }

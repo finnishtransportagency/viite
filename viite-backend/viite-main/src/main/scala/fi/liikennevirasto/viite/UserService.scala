@@ -8,11 +8,13 @@ class UserService(userProvider: UserProvider) {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  def runWithTransaction[T](f: => T): T = PostGISDatabaseScalikeJDBC.runWithTransaction(f)
+
   def createUser(username: String, config: Configuration): Either[String, Unit] = {
     if (Option(username).exists(_.trim.nonEmpty)) {
       try {
-        PostGISDatabaseScalikeJDBC.runWithTransaction {
-          userProvider.addUser(username.trim.toLowerCase, config)
+        runWithTransaction {
+          userProvider.addUser(username, config)
         }
         Right(())
       } catch {
@@ -28,7 +30,7 @@ class UserService(userProvider: UserProvider) {
   def deleteUser(username: String): Either[String, Unit] = {
     if (Option(username).exists(_.trim.nonEmpty)) {
       try {
-        PostGISDatabaseScalikeJDBC.runWithTransaction {
+        runWithTransaction {
           userProvider.deleteUser(username.trim)
         }
         Right(())
@@ -44,7 +46,7 @@ class UserService(userProvider: UserProvider) {
 
   def updateUsers(users: List[User]): Either[String, Unit] = {
     try {
-      PostGISDatabaseScalikeJDBC.runWithTransaction {
+      runWithTransaction {
         userProvider.updateUsers(users)
       }
       Right(())
