@@ -550,6 +550,11 @@
 
                 tableBody.innerHTML = '';
 
+                if (!users || users.length === 0) {
+                    Toast.show("Käyttäjiä ei löytynyt.", { type: 'warning' });
+                    return;
+                }
+
                 users.forEach(function (user, index) {
                     let roleDropdownId = 'userRoles-' + index;
                     let elyDropdownId = 'userElys-' + index;
@@ -580,8 +585,8 @@
                         const username = this.dataset.username;
                         const currentUsername = applicationModel.getSessionUsername();
                         if (username === currentUsername) {
-                            Toast.show("Et voi poistaa itseäsi.", { type: 'warning' })
-                            return
+                            Toast.show("Et voi poistaa itseäsi.", { type: 'warning' });
+                            return;
                         }
                         if (confirm(`Poistetaanko käyttäjä ${username}?`)) {
                             userManagementBackend.deleteUser(username,
