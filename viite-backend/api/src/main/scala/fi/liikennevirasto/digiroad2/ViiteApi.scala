@@ -18,7 +18,6 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.liikennevirasto.viite.UserService
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
 import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
-import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
 import org.json4s._
 import org.scalatra._
@@ -1476,6 +1475,12 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   }
 
   // -------------------------------------------- User management routes -----------------------------------------------------------//
+  private def requireAdminAccess(): Unit = {
+    if (!userProvider.getCurrentUser.isAdmin) {
+      halt(403, Map("success" -> false, "reason" -> "Admin access required"))
+    }
+  }
+
   private val getAllUsers: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("getAllUsers")
       tags "ViiteAPI - Käyttäjähallinta"
@@ -1483,6 +1488,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     )
 
   get("/users", operation(getAllUsers)) {
+    requireAdminAccess()
     time(logger, s"GET request for /users") {
       try {
         val users: Seq[User] = userService.getAllUsers
@@ -1519,6 +1525,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     )
 
   delete("/users/:username", operation(deleteUser)) {
+    requireAdminAccess()
     val username = params("username")
 
     time(logger, s"DELETE request for /users/$username") {
@@ -1540,6 +1547,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     )
 
   post("/users", operation(addUser)) {
+    requireAdminAccess()
     time(logger, s"POST request to /users") {
       try {
         val body = parsedBody.extract[User]
@@ -1573,6 +1581,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     )
 
   put("/users", operation(updateUsers)) {
+    requireAdminAccess()
     time(logger, s"PUT request to /users") {
       try {
         val usersToUpdate = parsedBody.extract[List[User]]
