@@ -1,7 +1,7 @@
 #toast-container {
   position: fixed;
-  bottom: 3rem;
-  left: 1rem;
+  top: 3rem;
+  right: 1.5rem;
   z-index: 99999;
   display: flex;
   flex-direction: column;
@@ -37,7 +37,7 @@
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateX(-100%);
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
@@ -56,6 +56,6 @@
   }
   to {
     opacity: 0;
-    transform: translateX(-100%);
+    transform: translateX(100%);
   }
 }

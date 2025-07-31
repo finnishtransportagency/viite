@@ -28,9 +28,9 @@
 
             const { type = 'info' } = options;
 
-            // Calculate duration based on message length (e.g., 60ms per character)
-            const baseDuration = message.length * 60;
-            const duration = Math.min(Math.max(baseDuration, 4000), 8000); // Clamp between 4000 and 8000 ms
+            // Calculate duration based on message length
+            const baseDuration = message.length * 70;
+            const duration = Math.min(Math.max(baseDuration, 5000), 9000); // Clamp between 5000 and 9000 ms
 
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
