@@ -70,7 +70,7 @@ class UserProviderDAO extends BaseDAO with UserProvider {
         sql"""
         UPDATE service_user
         SET configuration = ${write(user.configuration)}
-        WHERE LOWER(username) = ${user.username}
+        WHERE username = ${user.username}
       """
       )
     }
