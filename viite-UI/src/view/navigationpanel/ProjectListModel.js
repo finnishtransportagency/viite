@@ -221,35 +221,31 @@
 
       // Main sort function for the project list
       function sortProjects(projects, orderBy, headers) {
-        let sortedProjects;
+        const sortedProjects = projects.slice().sort((a, b) => {
+          const primaryCmp = headers[orderBy.id].sortFunc(a, b);
 
+          // Adjust primary comparison based on reversed flag
+          const primaryCmpAdjusted = orderBy.reversed ? -primaryCmp : primaryCmp;
+
+          if (primaryCmpAdjusted !== 0) return primaryCmpAdjusted;
+
+          // Secondary sort by createdDate DESC (latest first)
+          return compareByCreatedDateDesc(a, b);
+        });
+
+        // Special case: if sorting by statusCode ascending and not reversed
         if (orderBy.id === 'sortStatus' && !orderBy.reversed) {
-          // Default sorting: by statusCode asc, then by createdDate desc
-          sortedProjects = projects.slice().sort((a, b) => {
+          return projects.slice().sort((a, b) => {
             if (a.statusCode !== b.statusCode) {
               return a.statusCode - b.statusCode;
             }
-            // Secondary sort by created date (descending)
             return compareByCreatedDateDesc(a, b);
           });
-        } else {
-          // User-selected sorting
-          sortedProjects = projects.slice().sort((a, b) => {
-            const cmp = headers[orderBy.id].sortFunc(a, b);
-
-            if (cmp !== 0) return cmp;
-
-            // Secondary sort by created date (descending)
-            return compareByCreatedDateDesc(a, b);
-          });
-
-          if (orderBy.reversed) {
-            sortedProjects.reverse();
-          }
         }
 
         return sortedProjects;
       }
+
 
       const createProjectList = function (projects) {
         let sortedProjects = sortProjects(projects, orderBy, headers);
