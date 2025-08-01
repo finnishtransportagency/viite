@@ -45,15 +45,22 @@
     }
 
     function deleteUser(username, success, failure) {
-
         $.ajax({
             url: `api/viite/users/${encodeURIComponent(username)}`,
             type: 'DELETE',
-            success: function() {
-                if (_.isFunction(success)) success(username);
+            success: () => {
+                if (typeof success === 'function') {
+                    success({
+                        success: true,
+                        message: `Käyttäjä '${username}' poistettu.`
+                    });
+                }
             },
-            error: function(jqXHR) {
-                if (_.isFunction(failure)) failure(jqXHR.responseText || 'Virhe käyttäjän poistamisessa');
+            error: (e) => {
+                const errorMsg = e?.responseText || 'Virhe käyttäjän poistamisessa';
+                if (typeof failure === 'function') {
+                    failure(errorMsg);
+                }
             }
         });
     }
@@ -72,7 +79,7 @@
         });
     }
 
-    root.userManagementBackend = {
+    root.userManagementApi = {
         getAllUsers,
         addUser,
         deleteUser,
