@@ -173,7 +173,7 @@
     /**
      * Save initial node position for comparison purposes
      */
-    nodeTranslate.on('translatestart', function (evt) {
+    nodeTranslate.on('translatestart', function () {
       selectedNodesAndJunctions.setStartingCoordinates(selectedNodeStartingCoordinates);
     });
 
@@ -181,9 +181,7 @@
      * while translating the new position the 200m limitation need to be verified
      * and stop the node movement when that limitation is not obeyed
      */
-    let event = {};
     nodeTranslate.on('translating', function (evt) {
-      event = evt;
       var coordinates = {
         x: evt.coordinate[0],
         y: evt.coordinate[1]
