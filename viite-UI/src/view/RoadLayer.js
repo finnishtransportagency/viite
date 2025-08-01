@@ -206,7 +206,7 @@
             break;
           case 'node':
             // Don't fetch nodes if one is currently being moved (translated)
-            if (window.ViiteState?.isTranslatingNode) break;
+            if (window.ViiteState && window.ViiteState.isTranslatingNode) break;
               eventbus.trigger('nodeLayer:fetch');
             break;
           default:
