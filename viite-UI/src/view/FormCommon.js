@@ -68,7 +68,7 @@
       const originalEndOfSection   = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
       let sideCodeDropDown = '';
 
-      if (links.length == 1) {
+      if (links.length === 1) {
         const sideCodeValue = links[0].sideCode;
         const label = `<label>Linkin SideCode</label>`;
         const dropDown = `<select class="${prefix}form-control administrativeClassAndRoadName" id="sideCodeDropdown" size="1" style="width: 130px !important; display: inline">
