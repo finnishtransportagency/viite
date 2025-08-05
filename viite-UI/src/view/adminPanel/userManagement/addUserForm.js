@@ -20,7 +20,7 @@
         document.getElementById('newUserEast').value = DEFAULT_COORDINATES.east;
         document.getElementById('newUserNorth').value = DEFAULT_COORDINATES.north;
         setSelectedRoles('newUserRoles', []);
-        setSelectedElys('newUserElys', [12, 14]);
+        setSelectedElys('newUserElys', []);
     }
 
     root.UserManagement.AddUserForm = {
