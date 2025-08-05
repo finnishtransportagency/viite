@@ -4,29 +4,36 @@
         let targetPicker = '';
 
         function getContent() {
-            return '' +
-                '<div class="dynamic-link-network-content-wrapper">' +
-                '<div>' +
-                '<p style="padding: 10px; font-size: 14px">Valitse päivämäärät päivittääksesi tielinkkiverkkoa</p>' +
-                '<p id="dynamicLinkNetworkInfo" style="padding: 10px; font-size: 14px"><span style="visibility: hidden;">Placeholder Text</span></p>' +
-                '</div>' +
-                '<div class="dynamic-link-network-input-wrapper">' +
-                '<div class="dynamic-link-network-input">' +
-                '<label>Nykytilanne</label>' +
-                '<input type="text" id="sourceDate" readonly>' +
-                '</div>' +
-                '<p style="font-size: 20px">&#8594</p>' +
-                '<div class="dynamic-link-network-input">' +
-                '<label>Tavoitepäivämäärä</label>' +
-                '<input type="text" id="targetDate" readonly>' +
-                '</div>' +
-                '</div>' +
-                '<div class="dynamic-link-network-input-wrapper">' +
-                '<input type="checkbox" id="processPerDay">' +
-                '<label for="processPerDay">Päivä kerrallaan</label>' +
-                '</div>' +
-                '<button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px; margin: 10px">Päivitä tielinkkiverkko</button>' +
-                '</div>';
+            return `
+                <div class="dynamic-link-network-content-wrapper">
+                    <div>
+                        <p style="padding: 10px; font-size: 14px">
+                            Valitse päivämäärät päivittääksesi tielinkkiverkkoa
+                        </p>
+                        <p id="dynamicLinkNetworkInfo" style="padding: 10px; font-size: 14px">
+                            <span style="visibility: hidden;">Placeholder Text</span>
+                        </p>
+                    </div>
+                    <div class="dynamic-link-network-input-wrapper">
+                        <div class="dynamic-link-network-input">
+                            <label>Nykytilanne</label>
+                            <input type="text" id="sourceDate" readonly>
+                        </div>
+                        <p style="font-size: 20px">&#8594</p>
+                        <div class="dynamic-link-network-input">
+                            <label>Tavoitepäivämäärä</label>
+                            <input type="text" id="targetDate" readonly>
+                        </div>
+                    </div>
+                    <div class="dynamic-link-network-input-wrapper">
+                        <input type="checkbox" id="processPerDay">
+                        <label for="processPerDay">Päivä kerrallaan</label>
+                    </div>
+                    <button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px; margin: 10px">
+                        Päivitä tielinkkiverkko
+                    </button>
+                </div>
+            `;
         }
 
         function addDatePickersToInputFields() {
