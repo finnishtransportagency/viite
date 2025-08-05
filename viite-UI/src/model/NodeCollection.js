@@ -7,7 +7,6 @@
     var userNodePointTemplates = [];
     var userJunctionTemplates = [];
     var saving = events.spinners.saving;
-    var fetching = events.spinners.fetched;
 
     this.setMapTemplates = function (templates) {
       mapTemplates = templates;
