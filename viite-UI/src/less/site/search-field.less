@@ -1,0 +1,37 @@
+.panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+}
+
+.input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.location {
+  width: 137px !important;
+  padding-right: 30px;
+  box-sizing: border-box;
+}
+
+.clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  color: #888;
+  transition: color 0.2s ease;
+}
+
+.clear-btn:hover {
+  color: red; /* red on hover */
+}
