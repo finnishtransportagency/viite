@@ -66,6 +66,7 @@ module.exports = {
         "ProjectEditForm": "writable",
         "ScaleBar": "writable",
         "TileMapSelector": "writable",
+        "Toast" : "writable",
         "ZoomBox": "writable",
         "CoordinatesDisplay": "writable",
         "MapView": "writable",
