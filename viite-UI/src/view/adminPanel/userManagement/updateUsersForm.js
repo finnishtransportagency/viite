@@ -59,12 +59,23 @@
                     row.innerHTML = `
                         <td>${user.username}</td>
                         <td>${getRoleDropdownHtml(roleDropdownId, user.roles)}</td>
-                        <td><input class="zoom-input existing-user-input form-control" type="number" min="${COORD_LIMITS.zoom[0]}" max="${COORD_LIMITS.zoom[1]}" value="${user.configuration.zoom}"></td>
+                        <td>
+                          <input
+                            class="zoom-input existing-user-input form-control"
+                            type="number"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            min="${COORD_LIMITS.zoom[0]}"
+                            max="${COORD_LIMITS.zoom[1]}"
+                            value="${user.configuration.zoom}"
+                            onkeydown="return event.key !== '.' && event.key !== ','"
+                          >
+                        </td>
                         <td class="coordinate-wrapper">
                             <label class="user-management-label" for="userNorth-${index}">P:</label>
-                            <input type="number" id="userNorth-${index}" class="coord-input existing-user-input form-control" value="${user.configuration.north}">
+                            <input type="number" id="userNorth-${index}" class="coord-input north existing-user-input form-control" value="${user.configuration.north}">
                             <label class="user-management-label" for="userEast-${index}">I:</label>
-                            <input type="number" id="userEast-${index}" class="coord-input existing-user-input form-control" value="${user.configuration.east}">
+                            <input type="number" id="userEast-${index}" class="coord-input east existing-user-input form-control" value="${user.configuration.east}">
                         </td>
                         <td>${getElyDropdownHtml(elyDropdownId, user.authorizedElys)}</td>
                         <td><button class="btn btn-danger delete-user" data-username="${user.username}">Poista</button></td>
