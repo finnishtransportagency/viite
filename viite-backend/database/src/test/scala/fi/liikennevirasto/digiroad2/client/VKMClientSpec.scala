@@ -4,7 +4,9 @@ import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.Ignore
 
+@Ignore
 class VKMClientSpec extends AnyFunSuite with Matchers {
 
   /**

@@ -7,6 +7,7 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.RoadPart
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
+import fi.vaylavirasto.viite.util.VKMException
 import org.apache.hc.client5.http.classic.methods.{HttpGet, HttpPost}
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.cookie.StandardCookieSpec
@@ -246,15 +247,15 @@ class VKMClient(endPoint: String, apiKey: String) {
       }
     }
 
-    def getResponseHandler(url: String): HttpClientResponseHandler[Either[ViiteException, Seq[TiekamuRoadLinkChange]]] = {
-      new HttpClientResponseHandler[Either[ViiteException, Seq[TiekamuRoadLinkChange]]] {
+    def getResponseHandler(url: String): HttpClientResponseHandler[Either[VKMException, Seq[TiekamuRoadLinkChange]]] = {
+      new HttpClientResponseHandler[Either[VKMException, Seq[TiekamuRoadLinkChange]]] {
         @throws[IOException]
-        override def handleResponse(response: ClassicHttpResponse): Either[ViiteException, Seq[TiekamuRoadLinkChange]] = {
+        override def handleResponse(response: ClassicHttpResponse): Either[VKMException, Seq[TiekamuRoadLinkChange]] = {
           val responseString = EntityUtils.toString(response.getEntity, "UTF-8")
           if (response.getCode == HttpStatus.SC_OK) {
             Right(extractTiekamuRoadLinkChanges(responseString))
           } else {
-            Left(ViiteException(s"Request $url returned HTTP ${response.getCode}: $responseString"))
+            Left(VKMException(s"Request $url returned HTTP ${response.getCode}: $responseString"))
           }
         }
       }
@@ -277,23 +278,16 @@ class VKMClient(endPoint: String, apiKey: String) {
           request.addHeader("X-API-Key", apiKey)
 
           time(logger, s"Fetching page $page from Tiekamu") {
-            try {
-              client.execute(request, getResponseHandler(url)) match {
-                case Right(changes) =>
-                  Some(changes)
-                case Left(e: Throwable) if e.getMessage.contains("Ei tietoja määritetyllä sivutuksella") =>
-                  None
-                case Left(e: Throwable) =>
-                  logger.warn(s"Tiekamu page $page failed: ${e.getMessage}")
-                  throw e
-                case Left(e) =>
-                  logger.warn(s"Tiekamu page $page failed with unknown error: $e")
-                  throw new RuntimeException(e.toString)
-              }
-            } catch {
-              case t: Throwable =>
-                logger.warn(s"Fetching $url failed: ${t.getMessage}")
-                None
+            client.execute(request, getResponseHandler(url)) match {
+              case Right(changes) =>
+                Some(changes)
+
+              case Left(e) if e.getMessage.contains("Ei tietoja määritetyllä sivutuksella") =>
+                None // graceful exit – no more pages
+
+              case Left(e) =>
+                logger.error(s"Tiekamu page $page failed: ${e.getMessage}")
+                throw e // stop execution: let the caller handle it
             }
           }
         }
