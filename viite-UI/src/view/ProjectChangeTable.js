@@ -1,7 +1,13 @@
 (function (root) {
   root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
     let changeTableOpen = false;
-    let windowMaximized = localStorage.getItem('changeTableWindowMaximized') === 'true';
+    let windowMaximized = false;
+
+    try {
+      windowMaximized = localStorage.getItem('changeTableWindowMaximized') === 'true';
+    } catch (e) {
+      // LocalStorage value not found, fallback to false
+    }
 
     const formCommon = new FormCommon('');
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
