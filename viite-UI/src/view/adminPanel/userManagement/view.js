@@ -25,16 +25,17 @@
                         <input type="text" id="newUserUsername" class="form-control" placeholder="esim. ab1234">
                       </div>
         
+                      <!-- Coordinates and zoom-->
                       <div class="coordinates-group">
                         <label class="user-management-label">Oletuskoordinaatit</label>
                         <div class="coordinate-wrapper">
                           <div class="coordinate-input">
                             <label class="user-management-label" for="newUserNorth">P:</label>
-                            <input type="number" id="newUserNorth" class="coord-input form-control" value="${defaultNorth}">
+                            <input type="number" id="newUserNorth" class="coord-input north form-control" value="${defaultNorth}">
                           </div>
                           <div class="coordinate-input">
                             <label class="user-management-label" for="newUserEast">I:</label>
-                            <input type="number" id="newUserEast" class="coord-input form-control" value="${defaultEast}">
+                            <input type="number" id="newUserEast" class="coord-input east form-control" value="${defaultEast}">
                           </div>
                           <div class="coordinate-input">
                             <label class="user-management-label" for="newUserZoom">Zoom:</label>
@@ -61,6 +62,7 @@
                     </div>
                   </fieldset>
         
+                  <!-- Existing users-->
                   <div class="user-table-section user-management-form">
                     <h2>Nykyiset käyttäjät</h2>
                     <table class="table user-table">

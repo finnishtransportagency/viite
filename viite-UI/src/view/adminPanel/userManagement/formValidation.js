@@ -3,6 +3,8 @@
 
     const { COORD_LIMITS } = root.UserManagement.Constants;
 
+    // Performs validation checks on user fields like username, roles, ELYs, zoom, and map coordinates.
+    // Validation can be conditionally enabled or disabled using the `options` object.
     root.UserManagement.FormValidation = {
         validateUserFields: function (fields, options) {
             const {
@@ -50,6 +52,7 @@
 
     root.UserManagement.FormUtils = {
 
+        // Uses the validate function and shows all found errors using global toast
         validateUserFieldsAndToastErrors: function (fields, options = {}, prefix = '') {
             const { validateUserFields } = root.UserManagement.FormValidation;
             const errors = validateUserFields(fields, options);

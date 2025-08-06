@@ -27,7 +27,7 @@
         handleAddUser: function () {
             const username = document.getElementById('newUserUsername').value.trim();
             const roles = getSelectedRoles('newUserRoles');
-            const zoom = parseInt(document.getElementById('newUserZoom').value || DEFAULT_COORDINATES.zoom, 10);
+            const zoom = parseInt(document.getElementById('newUserZoom').value || DEFAULT_COORDINATES.zoom);
             const east = parseFloat(document.getElementById('newUserEast').value || DEFAULT_COORDINATES.east);
             const north = parseFloat(document.getElementById('newUserNorth').value || DEFAULT_COORDINATES.north);
             const elys = getSelectedElys('newUserElys');
@@ -76,6 +76,6 @@
                 e.preventDefault();
                 root.UserManagement.AddUserForm.handleAddUser();
             });
-        },
+        }
     };
 })(this);
