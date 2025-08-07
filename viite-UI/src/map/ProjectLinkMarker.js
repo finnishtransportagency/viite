@@ -31,11 +31,27 @@
           10: '#fc6da0',        //Polku
           11: '#888888'         //Muu tieverkko
         };
-
+      // DirectionMarkerColor is first handled through its status: this defines the color if the road link is being edited. Otherwise, it will fall back to its default color from colorMap
       var directionMarkerColor = function (roadLinka) {
         if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.New.value) {
-          return '#ff55dd';
-        } else if (roadLinka.roadClass in colorMap) {
+          return '#ff00ff';
+        }
+	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.NotHandled.value) {
+          return '#cfcf06'; // Yellow
+	}
+	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Transfer.value) {
+          return '#ff0000'; // Red
+	}
+	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Unchanged.value) {
+          return '#0000ff'; // Blue
+	}
+	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Numbering.value) {
+          return '#a52a2a'; // Brown
+	}
+	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Terminated.value) {
+          return '#000000'; // Black 
+	}
+        else if (roadLinka.roadClass in colorMap) {
           return colorMap[roadLinka.roadClass];
         } else
           return '#888888';
