@@ -221,7 +221,7 @@ module.exports = {
         "no-multi-str": "error",
         "no-multiple-empty-lines": "off",
         "no-native-reassign": "error",
-        "no-negated-condition": "error",
+        "no-negated-condition": "off",
         "no-negated-in-lhs": "error",
         "no-nested-ternary": "error",
         "no-new": "off",
