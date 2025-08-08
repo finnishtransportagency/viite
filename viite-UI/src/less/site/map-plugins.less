@@ -68,6 +68,49 @@
 			}
 		}		
 	}
+
+	.checkbox-dropdown-wrapper .dropdown-toggle {
+		margin-left: 8px;
+		padding: 0 6px;
+		cursor: pointer;
+		user-select: none;
+		width: 100%;
+		height: 22px;
+		font-size: 11px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		box-sizing: border-box;
+	}
+
+	.checkbox-dropdown-wrapper .checkbox-dropdown {
+		margin-left: 8px;
+		display: none;
+		position: absolute;
+		bottom: 100%;
+		left: 0;
+		background: white;
+		border: 1px solid #ccc;
+		box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+		z-index: 15001;
+		padding: 6px;
+		width: 215px;
+		vertical-align: center;
+	}
+
+	.checkbox-dropdown-wrapper.open .checkbox-dropdown {
+		display: block !important;
+	}
+
+	.checkbox-dropdown-wrapper {
+		position: relative;
+	}
+
+	@media (max-width: 1350px) {
+		.hide-on-medium {
+			visibility: hidden;
+		}
+	}
 }
 
 //** Background layer select
@@ -303,7 +346,7 @@
 }
 
 .selectable {
-  -webkit-touch-callout: all; /* iOS Safari */
+  -webkit-touch-callout: default; /* iOS Safari */
   -webkit-user-select: all; /* Safari */
   -khtml-user-select: all; /* Konqueror HTML */
   -moz-user-select: all; /* Firefox */
