@@ -140,10 +140,10 @@
 
     function showChangeTable(projectChangeData) {
       let htmlTable = '';
-      const warningM = projectChangeData.warningMessage;
-      if (warningM) void new ModalConfirm(warningM);
+      const warningM = projectChangeData && projectChangeData.warningMessage;
+      if (warningM) new ModalConfirm(warningM);
 
-      if (projectChangeData?.changeTable) {
+      if (projectChangeData && projectChangeData.changeTable) {
         _.each(projectChangeData.changeTable.changeInfoSeq, (changeInfoSeq, index) => {
           const rowColorClass = index % 2 === 0 ? 'white-row' : '';
           htmlTable += `<tr class="row-changes ${rowColorClass}">`;
@@ -156,13 +156,11 @@
               : getTargetInfo(changeInfoSeq);
           htmlTable += '</tr>';
         });
-      }
 
-      $('.row-changes').remove();
-      $('.change-table-dimensions').append($(htmlTable));
-      changeTableOpen = true;
+        $('.row-changes').remove();
+        $('.change-table-dimensions').append($(htmlTable));
+        changeTableOpen = true;
 
-      if (projectChangeData?.changeTable) {
         const projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
         $('.change-table-header').html(`
           <div class="left"><p>Validointi OK</p></div>
@@ -181,13 +179,14 @@
           formCommon.setDisabledAndTitleAttributesById('send-button', false, '');
         }
       } else {
+        $('.row-changes').remove();
         $('.change-table-header').html(`
-          <div class="left warning">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>
-          <div class="right">
-            <button class="max wbtn-max" aria-label="Toggle Size" title="Suurenna taulukko"><i id="sizeIcon" class="fas fa-expand"></i></button>
-            <button class="close wbtn-close" aria-label="Close"><i id="closeIcon" class="fas fa-times"></i></button>
-          </div>
-        `);
+      <div class="left warning">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>
+      <div class="right">
+        <button class="max wbtn-max" aria-label="Toggle Size" title="Suurenna taulukko"><i id="sizeIcon" class="fas fa-expand"></i></button>
+        <button class="close wbtn-close" aria-label="Close"><i id="closeIcon" class="fas fa-times"></i></button>
+      </div>
+    `);
       }
 
       resizeTable(windowMaximized);
@@ -231,8 +230,7 @@
 
       $frame.css({
         width: `${widthPercent * 100}%`,
-        maxWidth: '100%',
-
+        maxWidth: '100%'
       });
 
       updateTableFontSize();
@@ -265,7 +263,7 @@
 
     function sortChanges(btn) {
       const $btn = $(btn);
-      const idMatch = $btn.attr('id').match(/^label-(source|target)-btn$/);
+      const idMatch = $btn.attr('id').match(/^label-(?<type>source|target)-btn$/);
       if (!idMatch) return;
 
       const side = idMatch[1];
@@ -351,8 +349,8 @@
 
     function dragListener(event) {
       const target = event.target;
-      let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
-      let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+      const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
       target.style.transform = `translate(${x}px, ${y}px)`;
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);
@@ -382,8 +380,8 @@
             // Restrict resizing so height can't exceed content height
             const height = Math.max(minHeight, Math.min(newHeight, tableContentHeight));
 
-            let x = (parseFloat(target.getAttribute('data-x')) || 0) + event.deltaRect.left;
-            let y = (parseFloat(target.getAttribute('data-y')) || 0) + event.deltaRect.top;
+            const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.deltaRect.left;
+            const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.deltaRect.top;
 
             target.style.width = `${event.rect.width}px`;
             target.style.height = `${height}px`;
