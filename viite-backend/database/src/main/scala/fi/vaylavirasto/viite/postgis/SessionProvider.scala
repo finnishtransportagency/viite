@@ -16,6 +16,9 @@ object SessionProvider {
   // Tracks the current database session per thread
   private val threadLocalSession = new ThreadLocal[DBSession]()
 
+  // Tracks whether write operations are blocked for the current thread
+  private val writeOperationsBlocked = new ThreadLocal[Boolean]()
+
   /**
    * Provides implicit access to the current thread's database session.
    * This allows ScalikeJDBC queries to automatically use the correct session.
@@ -32,6 +35,16 @@ object SessionProvider {
   }
 
   /**
+   * Checks if write operations are currently allowed on this thread.
+   * Throws SQLException if writes are blocked.
+   */
+  def checkWriteAllowed(): Unit = {
+    if (Option(writeOperationsBlocked.get()).getOrElse(false)) {
+      throw new java.sql.SQLException("Write operations not allowed in read-only session within transaction")
+    }
+  }
+
+  /**
    * Executes code block in a database session, preventing nested transactions.
    * Sets up the session, runs the operation, and ensures cleanup afterwards by restoring previous session.
    *
@@ -41,22 +54,41 @@ object SessionProvider {
    * @throws IllegalStateException if called within an existing transaction
    */
   def withSession[T](newDbSession: DBSession)(f: => T): T = {
-    val currentSession = threadLocalSession.get() // Save the current session to restore it later
-    if (newDbSession.tx.isDefined && currentSession != null) { // New transaction sessions are not allowed inside existing sessions
-      val currentType = currentSession match {
-        case s if s.tx.isDefined => "transaction session"
-        case s if s.isReadOnly => "read-only session"
-        case _ => "autocommit session"
-      }
-      throw new IllegalStateException(s"Can't start transaction inside $currentType")
-    }
+    val currentSession = threadLocalSession.get()
+    val currentWriteBlocked = Option(writeOperationsBlocked.get()).getOrElse(false)
 
-    try {
-      threadLocalSession.set(newDbSession) // Set the new session
-      f
-    } finally {
-      threadLocalSession.set(currentSession) // Restore the previous session
+    currentSession match {
+      case null =>
+        // No existing session - use new session normally
+        executeWithSession(newDbSession, f, newDbSession.isReadOnly, currentWriteBlocked)
+
+      case existing if newDbSession.isReadOnly && existing.tx.isDefined =>
+        // Read-only joining transaction - keep existing session but block writes
+        executeWithSession(existing, f, writeBlocked = true, currentWriteBlocked)
+
+      case existing if newDbSession.tx.isDefined =>
+        // Trying to start transaction inside existing session - forbidden
+        val sessionType = if (existing.tx.isDefined) "transaction" else "session"
+        throw new IllegalStateException(s"Cannot start transaction inside existing $sessionType")
+
+      case _ =>
+        // Replace current session with new one
+        executeWithSession(newDbSession, f, newDbSession.isReadOnly, currentWriteBlocked)
     }
   }
 
+  /**
+   * Private helper to execute code with proper session and write-blocking setup/cleanup
+   */
+  private def executeWithSession[T](session: DBSession, f: => T, writeBlocked: Boolean, previousWriteBlocked: Boolean): T = {
+    val previousSession = threadLocalSession.get()
+    try {
+      threadLocalSession.set(session)
+      writeOperationsBlocked.set(writeBlocked)
+      f
+    } finally {
+      threadLocalSession.set(previousSession)
+      writeOperationsBlocked.set(previousWriteBlocked)
+    }
+  }
 }

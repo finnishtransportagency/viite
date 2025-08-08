@@ -183,7 +183,7 @@ class ComplementaryLinkDAO extends BaseDAO {
       ${complementaryLink.starttime},
       ${complementaryLink.versionstarttime},
       ${complementaryLink.sourcemodificationtime},
-      ST_GeomFromText(${geometryWKT}, 3067),
+      ST_GeomFromText($geometryWKT, 3067),
       ${complementaryLink.ajorata},
       ${complementaryLink.vvh_id}
     )
@@ -191,14 +191,11 @@ class ComplementaryLinkDAO extends BaseDAO {
     runUpdateToDb(updateQuery)
   }
 
-  def fetchByLinkId(linkId: String, readOnlySession: Boolean = true): Option[RoadLink] = {
-    if (readOnlySession)
-      fetchByLinkIdsInReadOnlySession(Set(linkId)).headOption
-    else
+  def fetchByLinkId(linkId: String): Option[RoadLink] = {
       fetchByLinkIds(Set(linkId)).headOption
   }
 
-  def fetchByLinkIdsInReadOnlySession(linkIds: Set[String]): List[RoadLink] = {
+  def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
     if (linkIds.nonEmpty) {
       time(logger, "Fetch complementary data by linkIds") {
         val query =
@@ -212,16 +209,8 @@ class ComplementaryLinkDAO extends BaseDAO {
     } else List()
   }
 
-  def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
-    val query = sql"""
-              $selectFromComplementaryLink
-              WHERE id IN ($linkIds)
-          """
-    runSelectQuery(query.map(RoadLink.apply))
-  }
-
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[RoadLink]] = {
-    Future(fetchByLinkIdsInReadOnlySession(linkIds))
+    Future(fetchByLinkIds(linkIds))
   }
 
   /**
@@ -246,16 +235,10 @@ class ComplementaryLinkDAO extends BaseDAO {
       val query =
         sql"""
           $selectFromComplementaryLink
-          WHERE municipalitycode = $municipality AND roadNumberFilter
+          WHERE municipalitycode = $municipality AND $roadNumberFilters
           """
       runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     }
-  }
-  /**
-    * Returns a sequence of RoadLinks. Uses Scala Future for concurrent operations.
-    */
-  def fetchByMunicipalityAndRoadNumbersF(municipality: Int, roadNumbers: Seq[(Int, Int)]): Future[Seq[RoadLink]] = {
-    Future(queryByRoadNumbersAndMunicipality(municipality, roadNumbers))
   }
 
   /**
@@ -263,27 +246,28 @@ class ComplementaryLinkDAO extends BaseDAO {
     */
   def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[SQLSyntax]): Seq[RoadLink] = {
     val geometry = sqls"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
-    val municipalityFilter = if (municipalities.nonEmpty) Some(sqls" AND municipalitycode IN (${municipalities})") else sqls""
+
+    val municipalityFilter = if (municipalities.nonEmpty) {
+      sqls" AND municipalitycode IN ($municipalities)"
+    } else {
+      sqls""
+    }
 
     time(logger, "Fetch complementary data by road numbers and municipality") {
       val query = sql"""
-      $selectFromComplementaryLink
-      WHERE $geometry
-      $municipalityFilter ${filter.getOrElse(sqls"")}
-      """
+    $selectFromComplementaryLink
+    WHERE $geometry $municipalityFilter ${filter.getOrElse(sqls"")}
+    """
 
       runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     }
   }
+
   /**
     * Returns road links. Uses Scala Future for concurrent operations.
     */
   def fetchByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
-  }
-
-  def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[RoadLink]] = {
-    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(sqls" AND roadclass = 12314")))
   }
 
 }
