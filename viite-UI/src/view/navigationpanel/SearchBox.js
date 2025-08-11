@@ -1,35 +1,39 @@
 (function (root) {
   root.SearchBox = function (instructionsPopup, locationSearch) {
-    var tooltip = "Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'), \ntieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),\nlinkki-id:llä (esim. '06ad934c-5241-4055-9ae6-71d63190f6d7:1')\ntai koordinaateilla ('P, I', esim. '6673830, 388774')";
-    var groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
-    var coordinatesDiv = $('<div class="panel"></div>');
-    var coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite tai koordinaatit" title="' + tooltip + '"/>');
-    var moveButton = $('<button id="executeSearch" class="btn btn-sm btn-primary">Hae</button>');
-    var panelHeader = $('<div class="panel-header"></div>').append(coordinatesText).append(moveButton);
-    var searchResults = $('<ul id="search-results"></ul>');
-    var resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
-    var clearButton = $('<button id="clearSearch" class="btn btn-secondary btn-block">Tyhjenn&auml; tulokset</button>');
-    var clearSection = $('<div class="panel-section"></div>').append(clearButton).hide();
+    const tooltip = "Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'), \ntieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),\nlinkki-id:llä (esim. '06ad934c-5241-4055-9ae6-71d63190f6d7:1')\ntai koordinaateilla ('P, I', esim. '6673830, 388774')";
+    const groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
+    const coordinatesDiv = $('<div class="panel"></div>');
+    const inputWrapper = $('<div class="input-wrapper"></div>');
+    const coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite / koordinaatit" title="' + tooltip + '"/>');
+    const clearButton = $('<button id="clearSearch" class="close wbtn-close clear-btn" aria-label="Tyhjennä haku" title="Tyhjennä haku"><i class="fas fa-times"></i></button>');
+    const moveButton = $('<button id="executeSearch" class="btn btn-sm btn-primary">Hae</button>');
+    const panelHeader = $('<div class="panel-header"></div>');
+    const searchResults = $('<ul id="search-results"></ul>');
+    const resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
 
-    var bindEvents = function () {
-      var populateSearchResults = function (results) {
-        var resultItems = _.chain(results).sortBy('distance').sortBy('title').sortBy(function (item) {
+    inputWrapper.append(coordinatesText).append(clearButton);
+    panelHeader.append(inputWrapper).append(moveButton);
+    groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection));
+
+    const bindEvents = function () {
+      const populateSearchResults = function (results) {
+        const resultItems = _.chain(results).sortBy('distance').sortBy('title').sortBy(function (item) {
           return item.title.split(', ')[1];
         }).map(function (result) {
           return $('<li></li>').text(result.title).on('click', function () {
-            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
+            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
           });
         }).value();
 
         searchResults.html(resultItems);
         resultsSection.show();
-        clearSection.show();
+        clearButton.show();
       };
 
-      var moveToLocation = function () {
-        var showDialog = function (message) {
+      const moveToLocation = function () {
+        const showDialog = function (message) {
           resultsSection.hide();
-          clearSection.hide();
+          clearButton.hide();
           instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         };
 
@@ -39,13 +43,13 @@
         locationSearch.search(coordinatesText.val()).then(function (results) {
           populateSearchResults(results);
           if (results.length === 1) {
-            var result = results[0];
-            eventbus.trigger('coordinates:selected', {lon: result.lon, lat: result.lat});
+            const result = results[0];
+            eventbus.trigger('coordinates:selected', { lon: result.lon, lat: result.lat });
           }
         }).fail(showDialog);
       };
 
-      coordinatesText.keypress(function (event) {
+      coordinatesText.on('keypress', function (event) {
         if (event.keyCode === 13) {
           moveToLocation();
         }
@@ -56,12 +60,26 @@
       });
 
       clearButton.on('click', function () {
+        coordinatesText.val('');
+        coordinatesText.focus();
         resultsSection.hide();
-        clearSection.hide();
+        clearButton.hide();
+      });
+
+      clearButton.hide(); // Hide initially
+
+      coordinatesText.on('input', function () {
+        if (coordinatesText.val().length > 0) {
+          clearButton.show();
+        } else {
+          clearButton.hide();
+          resultsSection.hide();
+        }
       });
     };
 
     bindEvents();
-    this.element = groupDiv.append(coordinatesDiv.append(panelHeader).append(resultsSection).append(clearSection));
+
+    this.element = groupDiv;
   };
 }(this));

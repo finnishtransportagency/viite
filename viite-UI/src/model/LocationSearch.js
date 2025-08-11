@@ -37,8 +37,15 @@
       };
       let lon, lat;
       const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.addrMRange.start === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value)
-         || (roadData.addrMRange.end === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
+      const isStartMatch =
+          roadData.addrMRange.start === addressMValueFixed &&
+          roadData.sideCode === sideCodes.TowardsDigitizing.value;
+
+      const isEndMatch =
+          roadData.addrMRange.end === addressMValueFixed &&
+          roadData.sideCode === sideCodes.AgainstDigitizing.value;
+
+      if (isStartMatch || isEndMatch) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
