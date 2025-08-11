@@ -143,7 +143,7 @@
       const warningM = projectChangeData && projectChangeData.warningMessage;
       if (warningM) new ModalConfirm(warningM);
 
-      if (projectChangeData && projectChangeData.changeTable) {
+      if (projectChangeData && projectChangeData.changeTable) {s
         _.each(projectChangeData.changeTable.changeInfoSeq, (changeInfoSeq, index) => {
           const rowColorClass = index % 2 === 0 ? 'white-row' : '';
           htmlTable += `<tr class="row-changes ${rowColorClass}">`;
@@ -263,6 +263,7 @@
 
     function sortChanges(btn) {
       const $btn = $(btn);
+
       const idMatch = $btn.attr('id').match(/^label-(?<type>source|target)-btn$/);
       if (!idMatch) return;
 
@@ -351,6 +352,7 @@
       const target = event.target;
       const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
       const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+
       target.style.transform = `translate(${x}px, ${y}px)`;
       target.setAttribute('data-x', x);
       target.setAttribute('data-y', y);

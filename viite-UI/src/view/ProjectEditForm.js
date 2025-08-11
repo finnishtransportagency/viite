@@ -672,6 +672,7 @@
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
+          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
         }
       });
 
