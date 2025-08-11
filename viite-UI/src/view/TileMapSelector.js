@@ -127,14 +127,6 @@
       eventbus.trigger('tileMap:selected', selectedTileMap.data('layerid'));
     });
 
-    // Toggle map visibility button (unchanged)
-    $('#toggleMapVisibility').on('click', function () {
-      const map = $('#map');
-      map.toggle();
-      const isHidden = map.is(':hidden');
-      $(this).text(isHidden ? 'Näytä kartta' : 'Piilota kartta');
-    });
-
     // Dropdown toggle
     $dropdownToggle.on('click', function (e) {
       e.stopPropagation();
