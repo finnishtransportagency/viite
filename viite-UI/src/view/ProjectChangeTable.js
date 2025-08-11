@@ -143,7 +143,7 @@
       const warningM = projectChangeData && projectChangeData.warningMessage;
       if (warningM) new ModalConfirm(warningM);
 
-      if (projectChangeData && projectChangeData.changeTable) {s
+      if (projectChangeData && projectChangeData.changeTable) {
         _.each(projectChangeData.changeTable.changeInfoSeq, (changeInfoSeq, index) => {
           const rowColorClass = index % 2 === 0 ? 'white-row' : '';
           htmlTable += `<tr class="row-changes ${rowColorClass}">`;
