@@ -10,7 +10,6 @@
     nameToolSearchWindow.append('<div class="content">Tienimi</div>');
     nameToolSearchWindow.append(`
       <div class="name-tool-content-new">
-        <label></label>
         <div class="panel-header">
           <input type="text" class="road-input" style="height: 22px" id="roadSearchParameter" placeholder="Tienumero">
           <div id="buttons-div">
