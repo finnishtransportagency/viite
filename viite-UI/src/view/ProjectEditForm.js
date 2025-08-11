@@ -787,10 +787,10 @@
       // show project errors' link id list in a popup window
       rootElement.on('click', '.linkIdList', function (event) {
         const error = projectCollection.getProjectErrors()[event.currentTarget.id];
-        if (error.linkIds.length > 0) {
+
           const linkIdsText = error.linkIds.join(', ');
-          GenericConfirmPopup(linkIdsText, {type: "alert"});
-        }
+          new GenericConfirmPopup(linkIdsText, {type: "alert"});
+
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
@@ -822,14 +822,14 @@
         }
       });
 
-      rootElement.on('input', '#addrStart, #addrEnd', function (event) {
+      rootElement.on('input', '#addrStart, #addrEnd', function () {
         const start = Number(document.getElementById("addrStart").value) || 0;
         const end = Number(document.getElementById("addrEnd").value) || 0;
         const res = end - start;
         document.getElementById("addrLength").textContent = res.toString();
       });
 
-      rootElement.on('input', '#origAddrStart, #origAddrEnd', function (event) {
+      rootElement.on('input', '#origAddrStart, #origAddrEnd', function () {
         const start = Number(document.getElementById("origAddrStart").value) || 0;
         const end = Number(document.getElementById("origAddrEnd").value) || 0;
         const res = end - start;
