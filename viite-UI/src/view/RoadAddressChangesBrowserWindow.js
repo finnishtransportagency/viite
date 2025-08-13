@@ -107,7 +107,11 @@
         }
 
         function toggle() {
-            $('.road-address-browser-modal-overlay').length === 0 ? show() : hide();
+            if ($('.road-address-browser-modal-overlay').length === 0) {
+                show();
+            } else {
+                hide();
+            }
         }
 
         function show() {
@@ -213,8 +217,8 @@
                 const aOsa = document.getElementById('roadAddrChangesInputStartPart');
                 const lOsa = document.getElementById('roadAddrChangesInputEndPart');
 
-                const aOsaValue = parseInt(aOsa.value, 10);
-                const lOsaValue = parseInt(lOsa.value, 10);
+                const aOsaValue = Number(aOsa.value);
+                const lOsaValue = Number(lOsa.value);
 
                 const aOsaIsNumber = !isNaN(aOsaValue);
                 const lOsaIsNumber = !isNaN(lOsaValue);

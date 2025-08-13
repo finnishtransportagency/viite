@@ -173,7 +173,7 @@
     /**
      * Save initial node position for comparison purposes
      */
-    nodeTranslate.on('translatestart', function (evt) {
+    nodeTranslate.on('translatestart', function () {
       selectedNodesAndJunctions.setStartingCoordinates(selectedNodeStartingCoordinates);
     });
 
@@ -181,9 +181,7 @@
      * while translating the new position the 200m limitation need to be verified
      * and stop the node movement when that limitation is not obeyed
      */
-    let event = {};
     nodeTranslate.on('translating', function (evt) {
-      event = evt;
       var coordinates = {
         x: evt.coordinate[0],
         y: evt.coordinate[1]
@@ -412,9 +410,9 @@
         junctions: []
       };
       addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(node),
-        function (feature) {
-          return feature.node.id === node.id;
-        });
+          function (feature) {
+            return feature.node.id === node.id;
+          });
       attachNode(node, selectedNodesAndJunctions.getCurrentTemplates());
     };
 
@@ -456,9 +454,9 @@
     var addJunctionToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
         addFeature(layer, new JunctionMarker().createJunctionMarker(junction),
-          function (feature) {
-            return feature.junction.id === junction.id;
-          });
+            function (feature) {
+              return feature.junction.id === junction.id;
+            });
       }
     };
 
@@ -496,9 +494,9 @@
     var toggleNodePointToTemplate = function (nodePoint, toTemplate) {
       if (toTemplate) {
         addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePoint),
-          function (feature) {
-            return feature.nodePointTemplate.id === nodePoint.id;
-          });
+            function (feature) {
+              return feature.nodePointTemplate.id === nodePoint.id;
+            });
       } else {
         var nodePointTemplateFeature = _.find(nodePointTemplateSelectedLayer.getSource().getFeatures(), function (feature) {
           return feature.nodePointTemplate.id === nodePoint.id;
@@ -622,41 +620,41 @@
             });
 
             addFeature(nodeMarkerSelectedLayer, new NodeMarker().createNodeMarker(currentNode),
-              function (feature) {
-                return feature.node.id === currentNode.id;
-              });
+                function (feature) {
+                  return feature.node.id === currentNode.id;
+                });
 
             _.each(_.filter(currentNode.nodePoints, function (nodePoint) {
               return _.isUndefined(nodePoint.nodeNumber);
             }), function (nodePointTemplate) {
               addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate),
-                function (feature) {
-                  return feature.nodePointTemplate.id === nodePointTemplate.id;
-                });
+                  function (feature) {
+                    return feature.nodePointTemplate.id === nodePointTemplate.id;
+                  });
             });
           }
 
           if (_.has(currentTemplates, 'nodePoints')) {
             _.each(currentTemplates.nodePoints, function (nodePointTemplate) {
               addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate),
-                function (feature) {
-                  return feature.nodePointTemplate.id === nodePointTemplate.id;
-                });
+                  function (feature) {
+                    return feature.nodePointTemplate.id === nodePointTemplate.id;
+                  });
             });
           }
 
           _.each(filteredNodes, function (node) {
             addFeature(nodeMarkerLayer, new NodeMarker().createNodeMarker(node),
-              function (feature) {
-                return feature.node.id === node.id;
-              });
+                function (feature) {
+                  return feature.node.id === node.id;
+                });
           });
 
           _.each(filteredNodePointTemplates, function (nodePointTemplate) {
             addFeature(nodePointTemplateLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePointTemplate),
-              function (feature) {
-                return feature.nodePointTemplate.id === nodePointTemplate.id;
-              });
+                function (feature) {
+                  return feature.nodePointTemplate.id === nodePointTemplate.id;
+                });
           });
         }
 
