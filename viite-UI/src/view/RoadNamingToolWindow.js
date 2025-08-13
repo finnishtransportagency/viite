@@ -202,8 +202,7 @@
 
       eventbus.on("roadNameTool:roadsFetched", function (roadData) {
         applicationModel.removeSpinner();
-        var html = '<table id="roadList-table" style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
-        // eslint-disable-next-line no-negated-condition
+        var html = '<table id="roadList-table" style="table-layout: fixed; width: 100%; text-align: left;">';
         if (!_.isEmpty(roadData)) {
           _.each(roadData, function (road) {
             var writable = !road.endDate;

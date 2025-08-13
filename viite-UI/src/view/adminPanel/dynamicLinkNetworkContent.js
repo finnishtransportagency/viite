@@ -163,4 +163,4 @@
             bindEvents: bindEvents
         };
     };
-})(this);
+}(this));

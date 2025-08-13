@@ -13,6 +13,7 @@
 
     function getAllUsers(callback) {
         $.get('api/viite/users', function(data) {
+            // eslint-disable-next-line callback-return
             if (_.isFunction(callback)) callback(data.users);
         }).fail(function(jqXHR) {
             console.error('Virhe käyttäjien haussa:', jqXHR.responseText);
@@ -57,7 +58,7 @@
                 }
             },
             error: (e) => {
-                const errorMsg = e?.responseText || 'Virhe käyttäjän poistamisessa';
+                const errorMsg = (e && e.responseText) || 'Virhe käyttäjän poistamisessa';
                 if (typeof failure === 'function') {
                     failure(errorMsg);
                 }
@@ -85,4 +86,4 @@
         deleteUser,
         updateUsers
     };
-})(this);
+}(this));

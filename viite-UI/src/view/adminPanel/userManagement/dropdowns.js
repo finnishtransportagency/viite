@@ -5,7 +5,7 @@
 
     // Get ELY options from enumeration source
     function getElyOptions() {
-        if (ViiteEnumerations?.ElyCodes) {
+        if (ViiteEnumerations && ViiteEnumerations.ElyCodes) {
             return Object.values(ViiteEnumerations.ElyCodes).map(ely => ({
                 value: ely.value,
                 label: `${ely.name} (${ely.shortName})`,
@@ -189,4 +189,4 @@
         setSelectedRoles: setSelectedRoles,
         setSelectedElys: setSelectedElys
     };
-})(this);
+}(this));
