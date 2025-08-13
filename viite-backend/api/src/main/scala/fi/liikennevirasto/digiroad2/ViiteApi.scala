@@ -15,6 +15,7 @@ import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.liikennevirasto.viite.UserService
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
 import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
 import org.joda.time.DateTime
@@ -65,7 +66,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
                val roadAddressService: RoadAddressService,     val projectService: ProjectService,
                val roadNameService: RoadNameService,           val nodesAndJunctionsService: NodesAndJunctionsService,
                val roadNetworkValidator: RoadNetworkValidator, val userProvider: UserProvider = Digiroad2Context.userProvider,
-               val deploy_date: String = Digiroad2Context.deploy_date,
+               val deploy_date: String = Digiroad2Context.deploy_date, val userService: UserService,
                implicit val swagger: Swagger)
   extends ScalatraServlet
     with JacksonJsonSupport
@@ -1472,6 +1473,138 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       }
     }
   }
+
+  // -------------------------------------------- User management routes -----------------------------------------------------------//
+  private def requireAdminAccess(): Unit = {
+    if (!userProvider.getCurrentUser.isAdmin) {
+      halt(403, Map("success" -> false, "reason" -> "Admin access required"))
+    }
+  }
+
+  private val getAllUsers: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("getAllUsers")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary "Hae kaikki käyttäjät"
+    )
+
+  get("/users", operation(getAllUsers)) {
+    requireAdminAccess()
+    time(logger, s"GET request for /users") {
+      try {
+        val users: Seq[User] = userService.getAllUsers
+
+        Map(
+          "success" -> true,
+          "users" -> users.map { user =>
+            Map(
+              "id" -> user.id,
+              "username" -> user.username,
+              "roles" -> user.configuration.roles,
+              "authorizedElys" -> user.configuration.authorizedElys,
+              "configuration" -> Map(
+                "zoom" -> user.configuration.zoom,
+                "east" -> user.configuration.east,
+                "north" -> user.configuration.north
+              )
+            )
+          }
+        )
+      } catch {
+        case ex: Exception =>
+          logger.error("Error fetching users", ex)
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+
+  private val deleteUser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("deleteUser")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary "Poista käyttäjä käyttäjänimellä"
+      parameter pathParam[String]("username").description("Poistettavan käyttäjän käyttäjätunnus")
+    )
+
+  delete("/users/:username", operation(deleteUser)) {
+    requireAdminAccess()
+    val username = params("username")
+
+    time(logger, s"DELETE request for /users/$username") {
+      userService.deleteUser(username) match {
+        case Right(_) =>
+          Map("success" -> true, "message" -> s"User '$username' deleted succesfully")
+        case Left(reason) =>
+          logger.warn(s"Error deleting user: '$username': $reason")
+          halt(400, Map("success" -> false, "reason" -> reason))
+      }
+    }
+  }
+
+  private val addUser: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("addUser")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary "Lisää uusi käyttäjä"
+      parameter bodyParam[User]("newUser").description("Lisättävä käyttäjäobjekti")
+    )
+
+  post("/users", operation(addUser)) {
+    requireAdminAccess()
+    time(logger, s"POST request to /users") {
+      try {
+        val body = parsedBody.extract[User]
+
+        userService.createUser(body.username, body.configuration) match {
+          case Right(_) =>
+            Map("success" -> true, "message" -> s"Käyttäjä '${body.username}' lisättiin onnistuneesti")
+          case Left(reason) if reason.contains("already exists") =>
+            logger.warn(s"Duplicate user: '${body.username}'")
+            halt(409, Map("success" -> false, "reason" -> reason))
+          case Left(reason) =>
+            logger.warn(s"Error adding user: $reason")
+            halt(400, Map("success" -> false, "reason" -> reason))
+        }
+      } catch {
+        case ex: MappingException =>
+          logger.warn("Invalid user data", ex)
+          halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
+        case ex: Exception =>
+          logger.error("Unexpected error adding user", ex)
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+
+  private val updateUsers: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("updateUsers")
+      tags "ViiteAPI - Käyttäjähallinta"
+      summary("Päivitä olemassa olevat käyttäjät")
+      parameter bodyParam[List[User]]("updatedUsers").description("Päivitetyt käyttäjät")
+    )
+
+  put("/users", operation(updateUsers)) {
+    requireAdminAccess()
+    time(logger, s"PUT request to /users") {
+      try {
+        val usersToUpdate = parsedBody.extract[List[User]]
+
+        userService.updateUsers(usersToUpdate) match {
+          case Right(_) =>
+            Map("success" -> true, "message" -> "Käyttäjät päivitettiin onnistuneesti.")
+          case Left(reason) =>
+            logger.warn(s"Error updating users: $reason")
+            halt(400, Map("success" -> false, "reason" -> reason))
+        }
+
+      } catch {
+        case ex: MappingException =>
+          logger.warn("Invalid user data", ex)
+          halt(400, Map("success" -> false, "reason" -> "Virheellinen käyttäjädata"))
+        case ex: Exception =>
+          logger.error("Unexpected error updating users", ex)
+          halt(500, Map("success" -> false, "reason" -> "Palvelimen sisäinen virhe"))
+      }
+    }
+  }
+  // ---------------------------------------------------------------------------------------------------------------------//
 
   private def getRoadAddressLinks(zoomLevel: Int)(bbox: String): (Seq[Seq[Map[String, Any]]], Seq[RoadAddressLink]) = {
     val boundingRectangle = constructBoundingRectangle(bbox)

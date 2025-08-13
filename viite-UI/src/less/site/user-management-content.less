@@ -1,0 +1,290 @@
+.user-management-content-wrapper {
+    .user-management-form {
+        margin-bottom: 30px;
+        margin-top: 30px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 20px;
+        background: #f9fafb;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h3,
+    h4 {
+        color: #374151;
+    }
+
+    h3 {
+        margin-bottom: 20px;
+    }
+
+    h4 {
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-row {
+        display: flex;
+        gap: 16px;
+        align-items: flex-start;
+        flex-wrap: wrap;
+
+        &.vertical-row {
+            gap: 14px;
+        }
+
+        &.horizontal-row {
+            gap: 24px;
+            flex-wrap: nowrap;
+        }
+
+        &.roles-and-elys {
+            gap: 16px;
+            min-width: 350px;
+        }
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .form-control {
+        width: 225.33px;
+        padding: 8px 12px;
+        font-size: 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        box-sizing: border-box;
+    }
+
+    .error-message {
+        color: #ef4444;
+        font-size: 12px;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .dropdown-toggle {
+        width: 330px;
+        border: 1px solid #d1d5db;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        background: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+
+        &.roles {
+            width: 200px;
+        }
+    }
+
+    .dropdown-label {
+        font-size: 14px;
+    }
+
+    .dropdown-content {
+        position: absolute;
+        z-index: 10;
+        background: white;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        padding: 8px;
+        margin-top: 4px;
+        min-width: 250px;
+        max-height: 260px;
+        overflow-y: auto;
+
+        div:hover {
+            background-color: #f3f4f6;
+        }
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .role-item,
+    .ely-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+
+        input {
+            margin-right: 8px;
+        }
+    }
+
+    .role-item input {
+        margin-top: 2px;
+    }
+
+    .role-description {
+        font-size: 12px;
+        color: #6b7280;
+        margin-top: 2px;
+    }
+
+    .user-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        border: 1px solid #e5e7eb;
+
+        thead {
+            background: #f3f4f6;
+            position: sticky;
+            top: 0;
+        }
+
+        th {
+            text-align: center;
+            padding: 12px 4px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+
+            &:first-child {
+                padding-left: 12px;
+            }
+
+            &:last-child {
+                padding-right: 12px;
+            }
+        }
+
+        td {
+            vertical-align: middle !important;
+            padding: 12px 8px;
+
+            &:first-child {
+                padding-left: 12px;
+            }
+
+            &:last-child {
+                padding-right: 12px;
+            }
+
+            input[type="number"] {
+                font-size: 12px;
+                padding: 4px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+            }
+        }
+    }
+
+    .coord-input {
+        width: 80px;
+        padding: 2px 4px;
+        border: 1px solid #d1d5db;
+        border-radius: 3px;
+        font-size: 14px !important;
+
+        &.north {
+            width: 90px;
+        }
+    }
+
+    .zoom-input {
+        font-size: 14px !important;
+        width: 50px;
+    }
+
+    .existing-user-input {
+        height: 37.33px;
+    }
+
+    .user-management-label {
+        font-size: 14px;
+        margin-right: 1px;
+        vertical-align: middle;
+    }
+
+    .table-wrapper {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        background: white;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .flex-end {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 15px;
+    }
+
+    .form-column {
+        flex: 1;
+        flex-direction: column;
+        width: 250px;
+    }
+
+    .coordinates-group {
+        display: flex;
+        flex-direction: column;
+        min-width: 320px;
+        gap: 8px;
+
+        > label {
+            display: block;
+            width: 100%;
+            font-weight: 600;
+        }
+    }
+
+    .coordinate-wrapper {
+        display: flex;
+        flex-direction: row;
+        gap: 12px;
+        align-items: center;
+    }
+
+    table > tbody > tr:first-child .coordinate-wrapper {
+        border-top: 0 !important;
+    }
+
+    .coordinate-input {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 80px;
+
+        label {
+            min-width: 18px;
+            font-weight: normal;
+            margin: 0;
+        }
+    }
+
+    .form-actions {
+        align-self: flex-end;
+        margin-left: auto;
+        margin-top: 8px;
+    }
+
+    .centered {
+        text-align: center;
+    }
+
+    .row-has-error {
+        background-color: #f8d7da;
+        padding: 0.5rem;
+        color: #721c24;
+    }
+}
