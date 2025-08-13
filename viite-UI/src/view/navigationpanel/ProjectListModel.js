@@ -215,7 +215,6 @@
         };
 
         var html = '<table style="table-layout: fixed; width: 100%;">';
-        // eslint-disable-next-line no-negated-condition
         if (!_.isEmpty(sortedProjects)) {
           var uniqueId = 0;
           _.each(sortedProjects, function (proj) {

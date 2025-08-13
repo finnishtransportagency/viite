@@ -3,7 +3,7 @@
 
     root.AdminPanel = function (backend) {
 
-        const dynamicLinkNetwork = dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
+        const dynamicLinkNetwork = window.dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
 
         const showAdminPanelWindow = function () {
             $('.container').append(`

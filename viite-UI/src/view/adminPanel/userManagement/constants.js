@@ -20,4 +20,4 @@
             { value: 'admin', label: 'Admin', desc: 'Käyttäjähallinta ja dynaamisen verkon käyttö' }
         ]
     };
-})(this);
+}(this));

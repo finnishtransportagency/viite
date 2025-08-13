@@ -18,4 +18,4 @@
             UpdateUserForm.fetchUsers();
         }
     };
-})(this);
+}(this));

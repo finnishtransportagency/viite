@@ -26,11 +26,10 @@
             Toast.show(msg, { type: 'success' });
             if (typeof onSuccess === 'function') onSuccess();
         } else {
-            const reason = response?.reason || errorMessage;
+            const reason = (response && response.reason) || errorMessage;
             Toast.show(reason, { type: 'error' });
         }
     }
-
 
     root.UserManagement.UpdateUserForm = {
 
@@ -144,7 +143,7 @@
 
                 const east = eastRaw === undefined || eastRaw === '' ? DEFAULT_COORDINATES.east : parseFloat(eastRaw);
                 const north = northRaw === undefined || northRaw === '' ? DEFAULT_COORDINATES.north : parseFloat(northRaw);
-                const zoom = zoomRaw === undefined || zoomRaw === '' ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw, 10);
+                const zoom = zoomRaw === undefined || zoomRaw === '' ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw);
 
                 // Validate fields and notify if errors
                 const fields = { roles, elys, east, north, zoom };
@@ -205,4 +204,4 @@
             });
         }
     };
-})(this);
+}(this));

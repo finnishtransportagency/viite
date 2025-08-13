@@ -6,6 +6,7 @@
     // Performs validation checks on user fields like username, roles, ELYs, zoom, and map coordinates.
     // Validation can be conditionally enabled or disabled using the `options` object.
     root.UserManagement.FormValidation = {
+        // eslint-disable-next-line complexity
         validateUserFields: function (fields, options) {
             const {
                 checkUsername = true,
@@ -18,7 +19,7 @@
             const { username, roles, elys, east, north, zoom } = fields;
 
             if (checkUsername) {
-                if (!username || !/^[A-Za-zÅÄÖåäö]/.test(username))
+                if (!username || !(/^[A-Za-zÅÄÖåäö]/).test(username))
                     errors.username = "Tunnuksen ensimmäisen merkin tulee olla kirjain.";
                 else if ((username.match(/\d/g) || []).length < 4)
                     errors.username = "Tunnuksessa tulee olla vähintään 4 numeroa.";
@@ -67,4 +68,4 @@
         }
     };
 
-})(this);
+}(this));
