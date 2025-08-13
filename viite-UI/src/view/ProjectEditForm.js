@@ -234,7 +234,7 @@
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
         $('#beginDistance').val(selectedLinks[0].addrMRange.start);
         if (isProjectEditable()) {
-            $('#endDistance').prop("readonly", false).val(selectedLinks[0].addrMRange.end);
+          $('#endDistance').prop("readonly", false).val(selectedLinks[0].addrMRange.end);
         } else {
           $('#endDistance').val(selectedLinks[0].addrMRange.end);
         }
@@ -306,24 +306,24 @@
         /* Disable numbering if the road part has any other status set. */
         if (selectedProjectLink[0].status !== RoadAddressChangeType.Numbering.value &&
             _.filter(projectCollection.getAll(), function (pl) {
-                return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
-                    pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
-                    (pl.status !== RoadAddressChangeType.NotHandled.value && pl.status !== RoadAddressChangeType.Numbering.value);
+              return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
+                  pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
+                  (pl.status !== RoadAddressChangeType.NotHandled.value && pl.status !== RoadAddressChangeType.Numbering.value);
             }).length !== 0) {
-              removeNumberingFromDropdown();
+          removeNumberingFromDropdown();
         }
         disableFormInputs();
         const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
-              return projectLink.addrMRange.end;
-          });
-          // If there are non-calculated new links, display the lowest value of discontinuity in selection (i.e. the most significant).
+          return projectLink.addrMRange.end;
+        });
+        // If there are non-calculated new links, display the lowest value of discontinuity in selection (i.e. the most significant).
         var selectedDiscontinuity;
         if (projectLinkMaxByEndAddressM.addrMRange.end === 0) {
-            selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
-                return projectLink.discontinuity;
-            }).discontinuity;
+          selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
+            return projectLink.discontinuity;
+          }).discontinuity;
         } else
-            selectedDiscontinuity = projectLinkMaxByEndAddressM.discontinuity;
+          selectedDiscontinuity = projectLinkMaxByEndAddressM.discontinuity;
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       }
 
@@ -462,22 +462,22 @@
         return true;
       };
 
-        var isEndDistanceTouched = function () {
-            const endDistance = $('#endDistance')[0];
-            var changedValue;
+      var isEndDistanceTouched = function () {
+        const endDistance = $('#endDistance')[0];
+        var changedValue;
 
-            if (endDistance)
-                changedValue = Number(endDistance.value);
+        if (endDistance)
+          changedValue = Number(endDistance.value);
 
-            const orderedByStartM = _.sortBy(selectedProjectLink, function (l) {
-                return -l.addrMRange.start;
-            });
+        const orderedByStartM = _.sortBy(selectedProjectLink, function (l) {
+          return -l.addrMRange.start;
+        });
 
-            // EndDistance is correct and changed.
-            return !isNaN(changedValue) &&
-                    typeof changedValue === 'number' &&
-                    changedValue !== orderedByStartM[0].addrMRange.end;
-        };
+        // EndDistance is correct and changed.
+        return !isNaN(changedValue) &&
+            typeof changedValue === 'number' &&
+            changedValue !== orderedByStartM[0].addrMRange.end;
+      };
 
       var cancelChanges = function () {
         projectCollection.revertRoadAddressChangeType();
@@ -504,9 +504,9 @@
         setFormDirty();
       });
 
-        rootElement.on('change', '.form-select-control', function () {
-            setFormDirty();
-        });
+      rootElement.on('change', '.form-select-control', function () {
+        setFormDirty();
+      });
 
       rootElement.on('click', '.project-form button.update', function () {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
@@ -715,16 +715,16 @@
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
 
-              const trackGeometryLengthDeviationErrorCode = 38;
-              if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
-                  const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
-                      // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
-                  new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
-                      type: "alert"
-                  });
-                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
-                  response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
-              }
+            const trackGeometryLengthDeviationErrorCode = 38;
+            if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+              const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
+              // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+              new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
+                type: "alert"
+              });
+              $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+              response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
+            }
 
             // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
             projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
@@ -742,8 +742,8 @@
           }
           // if something went wrong during recalculation or validation, show error to user
           else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
-              // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
-              projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
           } else {
             new ModalConfirm(response.errorMessage);
             applicationModel.removeSpinner();

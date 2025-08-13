@@ -217,8 +217,8 @@
                 const aOsa = document.getElementById('roadAddrChangesInputStartPart');
                 const lOsa = document.getElementById('roadAddrChangesInputEndPart');
 
-                const aOsaValue = parseInt(aOsa.value);
-                const lOsaValue = parseInt(lOsa.value);
+                const aOsaValue = Number(aOsa.value);
+                const lOsaValue = Number(lOsa.value);
 
                 const aOsaIsNumber = !isNaN(aOsaValue);
                 const lOsaIsNumber = !isNaN(lOsaValue);
