@@ -157,7 +157,7 @@
         position: absolute;
         top: 0;
         right: 10px;
-		font-size: 0px;
+		font-size: 0;
 		color: @gray-darkest;
 		text-align: right;
 
@@ -237,7 +237,6 @@
     border-width: 0;
     border-style: solid;
     border-color: @gray-darker-2;
-    background-color: @gray-lighter-2;
     background-color: rgba(red(@warning), green(@warning), blue(@warning), .85);
     pointer-events: none;
 }
@@ -294,6 +293,10 @@
 	bottom: 20px;
 	left: -50px;
 	min-width: 103px;
+
+	//Avoid text wrapping to another row, instead make container wider
+	white-space: nowrap;
+	width: auto;
 }
 
 .popup-line-div {
@@ -303,7 +306,7 @@
 }
 
 .selectable {
-  -webkit-touch-callout: all; /* iOS Safari */
+  //-webkit-touch-callout: all; /* iOS Safari */
   -webkit-user-select: all; /* Safari */
   -khtml-user-select: all; /* Konqueror HTML */
   -moz-user-select: all; /* Firefox */

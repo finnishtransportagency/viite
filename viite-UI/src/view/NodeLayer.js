@@ -8,8 +8,16 @@
     var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
     var directionMarkerVector = new ol.source.Vector({});
     var dblVector = function () {
-      return {selected: new ol.source.Vector({}), unselected: new ol.source.Vector({})};
+      return { selected: new ol.source.Vector({}), unselected: new ol.source.Vector({}) };
     };
+
+    // This is used to fix a bug where sometimes popup doesn't disappear when moved
+    let suppressOverlayUntilTs = 0;
+    const suppressOverlayForMs = (ms) => {
+      suppressOverlayUntilTs = Date.now() + ms;
+    };
+    const isOverlaySuppressed = () => Date.now() < suppressOverlayUntilTs;
+
     var nodeMarkerVector = dblVector();
     var junctionMarkerVector = dblVector();
     var nodePointTemplateVector = dblVector();
@@ -75,6 +83,104 @@
     });
 
     var layers = [directionMarkerLayer, nodeMarkerLayer, nodeMarkerSelectedLayer, junctionMarkerLayer, junctionMarkerSelectedLayer, nodePointTemplateLayer, nodePointTemplateSelectedLayer, junctionTemplateLayer, junctionTemplateSelectedLayer];
+
+  // Popup content shown when hovering mouse over a node which is not moved
+  const infoContent = document.getElementById('popup-content');
+
+  const getPopupOverlay = () => {
+    const overlays = map.getOverlays().getArray();
+    return _.find(overlays, (o) => {
+      const el = o.getElement && o.getElement();
+      return el && el.id === 'popup';
+    });
+  };
+
+  const clearOverlay = () => {
+    const overlay = getPopupOverlay();
+    if (overlay) overlay.setPosition(undefined);
+    if (infoContent) infoContent.innerHTML = '';
+  };
+
+  const displayNodeType = (nodeTypeCode) => {
+    const nodeType = _.find(ViiteEnumerations.NodeType, (type) => type.value === nodeTypeCode);
+    return _.isUndefined(nodeType) ? ViiteEnumerations.NodeType.UnknownNodeType.description : nodeType.description;
+  };
+
+  const displayNodeInfo = (event, pixel) => {
+    // Do not show node info while moving a node
+    if (window.ViiteState && window.ViiteState.isTranslatingNode) return;
+
+    const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature);
+    if (!featureAtPixel || _.isUndefined(featureAtPixel.node)) return;
+
+    const overlay = getPopupOverlay();
+    if (!overlay) return;
+
+    const coordinate = map.getEventCoordinate(event.originalEvent);
+    if (infoContent !== null) {
+      let nodeName = '';
+      const name = featureAtPixel.getProperties().name;
+      if (!_.isUndefined(name)) {
+        nodeName = 'Nimi: ' + _.escape(name) + '<br>';
+      }
+      infoContent.innerHTML = nodeName + 'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>';
+    }
+    overlay.setPosition(coordinate);
+  };
+
+  const displayJunctionInfo = (event, pixel) => {
+    // Do not show junction info while moving a node
+    if (window.ViiteState && window.ViiteState.isTranslatingNode) return;
+
+    const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature);
+    if (_.isUndefined(featureAtPixel) || _.isUndefined(featureAtPixel.junction) || _.isUndefined(featureAtPixel.junction.junctionPoints)) return;
+
+    const overlay = getPopupOverlay();
+    if (!overlay) return;
+
+    const junctionData = featureAtPixel.junction;
+    const junctionPointData = featureAtPixel.junction.junctionPoints;
+    const node = nodeCollection.getNodeByNodeNumber(junctionData.nodeNumber);
+    const coordinate = map.getEventCoordinate(event.originalEvent);
+    const roadAddressInfo = [];
+    _.map(junctionPointData, (point) => {
+      roadAddressInfo.push({
+        road: point.roadNumber,
+        part: point.roadPartNumber,
+        track: point.track,
+        addr: point.addrM,
+        beforeAfter: point.beforeAfter
+      });
+    });
+
+    const groupedRoadAddresses = _.groupBy(roadAddressInfo, (row) => [row.road, row.track, row.part, row.addr]);
+
+    const roadAddresses = _.partition(groupedRoadAddresses, (group) => group.length > 1);
+
+    const doubleRows = _.map(roadAddresses[0], (junctionPoints) => {
+      const first = _.head(junctionPoints);
+      return { road: first.road, track: first.track, part: first.part, addr: first.addr };
+    });
+
+    const singleRows = _.map(roadAddresses[1], (junctionPoint) => ({
+        road: junctionPoint[0].road,
+        track: junctionPoint[0].track,
+        part: junctionPoint[0].part,
+        addr: junctionPoint[0].addr
+      }));
+
+    const roadAddressContent = _.sortBy(doubleRows.concat(singleRows), ['road', 'part', 'track', 'addr']);
+
+    if (infoContent !== null) {
+      infoContent.innerHTML =
+        'Solmun\u00a0nimi:\u00a0' + ((node) ? node.name.replace(' ', '\u00a0') : '') + '<br>' +
+        'Tieosoite:<br>' +
+        _.map(roadAddressContent, function (junctionPoint) {
+          return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
+        }).join('');
+    }
+    overlay.setPosition(coordinate);
+  };
 
     var setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
@@ -174,7 +280,11 @@
      * Save initial node position for comparison purposes
      */
     nodeTranslate.on('translatestart', function () {
+      window.ViiteState.isTranslatingNode = true;
       selectedNodesAndJunctions.setStartingCoordinates(selectedNodeStartingCoordinates);
+      // Hide any visible overlay immediately and suppress updates briefly to avoid flicker
+      suppressOverlayForMs(150);
+      clearOverlay();
     });
 
     /**
@@ -186,6 +296,7 @@
         x: evt.coordinate[0],
         y: evt.coordinate[1]
       };
+
       if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         eventbus.trigger('node:displayCoordinates', {
           x: evt.coordinate[0],
@@ -198,7 +309,7 @@
       window.ViiteState.isTranslatingNode = false;
       const geometry = evt.features.item(0).getGeometry();
       let coordinates = geometry.getCoordinates();
-      coordinates = {x: coordinates[0], y: coordinates[1]}; // Format coordinates correctly
+      coordinates = { x: coordinates[0], y: coordinates[1] }; // Format coordinates correctly
       const startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
 
       // Check if node was moved over 200m
@@ -254,6 +365,16 @@
     eventbus.on("userData:fetched", function (userData) {
       userHasPermissionToEdit = _.includes(userData.roles, 'viite');
       addInteractions();
+    });
+
+    // Immediately hide overlay when user starts interacting over node/junction to avoid flicker
+    map.on('pointerdown', function (evt) {
+      // Only act if clicking over a node or junction marker
+      var featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
+      if (featureAtPixel && (featureAtPixel.node || featureAtPixel.junction)) {
+        suppressOverlayForMs(200);
+        clearOverlay();
+      }
     });
 
 
@@ -404,7 +525,7 @@
 
     var createNewNodeMarker = function (coords) {
       var node = {
-        coordinates: {x: coords.x, y: coords.y},
+        coordinates: { x: coords.x, y: coords.y },
         type: ViiteEnumerations.NodeType.UnknownNodeType.value,
         nodePoints: [],
         junctions: []
@@ -427,8 +548,8 @@
     var updateCurrentNodeMarker = function (node) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
         if (nodeFeature.node.id === node.id) {
-          nodeFeature.setProperties({type: node.type});
-          nodeFeature.setProperties({name: node.name});
+          nodeFeature.setProperties({ type: node.type });
+          nodeFeature.setProperties({ name: node.name });
           nodeFeature.setGeometry(new ol.geom.Point([node.coordinates.x, node.coordinates.y]));
         }
       });
@@ -446,7 +567,7 @@
           return junctionFound.id === junctionFeature.junction.id;
         });
         if (!_.isUndefined(junction)) {
-          junctionFeature.setProperties({junctionNumber: junction.junctionNumber});
+          junctionFeature.setProperties({ junctionNumber: junction.junctionNumber });
         }
       });
     };
@@ -511,7 +632,7 @@
       var updateJunctionTemplateNumberOnMap = function (junctionToUpdate) {
         _.each(junctionTemplateSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
           if (_.isEqual(junctionFeature.junctionTemplate.id, junctionToUpdate.id)) {
-            junctionFeature.setProperties({junctionNumber: junctionToUpdate.junctionNumber});
+            junctionFeature.setProperties({ junctionNumber: junctionToUpdate.junctionNumber });
           }
         });
       };
@@ -519,7 +640,7 @@
       var updateJunctionNumberOnMap = function (junctionToMap) {
         _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
           if (_.isEqual(junctionFeature.junction.id, junctionToMap.id)) {
-            junctionFeature.setProperties({junctionNumber: junctionToMap.junctionNumber});
+            junctionFeature.setProperties({ junctionNumber: junctionToMap.junctionNumber });
           }
         });
       };
@@ -705,6 +826,16 @@
 
       eventListener.listenTo(eventbus, 'change:node', function (node, _junction) {
         updateCurrentNodeMarker(node);
+      });
+
+      // Handle node & junction info popup on overlay update
+      eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
+        if (isOverlaySuppressed() || (window.ViiteState && window.ViiteState.isTranslatingNode)) {
+          clearOverlay();
+          return;
+        }
+        displayNodeInfo(event, pixel);
+        displayJunctionInfo(event, pixel);
       });
     };
 
