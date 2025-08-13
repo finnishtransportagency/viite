@@ -27,7 +27,7 @@ module.exports = function (grunt) {
     secure: true,
     xfwd: true,
     headers: {
-      "X-API-Key": process.env.rasterServiceApiKey,
+      "X-API-Key": process.env.rasterServiceApiKey, // eslint-disable-line no-process-env
       host: 'api.vaylapilvi.fi'
     },
     pathRewrite: {
@@ -42,7 +42,7 @@ module.exports = function (grunt) {
     secure: true,
     xfwd: true,
     headers: {
-      "X-API-Key": process.env.rasterServiceApiKey,
+      "X-API-Key": process.env.rasterServiceApiKey, // eslint-disable-line no-process-env
       host: 'api.vaylapilvi.fi'
     },
     pathRewrite: {
