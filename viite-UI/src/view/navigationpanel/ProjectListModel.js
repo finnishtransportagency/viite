@@ -84,7 +84,7 @@
     const headersToHtml = function () {
       let html = "";
       Object.keys(headers).forEach(function(id) {
-          let header = headers[id];
+          const header = headers[id];
           html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id="' + id + '" class="btn-icon sort fas ' + getIcon(id) + '"></i>';
 
         if (id === "sortUser") {
@@ -97,7 +97,7 @@
       return html;
     };
 
-    let projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
+    const projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
@@ -112,19 +112,15 @@
       '</div>');
 
     const staticFieldProjectName = function (dataField) {
-      let field;
-      field = '<div>' +
-        '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
-        '</div>';
-      return field;
+      return '<div>' +
+          '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
+          '</div>';
     };
 
     const staticFieldProjectList = function (dataField) {
-      let field;
-      field = '<div>' +
-        '<label class="control-label-projects-list">' + dataField + '</label>' +
-        '</div>';
-      return field;
+      return '<div>' +
+          '<label class="control-label-projects-list">' + dataField + '</label>' +
+          '</div>';
       };
 
     let pollProjects = null;
@@ -151,7 +147,7 @@
     }
 
     function fetchProjectStates() {
-      projectCollection.getProjectStates(projectArray.map(project => project.id));
+      projectCollection.getProjectStates(projectArray.map((project) => project.id));
     }
 
     function onlyActive() {
@@ -176,7 +172,7 @@
 
     const userFilterVisibility = function () {
       const searchBox = $('#userFilterSpan');
-      let textField = $('#userNameBox');
+      const textField = $('#userNameBox');
       if (filterBox.visible) {
         searchBox.show();
         if (textField.val() === "") {
@@ -201,8 +197,8 @@
       });
 
       eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
-        projectArray = projectArray.map(project => {
-          const statusCode = idsAndStates.find(idState => idState[0] === project.id)[1];
+        projectArray = projectArray.map((project) => {
+          const statusCode = idsAndStates.find((idState) => idState[0] === project.id)[1];
           project.statusCode = statusCode;
           project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === statusCode).description;
           return project;
@@ -220,7 +216,7 @@
       }
 
       // Main sort function for the project list
-      function sortProjects(projects, orderBy, headers) {
+      function sortProjects(projects) {
         const sortedProjects = projects.slice().sort((a, b) => {
           const primaryCmp = headers[orderBy.id].sortFunc(a, b);
 
@@ -248,7 +244,7 @@
 
 
       const createProjectList = function (projects) {
-        let sortedProjects = sortProjects(projects, orderBy, headers);
+        const sortedProjects = sortProjects(projects, orderBy, headers);
 
         const triggerOpening = function (event, button) {
           $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);

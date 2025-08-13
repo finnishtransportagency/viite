@@ -119,7 +119,7 @@
             $('.admin-panel-modal-overlay').remove();
         };
 
-        function willPassValidations(dateString, dateElement) {
+        function willPassValidations(dateString, _dateElement) {
             // Check format ignoring whitespace
             if (dateutil.isFinnishDateString(dateString.trim())) {
                 const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
@@ -144,7 +144,7 @@
         /**
          *  Check that the source date is before the target date.
          */
-        function reasonableDates(sourceDateObject, sourceDateElem, targetDateObject, targetDateElem) {
+        function reasonableDates(sourceDateObject, _sourceDateElem, targetDateObject, _targetDateElem) {
             if (sourceDateObject >= targetDateObject) {
                 setInfoText("Nykytilanteen tulee olla ennen tavoitepäivämäärää!");
                 return false;

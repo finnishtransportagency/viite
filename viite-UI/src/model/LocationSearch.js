@@ -37,8 +37,8 @@
       };
       let lon, lat;
       const addressMValueFixed = _.isUndefined(addressMValue) ? 0 : addressMValue;
-      if ((roadData.addrMRange.start === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value)
-         || (roadData.addrMRange.end === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
+      if ((roadData.addrMRange.start === addressMValueFixed && roadData.sideCode === sideCodes.TowardsDigitizing.value) ||
+          (roadData.addrMRange.end === addressMValueFixed && roadData.sideCode === sideCodes.AgainstDigitizing.value)) {
         lon = roadData.geometry[0].x;
         lat = roadData.geometry[0].y;
       } else {
