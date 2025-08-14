@@ -253,6 +253,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
     time(logger, "Creating Viite road link change info sets") {
       val tiekamuRoadLinkChanges = vkmClient.getTiekamuRoadlinkChanges(previousDate, newDate)
+      logger.info(s"${tiekamuRoadLinkChanges.length} TiekamuRoadLinkChanges fetched.")
       // filter change infos so that only the ones that target links with road addresses are left
       val roadAddressedRoadLinkChanges = getChangeInfosWithRoadAddress(tiekamuRoadLinkChanges, activeLinearLocations)
 
