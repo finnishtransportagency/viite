@@ -8,7 +8,7 @@
     var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
     var directionMarkerVector = new ol.source.Vector({});
     var dblVector = function () {
-      return {selected: new ol.source.Vector({}), unselected: new ol.source.Vector({})};
+      return { selected: new ol.source.Vector({}), unselected: new ol.source.Vector({}) };
     };
 
     // This is used to fix a bug where sometimes popup doesn't disappear when moved
