@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.withRoadNumbersFilter
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
-import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.vaylavirasto.viite.postgis.{MassQuery, PostGISDatabaseScalikeJDBC}
 import org.joda.time.DateTime
 import net.postgis.jdbc.geometry.GeometryBuilder
 import scalikejdbc._
@@ -213,11 +213,21 @@ class ComplementaryLinkDAO extends BaseDAO {
   }
 
   def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
-    val query = sql"""
-              $selectFromComplementaryLink
-              WHERE id IN ($linkIds)
-          """
-    runSelectQuery(query.map(RoadLink.apply))
+    if (linkIds.size < 1000) {
+      val query = sql"""
+      $selectFromComplementaryLink
+      WHERE id IN ($linkIds)
+    """
+      runSelectQuery(query.map(RoadLink.apply))
+    } else {
+      MassQuery.withIds(linkIds) { tempTable =>
+        val query = sql"""
+        $selectFromComplementaryLink
+        WHERE EXISTS (SELECT 1 FROM $tempTable WHERE $tempTable.id = complementary_link_table.id)
+      """
+        runSelectQuery(query.map(RoadLink.apply))
+      }
+    }
   }
 
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[RoadLink]] = {
