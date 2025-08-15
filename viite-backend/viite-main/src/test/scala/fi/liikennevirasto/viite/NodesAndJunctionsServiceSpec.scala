@@ -4475,7 +4475,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
             1
           ),
           DateTime.now
-        ),
+        )
       )
 
       val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
