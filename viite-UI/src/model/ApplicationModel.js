@@ -197,17 +197,28 @@
       }
     };
 
-    const addSpinner = function () {
-      jQuery('.container').append(
-          $('<div></div>')
-              .addClass("spinner-overlay modal-overlay")
-              .append($('<div></div>').addClass("spinner"))
-      );
+    const addSpinner = function() {
+      // Prevent duplicate spinners
+      if ($('.spinner-overlay').length) return;
+
+      const $spinnerOverlay = $('<div></div>')
+          .addClass('spinner-overlay modal-overlay')
+          .append($('<div></div>').addClass('spinner'));
+
+      $('.container').append($spinnerOverlay);
+
+      // Auto-remove after 8 seconds
+      setTimeout(() => {
+        if ($spinnerOverlay.is(':visible')) {
+          removeSpinner();
+        }
+      }, 8000);
     };
 
-    const removeSpinner = function () {
-      jQuery('.spinner-overlay').remove();
+    const removeSpinner = function() {
+      $('.spinner-overlay').remove();
     };
+
 
     eventbus.on("userData:fetched", function (userData) {
       sessionUsername = userData.userName;
