@@ -175,7 +175,7 @@
         formCommon.setDisabledAndTitleAttributesById('recalculate-button', true, 'Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki');
         formCommon.setDisabledAndTitleAttributesById('changes-button', true, 'Yhteenvetotaulukko on jo auki');
 
-        if ($('.change-table-frame').css('display') === 'block' && currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
+        if (currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
           formCommon.setDisabledAndTitleAttributesById('send-button', false, '');
         }
       } else {
