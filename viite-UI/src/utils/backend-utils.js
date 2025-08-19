@@ -52,13 +52,14 @@
       };
     });
 
-    this.getNodesAndJunctions = createCallbackRequestor(function (params) {
+    this.getNodesAndJunctions = _.throttle(function (params, callback) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox
-      };
-    });
+
+      return $.get('api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 500);
 
     this.abortLoadingProject = (function () {
       if (loadingProject) {
