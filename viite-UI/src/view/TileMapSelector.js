@@ -21,7 +21,7 @@
         <div class="noroadaddress-visible-wrapper">
           <div class="checkbox">
             <label>
-              <input type="checkbox" id="unAddressedRoadsVisibleCheckbox">
+              <input type="checkbox" id="unAddressedRoadsVisibleCheckbox" checked>
               Näytä tieosoitteettomat-linkit
             </label>
           </div>
