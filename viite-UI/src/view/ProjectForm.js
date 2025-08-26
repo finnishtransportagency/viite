@@ -88,8 +88,8 @@
         '</form>' +
         '</div>' +
         '</div><div class = "form-result"><label >PROJEKTIIN VALITUT TIEOSAT:</label>' +
-        '<div style="margin-left: 16px;">' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
+        '<div>' +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') + addSmallLabel('EVK') +
         '</div>' +
         '<div id ="reservedRoads">' +
         '</div></div>' +
@@ -128,16 +128,16 @@
         '</div>' +
         '<div class = "form-result">' +
         '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
-        '<div style="margin-left: 16px;">' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
+        '<div>' +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') + addSmallLabel('EVK') +
         '</div>' +
         '<div id ="reservedRoads">' +
         reservedRoads +
         '</div></div></br></br>' +
         '<div class = "form-result">' +
         '<label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>' +
-        '<div style="margin-left: 16px;">' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
+        '<div>' +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') + addSmallLabel('EVK') +
         '</div>' +
         '<div id ="newReservedRoads">' +
         newReservedRoads +
@@ -285,6 +285,7 @@
                       addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
                       addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
                       addSmallLabelWithIds((line.currentEly), 'reservedEly') +
+                      addSmallLabelWithIds((line.currentEvk || line.currentEly), 'reservedEvk') +
                       '</div>';
               }
           });
@@ -302,6 +303,7 @@
               addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
               addSmallLabelWithIds((line.newDiscontinuity), 'reservedDiscontinuity') +
               addSmallLabelWithIds((line.newEly), 'reservedEly') +
+              addSmallLabelWithIds((line.newEvk || line.newEly), 'reservedEvk') +
               '</div>';
           }
         });
@@ -341,7 +343,7 @@
           _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
             text += '<div class="form-reserved-roads-list">' + button +
-              addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
+              addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) + addSmallLabel(line.evk || line.ely) +
               '</div>';
           });
           rootElement.html(openProjectTemplate(currentProject, text, ''));

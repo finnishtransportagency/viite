@@ -86,7 +86,9 @@
 
     this.getProjectLinksById = _.throttle(function (projectId, callback) {
       return $.getJSON('api/viite/project/links/' + projectId, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // Add mock EVK codes to the project links data
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
@@ -247,7 +249,9 @@
 
     this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // Add mock EVK codes to the project data
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
@@ -262,7 +266,9 @@
         loadingProject.abort();
       }
       loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // Add mock EVK codes to the project data
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
       return loadingProject;
     }, 1000);
@@ -347,6 +353,62 @@
 
     function convertDatetoSimpleDate(date) {
       return moment(date, 'DD.MM.YYYY').format("YYYY-MM-DD");
+    }
+
+    // Mock function to convert ELY codes to EVK codes
+    // This is a temporary solution until backend supports EVK codes
+    function addMockEvkCodes(data) {
+      if (!data) return data;
+      
+      // ELY to EVK mapping based on geographical regions
+      const elyToEvkMapping = {
+        1: 1,   // Uusimaa -> Uudenmaan elinvoimakeskus
+        2: 2,   // Varsinais-Suomi -> Lounais-Suomen elinvoimakeskus
+        3: 3,   // Kaakkois-Suomi -> Kaakkois-Suomen elinvoimakeskus
+        4: 4,   // Pirkanmaa -> Sisä-Suomen elinvoimakeskus
+        8: 10,  // Pohjois-Savo -> Itä-Suomen elinvoimakeskus
+        9: 8,   // Keski-Suomi -> Keski-Suomen elinvoimakeskus
+        10: 12, // Etelä-Pohjanmaa -> Etelä-Pohjanmaan elinvoimakeskus
+        12: 14, // Pohjois-Pohjanmaa -> Pohjanmaan elinvoimakeskus
+        14: 18  // Lappi -> Lapin elinvoimakeskus
+      };
+
+      // Helper function to add EVK code to a single item
+      function addEvkToItem(item) {
+        if (item && typeof item === 'object') {
+          // Add EVK code based on ELY code
+          if (item.currentEly !== undefined) {
+            item.currentEvk = elyToEvkMapping[item.currentEly] || item.currentEly;
+          }
+          if (item.newEly !== undefined) {
+            item.newEvk = elyToEvkMapping[item.newEly] || item.newEly;
+          }
+          if (item.ely !== undefined) {
+            item.evk = elyToEvkMapping[item.ely] || item.ely;
+          }
+          if (item.elyCode !== undefined) {
+            item.evkCode = elyToEvkMapping[item.elyCode] || item.elyCode;
+          }
+        }
+        return item;
+      }
+
+      // Handle different data structures
+      if (Array.isArray(data)) {
+        return data.map(addEvkToItem);
+      } else if (data && typeof data === 'object') {
+        // Handle project data with reservedInfo and formedInfo arrays
+        if (data.reservedInfo && Array.isArray(data.reservedInfo)) {
+          data.reservedInfo = data.reservedInfo.map(addEvkToItem);
+        }
+        if (data.formedInfo && Array.isArray(data.formedInfo)) {
+          data.formedInfo = data.formedInfo.map(addEvkToItem);
+        }
+        // Handle single item
+        addEvkToItem(data);
+      }
+      
+      return data;
     }
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
