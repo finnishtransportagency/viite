@@ -334,7 +334,7 @@
       var endDistance = $('#endDistance')[0];
       const hasDevRights = _.includes(startupParameters.roles, 'dev');
 
-      const getValueWithId = function(id) {
+      const getValueWithId = function (id) {
         const element = roadAddressProjectForm.find(id)[0];
         return element && element.value ? Number(element.value) : null;
       };
@@ -347,8 +347,8 @@
       const endCp = getValueWithId('#endCPDropdown');
       const sideCode = getValueWithId('#sideCodeDropdown');
       const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber')[0]
-          ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked
-          : null;
+        ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked
+        : null;
 
       let devToolData = null;
       if (hasDevRights) {
@@ -492,8 +492,10 @@
       backend.sendProjectChangesToViite(
         projectInfo.id,
         function (result) {
-          if (result.sendSuccess) { eventbus.trigger('roadAddress:projectSentSuccess');
-          } else                  { eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+          if (result.sendSuccess) {
+            eventbus.trigger('roadAddress:projectSentSuccess');
+          } else {
+            eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
           }
         },
         function (result) {
@@ -515,14 +517,15 @@
       var listContent = '';
       var index = 0;
       _.each(me.getReservedParts(), function (row) {
-          var button = deleteButton(index++, row.roadNumber, row.roadPartNumber, 'reservedList');
-          listContent += '<div class="form-reserved-roads-list">' + button +
-            addSmallLabelWithIds(row.roadNumber, 'reservedRoadNumber') +
-            addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') +
-            addSmallLabelWithIds((row.newLength ? row.newLength : row.currentLength), 'reservedRoadLength') +
-            addSmallLabelWithIds((row.newDiscontinuity ? row.newDiscontinuity : row.currentDiscontinuity), 'reservedDiscontinuity') +
-            addSmallLabelWithIds((row.newEly ? row.newEly : row.currentEly), 'reservedEly') + '</div>';
-        }
+        var button = deleteButton(index++, row.roadNumber, row.roadPartNumber, 'reservedList');
+        listContent += '<div class="form-reserved-roads-list">' + button +
+          addSmallLabelWithIds(row.roadNumber, 'reservedRoadNumber') +
+          addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') +
+          addSmallLabelWithIds((row.newLength ? row.newLength : row.currentLength), 'reservedRoadLength') +
+          addSmallLabelWithIds((row.newDiscontinuity ? row.newDiscontinuity : row.currentDiscontinuity), 'reservedDiscontinuity') +
+          addSmallLabelWithIds((row.newEly ? row.newEly : row.currentEly), 'reservedEly') +
+          addSmallLabelWithIds((row.newEvk ? row.newEvk : row.currentEvk), 'reservedEvk') + '</div>';
+      }
       );
       return listContent;
     };
@@ -533,8 +536,8 @@
 
     var deleteButton = function (index, roadNumber, roadPartNumber, selector) {
       var disabledInput = !_.isUndefined(currentProject) &&
-          (currentProject.project.statusCode === ProjectStatus.InUpdateQueue.value ||
-              currentProject.project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value);
+        (currentProject.project.statusCode === ProjectStatus.InUpdateQueue.value ||
+          currentProject.project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value);
       return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete ml-2 btn-delete ' + selector + ' fas fa-trash-alt fa-lg" ' + (disabledInput ? 'disabled' : '') + '></i>';
     };
 

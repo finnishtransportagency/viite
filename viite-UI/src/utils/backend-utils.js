@@ -207,7 +207,9 @@
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
       }).then(function (x) {
-        eventbus.trigger('roadPartsValidation:checkRoadParts', x);
+        // Add mock EVK codes to the validation response
+        const dataWithEvk = addMockEvkCodes(x);
+        eventbus.trigger('roadPartsValidation:checkRoadParts', dataWithEvk);
       });
     });
 
@@ -256,9 +258,9 @@
     }, 1000);
 
     this.getRoadAddressProjectStates = _.throttle(function (projectIDs, callback) {
-            return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
-                return _.isFunction(callback) && callback(data);
-            });
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
     }, 1000);
 
     this.getProjectsWithLinksById = _.throttle(function (id, callback) {
@@ -309,7 +311,7 @@
     };
 
     this.getSearchResults = function (searchString) {
-      return $.get("api/viite/roadlinks/search", {search: searchString}).then(function (x) {
+      return $.get("api/viite/roadlinks/search", { search: searchString }).then(function (x) {
         return x;
       });
     };
@@ -359,7 +361,7 @@
     // This is a temporary solution until backend supports EVK codes
     function addMockEvkCodes(data) {
       if (!data) return data;
-      
+
       // ELY to EVK mapping based on geographical regions
       const elyToEvkMapping = {
         1: 1,   // Uusimaa -> Uudenmaan elinvoimakeskus
@@ -407,7 +409,7 @@
         // Handle single item
         addEvkToItem(data);
       }
-      
+
       return data;
     }
 
