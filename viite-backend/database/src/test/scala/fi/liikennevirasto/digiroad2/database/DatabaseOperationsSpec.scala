@@ -114,9 +114,6 @@ class DatabaseOperationsSpec extends AnyFunSuite with Matchers with BaseDAO {
         // First read-only session should see the data
         selectTestData(id1) should be(Some(testValue1))
 
-        // Insert more data in the outer transaction context (this should work)
-        // Note: We can't actually insert here because we're in read-only,
-        // so we'll test nested read-only sessions instead
         runWithReadOnlySession {
           // Nested read-only session should also see the data
           selectTestData(id1) should be(Some(testValue1))
@@ -135,16 +132,12 @@ class DatabaseOperationsSpec extends AnyFunSuite with Matchers with BaseDAO {
       val originalSession = SessionProvider.session
 
       runWithReadOnlySession {
-        // Check if write blocking is active
-        try {
+        // Verify write blocking is active
+        an[java.sql.SQLException] should be thrownBy {
           SessionProvider.checkWriteAllowed()
-          println("checkWriteAllowed() passed - writes are allowed!")
-        } catch {
-          case e: java.sql.SQLException =>
-            println(s"checkWriteAllowed() failed: ${e.getMessage}")
         }
 
-        // Try an write operation through BaseDAO
+        // Try a write operation through BaseDAO
         an[java.sql.SQLException] should be thrownBy {
           runUpdateToDb(sql"INSERT INTO session_test_table (value) VALUES ('should_fail')")
         }
