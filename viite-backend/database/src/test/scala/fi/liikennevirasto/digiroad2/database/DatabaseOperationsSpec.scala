@@ -250,7 +250,7 @@ class DatabaseOperationsSpec extends AnyFunSuite with Matchers with BaseDAO {
     }
   }
 
-  test("Test write blocking is properly restored after multiple nesting levels") {
+  test("Test write blocking is removed after exiting nested read-only sessions") {
     runWithRollback {
       createTestTable()
 
@@ -276,7 +276,7 @@ class DatabaseOperationsSpec extends AnyFunSuite with Matchers with BaseDAO {
         }
       }
 
-      // Should work again - write blocking restored
+      // Should work again - back in transaction context
       noException should be thrownBy {
         insertTestData("tx_data_after_readonly")
       }
