@@ -209,6 +209,19 @@
     ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
   };
 
+  root.EVKCodes = { // Values might change, using placeholders for now
+    EVK_UUD: {value: 1, name: "Uudenmaan elinvoimakeskus", shortName: "UUD"},
+    EVK_LOU: {value: 2, name: "Lounais-Suomen elinvoimakeskus", shortName: "LOU"},
+    EVK_KAS: {value: 3, name: "Kaakkois-Suomen elinvoimakeskus", shortName: "KAS"},
+    EVK_SIS: {value: 4, name: "Sisä-Suomen elinvoimakeskus", shortName: "SIS"},
+    EVK_KES: {value: 8, name: "Keski-Suomen elinvoimakeskus", shortName: "KES"},
+    EVK_ITA: {value: 10, name: "Itä-Suomen elinvoimakeskus", shortName: "ITÄ"},
+    EVK_EPO: {value: 12, name: "Etelä-Pohjanmaan elinvoimakeskus", shortName: "EPO"},
+    EVK_POH: {value: 14, name: "Pohjanmaan elinvoimakeskus", shortName: "POH"},
+    EVK_PSU: {value: 16, name: "Pohjois-Suomen elinvoimakeskus", shortName: "PSU"},
+    EVK_LAP: {value: 18, name: "Lapin elinvoimakeskus", shortName: "LAP"}
+  };
+
   root.NodeType = {
     NormalIntersection: {value: 1, description: "Normaali tasoliittymä"},
     Roundabout: {value: 3, description: "Kiertoliittymä"},
