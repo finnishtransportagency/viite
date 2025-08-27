@@ -109,10 +109,6 @@
       };
     };
 
-    function spinnerClassName(spinnerEvent) {
-      return spinnerEvent ? spinnerEvent : 'default-spinner';
-    }
-
     const canZoomOutEditMode = function () {
       return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
     };
