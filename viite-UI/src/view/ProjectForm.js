@@ -1,6 +1,7 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, startupParameters) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
+    const discontinuityColumnWidth = '80px !important';
     var currentProject = false;
     var formCommon = new FormCommon('');
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
@@ -89,7 +90,7 @@
         '</div>' +
         '</div><div class = "form-result"><label >PROJEKTIIN VALITUT TIEOSAT:</label>' +
         '<div>' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') + addSmallLabel('EVK') +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('EVK') +
         '</div>' +
         '<div id ="reservedRoads">' +
         '</div></div>' +
@@ -129,7 +130,7 @@
         '<div class = "form-result">' +
         '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
         '<div>' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') + addSmallLabel('EVK') +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('EVK') +
         '</div>' +
         '<div id ="reservedRoads">' +
         reservedRoads +
@@ -137,7 +138,7 @@
         '<div class = "form-result">' +
         '<label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>' +
         '<div>' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') + addSmallLabel('EVK') +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('EVK') +
         '</div>' +
         '<div id ="newReservedRoads">' +
         newReservedRoads +
@@ -180,12 +181,13 @@
         return '';
     };
 
-    var addSmallLabel = function (label) {
-      return '<label class="control-label-small">' + label + '</label>';
+    var addSmallLabel = function (label, customWidth) {
+      return '<label class="control-label-small" style="width: ' + customWidth + '">' + label + '</label>';
     };
 
-    var addSmallLabelWithIds = function (label, id) {
-      return '<label class="control-label-small" id=' + id + '>' + label + '</label>';
+    var addSmallLabelWithIds = function (label, id, customWidth) {
+      const style = customWidth ? ' style="width: ' + customWidth + '"' : '';
+      return '<label class="control-label-small" id="' + id + '"' + style + '>' + label + '</label>';
     };
 
     var addSmallInputNumber = function (id, value, maxLength) {
@@ -279,13 +281,14 @@
         var index = 0;
         _.each(list, function (line) {
           if (!_.isUndefined(line.currentLength)) {
-            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
+            text += '<div class="form-reserved-roads-list">' +
               addSmallLabel(line.roadNumber) +
               addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
               addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
-              addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
+              addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
               addSmallLabelWithIds((line.currentEly), 'reservedEly') +
               addSmallLabelWithIds((line.currentEvk), 'reservedEvk') +
+              projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
               '</div>';
           }
         });
@@ -297,13 +300,14 @@
         var index = 0;
         _.each(list, function (line) {
           if (!_.isUndefined(line.newLength)) {
-            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
+            text += '<div class="form-reserved-roads-list">' +
               addSmallLabel(line.roadNumber) +
               addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
               addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
-              addSmallLabelWithIds((line.newDiscontinuity), 'reservedDiscontinuity') +
+              addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
               addSmallLabelWithIds((line.newEly), 'reservedEly') +
               addSmallLabelWithIds((line.newEvk), 'reservedEvk') +
+              projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
               '</div>';
           }
         });
