@@ -1,6 +1,17 @@
 (function (root) {
   root.LinkPropertyForm = function (selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel) {
     var selectionType = ViiteEnumerations.SelectionType;
+
+    // Helper function to convert ViiteEnumerations objects so they can be used here
+    var createAttributesFromEnum = function(enumObj, useNameProperty) {
+      return _.map(enumObj, function(item) {
+        return {
+          value: item.value,
+          description: useNameProperty ? item.name : item.description
+        };
+      });
+    };
+
     var decodedAttributes = [
       {
         id: 'AJORATA',
@@ -12,37 +23,26 @@
       },
       {
         id: 'ELY',
-        attributes: [
-          {value: 1, description: "Uusimaa"},
-          {value: 2, description: "Varsinais-Suomi"},
-          {value: 3, description: "Kaakkois-Suomi"},
-          {value: 4, description: "Pirkanmaa"},
-          {value: 8, description: "Pohjois-Savo"},
-          {value: 9, description: "Keski-Suomi"},
-          {value: 10, description: "Etelä-Pohjanmaa"},
-          {value: 12, description: "Pohjois-Pohjanmaa"},
-          {value: 14, description: "Lappi"}
-        ]
+        attributes: createAttributesFromEnum(ViiteEnumerations.ElyCodes, true)
+      },
+      {
+        id: 'EVK',
+        attributes: createAttributesFromEnum(ViiteEnumerations.EVKCodes, true)
       },
       {
         id: 'HALLINNOLLINEN LUOKKA',
         attributes: [
-          {value: 1, description: "Valtio"},
-          {value: 2, description: "Kunta"},
-          {value: 3, description: "Yksityinen"},
-          {value: 99, description: "Ei määritelty"}
+          {value: ViiteEnumerations.AdministrativeClass.PublicRoad.value, description: ViiteEnumerations.AdministrativeClass.PublicRoad.textValue},
+          {value: ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.value, description: ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.textValue},
+          {value: ViiteEnumerations.AdministrativeClass.PrivateRoad.value, description: ViiteEnumerations.AdministrativeClass.PrivateRoad.textValue},
+          {value: ViiteEnumerations.AdministrativeClass.Unknown.value, description: ViiteEnumerations.AdministrativeClass.Unknown.description}
         ]
       },
       {
         id: 'JATKUVUUS',
-        attributes: [
-          {value: 1, description: "Tien loppu"},
-          {value: 2, description: "Epäjatkuva"},
-          {value: 3, description: "ELY:n raja"},
-          {value: 4, description: "Lievä epäjatkuvuus"},
-          {value: 5, description: "Jatkuva"},
+        attributes: createAttributesFromEnum(ViiteEnumerations.Discontinuity, false).concat([
           {value: 6, description: "Rinnakkainen linkki"} /* 5. Jatkuva (Rinnakkainen linkki) */
-        ]
+        ])
       }
     ];
 
@@ -396,6 +396,7 @@
             props.addrMRange.start = '';
           }
           props.elyCode = isNaN(parseFloat(props.elyCode)) ? '' : props.elyCode;
+          props.evkCode = isNaN(parseFloat(props.evkCode)) ? '' : props.evkCode;
           props.addrMRange.end = props.addrMRange.end || '';
           props.discontinuity = props.discontinuity || '';
           props.roadLinkType = props.roadLinkType || '';
