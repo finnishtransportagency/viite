@@ -201,14 +201,14 @@ class ComplementaryLinkDAO extends BaseDAO {
       $selectFromComplementaryLink
       WHERE id IN ($linkIds)
     """
-      runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply))
+      runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     } else {
       MassQuery.withIds(linkIds) { tempTable =>
         val query = sql"""
         $selectFromComplementaryLink
         WHERE EXISTS (SELECT 1 FROM $tempTable WHERE $tempTable.id = complementary_link_table.id)
       """
-        runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply))
+        runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
       }
     }
   }
