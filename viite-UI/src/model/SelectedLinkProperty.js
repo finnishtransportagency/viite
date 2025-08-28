@@ -66,7 +66,7 @@
         var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
         var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
         var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
-
+        var evkCodes = {evkCode: extractUniqueValues(selectedData, 'evkCode')};
         // TODO Check that merge was done correctly
         var discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
         var addrMRange = {
@@ -81,7 +81,7 @@
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
         };
-        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, addrMRange, discontinuity);
+        properties = _.merge(properties, latestModified, municipalityCodes, verticalLevels, roadPartNumbers, roadNames, elyCodes, evkCodes, addrMRange, discontinuity);
       }
       properties = _.merge(properties, roadLinkSource);
       return properties;
