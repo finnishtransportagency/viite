@@ -7,6 +7,7 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.RoadPart
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
+import fi.vaylavirasto.viite.util.VKMException
 import org.apache.hc.client5.http.classic.methods.{HttpGet, HttpPost}
 import org.apache.hc.client5.http.config.RequestConfig
 import org.apache.hc.client5.http.cookie.StandardCookieSpec
@@ -21,7 +22,6 @@ import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, JNull, JValue}
 import org.json4s.JsonAST.JArray
 import org.json4s.jackson.JsonMethods._
-
 import java.io.IOException
 import scala.util.Try
 import scala.util.control.NonFatal
@@ -223,86 +223,82 @@ class VKMClient(endPoint: String, apiKey: String) {
 
   def getTiekamuRoadlinkChanges(previousDate: DateTime, newDate: DateTime): Seq[TiekamuRoadLinkChange] = {
 
-    /** Create a response handler, with handleResponse implementation returning the
-     * response body in Right as Seq[TiekamuRoadLinkChanges], or an Exception in Left. */
-    def getResponseHandler(url: String) = {
-      new HttpClientResponseHandler[Either[ViiteException, Seq[TiekamuRoadLinkChange]]] {
-        @throws[IOException]
-        override def handleResponse(response: ClassicHttpResponse): Either[ViiteException, Seq[TiekamuRoadLinkChange]]  = {
-          if (response.getCode == HttpStatus.SC_OK) {
-            val entity = response.getEntity
-            val responseString = EntityUtils.toString(entity, "UTF-8")
-            val tiekamuRoadLinkChanges = extractTiekamuRoadLinkChanges(responseString)
-            Right(tiekamuRoadLinkChanges)
-          } else {
-            Left(ViiteException(s"Request $url returned HTTP ${response.getCode}"))
-          }
-        }
-      }
-    }
-
     def extractTiekamuRoadLinkChanges(responseString: String): Seq[TiekamuRoadLinkChange] = {
-      def getDigitizationChangeValue(newStartMValue: Double, newEndMValue: Double): Boolean = {
-        if (newEndMValue < newStartMValue)
-          true
-        else
-          false
-      }
+      def getDigitizationChangeValue(newStartMValue: Double, newEndMValue: Double): Boolean =
+        newEndMValue < newStartMValue
 
-      // Parse the JSON response
       val parsedJson = parse(responseString)
-
-      // Extract the "features" field as a sequence of JValue
       val features = (parsedJson \ "features").asInstanceOf[JArray].arr
-      // Map the JSON objects to the TiekamuRoadLinkChange class
-      val tiekamuRoadLinkChanges = features.map { feature =>
+
+      features.map { feature =>
         val properties = feature \ "properties"
         val newStartM = (properties \ "m_arvo_alku_kohdepvm").extract[Double]
         val newEndM = (properties \ "m_arvo_loppu_kohdepvm").extract[Double]
+
         TiekamuRoadLinkChange(
           (properties \ "link_id").extract[String],
           (properties \ "m_arvo_alku").extract[Double],
           (properties \ "m_arvo_loppu").extract[Double],
           (properties \ "link_id_kohdepvm").extract[String],
-          if(newStartM > newEndM) newEndM else newStartM ,
-          if(newEndM < newStartM) newStartM else newEndM,
+          if (newStartM > newEndM) newEndM else newStartM,
+          if (newEndM < newStartM) newStartM else newEndM,
           getDigitizationChangeValue(newStartM, newEndM)
         )
       }
-      tiekamuRoadLinkChanges
+    }
+
+    def getResponseHandler(url: String): HttpClientResponseHandler[Either[VKMException, Seq[TiekamuRoadLinkChange]]] = {
+      new HttpClientResponseHandler[Either[VKMException, Seq[TiekamuRoadLinkChange]]] {
+        @throws[IOException]
+        override def handleResponse(response: ClassicHttpResponse): Either[VKMException, Seq[TiekamuRoadLinkChange]] = {
+          val responseString = EntityUtils.toString(response.getEntity, "UTF-8")
+          if (response.getCode == HttpStatus.SC_OK) {
+            Right(extractTiekamuRoadLinkChanges(responseString))
+          } else {
+            Left(VKMException(s"Request $url returned HTTP ${response.getCode}: $responseString"))
+          }
+        }
+      }
     }
 
     time(logger, "Creating TiekamuRoadLinkChange sets") {
-      try {
-        val previousDateFinnishFormat = finnishDateFormatter.print(previousDate)
-        val newDateFinnishFormat = finnishDateFormatter.print(newDate)
-        val tiekamuEndpoint = endPoint ++ "/tiekamu?"
-        val tiekamuDateParams = s"tilannepvm=${previousDateFinnishFormat}&asti=${newDateFinnishFormat}"
-        val tiekamuReturnValueParam = "&palautusarvot=72" // For more info on the different return options, check the VKM/Tiekamu API docs
-        val url = tiekamuEndpoint ++ tiekamuDateParams ++ tiekamuReturnValueParam
+      val pageSize = 10000
+      val previousDateStr = finnishDateFormatter.print(previousDate)
+      val newDateStr = finnishDateFormatter.print(newDate)
 
-        val request = new HttpGet(url)
-        request.addHeader("accept", "application/geo+json")
-        request.addHeader("X-API-Key", apiKey)
+      Stream
+        .from(1)
+        .map { page =>
+          val params =
+            s"tilannepvm=$previousDateStr&asti=$newDateStr&palautusarvot=72&sivunkoko=$pageSize&sivu=$page"
+          val url = s"$endPoint/tiekamu?$params"
 
-        time(logger, "Fetching change set data from Tiekamu") {
-          try {
-            val tiekamuRoadLinkChanges = client.execute(request, getResponseHandler(url))
-            tiekamuRoadLinkChanges match {
-              case Left(t) => throw t
-              case Right(tiekamuRoadLinkChanges) => tiekamuRoadLinkChanges
+          val request = new HttpGet(url)
+          request.addHeader("accept", "application/geo+json")
+          request.addHeader("X-API-Key", apiKey)
+
+          time(logger, s"Fetching page $page from Tiekamu") {
+            client.execute(request, getResponseHandler(url)) match {
+              case Right(changes) =>
+                Some(changes)
+
+              case Left(e) if e.getMessage.contains("Ei tietoja määritetyllä sivutuksella") =>
+                None // graceful exit – no more pages
+
+              case Left(e) =>
+                logger.error(s"Tiekamu page $page failed: ${e.getMessage}")
+                throw e // stop execution: let the caller handle it
             }
-          } catch {
-            case t: Throwable =>
-              logger.warn(s"Fetching $url failed. Throwable when fetching TiekamuRoadlinkChanges: ${t.getMessage}")
-              Seq()
           }
         }
-      } catch {
-        case t: Throwable =>
-          logger.warn(s"Creating query URL failed: ${t.getMessage}")
-          Seq()
-      }
+        .takeWhile {
+          case Some(changes) =>
+            // Stop if all changes are "empty" dummy values
+            !changes.forall(_ == TiekamuRoadLinkChange(null, 0.0, 0.0, null, 0.0, 0.0, false))
+          case None => false
+        }
+        .flatMap(_.toSeq.flatten)
+        .toSeq
     }
   }
 }

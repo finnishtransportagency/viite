@@ -107,7 +107,11 @@
         }
 
         function toggle() {
-            $('.road-address-browser-modal-overlay').length === 0 ? show() : hide();
+            if ($('.road-address-browser-modal-overlay').length === 0) {
+                show();
+            } else {
+                hide();
+            }
         }
 
         function show() {
@@ -171,7 +175,8 @@
                     ely.reportValidity() &&
                     roadNumber.reportValidity() &&
                     minRoadPartNumber.reportValidity() &&
-                    maxRoadPartNumber.reportValidity();
+                    maxRoadPartNumber.reportValidity() &&
+                    validateBeginningAndEndParts();
             }
 
             function validateDate(dateString, dateElement) {
@@ -204,6 +209,38 @@
 
             roadAddrChangesEndDate.addEventListener('input', function() {
                 validateDate(this.value, this);
+                this.setCustomValidity("");
+            });
+
+            // Validate A-osa and L-osa
+            function validateBeginningAndEndParts () {
+                const aOsa = document.getElementById('roadAddrChangesInputStartPart');
+                const lOsa = document.getElementById('roadAddrChangesInputEndPart');
+
+                const aOsaValue = Number(aOsa.value);
+                const lOsaValue = Number(lOsa.value);
+
+                const aOsaIsNumber = !isNaN(aOsaValue);
+                const lOsaIsNumber = !isNaN(lOsaValue);
+
+                // If both are numbers and A is greater than L, show error
+                if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
+                    lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
+                    return false;
+                }
+
+                // Clear error if valid
+                lOsa.setCustomValidity("");
+                return true;
+            }
+
+            // Clear A-osa / L-osa error when either value changes
+            document.getElementById('roadAddrChangesInputStartPart').addEventListener('input', function() {
+                validateBeginningAndEndParts(this.value);
+                this.setCustomValidity("");
+            });
+            document.getElementById('roadAddrChangesInputEndPart').addEventListener('input', function() {
+                validateBeginningAndEndParts(this.value);
                 this.setCustomValidity("");
             });
 
@@ -251,6 +288,7 @@
             ely.setCustomValidity("");
             roadAddrChangesStartDate.setCustomValidity("");
             roadAddrChangesEndDate.setCustomValidity("");
+
 
             if (willPassValidations())
 

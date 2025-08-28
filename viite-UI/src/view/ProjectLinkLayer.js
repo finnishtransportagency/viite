@@ -132,25 +132,27 @@
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select', function (event) {
-      var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var modPressed = (event.mapBrowserEvent) ? (
+      event.mapBrowserEvent.originalEvent.ctrlKey || event.mapBrowserEvent.originalEvent.metaKey
+) : false;
       var rawSelection = (event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
         return feature;
       }) : event.selected;
-      var selection = _.find(ctrlPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
+      var selection = _.find(modPressed? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         if (selectionTarget)
           return !_.isUndefined(selectionTarget.linkData) && (
             projectRoadAddressChangeTypeIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
         else return false;
       });
-      if (ctrlPressed) {
-        showDoubleClickChanges(ctrlPressed, selection);
+      if (modPressed) {
+        showDoubleClickChanges(modPressed, selection);
       } else if (isNotEditingData) {
-        showSingleClickChanges(ctrlPressed, selection);
+        showSingleClickChanges(modPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(ctrlPressed, selection, 'single');
+        fireDeselectionConfirmation(modPressed, selection, 'single');
       }
       highlightFeatures();
     });
