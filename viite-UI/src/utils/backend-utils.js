@@ -40,7 +40,18 @@
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
-        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
+        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox,
+        dataType: 'json',
+        // TODO, Inject mock EVK values, remove later
+        dataFilter: function (raw) {
+          try {
+            var parsed = JSON.parse(raw);
+            var transformed = addMockEvkCodes(parsed);
+            return JSON.stringify(transformed);
+          } catch (e) {
+            return raw;
+          }
+        }
       };
     });
 
@@ -48,7 +59,18 @@
       var roadNumber = params.roadNumber;
       var roadPart = params.roadPartNumber;
       return {
-        url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart
+        url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart,
+        dataType: 'json',
+        // TODO, Inject mock EVK values, remove later
+        dataFilter: function (raw) {
+          try {
+            var parsed = JSON.parse(raw);
+            var transformed = addMockEvkCodes(parsed);
+            return JSON.stringify(transformed);
+          } catch (e) {
+            return raw;
+          }
+        }
       };
     });
 
@@ -106,31 +128,41 @@
 
     this.getProjectLinkByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // TODO Add mock EVK codes, remove this later
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
     this.getRoadAddressByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // TODO Add mock EVK codes, remove this later
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
     this.getPrefillValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // TODO Add mock EVK codes, remove this later
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // TODO Add mock EVK codes, remove this later
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
     this.getRoadLinkByMtkId = _.throttle(function (mtkId, callback) {
       return $.getJSON('api/viite/roadlinks/mtkid/' + mtkId, function (data) {
-        return _.isFunction(callback) && callback(data);
+        // TODO Add mock EVK codes, remove this later
+        const dataWithEvk = addMockEvkCodes(data);
+        return _.isFunction(callback) && callback(dataWithEvk);
       });
     }, 1000);
 
@@ -139,7 +171,9 @@
       _.debounce(function (roadNumber, projectID, callback) {
         if (projectID !== 0 && roadNumber !== '') {
           return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
-            return _.isFunction(callback) && callback(data);
+            // TODO Add mock EVK codes, remove this later
+            const dataWithEvk = addMockEvkCodes(data);
+            return _.isFunction(callback) && callback(dataWithEvk);
           });
         } else {
           $('#roadName').val('').change();
@@ -398,7 +432,14 @@
 
       // Handle different data structures
       if (Array.isArray(data)) {
-        return data.map(addEvkToItem);
+        return data.map(function (item) {
+          // Handle array of arrays
+          if (Array.isArray(item)) {
+            return item.map(addEvkToItem);
+          }
+          // Handle regular array items
+          return addEvkToItem(item);
+        });
       } else if (data && typeof data === 'object') {
         // Handle project data with reservedInfo and formedInfo arrays
         if (data.reservedInfo && Array.isArray(data.reservedInfo)) {
