@@ -40,7 +40,18 @@
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
-        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
+        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox,
+        dataType: 'json',
+        // TODO, Inject mock EVK values, remove later
+        dataFilter: function (raw) {
+          try {
+            var parsed = JSON.parse(raw);
+            var transformed = addMockEvkCodes(parsed);
+            return JSON.stringify(transformed);
+          } catch (e) {
+            return raw;
+          }
+        }
       };
     });
 
@@ -398,7 +409,14 @@
 
       // Handle different data structures
       if (Array.isArray(data)) {
-        return data.map(addEvkToItem);
+        return data.map(function (item) {
+          // Handle array of arrays
+          if (Array.isArray(item)) {
+            return item.map(addEvkToItem);
+          }
+          // Handle regular array items
+          return addEvkToItem(item);
+        });
       } else if (data && typeof data === 'object') {
         // Handle project data with reservedInfo and formedInfo arrays
         if (data.reservedInfo && Array.isArray(data.reservedInfo)) {
