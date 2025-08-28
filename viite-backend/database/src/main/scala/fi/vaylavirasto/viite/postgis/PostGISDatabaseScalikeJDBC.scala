@@ -58,6 +58,8 @@ object PostGISDatabaseScalikeJDBC {
    * Executes `readOnlyOperation` within a read-only session.
    *
    * Use this method for database operations that only read data.
+   * If called within an existing transaction, it will join that transaction but block write operations.
+   * If called standalone, it creates a new read-only session.
    * If a write operation is attempted within this session, a `java.sql.SQLException` will be thrown.
    *
    * @param readOnlyOperation The operation to execute.

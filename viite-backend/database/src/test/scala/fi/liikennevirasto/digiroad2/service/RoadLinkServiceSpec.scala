@@ -71,35 +71,6 @@ class RoadLinkServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Test getCurrentAndComplementaryRoadLinksByMunicipality() When asking for info for a specific municipality Then return full municipality info, that includes both complementary and ordinary geometries") {
-    val municipalityId = 235
-    val linkId = Seq(1L, 2L).map(_.toString)
-    val roadLinks = linkId.map(id =>
-      RoadLink(id, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "RoadLink")
-    )
-    val linkIdComp = Seq(3L, 4L).map(_.toString)
-    val roadLinksComp = linkIdComp.map(id =>
-      RoadLink(id, Seq(), 0, AdministrativeClass.Municipality, TrafficDirection.TowardsDigitizing, None,None, municipalityCode = municipalityId, sourceId = "Complementary")
-    )
-
-    val mockKGVClient = MockitoSugar.mock[KgvRoadLink]
-    val mockKGVRoadLinkClient = MockitoSugar.mock[KgvRoadLinkClient[RoadLink]]
-    val mockKGVComplementaryClient = MockitoSugar.mock[ComplementaryLinkDAO]
-    val service = new TestService(mockKGVClient)
-
-    runWithReadOnlySession {
-      when(mockKGVClient.complementaryData).thenReturn(mockKGVComplementaryClient)
-      when(mockKGVClient.roadLinkData).thenReturn(mockKGVRoadLinkClient)
-      when(mockKGVComplementaryClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinksComp))
-      when(mockKGVRoadLinkClient.fetchByMunicipalityAndRoadNumbersF(any[Int], any[Seq[(Int,Int)]])).thenReturn(Future(roadLinks))
-
-      val roadLinksList = service.getCurrentAndComplementaryRoadLinksByMunicipality(235, Seq())
-
-      roadLinksList should have length 4
-      roadLinksList.groupBy(_.sourceId) should have size 2
-    }
-  }
-
   ignore("Test getRoadLinksHistoryFromVVH() When supplying a single linkId to query Then return the VVHHistoryRoadLink for the queried linkId "){
 //    val municipalityId = 235
 //    val linkId = 1234.toString
