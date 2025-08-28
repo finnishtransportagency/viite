@@ -1,5 +1,6 @@
 package fi.vaylavirasto.viite.dao
 
+import fi.vaylavirasto.viite.postgis.SessionProvider
 import scalikejdbc._
 import org.slf4j.{Logger, LoggerFactory}
 import fi.vaylavirasto.viite.postgis.SessionProvider.session
@@ -15,8 +16,11 @@ trait BaseDAO {
    *
    * @param updateQuery SQL query to execute
    * @return The number of rows affected
+   * @throws java.sql.SQLException if write operations are blocked by SessionProvider.checkWriteAllowed()
+   *                               (occurs in read-only sessions within transactions)
    */
   def runUpdateToDb(updateQuery: SQL[Nothing, NoExtractor]): Int = {
+    SessionProvider.checkWriteAllowed() // Check before executing write
     updateQuery.update.apply()
   }
 
@@ -26,8 +30,11 @@ trait BaseDAO {
    * @param query query SQL query to execute
    * @param batchParams Sequence of parameter sets, each set corresponding to one batch operation
    * @return List of numbers indicating rows affected by each batch operation
+   * @throws java.sql.SQLException if write operations are blocked by SessionProvider.checkWriteAllowed()
+   *                               (occurs in read-only sessions within transactions)
    */
   def runBatchUpdateToDb(query: SQL[Nothing, NoExtractor], batchParams: Seq[Seq[Any]]): List[Int] = {
+    SessionProvider.checkWriteAllowed() // Check before executing write
     query.batch(batchParams: _*).apply()
   }
 

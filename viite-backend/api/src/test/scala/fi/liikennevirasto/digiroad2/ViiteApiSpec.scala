@@ -61,7 +61,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   when(frozenTimeRoadLinkData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq(testRoadLink)))
 
   when(complementaryData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq()))
-  when(complementaryData.fetchByLinkIdsInReadOnlySession(any[Set[String]])).thenReturn(List())
+  when(complementaryData.fetchByLinkIds(any[Set[String]])).thenReturn(List())
   when(complementaryData.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle],any[Set[Int]])).thenReturn(Future(Seq()))
   when(frozenTimeRoadLinkData.fetchBySourceId(any[Long])).thenReturn(Some(testRoadLink))
   when(frozenTimeRoadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]], any[Seq[(Int, Int)]], any[Boolean])).thenReturn(Future(Seq(testRoadLink)))
