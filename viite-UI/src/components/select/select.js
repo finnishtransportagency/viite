@@ -116,7 +116,7 @@ return `<div>${selector.render()}</div>`;
       const columns = Object.keys(config.data).map(Number).sort();
       let html = `<div id="${config.id}-dropdown" class="mcs-dropdown hidden"><div class="mcs-columns">`;
 
-      columns.forEach((colIndex, idx) => {
+      columns.forEach((colIndex) => {
         const colData = config.data[colIndex];
         if (!colData) return;
 
@@ -257,7 +257,7 @@ return `<div>${selector.render()}</div>`;
 
     function setValue(value) {
       const allItems = Object.values(config.data).flatMap(c => c.items || []);
-      const found = allItems.find(it => it.value == value);
+      const found = allItems.find(it => it.value === value);
 
       if (found) {
         config.selectedItem = `${found.value}-${found.label}`;
@@ -270,7 +270,6 @@ return `<div>${selector.render()}</div>`;
       const el = document.getElementById(config.id);
       if (el) {
         const label = el.querySelector('.mcs-label');
-        const button = el.querySelector('.mcs-button');
         label.textContent = found ? found.label : config.placeholder;
 
         // Update dropdown items state
@@ -327,4 +326,4 @@ return `<div>${selector.render()}</div>`;
   if (!root.MultiColumnSelector) {
     root.MultiColumnSelector = root.Selector;
   }
-})(this);
+}(this));
