@@ -23,7 +23,7 @@ module.exports = {
         "mochaPhantomJS": "writable",
         "Application": "writable",
         "ViiteEnumerations": "writable",
-        "ViiteSelect": "writable",
+        "Selector": "writable",
         "EnumerationUtils": "writable",
         "ViiteConstants": "writable",
         "FormCommon": "writable",
