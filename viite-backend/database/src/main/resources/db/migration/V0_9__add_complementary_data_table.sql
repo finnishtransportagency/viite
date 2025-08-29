@@ -29,7 +29,8 @@ CREATE TABLE public.complementary_link_table (
                                            versionstarttime timestamp NULL,
                                            sourcemodificationtime timestamp NULL,
                                            geometry public.geometry NULL,
-                                           ajorata int4 NULL
+                                           ajorata int4 NULL,
+                                           vvh_id varchar(30) NULL
 );
 CREATE INDEX complementary_data_geometry_i ON public.complementary_link_table USING gist (geometry);
 CREATE INDEX complementary_data_link_id_i ON public.complementary_link_table USING btree (id);
