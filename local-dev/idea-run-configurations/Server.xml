@@ -1,9 +1,18 @@
 <component name="ProjectRunConfigurationManager">
-    <configuration default="false" name="Server" type="SbtRunConfiguration" factoryName="sbt Task">
-        <setting name="tasks" value="&quot;~;container:start; container:reload /&quot;" />
-        <setting name="vmparams" value="-Xms512M -Xmx2048M -Xss1M -XX:+CMSClassUnloadingEnabled" />
-        <setting name="workingDir" value="$PROJECT_DIR$" />
+    <configuration default="false" name="Server" type="SbtRunConfiguration" factoryName="sbt Task" show_console_on_std_err="false" show_console_on_std_out="false">
+        <option name="allowRunningInParallel" value="false" />
+        <option name="projectPathOnTarget" />
+        <option name="selectedOptions">
+            <list />
+        </option>
+        <option name="tasks" value="run" />
+        <option name="useSbtShell" value="false" />
+        <option name="vmparams" value="-Xms512M -Xmx2048M -Xss1M -XX:+CMSClassUnloadingEnabled -Denv=local" />
+        <option name="workingDir" value="$PROJECT_DIR$" />
+        <option name="envFilePaths" />
         <envs />
-        <method />
+        <method v="2">
+            <option name="Make" enabled="true" />
+        </method>
     </configuration>
 </component>

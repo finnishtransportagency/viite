@@ -41,12 +41,12 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
 
 
   def fetchRoadLinkAndComplementaryData(linkIds: Set[String]): Seq[RoadLink] = {
-    if (linkIds.nonEmpty) kgvClient.roadLinkData.fetchByLinkIds(linkIds) ++ kgvClient.complementaryData.fetchByLinkIds(linkIds)
+    if (linkIds.nonEmpty) kgvClient.roadLinkData.fetchByLinkIds(linkIds) ++ kgvClient.complementaryData.fetchByLinkIdsInReadOnlySession(linkIds)
     else Seq.empty[RoadLink]
   }
 
   private def fetchFrozenAndComplementaryRoadLinks(linkIds: Set[String]): Seq[RoadLink] = {
-    if (linkIds.nonEmpty) kgvClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) ++ kgvClient.complementaryData.fetchByLinkIds(linkIds)
+    if (linkIds.nonEmpty) kgvClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) ++ kgvClient.complementaryData.fetchByLinkIdsInReadOnlySession(linkIds)
     else Seq.empty[RoadLink]
   }
 
@@ -230,6 +230,6 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
 
   def getCurrentAndComplementaryRoadLinks(linkIds: Set[String]): Seq[RoadLink] = {
     val roadLinks = if (useFrozenLinkInterface) kgvClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) else kgvClient.roadLinkData.fetchByLinkIds(linkIds)
-    kgvClient.complementaryData.fetchByLinkIds(linkIds) ++ roadLinks
+    kgvClient.complementaryData.fetchByLinkIdsInReadOnlySession(linkIds) ++ roadLinks
   }
 }

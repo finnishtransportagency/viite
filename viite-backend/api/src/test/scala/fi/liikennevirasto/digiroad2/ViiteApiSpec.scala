@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
-import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator, ViiteVkmClient}
+import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
+import fi.liikennevirasto.viite.{NodesAndJunctionsService, PreFillInfo, ProjectService, RoadAddressService, RoadNameService, RoadNameSource, RoadNetworkValidator}
 import fi.liikennevirasto.viite.dao.ProjectLinkDAO
 import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer}
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
@@ -41,7 +42,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   val mockRoadNetworkValidator    : RoadNetworkValidator     = MockitoSugar.mock[RoadNetworkValidator]
   val roadNameService             : RoadNameService          = new RoadNameService { override def runWithTransaction[T](f: => T): T = runWithRollback(f) }
 
-  val mockViiteVkmClient: ViiteVkmClient = MockitoSugar.mock[ViiteVkmClient]
+  val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
 
   val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
   private val testProjectId = roadNameService.runWithReadOnlySession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }
@@ -60,7 +61,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   when(frozenTimeRoadLinkData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq(testRoadLink)))
 
   when(complementaryData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq()))
-  when(complementaryData.fetchByLinkIds(any[Set[String]])).thenReturn(List())
+  when(complementaryData.fetchByLinkIdsInReadOnlySession(any[Set[String]])).thenReturn(List())
   when(complementaryData.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle],any[Set[Int]])).thenReturn(Future(Seq()))
   when(frozenTimeRoadLinkData.fetchBySourceId(any[Long])).thenReturn(Some(testRoadLink))
   when(frozenTimeRoadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]], any[Seq[(Int, Int)]], any[Boolean])).thenReturn(Future(Seq(testRoadLink)))
@@ -69,7 +70,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   val roadLinkService: RoadLinkService = new RoadLinkService(mockKgvRoadLink, eventbus, new JsonSerializer, useFrozenLinkInterface)
   val roadAddressService: RoadAddressService = new RoadAddressService(roadLinkService, roadwayDAO, linearLocationDAO, roadNetworkDAO, roadwayPointDAO, nodePointDAO, junctionPointDAO, roadwayAddressMapper, eventbus, useFrozenLinkInterface){
-    override val viiteVkmClient = mockViiteVkmClient
+    override val vkmClient = mockViiteVkmClient
   }
 
   val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
@@ -195,7 +196,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       val links = read[Seq[Map[String, Seq[Any]]]](body)
       links should have size 1
       val street = links.flatMap(_.get("street")).flatten.head
-      val features = parse(StringInput(street.toString)).values.asInstanceOf[Map[String, Any]]("features").asInstanceOf[Seq[Map[String, Map[String, Any]]]]
+      val features = parse(street.toString).values.asInstanceOf[Map[String, Any]]("features").asInstanceOf[Seq[Map[String, Map[String, Any]]]]
       features.filter(_.get("properties").get.get("kuntanimi").get == "Helsinki") should have size 1
     }
   }
@@ -203,7 +204,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test /getRoadLinkDate") {
     get("/getRoadLinkDate") {
       status should equal(200)
-      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      val response = parse(body).values.asInstanceOf[Map[String, Any]]
       response should have size 1
       response.head._1 should be(("result"))
       finnishDateTimeFormatter.parseDateTime(response.head._2.asInstanceOf[String].trim).getYear should be (2018)
@@ -213,7 +214,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test /project/recalculateProject/:testProjectId") {
     get("/project/recalculateProject/7081807") {
       status should equal(200)
-      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      val response = parse(body).values.asInstanceOf[Map[String, Any]]
       response should have size 2
       response.head should be(("success",true))
 
@@ -229,7 +230,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test /project/getchangetable/:testProjectId") {
     get("/project/getchangetable/7081807") {
       status should equal(200)
-      val changeInfo = parse(StringInput(body)).values.asInstanceOf[Map[String, Map[String, Any]]]
+      val changeInfo = parse(body).values.asInstanceOf[Map[String, Map[String, Any]]]
       changeInfo("changeTable")("name") should be ("ProjectOne")
     }
   }
@@ -237,7 +238,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   test("Test PUT /roadnames/:roadNumber") {
     put("/roadnames/5", body = """[{"name":"Test name for road 5","roadNumber":5,"id":1000000,"startDate":"31.12.1988"}]""") {
       status should equal(200)
-      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      val response = parse(body).values.asInstanceOf[Map[String, Any]]
       response should have size 1
       response("success").toString should be ("true")
     }
@@ -248,7 +249,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       body = """{"id":7081807,"status":1,"name":"ProjectOne to test","startDate":"11.10.2022","additionalInfo":"","reservedPartList":[],"formedPartList":[{"discontinuity":"Tien loppu","ely":1,"roadLength":3214,"roadNumber":77997,"roadPartId":0,"roadPartNumber":1,"startingLinkId":"6117675"}],"resolution":8}"""
     ) {
       status should equal(200)
-      val response = parse(StringInput(body)).values.asInstanceOf[Map[String, Any]]
+      val response = parse(body).values.asInstanceOf[Map[String, Any]]
       response should have size 5
       response("success").toString should be ("true")
     }

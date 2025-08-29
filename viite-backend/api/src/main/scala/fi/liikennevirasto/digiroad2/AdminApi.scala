@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.util.DatabaseMigration
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.util.DataImporter
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
+import fi.vaylavirasto.viite.util.DateUtils.parseStringToDateTime
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.HttpClients
 import org.apache.hc.core5.http.ClassicHttpResponse
@@ -207,7 +208,7 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
           logger.info(s"Testing connection to url: $url")
           val request = new HttpGet(url)
           if (headersParam.isDefined) {
-            val headers = parse(StringInput(URLDecoder.decode(headersParam.get))).values.asInstanceOf[Map[String, String]]
+            val headers = parse(URLDecoder.decode(headersParam.get)).values.asInstanceOf[Map[String, String]]
             headers.foreach { case (name, value) => request.addHeader(name, value) }
           }
           val client = HttpClients.createDefault()
@@ -295,8 +296,22 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
   }
 
   def validateDateParams(previousDate: String, newDate: String): (DateTime, DateTime) = {
-    val format = ISOdateFormatter
-    (format.parseDateTime(previousDate), format.parseDateTime(newDate))
+    (parseStringToDateTime(previousDate), parseStringToDateTime(newDate))
+  }
+
+  def handleUpdate(previousDate: String, newDate: String, processPerDay: Boolean): ActionResult = {
+    try {
+      val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
+      Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject, processPerDay))
+      Ok("Samuutus käynnistetty")
+    } catch {
+      case ex: IllegalArgumentException =>
+        logger.error("Updating link network failed.", ex)
+        BadRequest("Unable to parse date, the date should be in yyyy-MM-dd format.")
+      case e: Exception =>
+        logger.error("Updating link network failed.", e)
+        InternalServerError(s"Updating link network failed: ${e.getMessage}")
+    }
   }
 
   /**
@@ -307,25 +322,22 @@ class AdminApi(val dataImporter: DataImporter, implicit val swagger: Swagger) ex
    */
   get("/update_link_network") {
     time(logger, "GET request for /update_link_network") {
-
       val previousDate = params.get("previousDate")
       val newDate = params.get("newDate")
 
       (previousDate, newDate) match {
         case (Some(previousDate), Some(newDate)) =>
-          try {
-            val (previousDateTimeObject, newDateTimeObject) = validateDateParams(previousDate, newDate)
-            Future(dynamicRoadNetworkService.initiateLinkNetworkUpdates(previousDateTimeObject, newDateTimeObject))
-            "Samuutus käynnistetty"
-          } catch {
-            case ex: IllegalArgumentException =>
-              logger.error("Updating link network failed.", ex)
-              BadRequest("Unable to parse date, the date should be in yyyy-MM-dd format.")
-            case e: Exception =>
-              logger.error("Updating link network failed.", e)
-              InternalServerError(s"Updating link network failed: ${e.getMessage}")
+          params.get("processPerDay") match {
+            case Some("true")  => handleUpdate(previousDate, newDate, processPerDay = true)
+            case Some("false") => handleUpdate(previousDate, newDate, processPerDay = false)
+            case Some(invalid) =>
+              logger.error(s"Invalid boolean value for 'processPerDay': $invalid")
+              BadRequest(s"Invalid boolean value for 'processPerDay': $invalid")
+            case None => handleUpdate(previousDate, newDate, processPerDay = false)
           }
-        case _ => BadRequest("Missing mandatory date parameter from the url - for example: /update_link_network?previousDate=2023-05-20&newDate=2023-05-23")
+
+        case _ =>
+          BadRequest("Missing mandatory date parameter from the url - for example: /update_link_network?previousDate=2023-05-20&newDate=2023-05-23")
       }
     }
   }

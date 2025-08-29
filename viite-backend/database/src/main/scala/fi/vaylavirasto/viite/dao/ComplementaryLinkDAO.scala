@@ -13,6 +13,39 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
+case class ComplementaryLink(
+                              id: String,
+                              datasource: Int,
+                              adminclass: Int,
+                              municipalitycode: Int,
+                              featureclass: Int,
+                              roadclass: Int,
+                              roadnamefin: Option[String],
+                              roadnameswe: Option[String],
+                              roadnamesme: Option[String],
+                              roadnamesmn: Option[String],
+                              roadnamesms: Option[String],
+                              roadnumber: Int,
+                              roadpartnumber: Int,
+                              surfacetype: Int,
+                              lifecyclestatus: Int,
+                              directiontype: Int,
+                              surfacerelation: Int,
+                              xyaccuracy: Double,
+                              zaccuracy: Double,
+                              horizontallength: Double,
+                              addressfromleft: Int,
+                              addresstoleft: Int,
+                              addressfromright: Int,
+                              addresstoright: Int,
+                              starttime: DateTime,
+                              versionstarttime: DateTime,
+                              sourcemodificationtime: DateTime,
+                              geometry: Seq[Point],
+                              ajorata: Int,
+                              vvh_id: String
+                            )
+
 class ComplementaryLinkDAO extends BaseDAO {
 
   lazy val selectFromComplementaryLink =
@@ -88,11 +121,84 @@ class ComplementaryLinkDAO extends BaseDAO {
     compareDateMillisOptions(lastEditedDate, geometryEditedDate).orElse(createdDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  def fetchByLinkId(linkId: String): Option[RoadLink] = {
-    fetchByLinkIds(Set(linkId)).headOption
+  def create(complementaryLink: ComplementaryLink): Long = {
+    val geometryWKT = s"LINESTRING Z(${complementaryLink.geometry.map(p => s"${p.x} ${p.y} ${p.z}").mkString(", ")})"
+    val updateQuery = sql"""
+    INSERT INTO complementary_link_table (
+      id,
+      datasource,
+      adminclass,
+      municipalitycode,
+      featureclass,
+      roadclass,
+      roadnamefin,
+      roadnameswe,
+      roadnamesme,
+      roadnamesmn,
+      roadnamesms,
+      roadnumber,
+      roadpartnumber,
+      surfacetype,
+      lifecyclestatus,
+      directiontype,
+      surfacerelation,
+      xyaccuracy,
+      zaccuracy,
+      horizontallength,
+      addressfromleft,
+      addresstoleft,
+      addressfromright,
+      addresstoright,
+      starttime,
+      versionstarttime,
+      sourcemodificationtime,
+      geometry,
+      ajorata,
+      vvh_id
+    ) VALUES (
+      ${complementaryLink.id},
+      ${complementaryLink.datasource},
+      ${complementaryLink.adminclass},
+      ${complementaryLink.municipalitycode},
+      ${complementaryLink.featureclass},
+      ${complementaryLink.roadclass},
+      ${complementaryLink.roadnamefin},
+      ${complementaryLink.roadnameswe},
+      ${complementaryLink.roadnamesme},
+      ${complementaryLink.roadnamesmn},
+      ${complementaryLink.roadnamesms},
+      ${complementaryLink.roadnumber},
+      ${complementaryLink.roadpartnumber},
+      ${complementaryLink.surfacetype},
+      ${complementaryLink.lifecyclestatus},
+      ${complementaryLink.directiontype},
+      ${complementaryLink.surfacerelation},
+      ${complementaryLink.xyaccuracy},
+      ${complementaryLink.zaccuracy},
+      ${complementaryLink.horizontallength},
+      ${complementaryLink.addressfromleft},
+      ${complementaryLink.addresstoleft},
+      ${complementaryLink.addressfromright},
+      ${complementaryLink.addresstoright},
+      ${complementaryLink.starttime},
+      ${complementaryLink.versionstarttime},
+      ${complementaryLink.sourcemodificationtime},
+      ST_GeomFromText(${geometryWKT}, 3067),
+      ${complementaryLink.ajorata},
+      ${complementaryLink.vvh_id}
+    )
+  """
+    runUpdateToDb(updateQuery)
   }
 
-  def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
+  def fetchByLinkId(linkId: String, readOnlySession: Boolean = true): Option[RoadLink] = {
+    if (readOnlySession)
+      fetchByLinkIdsInReadOnlySession(Set(linkId)).headOption
+    else
+      fetchByLinkIds(Set(linkId)).headOption
+  }
+
+  def fetchByLinkIdsInReadOnlySession(linkIds: Set[String]): List[RoadLink] = {
     if (linkIds.nonEmpty) {
       time(logger, "Fetch complementary data by linkIds") {
         val query =
@@ -106,8 +212,16 @@ class ComplementaryLinkDAO extends BaseDAO {
     } else List()
   }
 
+  def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
+    val query = sql"""
+              $selectFromComplementaryLink
+              WHERE id IN ($linkIds)
+          """
+    runSelectQuery(query.map(RoadLink.apply))
+  }
+
   def fetchByLinkIdsF(linkIds: Set[String]): Future[Seq[RoadLink]] = {
-    Future(fetchByLinkIds(linkIds))
+    Future(fetchByLinkIdsInReadOnlySession(linkIds))
   }
 
   /**
