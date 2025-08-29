@@ -23,7 +23,8 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.concurrent.Future
-import scala.util.parsing.json.JSON
+import org.json4s._
+import org.json4s.jackson.JsonMethods
 
 class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAfter {
   val mockProjectService: ProjectService = MockitoSugar.mock[ProjectService]
@@ -178,6 +179,9 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
       ))
   }
+
+  // Define an implicit format for case class extraction
+  implicit val formats: Formats = DefaultFormats
 
   test("Test projectService.updateProjectLinks() When using a recently created project Then project should become publishable after the update.") {
     var count = 0
@@ -615,7 +619,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
 
       val points6552 = "[{\"x\":537869.292,\"y\":6997722.466,\"z\":110.39800000000105}," +
         "{\"x\":538290.056,\"y\":6998265.169,\"z\":85.4429999999993}]"
-      val geom = JSON.parseFull(points6552).get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
+      val geom = JsonMethods.parse(points6552).extract[List[Point]]
 
 
       val addProjectAddressLink552 = ProjectAddressLink(NewIdValue, 6552.toString, geom, GeometryUtils.geometryLength(geom), AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, 749, "Siilinjärvi", Some(DateTime.now().toString()), None, RoadPart(19999, 1), 2L, 8L, 5L, AddrMRange(0L, 0L), 0.0, GeometryUtils.geometryLength(geom), SideCode.TowardsDigitizing, None, None, RoadAddressChangeType.New, 0, 0, sourceId = "", originalAddrMRange = Some(AddrMRange(0L, 0L)))

@@ -2,8 +2,8 @@
     root.RoadNetworkErrorsList = function (backend) {
 
         const networkErrorListWindow =
-            $('<div class="road-network-errors-list-window" id="roadNetworkErrorsListWindow">' +
-                '<div class="road-network-errors-list-header"> ' +
+            $('<div class="generic-window" id="roadNetworkErrorsListWindow">' +
+                '<div class="generic-window-header"> ' +
                     '<p>Tieverkon virheet</p>' +
                     '<button class="close btn-close" id="closeRoadNetworkErrorsList">x</button>' +
                 '</div>' +
@@ -292,7 +292,7 @@
 
         const bindEvents = function () {
 
-            $('.road-network-errors-list-header').on('click', '#closeRoadNetworkErrorsList', function() {
+            $('.generic-window-header').on('click', '#closeRoadNetworkErrorsList', function() {
                 hideRoadNetworkErrorsListWindow();
             });
         };

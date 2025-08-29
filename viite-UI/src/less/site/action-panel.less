@@ -563,7 +563,7 @@
   }
 }
 
-.road-network-errors-list-window{
+.generic-window{
   overflow-y: auto;
   background-color: #e3e3e1;
   position: fixed;
@@ -571,7 +571,7 @@
   top: 50%;
   margin-top: -250px;
   margin-left: -450px;
-  min-width: 50%;
+  min-width: 45%;
   height: 500px;
 
   p {
@@ -579,7 +579,7 @@
   }
 }
 
-.road-network-errors-list-header {
+.generic-window-header {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -593,6 +593,90 @@
   p {
     flex-grow: 10;
   }
+}
+
+.navbar {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+  background-color: #eee;
+}
+
+.tab-button {
+  padding: 10px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 1em;
+  border-right: 1px solid #ccc;
+  transition: background-color 0.2s ease; // Smooth hover
+}
+.tab-button:last-child {
+  border-right: none;
+}
+
+.tab-button:hover {
+  background-color: #ddd;
+}
+
+// Style for the ACTIVE tab button
+.tab-button.active {
+  background-color: #fff;
+  border-bottom: 2px solid #1c70be;
+  font-weight: bold;
+  position: relative; // Helps overlap the main border
+  bottom: -1px; // Overlap the navbar bottom border
+}
+
+.content-area {
+  padding: 20px;
+  flex-grow: 1;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.dynamic-link-network-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+.dynamic-link-network-input {
+  display: flex;
+  flex-direction: column;
+
+  input[readonly] {
+    opacity: 0.7;
+    cursor: pointer;
+    background-color: #f9f9f9;
+  }
+}
+
+.dynamic-link-network-input-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 10px;
+  padding: 10px;
+
+  input[type="checkbox"] {
+    align-self: baseline;
+  }
+}
+
+.update-link-network-button {
+  height: fit-content;
+  margin-left: 25px;
+  margin-top: 10px;
+
+  background-color: #1c70be;
+  box-shadow: inset 0 1px 0 rgba(129, 186, 239, 0.325), 0px 1px 1px 0px rgba(23, 23, 23, 0.125);
+  color: white;
 }
 
 .road-address-changes-browser-window{

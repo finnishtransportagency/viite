@@ -142,11 +142,11 @@ object Digiroad2Context {
   }
 
   lazy val userProvider: UserProvider = {
-    Class.forName(ViiteProperties.userProvider).newInstance().asInstanceOf[UserProvider]
+    Class.forName(ViiteProperties.userProvider).getDeclaredConstructor().newInstance().asInstanceOf[UserProvider]
   }
 
   lazy val eventbus: DigiroadEventBus = {
-    Class.forName(ViiteProperties.eventBus).newInstance().asInstanceOf[DigiroadEventBus]
+    Class.forName(ViiteProperties.eventBus).getDeclaredConstructor().newInstance().asInstanceOf[DigiroadEventBus]
   }
 
   lazy val kgvRoadLinkClient: KgvRoadLink = new KgvRoadLink()
