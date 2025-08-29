@@ -6,15 +6,15 @@
 
       const roadAddrBrowserWindow = $('<div id="road-address-browser-window" class="form-horizontal road-address-browser-window"></div>').hide();
       const roadAddressChangesBrowserHeader = $(
-          '<div class="generic-window-header">' +
-              '<p>Tieosoitteiden katselu</p>' +
-              '<a href="manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu" target="_blank">' +
-                  '<button class="btn-manual" title="Avaa käyttöohje">' +
-                      '<i class="fas fa-question"></i>' +
-                  '</button>' +
-              '</a>' +
-              '<button class="close btn-close-road-address-browser">x</button>' +
-          '</div>'
+          `<div class="generic-window-header">
+              <p>Tieosoitteiden katselu</p>
+              <a href="manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu" target="_blank">
+                  <button class="btn-manual" title="Avaa käyttöohje">
+                      <i class="fas fa-question"></i>
+                  </button>
+              </a>
+              <button class="close btn-close-road-address-browser">x</button>
+          </div>`
       );
       roadAddrBrowserWindow.append(roadAddressChangesBrowserHeader);
       roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
@@ -342,7 +342,7 @@
           }
 
           const params = me.getSearchParams();
-          const fileNameString = "Viite_" + params.target + "_" + params.situationDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".csv";
+          const fileNameString = `Viite_${params.target}_${params.situationDate}_${params.ely}_${params.roadNumber}_${params.minRoadPartNumber}_${params.maxRoadPartNumber}.csv`;
           const fileName = fileNameString.replaceAll("undefined", "-");
 
           let data = [];
@@ -405,7 +405,7 @@
                   if (dateutil.isDateInYearRange(roadAddrSituationDateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
                       roadAddrSituationDate.setCustomValidity("");
                   } else {
-                      roadAddrSituationDate.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                      roadAddrSituationDate.setCustomValidity(`Vuosiluvun tulee olla väliltä ${ViiteConstants.MIN_YEAR_INPUT} - ${ViiteConstants.MAX_YEAR_INPUT}`);
                   }
               } else {
                   roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");

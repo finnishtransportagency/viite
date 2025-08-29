@@ -84,8 +84,7 @@ return `<div>${selector.render()}</div>`;
       disabled: false,
       onSelectionChange: null,
       className: '',
-      // Optional width for the control. Accepts number (px) or string (any CSS unit)
-      width: null
+      width: null // Optional width for the control. Accepts number (px) or string (any CSS unit)
     };
 
     const config = Object.assign({}, defaults, props);
@@ -188,7 +187,7 @@ return `<div>${selector.render()}</div>`;
       }
 
       // Create global click handler
-      config._globalClickHandler = function(e) {
+      config._globalClickHandler = function (e) {
         const rootEl = document.getElementById(config.id);
         if (!rootEl) return;
 
@@ -212,7 +211,7 @@ return `<div>${selector.render()}</div>`;
         if (itemEl && dropdown.contains(itemEl)) {
           e.preventDefault();
           e.stopPropagation();
-          
+
           const itemId = itemEl.getAttribute('data-id');
           const itemValue = itemId.split('-')[0];
 
@@ -226,7 +225,7 @@ return `<div>${selector.render()}</div>`;
           const isSame = config.selectedItem === itemId;
           config.selectedItem = isSame ? null : itemId;
           config.value = isSame ? null : itemValue;
-          
+
           if (config.selectedItem) {
             itemEl.classList.add('selected');
             const circle = itemEl.querySelector('.mcs-circle');
