@@ -321,6 +321,21 @@
         function show() {
             $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.show());
+
+            const formEl = document.getElementById('roadAddressBrowser');
+            if (formEl && typeof ViiteSelect !== 'undefined') {
+                const $elyContainer = $('#roadAddressBrowser #roadAddrInputEly').closest('.input-container');
+                if ($elyContainer.length) {
+                    const elySelect = new ViiteSelect({
+                        id: 'roadAddrInputEly',
+                        label: 'Ely',
+                        props: ViiteSelect.createElyprops()
+                    });
+                    $elyContainer.replaceWith(elySelect.render());
+                    elySelect.bindEvents(formEl);
+                }
+            }
+
             bindEvents();
         }
 
