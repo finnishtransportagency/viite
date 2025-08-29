@@ -322,7 +322,7 @@
           $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
           $('.road-address-browser-modal-window').append(roadAddrBrowserWindow.show());
 
-          // Bind events for MultiColumnSelector components
+          // Bind events for Selector components
           const formEl = document.getElementById('roadAddressBrowser');
           if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
               roadAddressBrowserForm.bindSelectorEvents(formEl);

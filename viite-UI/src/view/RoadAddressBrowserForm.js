@@ -6,7 +6,7 @@
 
     function initializeSelectors() {
       // Date target selector for changes browser
-      dateTargetSelector = new MultiColumnSelector({
+      dateTargetSelector = new Selector({
         id: 'dateTarget',
         placeholder: 'Valitse rajausperuste',
         data: {
@@ -28,14 +28,14 @@
       });
 
       // ELY selector for changes browser
-      elyChangesSelector = new MultiColumnSelector({
+      elyChangesSelector = new Selector({
         id: 'roadAddrChangesInputEly',
         placeholder: 'Valitse ELY',
         data: createElyData()
       });
 
       // ELY/EVK selector for address browser
-      elyEvkSelector = new MultiColumnSelector({
+      elyEvkSelector = new Selector({
         id: 'roadAddrInputElyEvk',
         placeholder: 'Valitse ELY/EVK',
         width: 200,
@@ -43,7 +43,7 @@
       });
 
       // Target selector for address browser
-      targetSelector = new MultiColumnSelector({
+      targetSelector = new Selector({
         id: 'targetValue',
         placeholder: 'Valitse hakukohde',
         value: 'Tracks',

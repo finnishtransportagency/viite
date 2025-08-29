@@ -30,8 +30,7 @@ Callable methods:
 Example: Single column
 
 ```
-
-const targetSelector = new MultiColumnSelector({
+const targetSelector = new Selector({
   id: 'targetValue',
   placeholder: 'Valitse hakukohde...',
   value: 'Tracks',
@@ -49,13 +48,13 @@ const targetSelector = new MultiColumnSelector({
   }
 });
 
-return `<div>${selector.render()}</div>`;
+return `<div>${targetSelector.render()}</div>`;
 ```
 
 Example: Multi-column
 
 ```
-const selector = new MultiColumnSelector({
+const selector = new Selector({
   id: 'roadAddress',
   data: {
     0: {
@@ -72,10 +71,11 @@ const selector = new MultiColumnSelector({
 });
 
 return `<div>${selector.render()}</div>`;
+```
 */
 
 (function (root) {
-  root.MultiColumnSelector = function (props) {
+  root.Selector = function (props) {
     const defaults = {
       id: '',
       data: {},
@@ -93,10 +93,10 @@ return `<div>${selector.render()}</div>`;
     // Trigger error if passed data or id are invalid
     function validateConfig() {
       if (!config.id) {
-        throw new Error('MultiColumnSelector: id is required');
+        throw new Error('Selector: id is required');
       }
       if (typeof config.data !== 'object') {
-        throw new Error('MultiColumnSelector: data must be an object');
+        throw new Error('Selector: data must be an object');
       }
     }
 
@@ -324,4 +324,8 @@ return `<div>${selector.render()}</div>`;
       config: config
     };
   };
+  // Backward compatibility: keep old name available
+  if (!root.MultiColumnSelector) {
+    root.MultiColumnSelector = root.Selector;
+  }
 })(this);
