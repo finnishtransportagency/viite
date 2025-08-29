@@ -196,7 +196,8 @@ class ComplementaryLinkDAO extends BaseDAO {
   }
 
   def fetchByLinkIds(linkIds: Set[String]): List[RoadLink] = {
-    if (linkIds.size < 1000) {
+    if (linkIds.isEmpty) List.empty // Return early for empty set
+    else if (linkIds.size < 1000) {
       val query = sql"""
       $selectFromComplementaryLink
       WHERE id IN ($linkIds)
