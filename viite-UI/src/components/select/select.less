@@ -1,0 +1,37 @@
+.select-container {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin: 5px;
+
+  > label.control-label-small {
+    margin: 2px 0 4px;
+    text-align: left;
+  }
+
+  > select {
+    // Default look similar to .form-select-control in core/forms.less
+    display: block;
+    width: 100%;
+    height: (@line-height-modifier * 5) + 2;
+    padding: @line-height-modifier (1px);
+    font-size: @font-size-base;
+    line-height: @line-height-modifier * 3;
+    color: @input-color;
+    background-color: @input-bg;
+    .box-sizing(border-box);
+    .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+    .shadow-box();
+
+    .form-control-focus();
+    .placeholder();
+
+    &[disabled] {
+      cursor: not-allowed;
+      border-color: @input-border-disabled;
+      color: @input-color-placeholder;
+      background-color: @input-bg-disabled;
+      opacity: 1;
+    }
+  }
+}
