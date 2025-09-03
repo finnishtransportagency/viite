@@ -2,7 +2,7 @@
   root.RoadAddressBrowserForm = function () {
 
     // Initialize multi-column selectors
-    let dateTargetSelector, elyChangesSelector, elyEvkSelector, targetSelector;
+    let dateTargetSelector, elyEvkSelector, targetSelector;
 
     function initializeSelectors() {
       // Date target selector for changes browser
@@ -11,28 +11,55 @@
         placeholder: 'Valitse rajausperuste',
         data: {
           0: {
-            columnTitle: 'Rajausperuste',
             items: [
               { value: 'ProjectAcceptedDate', label: 'Projektin hyväksymispvm' },
               { value: 'RoadAddressStartDate', label: 'Muutoksen voimaantulopvm' }
-            ]
-          },
-          1: {
-            columnTitle: 'Kuvaus',
-            items: [
-              { value: 'ProjectAcceptedDate', label: 'Päivämäärä jolloin projekti hyväksyttiin' },
-              { value: 'RoadAddressStartDate', label: 'Päivämäärä jolloin muutos tuli voimaan' }
             ]
           }
         }
       });
 
-      // ELY selector for changes browser
-      elyChangesSelector = new Selector({
-        id: 'roadAddrChangesInputEly',
-        placeholder: 'Valitse ELY',
-        data: createElyData()
-      });
+      function createElyEvkData() {
+        const evkItems = [];
+        const elyItems = [];
+  
+        // Add EVK items to first column
+        if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
+          for (const evk in ViiteEnumerations.EVKCodes) {
+            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
+              const evkData = ViiteEnumerations.EVKCodes[evk];
+              evkItems.push({
+                value: `EVK_${evkData.value}`,
+                label: `${evkData.value} (${evkData.shortName})`
+              });
+            }
+          }
+        }
+  
+        // Add ELY items to second column
+        if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
+          for (const ely in ViiteEnumerations.ElyCodes) {
+            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
+              const elyData = ViiteEnumerations.ElyCodes[ely];
+              elyItems.push({
+                value: `ELY_${elyData.value}`,
+                label: `${elyData.value} (${elyData.shortName})`
+              });
+            }
+          }
+        }
+  
+        return {
+          0: {
+            columnTitle: 'EVK',
+            items: evkItems
+          },
+          1: {
+            columnTitle: 'ELY',
+            items: elyItems
+          }
+        };
+      }
 
       // ELY/EVK selector for address browser
       elyEvkSelector = new Selector({
@@ -47,7 +74,7 @@
         id: 'targetValue',
         placeholder: 'Valitse hakukohde',
         value: 'Tracks',
-        width: 120,
+        width: 100,
         data: {
           0: {
             items: [
@@ -62,84 +89,8 @@
       });
     }
 
-    function createElyData() {
-      const elyItems = [];
-      const elyDescriptions = [];
-      
-      if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
-        for (const ely in ViiteEnumerations.ElyCodes) {
-          if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
-            const elyData = ViiteEnumerations.ElyCodes[ely];
-            elyItems.push({
-              value: elyData.value,
-              label: `${elyData.value} (${elyData.shortName})`
-            });
-            elyDescriptions.push({
-              value: elyData.value,
-              label: elyData.name || elyData.shortName
-            });
-          }
-        }
-      }
-
-      return {
-        0: {
-          columnTitle: 'ELY-keskus',
-          items: elyItems
-        },
-        1: {
-          columnTitle: 'Nimi',
-          items: elyDescriptions
-        }
-      };
-    }
-
-    function createElyEvkData() {
-      const evkItems = [];
-      const elyItems = [];
-
-      // Add EVK items to first column
-      if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
-        for (const evk in ViiteEnumerations.EVKCodes) {
-          if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
-            const evkData = ViiteEnumerations.EVKCodes[evk];
-            evkItems.push({
-              value: `EVK_${evkData.value}`,
-              label: `${evkData.value} (${evkData.shortName})`
-            });
-          }
-        }
-      }
-
-      // Add ELY items to second column
-      if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
-        for (const ely in ViiteEnumerations.ElyCodes) {
-          if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
-            const elyData = ViiteEnumerations.ElyCodes[ely];
-            elyItems.push({
-              value: `ELY_${elyData.value}`,
-              label: `${elyData.value} (${elyData.shortName})`
-            });
-          }
-        }
-      }
-
-      return {
-        0: {
-          columnTitle: 'EVK',
-          items: evkItems
-        },
-        1: {
-          columnTitle: 'ELY',
-          items: elyItems
-        }
-      };
-    }
-
     function getRoadAddressChangesBrowserForm() {
-      if (!dateTargetSelector || !elyChangesSelector) {
-        initializeSelectors();
-      }
+      if (!dateTargetSelector) initializeSelectors();
 
       const html = `
         <form class="road-address-browser-form" id="roadAddressChangesBrowser">
@@ -160,10 +111,6 @@
               <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" style="width: 80px" />
             </div>
           </div>
-          <div class="input-container">
-            <label class="control-label-small">Ely</label>
-            ${elyChangesSelector.render()}
-          </div>
           ${createRoadNumberInputField('roadAddrChangesInputRoad')}
           ${createRoadPartNumberInputFields('roadAddrChangesInputStartPart', 'roadAddrChangesInputEndPart')}
           <div class="road-address-browser-form-button-wrapper">
@@ -174,15 +121,12 @@
 
       // Setup event delegation immediately
       dateTargetSelector.bindEvents();
-      elyChangesSelector.bindEvents();
 
       return html;
     }
 
     function getRoadAddressBrowserForm() {
-      if (!elyEvkSelector || !targetSelector) {
-        initializeSelectors();
-      }
+      if (!elyEvkSelector || !targetSelector) initializeSelectors();
 
       const html = `
         <form id="roadAddressBrowser" class="road-address-browser-form">
@@ -218,7 +162,6 @@
     // Bind events for all selector components after form is rendered
     function bindSelectorEvents(container) {
       if (dateTargetSelector) dateTargetSelector.bindEvents(container);
-      if (elyChangesSelector) elyChangesSelector.bindEvents(container);
       if (elyEvkSelector) elyEvkSelector.bindEvents(container);
       if (targetSelector) targetSelector.bindEvents(container);
     }
@@ -247,7 +190,6 @@
       getSelectorComponents: function () {
         return {
           dateTarget: dateTargetSelector,
-          elyChanges: elyChangesSelector,
           elyEvk: elyEvkSelector,
           target: targetSelector
         };
