@@ -17,7 +17,7 @@
             '</div>'
         );
         roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
-        roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadRoadAddressChangesBrowserForm());
+        roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadAddressChangesBrowserForm());
 
         // Create EVK/ELY data for the multi-column selector (copied from RoadAddressBrowserForm.js)
         function createElyEvkData() {
@@ -52,6 +52,50 @@
                 0: { columnTitle: 'EVK', items: evkItems },
                 1: { columnTitle: 'ELY', items: elyItems }
             };
+        }
+
+        // ========== Validation helpers (extracted) ==========
+        function validateDate(dateString, dateElement) {
+            // Check format ignoring whitespace
+            if (dateutil.isFinnishDateString(dateString.trim())) {
+                const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
+                if (dateutil.isValidDate(dateObject)){
+                    if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+                        dateElement.setCustomValidity("");
+                        return true;
+                    } else {
+                        dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                        return false;
+                    }
+                } else {
+                    dateElement.setCustomValidity("Tarkista päivämäärä!");
+                    return false;
+                }
+            } else {
+                dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
+                return false;
+            }
+        }
+
+        function validateBeginningAndEndParts () {
+            const aOsa = document.getElementById('roadAddrChangesInputStartPart');
+            const lOsa = document.getElementById('roadAddrChangesInputEndPart');
+
+            const aOsaValue = Number(aOsa.value);
+            const lOsaValue = Number(lOsa.value);
+
+            const aOsaIsNumber = !isNaN(aOsaValue);
+            const lOsaIsNumber = !isNaN(lOsaValue);
+
+            // If both are numbers and A is greater than L, show error
+            if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
+                lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
+                return false;
+            }
+
+            // Clear error if valid
+            lOsa.setCustomValidity("");
+            return true;
         }
 
         // Instantiate selector and inject it into the Changes form
@@ -215,7 +259,7 @@
                 for (const cell of row.cells) {
                     rowData.push(cell.innerText);
                 }
-                csvContent += rowData.join(";") + "\n"; // Join cells with commas
+                csvContent += rowData.join(";") + "\n"; // Join cells with semicolons
             }
 
             // Create a downloadable CSV file
@@ -256,70 +300,7 @@
                     validateBeginningAndEndParts();
             }
 
-            function validateDate(dateString, dateElement) {
-                // Check format ignoring whitespace
-                if (dateutil.isFinnishDateString(dateString.trim())) {
-                    const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
-                    if (dateutil.isValidDate(dateObject)){
-                        if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
-                            dateElement.setCustomValidity("");
-                            return true;
-                        } else {
-                            dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
-                            return false;
-                        }
-                    } else {
-                        dateElement.setCustomValidity("Tarkista päivämäärä!");
-                        return false;
-                    }
-                } else {
-                    dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
-                    return false;
-                }
-            }
-
-            // Clear date error message when typing is started again
-            roadAddrChangesStartDate.addEventListener('input', function() {
-                validateDate(this.value, this);
-                this.setCustomValidity("");
-            });
-
-            roadAddrChangesEndDate.addEventListener('input', function() {
-                validateDate(this.value, this);
-                this.setCustomValidity("");
-            });
-
-            // Validate A-osa and L-osa
-            function validateBeginningAndEndParts () {
-                const aOsa = document.getElementById('roadAddrChangesInputStartPart');
-                const lOsa = document.getElementById('roadAddrChangesInputEndPart');
-
-                const aOsaValue = Number(aOsa.value);
-                const lOsaValue = Number(lOsa.value);
-
-                const aOsaIsNumber = !isNaN(aOsaValue);
-                const lOsaIsNumber = !isNaN(lOsaValue);
-
-                // If both are numbers and A is greater than L, show error
-                if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
-                    lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
-                    return false;
-                }
-
-                // Clear error if valid
-                lOsa.setCustomValidity("");
-                return true;
-            }
-
-            // Clear A-osa / L-osa error when either value changes
-            document.getElementById('roadAddrChangesInputStartPart').addEventListener('input', function() {
-                validateBeginningAndEndParts(this.value);
-                this.setCustomValidity("");
-            });
-            document.getElementById('roadAddrChangesInputEndPart').addEventListener('input', function() {
-                validateBeginningAndEndParts(this.value);
-                this.setCustomValidity("");
-            });
+            // Input listeners moved to bindEvents() to avoid re-attaching on each search
 
             function willPassValidations() {
                 // If start date is provided, validate it
@@ -428,6 +409,37 @@
                     this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                 }
             };
+
+            // Attach validation listeners once
+            const startDateEl = document.getElementById('roadAddrChangesStartDate');
+            const endDateEl = document.getElementById('roadAddrChangesEndDate');
+            if (startDateEl) {
+                startDateEl.addEventListener('input', function () {
+                    validateDate(this.value, this);
+                    this.setCustomValidity("");
+                });
+            }
+            if (endDateEl) {
+                endDateEl.addEventListener('input', function () {
+                    validateDate(this.value, this);
+                    this.setCustomValidity("");
+                });
+            }
+
+            const startPartEl = document.getElementById('roadAddrChangesInputStartPart');
+            const endPartEl = document.getElementById('roadAddrChangesInputEndPart');
+            if (startPartEl) {
+                startPartEl.addEventListener('input', function () {
+                    validateBeginningAndEndParts();
+                    this.setCustomValidity("");
+                });
+            }
+            if (endPartEl) {
+                endPartEl.addEventListener('input', function () {
+                    validateBeginningAndEndParts();
+                    this.setCustomValidity("");
+                });
+            }
             
             roadAddressChangesBrowserWindow.on('click', '#exportAsCsvFile', function () {
                 exportDataAsCsvFile();
