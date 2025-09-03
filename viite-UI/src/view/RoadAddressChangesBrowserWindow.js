@@ -1,6 +1,7 @@
 (function (root) {
     root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
         let searchParams = {};
+        let elyEvkSelector;
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
@@ -17,6 +18,74 @@
         );
         roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadRoadAddressChangesBrowserForm());
+
+        // Create EVK/ELY data for the multi-column selector (copied from RoadAddressBrowserForm.js)
+        function createElyEvkData() {
+            const evkItems = [];
+            const elyItems = [];
+
+            if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
+                for (const evk in ViiteEnumerations.EVKCodes) {
+                    if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
+                        const evkData = ViiteEnumerations.EVKCodes[evk];
+                        evkItems.push({
+                            value: `EVK_${evkData.value}`,
+                            label: `${evkData.value} (${evkData.shortName})`
+                        });
+                    }
+                }
+            }
+
+            if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
+                for (const ely in ViiteEnumerations.ElyCodes) {
+                    if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
+                        const elyData = ViiteEnumerations.ElyCodes[ely];
+                        elyItems.push({
+                            value: `ELY_${elyData.value}`,
+                            label: `${elyData.value} (${elyData.shortName})`
+                        });
+                    }
+                }
+            }
+
+            return {
+                0: { columnTitle: 'EVK', items: evkItems },
+                1: { columnTitle: 'ELY', items: elyItems }
+            };
+        }
+
+        // Instantiate selector and inject it into the Changes form
+        function insertElyEvkSelector() {
+            // Render selector with id expected by getData()
+            elyEvkSelector = new Selector({
+                id: 'roadAddrChangesInputEly',
+                placeholder: 'Valitse ELY/EVK',
+                width: 200,
+                data: createElyEvkData()
+            });
+
+            // Find the changes form and the end date container to insert after (search within the window container)
+            const $form = roadAddressChangesBrowserWindow.find('#roadAddressChangesBrowser');
+            const $endDateContainer = $form.find('#roadAddrChangesEndDate').closest('.input-container');
+
+            // Build container matching existing style
+            const $elyContainer = $([
+                '<div class="input-container">',
+                '  <label class="control-label-small">ELY/EVK</label>',
+                `  ${elyEvkSelector.render()}`,
+                '</div>'
+            ].join(''));
+
+            if ($endDateContainer.length > 0) {
+                $endDateContainer.after($elyContainer);
+            } else {
+                // Fallback: append to end of form
+                $form.append($elyContainer);
+            }
+
+            // Bind selector events (global/default binding)
+            elyEvkSelector.bindEvents();
+        }
 
         /**
          *      This function is performance critical. Pointers in use for reasonable processing time.
@@ -117,7 +186,15 @@
         function show() {
             $('.container').append('<div class="road-address-browser-modal-overlay viite-modal-overlay confirm-modal"><div class="road-address-browser-modal-window"></div></div>');
             $('.road-address-browser-modal-window').append(roadAddressChangesBrowserWindow.show());
+            // Insert selector only once when showing the modal
+            if (roadAddressChangesBrowserWindow.find('#roadAddrChangesInputEly').length === 0) {
+                insertElyEvkSelector();
+            }
             bindEvents();
+            // Ensure selector events are bound after insertion into DOM
+            if (elyEvkSelector) {
+                elyEvkSelector.bindEvents();
+            }
         }
 
         function hide() {
@@ -159,11 +236,12 @@
         function getData() {
             const roadAddrChangesStartDate      = document.getElementById('roadAddrChangesStartDate');
             const roadAddrChangesEndDate        = document.getElementById('roadAddrChangesEndDate');
-            const ely                           = document.getElementById('roadAddrChangesInputEly');
+            // ELY is a Selector component, not an input element
             const roadNumber                    = document.getElementById('roadAddrChangesInputRoad');
             const minRoadPartNumber             = document.getElementById('roadAddrChangesInputStartPart');
             const maxRoadPartNumber             = document.getElementById('roadAddrChangesInputEndPart');
-            const dateTarget                    = document.getElementById('dateTarget');
+            // Get dateTarget from the form's selector component
+            const dateTargetSelector = roadAddressBrowserForm.getSelectorComponents().dateTarget;
 
             // convert date input text to date object
             const roadAddrStartDateObject  = moment(roadAddrChangesStartDate.value, "DD-MM-YYYY").toDate();
@@ -172,7 +250,6 @@
             function reportValidations() {
                 return roadAddrChangesStartDate.reportValidity() &&
                     roadAddrChangesEndDate.reportValidity() &&
-                    ely.reportValidity() &&
                     roadNumber.reportValidity() &&
                     minRoadPartNumber.reportValidity() &&
                     maxRoadPartNumber.reportValidity() &&
@@ -269,12 +346,24 @@
                 const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
                 const params = {
                     startDate: parsedDateString,
-                    dateTarget: dateTarget.value
+                    dateTarget: dateTargetSelector && dateTargetSelector.getSelectedValue ? dateTargetSelector.getSelectedValue() : 'ProjectAcceptedDate'
                 };
                 if (roadAddrChangesEndDate.value)
                     params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
-                if (ely.value)
-                    params.ely = ely.value;
+                const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
+                  ? elyEvkSelector.getSelectedValue()
+                  : null;
+                // Note: Backend currently supports only ELY. We still pass EVK proactively for future support.
+                // Only pass numeric ELY to backend
+                if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
+                    const parts = selected.split('_');
+                    if (parts[1]) params.ely = parts[1];
+                }
+                // Pass EVK as a separate parameter if chosen (backend may ignore this for now)
+                if (selected && typeof selected === 'string' && selected.startsWith('EVK_')) {
+                    const parts = selected.split('_');
+                    if (parts[1]) params.evk = parts[1];
+                }
                 if (roadNumber.value)
                     params.roadNumber = roadNumber.value;
                 if (minRoadPartNumber.value)
@@ -284,8 +373,7 @@
                 return params;
             }
 
-            //reset ely and roadAddrStartDate input fields' custom validity
-            ely.setCustomValidity("");
+            //reset roadAddrStartDate input fields' custom validity
             roadAddrChangesStartDate.setCustomValidity("");
             roadAddrChangesEndDate.setCustomValidity("");
 

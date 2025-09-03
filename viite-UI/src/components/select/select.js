@@ -1,5 +1,6 @@
 /*
-This is a general selector component used for selecting one option from a list. It consists of a button and a dropdown menu, which can be single-column or multi-column.
+This is a general selector component used for selecting one option from a list.
+It consists of a button and a dropdown menu, which can be single or multi-column.
 
 Props (constructor argument):
 - id (string, required): DOM id for the root container element
@@ -21,7 +22,7 @@ Callable methods:
 - render(): string              -> Returns component HTML (button + hidden dropdown)
 - bindEvents(): void            -> Attaches event listeners; call after inserting the HTML
 - setValue(value): void         -> Programmatically select by item value; updates button label and dropdown state
-- getSelectedValue(): string|null       -> Returns the internal selected id `value-label` or null. Use `.split('-')[0]` for just value
+- getSelectedValue(): string|null      -> Returns the internal selected id `value-label` or null. Use `.split('-')[0]` for just value
 - setDisabled(bool): void       -> Enables/disables the button
 - updateData(newData): void     -> Replaces column data and re-renders the dropdown section.
 - getElement(): HTMLElement?    -> Returns the root element by `id`.
@@ -107,7 +108,7 @@ return `<div>${selector.render()}</div>`;
       return `
         <button id="${config.id}-button" class="mcs-button"${widthStyle} ${disabledAttr}>
           <span class="mcs-label">${selectedLabel || config.placeholder}</span>
-          <span class="mcs-arrow">&#9662;</span>
+          <span class="mcs-arrow" style="font-size: 1.5em;">&#9662;</span>
         </button>
       `;
     }
