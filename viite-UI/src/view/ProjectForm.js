@@ -18,182 +18,190 @@
     };
 
     var staticField = function (labelText, dataField) {
-      var field;
-      field = '<div class="form-group">' +
-        '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
-        '</div>';
-      return field;
+      return `<div class="form-group">
+        <p class="form-control-static asset-log-info">${labelText} : ${dataField}</p>
+      </div>`;
     };
 
     var largeInputField = function (dataField) {
-      return '<div class="form-group">' +
-        '<label class="control-label">LISÄTIEDOT</label>' +
-        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" >' + (dataField === undefined || dataField === null ? "" : dataField ) + '</textarea>' +
-        '</div>';
+      const value = dataField === undefined || dataField === null ? '' : dataField;
+      return `<div class="form-group">
+        <label class="control-label">LISÄTIEDOT</label>
+        <textarea class="form-control large-input roadAddressProject" id="lisatiedot">${value}</textarea>
+      </div>`;
     };
 
     const inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
-      let lengthLimit = '';
-      if (maxLength)
-        lengthLimit = 'maxlength="' + maxLength + '"';
-      return '<div class="form-group input-required">' +
-        '<label class="control-label required">' + labelText + '</label>' +
-        '<input type="text" class="form-control" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '"/>' +
-        '</div>';
+      const lengthLimit = maxLength ? `maxlength="${maxLength}"` : '';
+      return `<div class="form-group input-required">
+        <label class="control-label required">${labelText}</label>
+        <input type="text" class="form-control" id="${id}" ${lengthLimit} placeholder="${placeholder}" value="${value || ''}"/>
+      </div>`;
     };
 
     const title = function (projectName) {
-      const projectNameFixed = (projectName) ? projectName : "Uusi tieosoiteprojekti";
-      return '<span class ="edit-mode-title">' + projectNameFixed + '</span>';
+      const projectNameFixed = projectName || 'Uusi tieosoiteprojekti';
+      return `<span class="edit-mode-title">${projectNameFixed}</span>`;
     };
 
     var actionButtons = function () {
-      var html = '<div class="project-form form-controls" id="actionButtons">';
+      let deleteButton = '';
       if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-        html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-          'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
+        deleteButton = `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>`;
       }
-      html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
-        '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
-        '</div>';
-      return html;
+      return `
+        <div class="project-form form-controls" id="actionButtons">
+          ${deleteButton}
+          <button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>
+          <button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>
+        </div>`;
     };
 
     var newProjectTemplate = function () {
-      return _.template('' +
-        '<header>' +
-        title() +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<div class="edit-control-group project-choice-group">' +
-        staticField('Lisätty järjestelmään', '-') +
-        staticField('Muokattu viimeksi', '-') +
-        '<div class="form-group editable form-editable-roadAddressProject"> ' +
-        '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
-        inputFieldRequired('*Nimi', 'nimi', '', '', 32) +
-        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '', 10) +
-        '   <div class="form-check-date-notifications"> ' +
-        '     <p id="projectStartDate-validation-notification"> </p>' +
-        '   </div>' +
-        largeInputField() +
-        '<div class="form-group">' +
-        '<label class="control-label"></label>' +
-        addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
-        '</div>' +
-        '<div class="form-group">' +
-        '<label class="control-label">Tieosat</label>' +
-        addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + addReserveButton() +
-        '</div>' +
-        '</form>' +
-        '</div>' +
-        '</div><div class = "form-result"><label >PROJEKTIIN VALITUT TIEOSAT:</label>' +
-        '<div style="margin-left: 16px;">' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
-        '</div>' +
-        '<div id ="reservedRoads">' +
-        '</div></div>' +
-        '</div></div>' +
-        '<footer>' + actionButtons() + '</footer>');
+      return _.template(`
+        <header>${title()}</header>
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <div class="edit-control-group project-choice-group">
+              ${staticField('Lisätty järjestelmään', '-')}
+              ${staticField('Muokattu viimeksi', '-')}
+              <div class="form-group editable form-editable-roadAddressProject">
+                <form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">
+                  ${inputFieldRequired('*Nimi', 'nimi', '', '', 32)}
+                  ${inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '', 10)}
+                  <div class="form-check-date-notifications">
+                    <p id="projectStartDate-validation-notification"></p>
+                  </div>
+                  ${largeInputField()}
+                  <div class="form-group">
+                    <label class="control-label"></label>
+                    ${addSmallLabel('TIE')}${addSmallLabel('AOSA')}${addSmallLabel('LOSA')}
+                  </div>
+                  <div class="form-group">
+                    <label class="control-label">Tieosat</label>
+                    ${addSmallInputNumber('tie', '', 5)}${addSmallInputNumber('aosa', '', 3)}${addSmallInputNumber('losa', '', 3)}${addReserveButton()}
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="form-result">
+              <label>PROJEKTIIN VALITUT TIEOSAT:</label>
+              <div style="margin-left: 16px;">
+                ${addSmallLabel('TIE')}${addSmallLabel('OSA')}${addSmallLabel('PITUUS')}${addSmallLabel('JATKUU')}${addSmallLabel('ELY')}
+              </div>
+              <div id="reservedRoads"></div>
+            </div>
+          </div>
+        </div>
+        <footer>${actionButtons()}</footer>
+      `);
     };
 
     var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
-      return _.template('' +
-        '<header>' +
-        title(project.name) +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<div class="edit-control-group project-choice-group">' +
-        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate) +
-        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
-        '<div class="form-group editable form-editable-roadAddressProject"> ' +
-        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
-        inputFieldRequired('*Nimi', 'nimi', '', project.name, 32) +
-        inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate, 10) +
-        '   <div class="form-check-date-notifications"> ' +
-        '     <p id="projectStartDate-validation-notification"> </p>' +
-        '   </div>' +
-        largeInputField(project.additionalInfo) +
-        '<div class="form-group">' +
-        '<label class="control-label"></label>' +
-        addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
-        '</div>' +
-        '<div class="form-group">' +
-        '<label class="control-label">Tieosat</label>' +
-        addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + addReserveButton() +
-        '</div>' +
-        '</form>' +
-        '</div>' +
-        '</div>' +
-        '<div class = "form-result">' +
-        '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
-        '<div style="margin-left: 16px;">' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
-        '</div>' +
-        '<div id ="reservedRoads">' +
-        reservedRoads +
-        '</div></div></br></br>' +
-        '<div class = "form-result">' +
-        '<label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>' +
-        '<div style="margin-left: 16px;">' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU') + addSmallLabel('ELY') +
-        '</div>' +
-        '<div id ="newReservedRoads">' +
-        newReservedRoads +
-        '</div></div></div></div>' +
-        '<footer>' + actionButtons() + '</footer>');
+      return _.template(`
+        <header>${title(project.name)}</header>
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <div class="edit-control-group project-choice-group">
+              ${staticField('Lisätty järjestelmään', `${project.createdBy} ${project.startDate}`)}
+              ${staticField('Muokattu viimeksi', `${project.modifiedBy} ${project.dateModified}`)}
+              <div class="form-group editable form-editable-roadAddressProject">
+                <form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">
+                  ${inputFieldRequired('*Nimi', 'nimi', '', project.name, 32)}
+                  ${inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate, 10)}
+                  <div class="form-check-date-notifications">
+                    <p id="projectStartDate-validation-notification"></p>
+                  </div>
+                  ${largeInputField(project.additionalInfo)}
+                  <div class="form-group">
+                    <label class="control-label"></label>
+                    ${addSmallLabel('TIE')}${addSmallLabel('AOSA')}${addSmallLabel('LOSA')}
+                  </div>
+                  <div class="form-group">
+                    <label class="control-label">Tieosat</label>
+                    ${addSmallInputNumber('tie', '', 5)}${addSmallInputNumber('aosa', '', 3)}${addSmallInputNumber('losa', '', 3)}${addReserveButton()}
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div class="form-result">
+              <label>PROJEKTIIN VARATUT TIEOSAT:</label>
+              <div style="margin-left: 16px;">
+                ${addSmallLabel('TIE')}${addSmallLabel('OSA')}${addSmallLabel('PITUUS')}${addSmallLabel('JATKUU')}${addSmallLabel('ELY')}
+              </div>
+              <div id="reservedRoads">${reservedRoads}</div>
+            </div>
+            <br/><br/>
+            <div class="form-result">
+              <label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>
+              <div style="margin-left: 16px;">
+                ${addSmallLabel('TIE')}${addSmallLabel('OSA')}${addSmallLabel('PITUUS')}${addSmallLabel('JATKUU')}${addSmallLabel('ELY')}
+              </div>
+              <div id="newReservedRoads">${newReservedRoads}</div>
+            </div>
+          </div>
+        </div>
+        <footer>${actionButtons()}</footer>
+      `);
     };
 
 
 
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
-      let devToolValidationButton = '';
-      if (_.includes(startupParameters.roles, 'dev')) {
-        devToolValidationButton = '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>';
-      }
-      return _.template('' +
-        '<header>' +
-          formCommon.titleWithEditingTool(project) +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
-        '<div class="form-group" id="project-errors"></div>' +
-        '</div></div></br></br>' +
-        '<footer>' +
-        '<div class="project-form form-controls">' +
-          devToolValidationButton +
-          formCommon.projectButtonsDisabled() +
-          '</div>' +
-          '</footer>');
+      const devToolValidationButton = _.includes(startupParameters.roles, 'dev') 
+        ? '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>'
+        : '';
+      
+      return _.template(`
+        <header>${formCommon.titleWithEditingTool(project)}</header>
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>
+            <div class="form-group" id="project-errors"></div>
+          </div>
+        </div>
+        <br/><br/>
+        <footer>
+          <div class="project-form form-controls">
+            ${devToolValidationButton}
+            ${formCommon.projectButtonsDisabled()}
+          </div>
+        </footer>
+      `);
     };
 
     var errorsList = function () {
-      if (projectCollection.getProjectErrors().length > 0) {
-        return '<label>TARKASTUSILMOITUKSET:</label>' +
-          '<div id ="projectErrors">' +
-          formCommon.getProjectErrors(projectCollection.getProjectErrors(), projectCollection.getAll(), projectCollection) +
-          '</div>';
+      const projectErrors = projectCollection.getProjectErrors();
+      if (projectErrors.length > 0) {
+        return `
+          <label>TARKASTUSILMOITUKSET:</label>
+          <div id="projectErrors">
+            ${formCommon.getProjectErrors(projectErrors, projectCollection.getAll(), projectCollection)}
+          </div>`;
       }
-      else
-        return '';
+      return '';
     };
 
     var addSmallLabel = function (label) {
-      return '<label class="control-label-small">' + label + '</label>';
+      return `<label class="control-label-small">${label}</label>`;
     };
 
     var addSmallLabelWithIds = function (label, id) {
-      return '<label class="control-label-small" id=' + id + '>' + label + '</label>';
+      return `<label class="control-label-small" id="${id}">${label}</label>`;
     };
 
     var addSmallInputNumber = function (id, value, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
-      var smallNumberInput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value ) + '"' +
-        (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
-      return smallNumberInput;
+      const val = _.isUndefined(value) ? '' : value;
+      const maxLen = _.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`;
+      return `<input type="text" 
+        onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)" 
+        class="form-control small-input roadAddressProject" 
+        id="${id}" 
+        value="${val}" 
+        ${maxLen} 
+        onclick=""
+      />`;
     };
 
     var addDatePicker = function () {
@@ -275,43 +283,41 @@
       };
 
       var reservedHtmlList = function (list) {
-          var text = '';
-          var index = 0;
-          _.each(list, function (line) {
-              if (!_.isUndefined(line.currentLength)) {
-                  text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
-                      addSmallLabel(line.roadNumber) +
-                      addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-                      addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
-                      addSmallLabelWithIds((line.currentDiscontinuity), 'reservedDiscontinuity') +
-                      addSmallLabelWithIds((line.currentEly), 'reservedEly') +
-                      '</div>';
-              }
-          });
-          return text;
+          return _.chain(list)
+            .filter(line => !_.isUndefined(line.currentLength))
+            .map((line, index) => `
+                <div class="form-reserved-roads-list">
+                  ${projectCollection.getDeleteButton(index, line.roadNumber, line.roadPartNumber, 'reservedList')}
+                  ${addSmallLabel(line.roadNumber)}
+                  ${addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber')}
+                  ${addSmallLabelWithIds(line.currentLength, 'reservedRoadLength')}
+                  ${addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity')}
+                  ${addSmallLabelWithIds(line.currentEly, 'reservedEly')}
+                </div>`)
+            .join('')
+            .value();
       };
 
       var formedHtmlList = function (list) {
-        var text = '';
-        var index = 0;
-        _.each(list, function (line) {
-          if (!_.isUndefined(line.newLength)) {
-            text += '<div class="form-reserved-roads-list">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
-              addSmallLabel(line.roadNumber) +
-              addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-              addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
-              addSmallLabelWithIds((line.newDiscontinuity), 'reservedDiscontinuity') +
-              addSmallLabelWithIds((line.newEly), 'reservedEly') +
-              '</div>';
-          }
-        });
-        return text;
+        return _.chain(list)
+          .filter(line => !_.isUndefined(line.newLength))
+          .map((line, index) => `
+              <div class="form-reserved-roads-list">
+                ${projectCollection.getDeleteButton(index, line.roadNumber, line.roadPartNumber, 'formedList')}
+                ${addSmallLabel(line.roadNumber)}
+                ${addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber')}
+                ${addSmallLabelWithIds(line.newLength, 'reservedRoadLength')}
+                ${addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity')}
+                ${addSmallLabelWithIds(line.newEly, 'reservedEly')}
+              </div>`)
+          .join('')
+          .value();
       };
 
       var toggleAdditionalControls = function () {
-        rootElement.find('header').replaceWith('<header>' +
-          formCommon.titleWithEditingTool(currentProject) +
-          '</header>');
+        rootElement.find('header').replaceWith(`
+          <header>${formCommon.titleWithEditingTool(currentProject)}</header>
+        `);
       };
 
       var createOrSaveProject = function () {
@@ -339,10 +345,16 @@
           var index = 0;
           projectCollection.setReservedParts(result.reservedInfo);
           _.each(result.reservedInfo, function (line) {
-            var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
-            text += '<div class="form-reserved-roads-list">' + button +
-              addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
-              '</div>';
+            const button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
+            text += `
+              <div class="form-reserved-roads-list">
+                ${button}
+                ${addSmallLabel(line.roadNumber)}
+                ${addSmallLabel(line.roadPartNumber)}
+                ${addSmallLabel(line.roadLength)}
+                ${addSmallLabel(line.discontinuity)}
+                ${addSmallLabel(line.ely)}
+              </div>`;
           });
           rootElement.html(openProjectTemplate(currentProject, text, ''));
 
