@@ -22,7 +22,7 @@ Callable methods:
 - render(): string              -> Returns component HTML (button + hidden dropdown)
 - bindEvents(): void            -> Attaches event listeners; call after inserting the HTML
 - setValue(value): void         -> Programmatically select by item value; updates button label and dropdown state
-- getSelectedValue(): string|null      -> Returns the internal selected id `value-label` or null. Use `.split('-')[0]` for just value
+ - getSelectedValue(): string|number|null -> Returns  the selected item `value` or null
 - setDisabled(bool): void       -> Enables/disables the button
 - updateData(newData): void     -> Replaces column data and re-renders the dropdown section.
 - getElement(): HTMLElement?    -> Returns the root element by `id`.

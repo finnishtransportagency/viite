@@ -184,7 +184,7 @@
     }
 
     return {
-      getRoadRoadAddressChangesBrowserForm: getRoadAddressChangesBrowserForm,
+      getRoadAddressChangesBrowserForm: getRoadAddressChangesBrowserForm,
       getRoadAddressBrowserForm: getRoadAddressBrowserForm,
       bindSelectorEvents: bindSelectorEvents,
       getSelectorComponents: function () {
