@@ -1,105 +1,209 @@
 (function (root) {
-    root.RoadAddressBrowserForm = function () {
+  root.RoadAddressBrowserForm = function () {
 
-        function getRoadAddressChangesBrowserForm() {
-            return '<form class="road-address-browser-form" id="roadAddressChangesBrowser">' +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Rajausperuste</label>' +
-                            '<select id="dateTarget">' +
-                                '<option value="ProjectAcceptedDate">Projektin hyväksymispvm</option>' +
-                                '<option value="RoadAddressStartDate">Muutoksen voimaantulopvm</option>' +
-                            '</select>' +
-                        '</div>' +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Alkupvm</label>' +
-                            '<div>' +
-                                ' <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" style="width: 80px" required/>' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="input-container"> <b style="margin-top: 25px"> - </b></div>' +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Loppupvm</label>' +
-                            '<div>' +
-                                ' <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" style="width: 80px" />' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Ely</label>' +
-                            '<select name id="roadAddrChangesInputEly" /> ' +
-                                createElyDropDownOptions() +
-                            '</select>' +
-                        '</div>' +
-                        createRoadNumberInputField("roadAddrChangesInputRoad") +
-                        createRoadPartNumberInputFields("roadAddrChangesInputStartPart", "roadAddrChangesInputEndPart") +
-                        '<div class="road-address-browser-form-button-wrapper">' +
-                            createSearchButton("fetchRoadAddressChanges") +
-                            createCsvDownloadButton() +
-                        '</div>' +
-                '</form>';
+    // Initialize multi-column selectors
+    let dateTargetSelector, elyEvkSelector, targetSelector;
+
+    function initializeSelectors() {
+      // Date target selector for changes browser
+      dateTargetSelector = new Selector({
+        id: 'dateTarget',
+        placeholder: 'Valitse rajausperuste',
+        data: {
+          0: {
+            items: [
+              { value: 'ProjectAcceptedDate', label: 'Projektin hyväksymispvm' },
+              { value: 'RoadAddressStartDate', label: 'Muutoksen voimaantulopvm' }
+            ]
+          }
         }
+      });
 
-        function getRoadAddressBrowserForm() {
-            return  '<form id="roadAddressBrowser" class="road-address-browser-form">' +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Tilannepvm</label>' +
-                            '<div>' +
-                                ' <input type="text" id="roadAddrSituationDate" value="' + dateutil.getCurrentDateString() + '" style="width: 80px" required />' +
-                            '</div>' +
-                        '</div>' +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Ely</label>' +
-                            '<select name id="roadAddrInputEly" /> ' +
-                                createElyDropDownOptions() +
-                            '</select>' +
-                        '</div>' +
-                        createRoadNumberInputField("roadAddrInputRoad") +
-                        createRoadPartNumberInputFields("roadAddrInputStartPart", "roadAddrInputEndPart") +
-                        '<div class="input-container">' +
-                            '<label class="control-label-small">Hakukohde</label>' +
-                            '<select id="targetValue">' +
-                                '<option value="Tracks">Ajoradat</option>' +
-                                '<option value="RoadParts">Tieosat</option>' +
-                                '<option value="Nodes">Solmut</option>' +
-                                '<option value="Junctions">Liittymät</option>' +
-                                '<option value="RoadNames">Tiennimet</option>' +
-                            '</select>' +
-                        '</div>' +
-                        '<div class="road-address-browser-form-button-wrapper">' +
-                            createSearchButton("fetchRoadAddresses") +
-                            createCsvDownloadButton() +
-                        '</div>' +
-                    '</form>';
-        }
-
-        function createElyDropDownOptions() {
-            let html = '<option value="">--</option>';
-            for (const ely in ViiteEnumerations.ElyCodes) {
-                if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely))
-                    html += '<option value="' + ViiteEnumerations.ElyCodes[ely].value + '">' + ViiteEnumerations.ElyCodes[ely].value + '(' + ViiteEnumerations.ElyCodes[ely].shortName + ')</option>';
+      function createElyEvkData() {
+        const evkItems = [];
+        const elyItems = [];
+  
+        // Add EVK items to first column
+        if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
+          for (const evk in ViiteEnumerations.EVKCodes) {
+            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
+              const evkData = ViiteEnumerations.EVKCodes[evk];
+              evkItems.push({
+                value: `EVK_${evkData.value}`,
+                label: `${evkData.value} (${evkData.shortName})`
+              });
             }
-            return html;
+          }
         }
-
-        function createRoadNumberInputField(id) {
-            return '<div class="input-container"><label class="control-label-small">Tie</label><input class="road-address-browser-road-input" type="number" min="1" max="99999" id="' + id + '" /></div>';
+  
+        // Add ELY items to second column
+        if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
+          for (const ely in ViiteEnumerations.ElyCodes) {
+            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
+              const elyData = ViiteEnumerations.ElyCodes[ely];
+              elyItems.push({
+                value: `ELY_${elyData.value}`,
+                label: `${elyData.value} (${elyData.shortName})`
+              });
+            }
+          }
         }
-
-        function createRoadPartNumberInputFields(idStart, idEnd) {
-            return  '<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="' + idStart + '"/></div>' +
-                    '<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="' + idEnd + '"/></div>';
-        }
-
-        function createCsvDownloadButton() {
-            return '<button id="exportAsCsvFile" class="download-csv btn" disabled>Lataa CSV-tiedostona <i class="fas fa-file-excel"></i></button>';
-        }
-
-        function createSearchButton(id) {
-            return '<button class="btn btn-primary" id="' + id + '"> Hae </button>';
-        }
-
+  
         return {
-            getRoadRoadAddressChangesBrowserForm: getRoadAddressChangesBrowserForm,
-            getRoadAddressBrowserForm: getRoadAddressBrowserForm
+          0: {
+            columnTitle: 'EVK',
+            items: evkItems
+          },
+          1: {
+            columnTitle: 'ELY',
+            items: elyItems
+          }
         };
+      }
+
+      // ELY/EVK selector for address browser
+      elyEvkSelector = new Selector({
+        id: 'roadAddrInputElyEvk',
+        placeholder: 'Valitse ELY/EVK',
+        width: 200,
+        data: createElyEvkData()
+      });
+
+      // Target selector for address browser
+      targetSelector = new Selector({
+        id: 'targetValue',
+        placeholder: 'Valitse hakukohde',
+        value: 'Tracks',
+        width: 100,
+        data: {
+          0: {
+            items: [
+              { value: 'Tracks', label: 'Ajoradat' },
+              { value: 'RoadParts', label: 'Tieosat' },
+              { value: 'Nodes', label: 'Solmut' },
+              { value: 'Junctions', label: 'Liittymät' },
+              { value: 'RoadNames', label: 'Tiennimet' }
+            ]
+          }
+        }
+      });
+    }
+
+    function getRoadAddressChangesBrowserForm() {
+      if (!dateTargetSelector) initializeSelectors();
+
+      const html = `
+        <form class="road-address-browser-form" id="roadAddressChangesBrowser">
+          <div class="input-container">
+            <label class="control-label-small">Rajausperuste</label>
+            ${dateTargetSelector.render()}
+          </div>
+          <div class="input-container">
+            <label class="control-label-small">Alkupvm</label>
+            <div>
+              <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" style="width: 80px" required/>
+            </div>
+          </div>
+          <div class="input-container"> <b style="margin-top: 25px"> - </b></div>
+          <div class="input-container">
+            <label class="control-label-small">Loppupvm</label>
+            <div>
+              <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" style="width: 80px" />
+            </div>
+          </div>
+          ${createRoadNumberInputField('roadAddrChangesInputRoad')}
+          ${createRoadPartNumberInputFields('roadAddrChangesInputStartPart', 'roadAddrChangesInputEndPart')}
+          <div class="road-address-browser-form-button-wrapper">
+            ${createSearchButton('fetchRoadAddressChanges')}
+            ${createCsvDownloadButton()}
+          </div>
+        </form>`;
+
+      // Setup event delegation immediately
+      dateTargetSelector.bindEvents();
+
+      return html;
+    }
+
+    function getRoadAddressBrowserForm() {
+      if (!elyEvkSelector || !targetSelector) initializeSelectors();
+
+      const html = `
+        <form id="roadAddressBrowser" class="road-address-browser-form">
+          <div class="input-container">
+            <label class="control-label-small">Tilannepvm</label>
+            <div>
+              <input type="text" id="roadAddrSituationDate" value="${dateutil.getCurrentDateString()}" style="width: 80px" required />
+            </div>
+          </div>
+          <div class="input-container">
+            <label class="control-label-small">ELY/EVK</label>
+            ${elyEvkSelector.render()}
+          </div>
+          ${createRoadNumberInputField('roadAddrInputRoad')}
+          ${createRoadPartNumberInputFields('roadAddrInputStartPart', 'roadAddrInputEndPart')}
+          <div class="input-container">
+            <label class="control-label-small">Hakukohde</label>
+            ${targetSelector.render()}
+          </div>
+          <div class="road-address-browser-form-button-wrapper">
+            ${createSearchButton('fetchRoadAddresses')}
+            ${createCsvDownloadButton()}
+          </div>
+        </form>`;
+
+      // Setup event delegation immediately
+      elyEvkSelector.bindEvents();
+      targetSelector.bindEvents();
+
+      return html;
+    }
+
+    // Bind events for all selector components after form is rendered
+    function bindSelectorEvents(container) {
+      if (dateTargetSelector) dateTargetSelector.bindEvents(container);
+      if (elyEvkSelector) elyEvkSelector.bindEvents(container);
+      if (targetSelector) targetSelector.bindEvents(container);
+    }
+
+    function createRoadNumberInputField(id) {
+      return `<div class="input-container"><label class="control-label-small">Tie</label><input class="road-address-browser-road-input" type="number" min="1" max="99999" id="${id}" /></div>`;
+    }
+
+    function createRoadPartNumberInputFields(idStart, idEnd) {
+      return `<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="${idStart}"/></div>` +
+        `<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="${idEnd}"/></div>`;
+    }
+
+    function createCsvDownloadButton() {
+      return '<button id="exportAsCsvFile" class="download-csv btn" disabled>Lataa CSV-tiedostona <i class="fas fa-file-excel"></i></button>';
+    }
+
+    function createSearchButton(id) {
+      return `<button class="btn btn-primary" id="${id}"> Hae </button>`;
+    }
+
+    return {
+      getRoadAddressChangesBrowserForm: getRoadAddressChangesBrowserForm,
+      getRoadAddressBrowserForm: getRoadAddressBrowserForm,
+      bindSelectorEvents: bindSelectorEvents,
+      getSelectorComponents: function () {
+        return {
+          dateTarget: dateTargetSelector,
+          elyEvk: elyEvkSelector,
+          target: targetSelector
+        };
+      },
+      setSelectorComponent: function (key, component) {
+        switch (key) {
+          case 'elyEvk':
+            elyEvkSelector = component;
+            break;
+          default:
+            break;
+        }
+      },
+      initializeSelectors: initializeSelectors
     };
+  };
 }(this));
