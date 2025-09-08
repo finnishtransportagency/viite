@@ -1,0 +1,143 @@
+.mcs-container {
+  position: relative;
+  display: inline-block;
+  font-family: sans-serif;
+  font-size: 14px;
+
+  .mcs-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 200px;
+    padding: 3px 6px;
+    border: 1px solid #ccc;
+    border-radius: @border-radius-base;
+    background-color: #fff;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover:not(:disabled) {
+      background-color: #f5f5f5;
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .mcs-label {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+    }
+
+    .mcs-arrow {
+      margin-left: 6px;
+      transition: transform 0.2s;
+    }
+
+    &.open {
+      .mcs-arrow {
+        transform: rotate(180deg);
+      }
+    }
+  }
+
+  .mcs-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: @border-radius-base;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    z-index: 1000;
+
+    &.hidden {
+      display: none;
+    }
+
+    .mcs-columns {
+      display: flex;
+      position: relative;
+      border-radius: @border-radius-base;
+      border-right: 1px solid #eee; // Divider
+    }
+  
+    .mcs-column:last-child {
+      border-right: none; // No divider on last column
+    }
+    
+    .mcs-column {
+      flex: 1;
+      min-width: 100px;
+      max-height: 380px;
+      overflow-y: auto;
+      border-right: 1px solid #eee;
+      background-color: #fff;
+
+      &:last-child {
+        border-right: none;
+      }
+
+      .mcs-column-title {
+        background-color: #f7f7f7;
+        border-bottom: 1px solid @gray;
+        padding: 3px 5px;
+        font-weight: 600;
+        font-size: 13px;
+        color: #333;
+      }
+
+      .mcs-item {
+        display: flex;
+        align-items: center;
+        padding: 3px 5px;
+        padding-right: 0;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        background-color: #fff;
+
+        &:hover {
+          background-color: #f0f0f0;
+        }
+
+        &.selected {
+          background-color: #e6f0ff;
+
+          .mcs-circle {
+            background-color: @blue;
+            border-color: @blue-lighter;
+          }
+        }
+
+        .mcs-circle {
+          width: 12px;
+          height: 12px;
+          border: 2px solid @gray;
+          border-radius: 50%;
+          margin-right: 8px;
+          flex-shrink: 0;
+        }
+
+        .mcs-item-label {
+          font-size: 14px;
+          color: #333;
+          flex: 1;
+        }
+      }
+    }
+
+    .mcs-divider {
+      width: 1px;
+      background-color: #ddd;
+    }
+  }
+
+  .mcs-columns, .mcs-column, .mcs-divider {
+    box-sizing: border-box;
+  }
+}
