@@ -24,18 +24,45 @@
       });
     }, 1000);
 
+    // TODO: Remove mock data
     this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddressbrowser', params, function (data) {
+        // Add evk field to results array
+        if (data && Array.isArray(data.results)) {
+          data.results.forEach((item, index) => {
+            item.evk = (index % 3) + 1; // 1,2,3,1,2,3...
+          });
+        }
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
-
+    
     this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
+        // Add evk field to results array
+        if (data && Array.isArray(data.results)) {
+          data.results.forEach((item, index) => {
+            item.evk = (index % 3) + 1; // 1,2,3,1,2,3...
+          });
+        }
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
+    // Old implementation without mock
+    // this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
+    //   return $.get('api/viite/roadaddressbrowser', params, function (data) {
+    //     return _.isFunction(callback) && callback(data);
+    //   });
+    // }, 1000);
+
+    // this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
+    //   return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
+    //     return _.isFunction(callback) && callback(data);
+    //   });
+    // }, 1000);
+    
+    
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
@@ -399,21 +426,20 @@
 
       // ELY to EVK mapping based on geographical regions
       const elyToEvkMapping = {
-        1: 1,   // Uusimaa -> Uudenmaan elinvoimakeskus
-        2: 2,   // Varsinais-Suomi -> Lounais-Suomen elinvoimakeskus
-        3: 3,   // Kaakkois-Suomi -> Kaakkois-Suomen elinvoimakeskus
-        4: 4,   // Pirkanmaa -> Sisä-Suomen elinvoimakeskus
-        8: 10,  // Pohjois-Savo -> Itä-Suomen elinvoimakeskus
-        9: 8,   // Keski-Suomi -> Keski-Suomen elinvoimakeskus
-        10: 12, // Etelä-Pohjanmaa -> Etelä-Pohjanmaan elinvoimakeskus
-        12: 14, // Pohjois-Pohjanmaa -> Pohjanmaan elinvoimakeskus
-        14: 18  // Lappi -> Lapin elinvoimakeskus
+        1: 1,  // Uusimaa -> Uudenmaan elinvoimakeskus
+        2: 2,  // Varsinais-Suomi -> Lounais-Suomen elinvoimakeskus
+        3: 3,  // Kaakkois-Suomi -> Kaakkois-Suomen elinvoimakeskus
+        4: 4,  // Pirkanmaa -> Sisä-Suomen elinvoimakeskus
+        8: 6,  // Pohjois-Savo -> Itä-Suomen elinvoimakeskus
+        9: 5,  // Keski-Suomi -> Keski-Suomen elinvoimakeskus
+        10: 7, // Etelä-Pohjanmaa -> Etelä-Pohjanmaan elinvoimakeskus
+        12: 8, // Pohjois-Pohjanmaa -> Pohjanmaan elinvoimakeskus
+        14: 10 // Lappi -> Lapin elinvoimakeskus
       };
 
       // Helper function to add EVK code to a single item
       function addEvkToItem(item) {
         if (item && typeof item === 'object') {
-          // Add EVK code based on ELY code
           if (item.currentEly !== undefined) {
             item.currentEvk = elyToEvkMapping[item.currentEly] || item.currentEly;
           }
@@ -433,22 +459,18 @@
       // Handle different data structures
       if (Array.isArray(data)) {
         return data.map(function (item) {
-          // Handle array of arrays
           if (Array.isArray(item)) {
             return item.map(addEvkToItem);
           }
-          // Handle regular array items
           return addEvkToItem(item);
         });
       } else if (data && typeof data === 'object') {
-        // Handle project data with reservedInfo and formedInfo arrays
         if (data.reservedInfo && Array.isArray(data.reservedInfo)) {
           data.reservedInfo = data.reservedInfo.map(addEvkToItem);
         }
         if (data.formedInfo && Array.isArray(data.formedInfo)) {
           data.formedInfo = data.formedInfo.map(addEvkToItem);
         }
-        // Handle single item
         addEvkToItem(data);
       }
 
