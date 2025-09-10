@@ -39,16 +39,16 @@
     
     this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
-        // Add evk field to results array
-        if (data && Array.isArray(data.results)) {
-          data.results.forEach((item, index) => {
-            item.evk = (index % 3) + 1; // 1,2,3,1,2,3...
+        if (data && Array.isArray(data.changeInfos)) {
+          data.changeInfos.forEach((item, index) => {
+            item.oldEvk = (index % 3) + 1;
+            item.newEvk = ((index + 1) % 3) + 1;
           });
         }
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
-
+    
     // Old implementation without mock
     // this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
     //   return $.get('api/viite/roadaddressbrowser', params, function (data) {
