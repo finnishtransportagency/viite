@@ -166,7 +166,7 @@
         addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5) +
         addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3) +
         addTrackCodeDropdown(trackCodeDropdown) +
-        addSmallInputNumber('ely', link.elyCode, !projectEditable, 2) +
+        addSmallInputNumber('ely', link.elyCode, true, 2) +
         addDiscontinuityDropdown() +
         addWideLabel('HALL. LUOKKA') +
         administrativeClassDropdown(administrativeClass) + '<br>' +
