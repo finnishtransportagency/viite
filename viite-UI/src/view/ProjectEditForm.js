@@ -3,7 +3,7 @@
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const CalibrationCode = ViiteEnumerations.CalibrationCode;
     const editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
-    const ValidElys = _.map(ViiteEnumerations.ElyCodes, ely => ely);
+    const validEvks = _.map(ViiteEnumerations.EVKCodes, evk => evk);
     let selectedProjectLink = false;
     let editedNameByUser = false;
     const LinkSources = ViiteEnumerations.LinkGeomSource;
@@ -443,12 +443,11 @@
       };
 
       const saveChanges = () => {
-        // TODO: Revert dirtyness if others than ACTION_TERMINATE is chosen
-        const elyValue = parseInt($('#ely')[0].value);
-        const isValidEly = _.some(ValidElys, ely => ely.value === elyValue);
-        
-        if (!isValidEly) {
-          return new ModalConfirm('Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.');
+        const evkValue = parseInt($('#evk')[0].value);
+        const isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
+
+        if (!isValidEvk) {
+          return new ModalConfirm('Tarkista antamasi EVK-koodi. Annettu arvo on virheellinen.');
         }
 
         const statusDropdownValue = $('#dropDown_0').val();
