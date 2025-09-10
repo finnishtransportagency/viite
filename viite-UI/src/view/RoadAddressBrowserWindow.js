@@ -25,6 +25,7 @@
           array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
+                  results[i].evk,
                   results[i].ely,
                   results[i].roadNumber,
                   results[i].track,
