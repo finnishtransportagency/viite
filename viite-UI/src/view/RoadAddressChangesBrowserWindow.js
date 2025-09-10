@@ -19,41 +19,6 @@
         roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadAddressChangesBrowserForm());
 
-        // Create EVK/ELY data for the multi-column selector (copied from RoadAddressBrowserForm.js)
-        function createElyEvkData() {
-            const evkItems = [];
-            const elyItems = [];
-
-            if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
-                for (const evk in ViiteEnumerations.EVKCodes) {
-                    if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
-                        const evkData = ViiteEnumerations.EVKCodes[evk];
-                        evkItems.push({
-                            value: `EVK_${evkData.value}`,
-                            label: `${evkData.value} (${evkData.shortName})`
-                        });
-                    }
-                }
-            }
-
-            if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
-                for (const ely in ViiteEnumerations.ElyCodes) {
-                    if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
-                        const elyData = ViiteEnumerations.ElyCodes[ely];
-                        elyItems.push({
-                            value: `ELY_${elyData.value}`,
-                            label: `${elyData.value} (${elyData.shortName})`
-                        });
-                    }
-                }
-            }
-
-            return {
-                0: { columnTitle: 'EVK', items: evkItems },
-                1: { columnTitle: 'ELY', items: elyItems }
-            };
-        }
-
         // ========== Validation helpers (extracted) ==========
         function validateDate(dateString, dateElement) {
             // Check format ignoring whitespace
@@ -97,6 +62,41 @@
             lOsa.setCustomValidity("");
             return true;
         }
+
+        // Create EVK/ELY data for the multi-column selector
+        function createElyEvkData() {
+          const evkItems = [];
+          const elyItems = [];
+
+          if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
+              for (const evk in ViiteEnumerations.EVKCodes) {
+                  if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
+                      const evkData = ViiteEnumerations.EVKCodes[evk];
+                      evkItems.push({
+                          value: `EVK_${evkData.value}`,
+                          label: `${evkData.value} (${evkData.shortName})`
+                      });
+                  }
+              }
+          }
+
+          if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
+              for (const ely in ViiteEnumerations.ElyCodes) {
+                  if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
+                      const elyData = ViiteEnumerations.ElyCodes[ely];
+                      elyItems.push({
+                          value: `ELY_${elyData.value}`,
+                          label: `${elyData.value} (${elyData.shortName})`
+                      });
+                  }
+              }
+          }
+
+          return {
+              0: { columnTitle: 'EVK', items: evkItems },
+              1: { columnTitle: 'ELY', items: elyItems }
+          };
+      }
 
         // Instantiate selector and inject it into the Changes form
         function insertElyEvkSelector() {
@@ -142,6 +142,7 @@
                                     <thead>
                                         <tr>
                                             <th>Voimaantulopvm</th>
+                                            <th>Evk</th>
                                             <th>Ely</th>
                                             <th>Tie</th>
                                             <th>Ajr</th>
@@ -152,6 +153,7 @@
                                             <th>Pituus</th>
                                             <th>Hall. luokka</th>
                                             <th>Muutos</th>
+                                            <th>u_Evk</th>
                                             <th>u_Ely</th>
                                             <th>u_Tie</th>
                                             <th>u_Ajr</th>
@@ -172,6 +174,7 @@
             for (let i = 0, len = results.length; i < len; i++) {
                 arr[++arrPointer] = `   <tr>
                                             <td>${results[i].startDate}</td>
+                                            <td>${results[i].oldEvk}</td>
                                             <td>${results[i].oldEly}</td>
                                             <td>${results[i].oldRoadNumber}</td>
                                             <td>${results[i].oldTrack}</td>
@@ -182,6 +185,7 @@
                                             <td>${results[i].oldLength}</td>
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
                                             <td>${EnumerationUtils.getChangeTypeDisplayText(results[i].changeType)}</td>
+                                            <td>${results[i].newEvk}</td>
                                             <td>${results[i].newEly}</td>
                                             <td>${results[i].newRoadNumber}</td>
                                             <td>${results[i].newTrack}</td>
