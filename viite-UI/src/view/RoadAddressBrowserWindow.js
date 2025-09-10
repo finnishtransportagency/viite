@@ -22,9 +22,10 @@
       function createArrayOfArraysForTracks(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
+          array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
+                  results[i].evk,
                   results[i].ely,
                   results[i].roadNumber,
                   results[i].track,
@@ -49,6 +50,7 @@
           arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
+                                          <th>Evk</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Ajr</th>
@@ -63,6 +65,7 @@
                                   <tbody>`;
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
+              <td>${results[i].evk}</td>
                                           <td>${results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].track}</td>
@@ -82,9 +85,10 @@
       function createArrayOfArraysForRoadParts(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
+          array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
+                  results[i].evk,
                   results[i].ely,
                   results[i].roadNumber,
                   results[i].roadPartNumber,
@@ -107,6 +111,7 @@
           arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
+                                          <th>Evk</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Osa</th>
@@ -119,6 +124,7 @@
                                   <tbody>`;
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
+                                          <td>${results[i].evk}</td>
                                           <td>${results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
@@ -136,9 +142,10 @@
       function createArrayOfArraysForNodes(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
+          array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
+                  results[i].evk,
                   results[i].ely,
                   results[i].roadNumber,
                   results[i].roadPartNumber,
@@ -164,6 +171,7 @@
           arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
+                                          <th>Evk</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Osa</th>
@@ -180,6 +188,7 @@
 
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
+                                          <td>${results[i].evk}</td>
                                           <td>${results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
@@ -270,9 +279,10 @@
       function createArrayOfArraysForRoadNames(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Ely', 'Tie', 'Nimi'];
+          array[++arrayPointer] = ['Evk', 'Ely', 'Tie', 'Nimi'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
+                  results[i].evk,
                   results[i].ely,
                   results[i].roadNumber,
                   results[i].roadName
@@ -291,6 +301,7 @@
           arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
+                                          <th>Evk</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Nimi</th>
@@ -300,6 +311,7 @@
 
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] = `   <tr>
+                                          <td>${results[i].evk}</td>
                                           <td>${results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadName}</td>
