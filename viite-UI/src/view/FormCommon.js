@@ -157,15 +157,16 @@
         trackCodeDropdown = track;
       }
       return `<div class="${prefix}form-group new-road-address" hidden>
-        <div><label></label></div><div><label style="margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>
-        ${addSmallLabel('TIE')}${addSmallLabel('OSA')}${addSmallLabel('AJR')}${addSmallLabel('ELY')}
+        <div><label></label></div><div><label style="margin-top: 20px">TIEOSOITTEEN TIEDOT</label></div>
+        ${addSmallLabel('TIE')}${addSmallLabel('OSA')}${addSmallLabel('AJR')}${addSmallLabel('EVK')}${addSmallLabel('ELY')}
         ${addSmallLabel('JATKUU')}
         </div>
         <div class="${prefix}form-group new-road-address" id="new-address-input1" hidden>
           ${addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5)}
           ${addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3)}
           ${addTrackCodeDropdown(trackCodeDropdown)}
-          ${addSmallInputNumber('ely', link.elyCode, !projectEditable, 2)}
+          ${addSmallInputNumber('evk', link.evkCode, !projectEditable, 2)}
+          ${addSmallInputNumber('ely', link.elyCode, true, 2)}
           ${addDiscontinuityDropdown()}
           ${addWideLabel('HALL. LUOKKA')}
           ${administrativeClassDropdown(administrativeClass)}<br>
@@ -183,6 +184,7 @@
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             $('#ely').val(response.ely);
+            $('#evk').val(response.evk);
             if (response.roadName !== '') {
               roadNameField.val(response.roadName);
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
