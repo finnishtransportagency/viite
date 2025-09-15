@@ -14,6 +14,13 @@
       recalculatedAfterChangesFlag = bool;
     });
 
+    eventbus.on('roadAddressProject:projectLinkSaved', function() {
+      // Hide action buttons (Tallenna, Peruuta)
+      $('#actionButtons').empty();
+      // Show project buttons (Päivitä etäisyyslukemat, etc.)
+      $('.project-form.form-controls').html(formCommon.projectButtons());
+    });
+
     var getRecalculatedAfterChangesFlag = function () {
       return recalculatedAfterChangesFlag;
     };
@@ -145,8 +152,6 @@
         '</div></div></div></div>' +
         '<footer>' + actionButtons() + '</footer>');
     };
-
-
 
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
       let devToolValidationButton = '';
@@ -590,6 +595,7 @@
         html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
           '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
         $('#actionButtons').html(html);
+        console.log("Load edit");
         eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
       };
 
