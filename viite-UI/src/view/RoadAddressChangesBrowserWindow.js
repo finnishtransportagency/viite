@@ -334,17 +334,17 @@
                 const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
                   ? elyEvkSelector.getSelectedValue()
                   : null;
-                // Note: Backend currently supports only ELY. We still pass EVK proactively for future support.
+                // TODO EVK: Note: Backend currently supports only ELY. We still pass EVK proactively for future support.
                 // Only pass numeric ELY to backend
                 if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
                     const parts = selected.split('_');
                     if (parts[1]) params.ely = parts[1];
                 }
                 // Pass EVK as a separate parameter if chosen (backend may ignore this for now)
-                if (selected && typeof selected === 'string' && selected.startsWith('EVK_')) {
-                    const parts = selected.split('_');
-                    if (parts[1]) params.evk = parts[1];
-                }
+                // if (selected && typeof selected === 'string' && selected.startsWith('EVK_')) {
+                //     const parts = selected.split('_');
+                //     if (parts[1]) params.evk = parts[1];
+                // }
                 if (roadNumber.value)
                     params.roadNumber = roadNumber.value;
                 if (minRoadPartNumber.value)
