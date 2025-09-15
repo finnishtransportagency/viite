@@ -337,7 +337,25 @@
     }, 1000);
 
     this.getChangeTable = _.throttle(function (id, callback) {
-      $.getJSON('api/viite/project/getchangetable/' + id, callback);
+      $.getJSON('api/viite/project/getchangetable/' + id, function(data) {
+        // Add mock EVK data to source and target objects
+        if (data && data.changeTable && data.changeTable.changeInfoSeq) {
+          data.changeTable.changeInfoSeq.forEach(change => {
+            if (change.source) {
+              // Add mock EVK (1-3) based on road number to ensure consistency
+              change.source.evk = (change.source.roadNumber % 3) + 1;
+            }
+            if (change.target) {
+              // Add mock EVK (1-3) based on road number to ensure consistency
+              change.target.evk = (change.target.roadNumber % 3) + 1;
+            }
+          });
+        }
+        callback(data);
+      }).fail(function(error) {
+        console.error('Error fetching change table:', error);
+        callback({ error: 'Failed to load change table data' });
+      });
     }, 500);
 
     this.recalculateAndValidateProject = function (id, callback) {

@@ -22,11 +22,11 @@
               <thead>
                 <tr class="project-change-table-dimension-header">
                   <th class="project-change-table-dimension-first-h">Ilmoitus</th>
-                  <th colspan="9" id="label-source-header">
+                  <th colspan="10" id="label-source-header">
                     Nykyosoite <i id="label-source-btn" class="btn-icon fas fa-sort"></i>
                   </th>
                   <th class="project-change-table-dimension-h dimension-reversed"></th>
-                  <th colspan="9" id="label-target-header">
+                  <th colspan="10" id="label-target-header">
                     Uusi osoite <i id="label-target-btn" class="btn-icon fas fa-sort"></i>
                   </th>
                 </tr>
@@ -41,6 +41,7 @@
                   <th class="project-change-table-dimension-h">JATK</th>
                   <th class="project-change-table-dimension-h wide-column">HALL</th>
                   <th class="project-change-table-dimension-h">ELY</th>
+                  <th class="project-change-table-dimension-h">EVK</th>
                   <th class="project-change-table-dimension-h dimension-reversed">KÄÄNNETTY</th>
                   <th class="project-change-table-dimension-h wide-column">TIE</th>
                   <th class="project-change-table-dimension-h">AJR</th>
@@ -51,6 +52,7 @@
                   <th class="project-change-table-dimension-h">JATK</th>
                   <th class="project-change-table-dimension-h wide-column">HALL</th>
                   <th class="project-change-table-dimension-h">ELY</th>
+                  <th class="project-change-table-dimension-h">EVK</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -292,30 +294,36 @@
     }
 
     function getEmptySource(changeInfoSeq) {
-      return `<td class="project-change-table-dimension-first">${getChangeType(changeInfoSeq.changetype)}</td>` +
-          '<td class="project-change-table-dimension"></td>' + // TIE
-          '<td class="project-change-table-dimension"></td>' + // AJR
-          '<td class="project-change-table-dimension"></td>' + // OSA
-          '<td class="project-change-table-dimension"></td>' + // AET
-          '<td class="project-change-table-dimension"></td>' + // LET
-          '<td class="project-change-table-dimension"></td>' + // PIT
-          '<td class="project-change-table-dimension"></td>' + // JATK
-          '<td class="project-change-table-dimension"></td>' + // HALL
-          '<td class="project-change-table-dimension"></td>';  // ELY
+      return `
+        <td class="project-change-table-dimension-first">${getChangeType(changeInfoSeq.changetype)}</td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+      `;
     }
 
     function getEmptyTarget() {
-      return  '<td class="project-change-table-dimension"></td>' + // TIE
-          '<td class="project-change-table-dimension"></td>' + // AJR
-          '<td class="project-change-table-dimension"></td>' + // OSA
-          '<td class="project-change-table-dimension"></td>' + // AET
-          '<td class="project-change-table-dimension"></td>' + // LET
-          '<td class="project-change-table-dimension"></td>' + // PIT
-          '<td class="project-change-table-dimension"></td>' + // JATK
-          '<td class="project-change-table-dimension"></td>' + // HALL
-          '<td class="project-change-table-dimension"></td>';  // ELY
+      return `
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+        <td class="project-change-table-dimension"></td>
+      `;
     }
-
 
     function getTargetInfo(changeInfoSeq) {
       const t = changeInfoSeq.target;
@@ -329,6 +337,7 @@
         <td class="project-change-table-dimension">${t.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(t.administrativeClass)}</td>
         <td class="project-change-table-dimension">${t.ely}</td>
+        <td class="project-change-table-dimension">${t.evk}</td>
       `;
     }
 
@@ -345,6 +354,7 @@
         <td class="project-change-table-dimension">${s.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(s.administrativeClass)}</td>
         <td class="project-change-table-dimension">${s.ely}</td>
+        <td class="project-change-table-dimension">${s.evk}</td>
       `;
     }
 
