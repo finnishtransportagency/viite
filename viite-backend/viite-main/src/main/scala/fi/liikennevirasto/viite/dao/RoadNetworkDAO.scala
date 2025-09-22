@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, RoadPart}
+import fi.vaylavirasto.viite.model.{AddrMRange, ArealRoadMaintainer, BeforeAfter, RoadPart}
 import fi.vaylavirasto.viite.dao.BaseDAO
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -12,7 +12,7 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 case class RoadwayNetworkSummaryRow
 (
   roadPart: RoadPart, roadName: String,
-  elyCode: Int, administrativeClass: Int,
+  elyCode: Int, roadMaintainer: ArealRoadMaintainer, administrativeClass: Int,
   track: Int, startAddressM: Int, endAddressM: Int, continuity: Int
 )
 
@@ -122,6 +122,7 @@ class RoadNetworkDAO extends BaseDAO {
       ),
       roadName            = rs.string("road_name"),
       elyCode             = rs.int("ely"),
+      roadMaintainer      = ArealRoadMaintainer.apply(rs.string("road_maintainer")),
       administrativeClass = rs.int("administrative_class"),
       track               = rs.int("track"),
       startAddressM       = rs.int("start_addr_m"),
@@ -551,7 +552,7 @@ class RoadNetworkDAO extends BaseDAO {
     sqls"""
        SELECT DISTINCT r.id, r.roadway_number, r.road_number, r.road_part_number, r.track,
         r.start_addr_m, r.end_addr_m, r.reversed, r.discontinuity, r.start_date, r.end_date,
-        r.created_by, r.administrative_class, r.ely, r.terminated, r.valid_from, r.valid_to,
+        r.created_by, r.administrative_class, r.ely, r.road_maintainer, r.terminated, r.valid_from, r.valid_to,
           (
           SELECT rn.road_name
           FROM road_name rn
@@ -694,7 +695,7 @@ class RoadNetworkDAO extends BaseDAO {
   private val selectOverlappingRoadway =
     sqls"""
            SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-            r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.terminated,
+            r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.road_maintainer, r.terminated,
             r.valid_from, r.valid_to,
             (
               SELECT rn.road_name from road_name rn
@@ -811,7 +812,7 @@ class RoadNetworkDAO extends BaseDAO {
 
       val query = sql"""
          SELECT r.road_number, n.road_name,
-                r.road_part_number, r.ely, r.administrative_class,
+                r.road_part_number, r.ely, r.road_maintainer, r.administrative_class,
                 r.track, r.start_addr_m, r.end_addr_m, r.discontinuity
            FROM roadway r
       LEFT JOIN $roadNameTable n ON n.road_number = r.road_number

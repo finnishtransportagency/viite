@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{NodeType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{ArealRoadMaintainer, NodeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.GeometryDbUtils
 import org.joda.time.DateTime
 import scalikejdbc._
@@ -14,7 +14,7 @@ case class Junction(id: Long, junctionNumber: Option[Long], nodeNumber: Option[L
                     validFrom: DateTime, validTo: Option[DateTime], createdBy: String, createdTime: Option[DateTime],
                     junctionPoints: Option[List[JunctionPoint]] = None)
 
-case class JunctionTemplate(id: Long, startDate: DateTime, roadPart: RoadPart, track: Track, addrM: Long, elyCode: Long, coords: Point = Point(0.0, 0.0))
+case class JunctionTemplate(id: Long, startDate: DateTime, roadPart: RoadPart, track: Track, addrM: Long, elyCode: Long, roadMaintainer: ArealRoadMaintainer,  /*roadMaintainer: ArealRoadMaintainer,*/ coords: Point = Point(0.0, 0.0))
 
 case class JunctionForRoadAddressBrowser(nodeNumber: Long, nodeCoordinates: Point, nodeName: Option[String], nodeType: NodeType, startDate: DateTime, junctionNumber: Option[Long], roadPart: RoadPart, track: Long, addrM: Long, beforeAfter: Seq[Long])
 
@@ -52,7 +52,9 @@ class JunctionDAO extends BaseDAO {
       roadPart  = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
       track     = Track(rs.int("track")),
       addrM     = rs.long("addr_m"),
-      elyCode   = rs.long("ely")
+      // roadMaintainer = ArealRoadMaintainer(rs.string("road_maintainer"))
+      elyCode   = rs.long("road_maintainer"),
+      roadMaintainer   = ArealRoadMaintainer.apply(rs.string("road_maintainer"))
     )
   }
 
@@ -202,7 +204,7 @@ class JunctionDAO extends BaseDAO {
   def fetchTemplates() : Seq[JunctionTemplate] = {
     val query =
       sql"""
-         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely, rw.road_maintainer
          FROM junction j
          JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
          JOIN roadway_point rp ON jp.roadway_point_id = rp.id
@@ -215,7 +217,7 @@ class JunctionDAO extends BaseDAO {
   def fetchJunctionTemplateById(id: Long): Option[JunctionTemplate] = {
     val query =
       sql"""
-         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely, rw.road_maintainer
          FROM junction j
          JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
          JOIN roadway_point rp ON jp.roadway_point_id = rp.id
@@ -230,7 +232,7 @@ class JunctionDAO extends BaseDAO {
     if (roadwayNumbers.nonEmpty) {
       val query =
         sql"""
-         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely, rw.roadMaintainer
          FROM junction j
          JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
          JOIN roadway_point rp ON jp.roadway_point_id = rp.id
@@ -293,7 +295,7 @@ class JunctionDAO extends BaseDAO {
 
       val query =
         sql"""
-         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely, rw.road_maintainer
          FROM junction j
          JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
          JOIN roadway_point rp ON jp.roadway_point_id = rp.id
@@ -306,7 +308,7 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+  def fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long],
                                           minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
     val baseQuery =
       sqls"""
@@ -320,11 +322,12 @@ class JunctionDAO extends BaseDAO {
         WHERE ${j.validTo} IS NULL AND ${j.endDate} IS NULL
     """
 
-    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
                                maxRoadPartNumber: Option[Long])(baseQuery: SQLSyntax): SQL[Nothing, NoExtractor] = {
       val dateCast = sqls"CAST(${situationDate.get} AS DATE)" // Scalike doesn't support directly casting to date TODO scalike: Better way to do this as a more reusable solution?
       val dateCondition = sqls"AND ${rw.startDate} <= $dateCast"
       val elyCondition = ely.map(e => sqls"AND ${rw.ely} = $e").getOrElse(sqls"")
+      val roadMaintainerCondition = roadMaintainer.map(e => sqls"AND ${rw.roadMaintainer} = $e").getOrElse(sqls"")
       val roadNumberCondition = roadNumber.map(rn => sqls"AND ${rw.column("road_number")} = $rn").getOrElse(sqls"")
 
       val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
@@ -335,14 +338,14 @@ class JunctionDAO extends BaseDAO {
       }
 
       sql"""
-        $baseQuery $dateCondition $elyCondition $roadNumberCondition $roadPartCondition
+        $baseQuery $dateCondition $elyCondition $roadMaintainerCondition $roadNumberCondition $roadPartCondition
         GROUP BY  node.node_number, xcoord, ycoord, node.name, node.TYPE, ${j.startDate}, ${j.junctionNumber},
                   ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m
         ORDER BY  ${rw.column("road_number")}, ${rw.column("road_part_number")}, rp.addr_m
         """
     }
 
-    val fullQuery = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
+    val fullQuery = withOptionalParameters(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
     runSelectQuery(fullQuery.map(JunctionForRoadAddressBrowser.apply))
 
   }

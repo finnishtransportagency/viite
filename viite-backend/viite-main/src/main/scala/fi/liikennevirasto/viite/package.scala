@@ -2,7 +2,7 @@ package fi.liikennevirasto
 
 import fi.liikennevirasto.viite.dao.BaseRoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLinkLike
-import fi.vaylavirasto.viite.model.Discontinuity.{ChangingELYCode, Discontinuous, EndOfRoad}
+import fi.vaylavirasto.viite.model.Discontinuity.{ChangingELYCode, ChangingEVKCode, Discontinuous, EndOfRoad}
 import fi.vaylavirasto.viite.model.{RoadAddressChangeType, SideCode}
 
 package object viite {
@@ -81,20 +81,25 @@ package object viite {
   val ConnectedDiscontinuousMessage = "Jatkuva tielinkki on merkitty epäjatkuvaksi, korjaa jatkuu-koodi."
   val DifferingDiscontinuityCodesForTracks = " Tieosan lopussa on yhteensopimattomat jatkuu-koodit. Tarkista jatkuu-koodit."
   val ElyCodeChangeNotPresent: String = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingELYCode.description}" """ + s"(${ChangingELYCode.value})."
+  val EvkCodeChangeNotPresent: String = s" Tieosan lopussa ei ole jatkuvuuskoodia " + s""" "${ChangingEVKCode.description}" """ + s"(${ChangingEVKCode.value})."
   val HasNotHandledLinksMessage = "%d kpl käsittelemättömiä linkkejä tieosalla %s."
   val ErrorInValidationOfUnchangedLinksMessage = "Ennallaan toimenpidettä ei voi edeltää muu kuin ennallaan-toimenpide."
   val RampDiscontinuityFoundMessage = "Rampin tieosan sisällä on epäjatkuvuuksia. Tarkista Jatkuu-koodit."
   val DiscontinuityInsideRoadPartMessage = "Epäjatkuvuus (2) voi olla vain tieosan lopussa."
   val DistinctAdministrativeClassesBetweenTracksMessage = "Rinnakkaisilla ajoradoilla eri hallinnollinen luokka."
   val RoadNotEndingInElyBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
+  val RoadNotEndingInEvkBorderMessage = "Tien lopussa pitää olla jatkuu-koodi 1. Korjaa jatkuu-koodi."
   val RoadContinuesInAnotherElyMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa ELY:ssa. "
+  val RoadContinuesInAnotherEvkMessage = "Jatkuu-koodi %s on virheellinen, koska tie jatkuu toisessa EVK:ssa. "
   val MinorDiscontinuousWhenRoadConnectingRoundabout = "Tieosalla on lievä epäjatkuvuus. Määrittele Jatkuvuuskoodi oikein kyseiselle linkille."
   val WrongDiscontinuityWhenAdjacentToTerminatedRoad: String = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuoliselle tieosalle täytyy muuttaa jatkuvuuskoodi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}). Muuta jatkuvuuskoodiksi" + s""" "${EndOfRoad.description}" """ + s"(${EndOfRoad.value}) tieosoitteelle %s."
   val DoubleEndOfRoadMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${EndOfRoad.description}" (${EndOfRoad.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val DiscontinuousCodeOnConnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${Discontinuous.description}" (${Discontinuous.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val NotDiscontinuousCodeOnDisconnectedRoadPartOutsideMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektia edeltävän tieosan päähän muodostuu epäjatkuvuus. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."""
   val ElyDiscontinuityCodeBeforeProjectButNoElyChangeMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${ChangingELYCode.description}" (${ChangingELYCode.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
+  val EvkDiscontinuityCodeBeforeProjectButNoEvkChangeMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan jatkuvuuskoodia "${ChangingEVKCode.description}" (${ChangingEVKCode.value}) tulee muuttaa. Tarkasta ja muuta tieosoitteen %s jatkuvuuskoodi."""
   val WrongDiscontinuityBeforeProjectWithElyChangeInProjectMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan ja projektin välillä vaihtuu ELY. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."
+  val WrongDiscontinuityBeforeProjectWithEvkChangeInProjectMessage = "Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan ja projektin välillä vaihtuu EVK. Tarkasta ja muuta tieosan %s jatkuvuuskoodi."
   val WrongDiscontinuityOutsideOfProjectMessage = s"""Tekemäsi tieosoitemuutoksen vuoksi projektin ulkopuolisen tieosan %s jatkuvuuskoodi tulee muuttaa."""
   val EndOfRoadMiddleOfPartMessage = s"""Tieosan keskellä olevalla linkillä on jatkuvuuskoodi "${EndOfRoad.description}" (${EndOfRoad.value})."""
   val RoadNotAvailableMessage = s"Tieosaa ei ole varattu projektiin tai se on varattuna toisessa projektissa."
@@ -229,7 +234,8 @@ package object viite {
     "|:--------------:|:----------:|\n" +
     "|   roadNumber   |    Long    |\n" +
     "| roadPartNumber |    Long    |\n" +
-    "|       ely      |    Long    |"
+    "|       ely      |    Long    |\n" +
+    "|       evk      |    Long    |"
 
   val projectStatusStructure: String = "" +
     "| Status Code |       Project Status       |              Description              |\n" +
@@ -248,6 +254,7 @@ package object viite {
     "|:--------------:|:-----------------------:|:-----------------------------------------------:|:--------------------------------------------------------------:|\n" +
     "|       id       |           Long          |               Project id to create              |                Should be -1000 for new projects                |\n" +
     "|   projectEly   |       Option[Long]      |        Optional Ely value of the project        | Optional because we can create projects without reserved roads |\n" +
+    "|   projectEvk   |       Option[Long]      |        Optional Evk value of the project        | Optional because we can create projects without reserved roads |\n" +
     "|     status     |           Long          |      Numerical value for the project status     |                                                                |\n" +
     "|      name      |          String         |               Name of the project               |                                                                |\n" +
     "|    startDate   |          String         |            Start date of the project            |                                                                |\n" +
@@ -277,6 +284,7 @@ package object viite {
     "|        trackCode       |         Int        |                           Track code of all project links                           |       |\n" +
     "|      discontinuity     |         Int        |                       Discontinuity code of all project links                       |       |\n" +
     "|         roadEly        |        Long        |                            Ely code of all project links                            |       |\n" +
+    "|         roadEvk        |        Long        |                            Evk code of all project links                            |       |\n" +
     "|     roadLinkSource     |         Int        |                        Road link source of all project links                        |       |\n" +
     "|  administrative class  |         Int        |               Administrative class code for all the project links                   |       |\n" +
     "| userDefinedEndAddressM |     Option[Int]    | Optional value, symbolizes if there is a specific value for the end address m value |       |\n" +

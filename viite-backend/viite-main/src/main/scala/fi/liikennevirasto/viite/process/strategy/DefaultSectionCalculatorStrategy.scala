@@ -723,6 +723,10 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
       val (leftLinks, rightLinks) = (newLinks ++ oldLinks).filterNot(_.track == Track.Combined).partition(_.track == Track.LeftSide)
       val chainEndPoints = TrackSectionOrder.findChainEndpoints(leftLinks)
 
+
+
+      println(s"CHAINENDPOINTS :::: ", chainEndPoints)
+
       if (chainEndPoints.isEmpty)
         throw new MissingTrackException("Tieosalta puuttuu vasen ajorata")
 
@@ -900,7 +904,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         } else {
           if (remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.nonEmpty && oppositeTrackLinks.exists(_.addrMRange.end != 0)) {
             val leftStartPoint = TrackSectionOrder.findChainEndpoints(oppositeTrackLinks).find(link => link._2.addrMRange.isRoadPartStart)
-            chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))
+            chainEndPoints.minBy(p => p._2.geometry.head.distance2DTo(leftStartPoint.get._1))   // TÄSSÄ SE ONGELMA (leftStartPoint.get._1)
           } else if (remainLinks.nonEmpty && oppositeTrackLinks.nonEmpty && remainLinks.forall(_.isNotCalculated) && oppositeTrackLinks.forall(_.isNotCalculated)) {
                 getStartPointByDiscontinuity(chainEndPoints).getOrElse {
                   val candidateRightStartPoint  = chainEndPoints.minBy(p => {

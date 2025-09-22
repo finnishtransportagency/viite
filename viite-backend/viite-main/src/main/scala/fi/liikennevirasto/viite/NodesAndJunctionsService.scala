@@ -221,15 +221,15 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
+  def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     runWithReadOnlySession {
-      nodeDAO.fetchNodesForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      nodeDAO.fetchNodesForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
-  def getJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
+  def getJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
     runWithReadOnlySession {
-      junctionDAO.fetchJunctionsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      junctionDAO.fetchJunctionsForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
@@ -1190,7 +1190,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       if (existingCorrect.isEmpty) {
         nodePointDAO.create {
-          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadPart, projectLink.track, projectLink.ely))
+          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadPart, projectLink.track, projectLink.ely, projectLink.roadMaintainer))
         }
       }
     }
