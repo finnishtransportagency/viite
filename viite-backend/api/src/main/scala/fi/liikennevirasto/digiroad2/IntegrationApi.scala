@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.{RoadAddressService, RoadNameService}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, SideCode}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, ArealRoadMaintainer, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.dateTimeNoMillisFormatter
 import fi.vaylavirasto.viite.util.ViiteException
@@ -162,7 +162,7 @@ println("Threading print test: Now in avoidRestrictions")
       description "Returns the current state of the whole road network address space that contains all the latest changes " +
               "to every part of any road found in Viite (also those addresses that will be valid not until in the future).\n" +
               "The returned JSON contains data about: road number, road name, " +
-              "road part number, ely code, administrative class, track, start address, end address, and discontinuity.\n" +
+              "road part number, ely code, evk code, administrative class, track, start address, end address, and discontinuity.\n" +
               "Or, with the optional <i>date</i> parameter, a historical summary state can be requested."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[String]("date").optional
@@ -228,6 +228,7 @@ println("Threading print test: Now in avoidRestrictions")
             Map(
               "roadpartnumber" -> key_RoadPARTNumber,
               "ely" -> uniqueAdmClassWithinRoadPARTMap.head.elyCode, // each row in the road part seq has the same roadName; take any (here: first)
+              "evk" -> ArealRoadMaintainer.getEVK(uniqueAdmClassWithinRoadPARTMap.head.roadMaintainer.id),
               "administrative_class" -> uniqueAdmClassWithinRoadPARTMap.head.administrativeClass, //   -"-    seq has the same adm.class; take any (here: first)
               "tracks" ->
                 parseTracksForSummary( uniqueAdmClassWithinRoadPARTMap )
@@ -322,7 +323,9 @@ println("Threading print test: Now in avoidRestrictions")
           "startAddrMValue" -> r.addrMRange.start,
           "endAddrMValue"   -> r.addrMRange.end,
           "discontinuity" -> r.discontinuity.value,
-          "ely" -> r.ely,
+       //   "ely" -> r.ely,
+          "ely" -> ArealRoadMaintainer.getELY(r.ely.toString),
+          "evk" -> ArealRoadMaintainer.getEVK(r.roadMaintainer.id),
           "roadType" -> r.administrativeClass.asRoadTypeValue,
           "administrativeClass" -> r.administrativeClass.value,
           "terminated" -> r.terminated.value,
@@ -396,7 +399,8 @@ println("Threading print test: Now in avoidRestrictions")
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.old_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.old_administrative_class,
-                "ely" -> roadwayChangesInfo.old_ely
+                "ely" -> roadwayChangesInfo.old_ely,
+                "evk" -> ArealRoadMaintainer.getEVK(roadwayChangesInfo.old_road_maintainer.id)
               ),
             "kohde" ->
               Map(
@@ -408,7 +412,8 @@ println("Threading print test: Now in avoidRestrictions")
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.new_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.new_administrative_class,
-                "ely" -> roadwayChangesInfo.new_ely
+                "ely" -> roadwayChangesInfo.new_ely,
+                "evk" -> ArealRoadMaintainer.getEVK(roadwayChangesInfo.new_road_maintainer.id)
               )
           )
         }
@@ -784,6 +789,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "start_addr_m" -> roadAddressLink.addrMRange.start,
           "end_addr_m"   -> roadAddressLink.addrMRange.end,
           "ely_code" -> roadAddressLink.elyCode,
+          "evk_code" -> ArealRoadMaintainer.getEVK(roadAddressLink.roadMaintainer.id),
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,

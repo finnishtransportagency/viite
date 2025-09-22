@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory
 
 trait Authentication extends TestUserSupport {
 
+  println(s"GETTING USER INFO")
+
   private val authLogger = LoggerFactory.getLogger(getClass)
   val viewerUser: User = User(0, "", Configuration(roles = Set("viewer")))
 

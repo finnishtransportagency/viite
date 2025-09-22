@@ -1,8 +1,10 @@
 package fi.vaylavirasto.viite.dao
 
+import fi.vaylavirasto.viite.model.ArealRoadMaintainer
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
+
 import java.sql.Date
 
 case class RoadName(id: Long, roadNumber: Long, roadName: String, startDate: Option[DateTime], endDate: Option[DateTime] = None,
@@ -23,13 +25,14 @@ object RoadName extends SQLSyntaxSupport[RoadName] {
     createdBy   = rs.string("created_by")
   )
 }
-case class RoadNameForRoadAddressBrowser(ely: Long, roadNumber: Long, roadName: String)
+case class RoadNameForRoadAddressBrowser(ely: Long, evk: Long, roadNumber: Long, roadName: String)
 
 object RoadNameForRoadAddressBrowserScalike extends SQLSyntaxSupport[RoadNameForRoadAddressBrowser] {
   override val tableName = "ROAD_NAME"
 
   def apply(rs: WrappedResultSet): RoadNameForRoadAddressBrowser = RoadNameForRoadAddressBrowser(
     ely         = rs.long("ely"),
+    evk = ArealRoadMaintainer.getEVK(rs.string("road_maintainer")).number, // ArealRoadMaintainer.apply(rs.string("road_maintainer")),
     roadNumber  = rs.long("road_number"),
     roadName    = rs.string("road_name")
   )
@@ -232,21 +235,22 @@ object RoadNameDAO extends BaseDAO {
     queryList(query).headOption
   }
 
-  def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+  def fetchRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long],
                                           minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
 
     val baseQuery = sqls"""
-    SELECT DISTINCT rw.ely AS ely, rw.road_number AS road_number, ${rn.roadName} AS road_name
+    SELECT DISTINCT rw.ely AS ely, rw.road_maintainer AS road_maintainer, rw.road_number AS road_number, ${rn.roadName} AS road_name
     FROM ${RoadName.as(rn)}
   """
 
-    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long],
                                minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(baseQuery: SQLSyntax): SQL[Nothing, NoExtractor] = {
       val rwDateCondition = sqls"AND rw.start_date <= $situationDate::date AND (rw.end_date >= $situationDate::date OR rw.end_date IS NULL)"
 
       val roadNameDateCondition = sqls"AND ${rn.startDate} <= $situationDate::date AND (${rn.endDate} > $situationDate::date OR ${rn.endDate} IS NULL)"
 
       val elyCondition = ely.map(e => sqls"AND rw.ely = $e").getOrElse(sqls"")
+      val roadMaintainerCondition = roadMaintainer.map(e => sqls"AND rw.roadMaintainer = $e").getOrElse(sqls"")
       val roadNumberCondition = roadNumber.map(rn => sqls"AND rw.road_number = $rn").getOrElse(sqls"")
 
       val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
@@ -264,13 +268,14 @@ object RoadNameDAO extends BaseDAO {
       WHERE ${rn.validTo} IS NULL
       $roadNameDateCondition
       $elyCondition
+      $roadMaintainerCondition
       $roadNumberCondition
       $roadPartCondition
       ORDER BY rw.ely, rw.road_number
     """
     }
 
-    val fullQuery = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
+    val fullQuery = withOptionalParameters(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
 
     // Use runSelectQuery from ScalikeJDBCBaseDAO to execute the query
     runSelectQuery(fullQuery.map(RoadNameForRoadAddressBrowserScalike.apply))

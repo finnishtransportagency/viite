@@ -123,7 +123,7 @@ class ProjectValidator {
       ErrorInValidationOfUnchangedLinks, RoadNotEndingInElyBorder, RoadContinuesInAnotherEly,
       MultipleElyInPart, IncorrectOperationTypeOnElyCodeChange,
       ElyCodeChangeButNoRoadPartChange, ElyCodeChangeButNoElyChange, ElyCodeChangeButNotOnEnd, ElyCodeDiscontinuityChangeButNoElyChange, RoadNotReserved, DistinctAdministrativeClassesBetweenTracks, WrongDiscontinuityOutsideOfProject,
-      TrackGeometryLengthDeviation, UniformAdminClassOnLink)
+      TrackGeometryLengthDeviation, UniformAdminClassOnLink, EvkCodeChangeDetected)
 
     // Viite-942
     case object MissingEndOfRoad extends ValidationError {
@@ -461,6 +461,24 @@ class ProjectValidator {
 
       def notification = true
     }
+
+    // ELY/EVK-muutos
+
+    case object EvkCodeChangeDetected extends ValidationError {
+      def value = 40
+
+      def message: String = EvkCodeChangeNotPresent
+
+      def notification = false
+    }
+
+    case object RoadNotEndingInEvkBorder extends ValidationError {
+      def value = 41
+
+      def message: String = RoadNotEndingInEvkBorderMessage
+
+      def notification = true
+    }
     
     def apply(intValue: Int): ValidationError = {
       values.find(_.value == intValue).get
@@ -654,18 +672,49 @@ class ProjectValidator {
 
   def checkTrackCodePairing(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
+    println(s"CHECKING TRACK CODE PAIRING FOR PROJECT ::: ${project.id}")
+    println(s"LINKS ::: ")
+    projectLinks.foreach(p => println(s"LINK: ${p.linkId} :: TRACK: ${p.track} :: STATUS: ${p.status}"))
+
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
     def checkMinMaxTrack(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {
       if (trackInterval.head.track != Track.Combined) {
+        println(s"if (trackInterval.head.track != Track.Combined) {")
+        println(s"trackInterval.head.track :: ${trackInterval.head.track}")
         val minTrackLink = trackInterval.minBy(_.addrMRange.start)
         val maxTrackLink = trackInterval.maxBy(_.addrMRange.end)
+
+     //   println(s"minTrackLink :: START: ${minTrackLink.addrMRange.start} :: ROADPART: ${minTrackLink.roadPart.roadNumber} > ${minTrackLink.roadPart.partNumber}")
+     //   println(s"maxTrackLink :: ${maxTrackLink.addrMRange.end}  :: ROADPART: ${maxTrackLink.roadPart.roadNumber} > ${maxTrackLink.roadPart.partNumber}")
+
         val notCombinedNonTerminatedLinksInRoadPart = notCombinedLinks.filter(l => l.roadPart == minTrackLink.roadPart && l.status != RoadAddressChangeType.Termination)
+
+    //    println(s"LISTING NOT COMBINED LINKS ROAD PARTS :::: ")
+
+    //    notCombinedLinks.foreach(l => println(s"LINK ID :: ${l.linkId} :: ROADPART : ${l.roadPart.roadNumber} -> ${l.roadPart.partNumber} :: STATUS : ${l.status}"))
+
+
+
         if (!notCombinedNonTerminatedLinksInRoadPart.exists(l => l.addrMRange.start == minTrackLink.addrMRange.start && l.track != minTrackLink.track)) {
+          println(s"if (!notCombinedNonTerminatedLinksInRoadPart.exists(l => l.addrMRange.start == minTrackLink.addrMRange.start && l.track != minTrackLink.track)) {")
           Some(minTrackLink)
         }
         else if (!notCombinedNonTerminatedLinksInRoadPart.exists(l => l.addrMRange.end == maxTrackLink.addrMRange.end && l.track != maxTrackLink.track)) {
+          println(s"else if (!notCombinedNonTerminatedLinksInRoadPart.exists(l => l.addrMRange.end == maxTrackLink.addrMRange.end && l.track != maxTrackLink.track)) {")
           Some(maxTrackLink)
-        } else None
+        } else {
+          println(s"ELSE")
+          println(s"ELSE")
+          println(s"ELSE")
+          println(s"ELSE")
+
+          println(s"minTrackLink :: ${minTrackLink.addrMRange.start} :: ${minTrackLink.track}")
+
+          println(s"maxTrackLink :: ${maxTrackLink.addrMRange.start} :: ${maxTrackLink.track}")
+
+
+          None
+        }
       } else None
     }
 

@@ -13,6 +13,13 @@ trait AddressLinkBuilder {
     }
   }
 
+  /** Viite municipality to EVK code mapping */
+  def municipalityToViiteEVKMapping: Map[Long, String] = {
+    runWithReadOnlySession {
+      MunicipalityDAO.getViiteMunicipalityToEvkMapping
+    }
+  }
+
   def municipalityNamesMapping: Map[Long, String] = {
     runWithReadOnlySession {
       MunicipalityDAO.getMunicipalityNames

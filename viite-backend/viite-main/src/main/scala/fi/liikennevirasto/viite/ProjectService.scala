@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityToViiteELYMapping
+import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.{municipalityToViiteELYMapping, municipalityToViiteEVKMapping}
 import fi.liikennevirasto.viite.dao._
 import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchr
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadLinkLike, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.ISOdateFormatter
 import fi.vaylavirasto.viite.util.ViiteException
@@ -74,7 +74,8 @@ case class PreFillInfo(RoadNumber    : BigInt,
                        PartNumber    : BigInt,
                        roadName      : String,
                        roadNameSource: RoadNameSource,
-                       ely           : Long
+                       ely           : Long,
+                       roadMaintainer: ArealRoadMaintainer
                       )
 
 case class LinkToRevert(id: Long, linkId: String, status: Long, geometry: Seq[Point])
@@ -226,7 +227,7 @@ class ProjectService(
         Left(s"Link could not be found from project: $projectId")
       }
       else {
-        preFillRoadName(Some(projectLinks.head.roadPart.roadNumber), Some(projectLinks.head.roadPart.partNumber), projectLinks.head.ely, projectId)
+        preFillRoadName(Some(projectLinks.head.roadPart.roadNumber), Some(projectLinks.head.roadPart.partNumber), projectLinks.head.ely, projectLinks.head.roadMaintainer, projectId)
       }
   }
 
@@ -237,6 +238,7 @@ class ProjectService(
           roadNumber,
           roadPartNumber,
           Try(municipalityToViiteELYMapping(municipalitycode)).getOrElse(-1),
+          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("ELY0")),
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")
@@ -246,14 +248,15 @@ class ProjectService(
   private def preFillRoadName(roadNumber    : Option[Long],
                               roadPartNumber: Option[Long],
                               ely           : Long,
+                              roadMaintainer: ArealRoadMaintainer,
                               projectId     : Long
                              ): Either[String, PreFillInfo] = {
     (roadNumber, roadPartNumber) match {
       case (Some(roadNumber: Long), Some(roadPartNumber: Long)) => val preFilledRoadName = RoadNameDAO.getLatestRoadName(roadNumber) match {
-        case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource, ely)
+        case Some(roadName) => PreFillInfo(roadNumber, roadPartNumber, roadName.roadName, RoadNameSource.RoadAddressSource, ely, roadMaintainer)
         case _ => ProjectLinkNameDAO.get(roadNumber, projectId) match {
-          case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource, ely)
-          case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource, ely)
+          case Some(projectLinkName) => PreFillInfo(roadNumber, roadPartNumber, projectLinkName.roadName, RoadNameSource.ProjectLinkSource, ely, roadMaintainer)
+          case _ => PreFillInfo(roadNumber, roadPartNumber, "", RoadNameSource.UnknownSource, ely, roadMaintainer)
         }
       }
         Right(preFilledRoadName)
@@ -425,9 +428,11 @@ class ProjectService(
         addressLength = Some(detail.endAddrM),
         discontinuity = Some(Discontinuity.apply(detail.discontinuity.toInt)),
         ely = Some(detail.ely),
+        roadMaintainer = Some(detail.roadMaintainer),
         newLength = Some(detail.endAddrM),
         newDiscontinuity = Some(Discontinuity.apply(detail.discontinuity.toInt)),
         newEly = Some(detail.ely),
+        newRoadMaintainer = Some(detail.roadMaintainer),
         startingLinkId = Some(detail.linkId)
       )
     }
@@ -462,13 +467,18 @@ class ProjectService(
     else None
   }
 
-  def createProjectLinks(linkIds: Seq[String], projectId: Long, roadPart: RoadPart, track: Track, userGivenDiscontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None, devToolData: Option[ProjectLinkDevToolData] = None): Map[String, Any] = {
+  def createProjectLinks(linkIds: Seq[String], projectId: Long, roadPart: RoadPart, track: Track, userGivenDiscontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, roadMaintainer: ArealRoadMaintainer, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None, devToolData: Option[ProjectLinkDevToolData] = None): Map[String, Any] = {
 
     def createProjectElyCodes(): Unit = {
       val elysForProject = projectLinkDAO.fetchProjectLinkElys(projectId) :+ roadEly
-      val updatedCount = projectDAO.updateProjectElys(projectId, elysForProject.toSet.toSeq)
-      if (updatedCount == 0) {
+      val roadMaintainersForProject = projectLinkDAO.fetchProjectLinkRoadMaintainers(projectId) :+ roadMaintainer.id
+      val updatedELYCount = projectDAO.updateProjectElys(projectId, elysForProject.toSet.toSeq)
+      val updatedEVKCount = projectDAO.updateProjectRoadMaintainers(projectId, roadMaintainersForProject.toSet.toSeq)
+      if (updatedELYCount == 0) {
         logger.warn(s"Ely-codes for project: $projectId were not updated.")
+      }
+      if (updatedEVKCount == 0) {
+        logger.warn(s"Evk-codes for project: $projectId were not updated.")
       }
     }
 
@@ -482,7 +492,7 @@ class ProjectService(
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = fetchProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
           val projectLinks: Seq[ProjectLink] = linkIds.distinct.map { id: String =>
-            newProjectLink(roadLinks(id), project, roadPart, track, Discontinuity.Continuous, administrativeClass, roadEly, roadName)
+            newProjectLink(roadLinks(id), project, roadPart, track, Discontinuity.Continuous, administrativeClass, roadEly, roadMaintainer, roadName)
           }
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
@@ -2039,8 +2049,25 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
 
+    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
+    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
+    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
+    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
+
+    println(s"PROJECT ID ::: ${projectId} ")
+
+    println(s"USER NAME ::: ${userName} ")
+
+    println(s"ROADPARTS :: ${roadParts.size}")
+
+    roadParts.foreach(r => println(s" ROADNUMBER: ${r.roadNumber} :: PARTNUMBER: ${r.partNumber}"))
+
+
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+
+   //   println(s"FETCHED PROJECT LINKS FOT PROJECT ID ::: ")
+   //   projectLinks.foreach(p => println(s"LINK ID : ${p.linkId} :: STATUS : ${p.status} :: END CALIBRATION POINT : ${p.endCalibrationPoint} ::: ROADPART :: ${p.roadPart}"))
 
       val recalculated = projectLinks.groupBy(pl => {
         (pl.roadPart)
@@ -2054,9 +2081,42 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
           val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
 
+          println(s"&/(&/(&/(")
+          println(s"&/(&/(&/(")
+          println(s"&/(&/(&/(")
+          println(s"&/(&/(&/(")
+          println(s"&/(&/(&/(")
+
+          println(s"FUSED LINKS :: ${fusedLinks.length}")
+
+          println(s"calibrationPoints :: ${calibrationPoints.length}")
+
+          println(s"projectLinksWithAdjustedCalibrationPoints :: ${projectLinksWithAdjustedCalibrationPoints.length}")
+
+          println(s"newLinks :: ${newLinks.length}")
+
+          println(s"notNewLinks :: ${notNewLinks.length}")
+
+          println(s"adjustedTerminated :: ${adjustedTerminated.length}")
+
+          println(s"withoutTerminated :: ${withoutTerminated.length}")
+
+          println(s"recalculatedNonTerminated :: ${recalculatedNonTerminated.length}")
+
+
           // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
           (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
       }.toSeq
+
+
+      println(s"()()()()()()")
+      println(s"()()()()()()")
+      println(s"()()()()()()")
+      println(s"()()()()()()")
+      println(s"()()()()()()")
+      println(s"()()()()()()")
+
+      println(s"RECALCULATED ::: ${recalculated.length}")
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
@@ -2228,13 +2288,18 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       case _ => ra.ely
     }
 
-    ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
+    val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
+      case Some(rp) => rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("ELY0"))
+      case _ => ra.roadMaintainer
+    }
+
+    ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newEly, newRoadMaintainer, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
   }
 
-  private def newProjectLink(rl: RoadLinkLike, project: Project, roadPart: RoadPart, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadName: String = "") = {
+  private def newProjectLink(rl: RoadLinkLike, project: Project, roadPart: RoadPart, trackCode: Track, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadMaintainer: ArealRoadMaintainer, roadName: String = "") = {
 
     val roadLinkTimestamp: Long = Try(rl.roadLinkTimeStamp).getOrElse(0)
-    ProjectLink(NewIdValue, roadPart, trackCode, discontinuity, AddrMRange(0L, 0L), AddrMRange(0L, 0L), Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, RoadAddressChangeType.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, false, None, roadLinkTimestamp, roadName = Some(roadName))
+    ProjectLink(NewIdValue, roadPart, trackCode, discontinuity, AddrMRange(0L, 0L), AddrMRange(0L, 0L), Some(project.startDate), None, Some(project.modifiedBy), rl.linkId, 0.0, rl.length, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), rl.geometry, project.id, RoadAddressChangeType.New, administrativeClass, rl.linkSource, rl.length, 0L, 0L, ely, roadMaintainer, false, None, roadLinkTimestamp, roadName = Some(roadName))
   }
 
   private def buildProjectRoadLink(projectLinks: Seq[ProjectLink]): Seq[ProjectAddressLink] = {
@@ -2655,6 +2720,18 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       projectDAO.fetchProjectElyById(projectId)
     }
   }
+
+  def getProjectEvk(projectId: Long): Seq[Long] = {
+    println(s"!!!!!!!")
+    println(s"!!!!!!!")
+    println(s"!!!!!!!")
+    println(s"!!!!!!!")
+    println(s"GETTING PROJECT EVK FOR PROJECT :: $projectId")
+    runWithReadOnlySession {
+      projectDAO.fetchProjectEvkById(projectId).map(e => ArealRoadMaintainer.getEVK(e).number.toLong)
+    }
+  }
+
   /**
    * This is for the dev tool VIITE-3203
    * For running validations without recalculation of the project links

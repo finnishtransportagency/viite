@@ -47,7 +47,8 @@ case class Project(id            : Long,
                    formedParts   : Seq[ProjectReservedPart],
                    statusInfo    : Option[String],
                    coordinates   : Option[ProjectCoordinates] = Some(ProjectCoordinates()),
-                   elys          : Set[Int] = Set()
+                   elys          : Set[Int] = Set(),
+                   evks          : Set[Int] = Set()
                   ) {
   def isReserved(roadPart: RoadPart): Boolean = {
     reservedParts.exists(p => p.roadPart == roadPart)
@@ -105,6 +106,20 @@ class ProjectDAO extends BaseDAO {
          WHERE project_id=$projectId
        """
     runSelectQuery(query.map(_.long(1)))
+  }
+
+  def fetchProjectEvkById(projectId: Long): Seq[String] = {
+    val query =
+      sql"""
+         SELECT DISTINCT road_maintainer
+         FROM project_link
+         WHERE project_id=$projectId
+         UNION
+         SELECT DISTINCT road_maintainer
+         FROM project_link_history
+         WHERE project_id=$projectId
+       """
+    runSelectQuery(query.map(_.string(1)))
   }
 
   def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
@@ -325,6 +340,20 @@ class ProjectDAO extends BaseDAO {
           sql"""
                UPDATE project p
                SET elys = ${elys.sorted.toArray}::integer[]
+               WHERE p.id = $projectId
+               """
+        runUpdateToDb(query)
+      } else -1
+    }
+  }
+
+  def updateProjectRoadMaintainers(projectId: Long, roadMaintainers : Seq[String]): Int = {
+    time(logger, s"Update roadMaintainers for project $projectId.") {
+      if (roadMaintainers.nonEmpty) {
+        val query   =
+          sql"""
+               UPDATE project p
+               SET road_maintainers = ${roadMaintainers.sorted.toArray}::[]
                WHERE p.id = $projectId
                """
         runUpdateToDb(query)

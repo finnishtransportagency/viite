@@ -644,23 +644,23 @@ class RoadAddressService(
     roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
   }
 
-  def getTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+  def getTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
     runWithReadOnlySession {
-      roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
-  def getRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+  def getRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
     runWithReadOnlySession {
-      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
   def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
-                                                 ely: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                                                 ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
                                                  maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
     runWithReadOnlySession {
-      roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber) //TODO: Add evk to the called function
     }
   }
 
@@ -750,7 +750,7 @@ class RoadAddressService(
     }
   }
 
-  def updateChangeSet(changeSet: ChangeSet): Unit = {
+  def updateChangeSet(changeSet: ChangeSet): Unit = { //Olisiko tämä? 
 
     runWithTransaction {
       //Getting the linearLocations before the drop
