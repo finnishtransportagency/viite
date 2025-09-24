@@ -14,11 +14,58 @@
       recalculatedAfterChangesFlag = bool;
     });
 
+    // Replace the existing event handler with this updated version
     eventbus.on('roadAddressProject:projectLinkSaved', function() {
-      // Hide action buttons (Tallenna, Peruuta)
-      $('#actionButtons').empty();
-      // Show project buttons (Päivitä etäisyyslukemat, etc.)
-      $('.project-form.form-controls').html(formCommon.projectButtons());
+      // Get the current state of the validate button if it exists
+      const $buttons = $('.project-form.form-controls');
+      const $validateButton = $buttons.find('#validate-button');
+      const hasValidationButton = $validateButton.length > 0;
+      const isValidationButtonVisible = hasValidationButton && $validateButton.is(':visible');
+      
+      // Rebuild the buttons with proper states
+      let buttonsHtml = '';
+      
+      // Add validate button if in dev mode
+      if (_.includes(startupParameters.roles, 'dev')) {
+        buttonsHtml += '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"' + 
+                     (isValidationButtonVisible ? '' : ' hidden="true"') + '>Validoi projekti</button>';
+      }
+      
+      // Add the rest of the buttons that match FormCommon.js
+      buttonsHtml += `
+        <button id="recalculate-button" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
+        <button id="changes-button" class="show-changes btn btn-block btn-show-changes" disabled>Avaa projektin yhteenvetotaulukko</button>
+        <button id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>
+      `;
+      
+      // Update the buttons container
+      $buttons.html(buttonsHtml);
+      
+      // Update button states based on project status
+      const projectErrors = projectCollection.getProjectErrors();
+      
+      // Update button states based on the same logic as in buttonsWhenReOpenCurrent
+      if (projectErrors.length === 0) {
+        if ($('.change-table-frame').css('display') === "block") {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
+          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+        } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === false) {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
+        } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === true) {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+        } else if (projectErrors.length !== 0 && getRecalculatedAfterChangesFlag() === true) {
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+        }
+      }
+      
+      // Rebind event handlers
+      if (typeof bindEvents === 'function') {
+        bindEvents();
+      }
     });
 
     var getRecalculatedAfterChangesFlag = function () {
