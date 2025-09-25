@@ -5,6 +5,8 @@
     const editableStatus = ViiteEnumerations.ProjectStatus.Incomplete.value;
     const AdministrativeClass = ViiteEnumerations.AdministrativeClass;
 
+    const smallWidthStyle = 'width: 40px !important;';
+
     const title = function (titleName) {
       const fixedTitle = titleName || "Uusi tieosoiteprojekti";
       return `<span class ="edit-mode-title"> ${fixedTitle} </span>`;
@@ -158,15 +160,15 @@
       }
       return `<div class="${prefix}form-group new-road-address" hidden>
         <div><label></label></div><div><label style="margin-top: 20px">TIEOSOITTEEN TIEDOT</label></div>
-        ${addSmallLabel('TIE')}${addSmallLabel('OSA')}${addSmallLabel('AJR')}${addSmallLabel('EVK')}${addSmallLabel('ELY')}
-        ${addSmallLabel('JATKUU')}
+        ${addSmallLabel('TIE')}${addSmallLabel('OSA', smallWidthStyle)}${addSmallLabel('AJR', smallWidthStyle)}${addSmallLabel('EVK', smallWidthStyle)}${addSmallLabel('ELY', smallWidthStyle)}
+        ${addSmallLabel('JATKUU', 'width: 82px !important;')}
         </div>
         <div class="${prefix}form-group new-road-address" id="new-address-input1" hidden>
           ${addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5)}
-          ${addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3)}
+          ${addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3, smallWidthStyle)}
           ${addTrackCodeDropdown(trackCodeDropdown)}
-          ${addSmallInputNumber('evk', link.evkCode, !projectEditable, 2)}
-          ${addSmallInputNumber('ely', link.elyCode, true, 2)}
+          ${addSmallInputNumber('evk', link.evkCode, !projectEditable, 2, smallWidthStyle)}
+          ${addSmallInputNumber('ely', link.elyCode, true, 2, smallWidthStyle)}
           ${addDiscontinuityDropdown()}
           ${addWideLabel('HALL. LUOKKA')}
           ${administrativeClassDropdown(administrativeClass)}<br>
@@ -203,7 +205,7 @@
       });
       return administrativeClassInfo.displayText;
     };
-    
+
     const administrativeClassDropdown = function (administrativeClassDefaultValue) {
       return `<select class="${prefix}form-control administrativeClassAndRoadName" id="administrativeClassDropdown" size="1" style="width: 190px !important; display: inline">
         <option value="${administrativeClassDefaultValue}" selected hidden>${administrativeClassLabel(administrativeClassDefaultValue)}</option>
@@ -212,23 +214,23 @@
         <option value="3">3 Yksityinen</option>
       </select>`;
     };
-    
-    const addSmallLabel = function (label) {
-      return `<label class="control-label-small">${label}</label>`;
+
+    const addSmallLabel = function (label, customStyle) {
+      return `<label class="control-label-small" style="${_.isUndefined(customStyle) ? '' : customStyle}">${label}</label>`;
     };
-    
-    const addWideLabel = function (label) {
-      return `<label class="control-label-wide">${label}</label>`;
+
+    const addWideLabel = function (label, customStyle) {
+      return `<label class="control-label-wide" style="${_.isUndefined(customStyle) ? '' : customStyle}">${label}</label>`;
     };
     
     const addSmallLabelLowercase = function (label) {
       return `<label class="control-label-small" style="text-transform: none">${label}</label>`;
     };
-    
-    const addSmallInputNumber = function (id, value, isDisabled, maxLength) {
+
+    const addSmallInputNumber = function (id, value, isDisabled, maxLength, customWidth) {
       //Validate only number characters on "onkeypress" including TAB and backspace
       const disabled = isDisabled ? ' readonly="readonly" ' : '';
-      return `<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)" class="${prefix}form-control small-input roadAddressProject" id="${id}" value="${_.isUndefined(value) ? '' : value}" ${disabled} ${_.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`} onclick=""/>`;
+      return `<input type="text" style="${_.isUndefined(customWidth) ? '' : customWidth}" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)" class="${prefix}form-control small-input roadAddressProject" id="${id}" value="${_.isUndefined(value) ? '' : value}" ${disabled} ${_.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`} onclick=""/>`;
     };
     
     const nodeInputNumber = function (id, maxLength) {
@@ -245,7 +247,7 @@
         <option value="5">5 Jatkuva</option>
       </select>`;
     };
-    
+
     const addTrackCodeDropdown = function (trackDefaultValue, properties) {
       const trackCodeDropdown = {
         value: trackDefaultValue,
@@ -256,15 +258,15 @@
         trackCodeDropdown.value = Track.Unknown.value;
         trackCodeDropdown.toShow = '--';
       }
-    
-      return `<select class="form-select-small-control" id="trackCodeDropdown" size="1" ${properties}>
+
+      return `<select class="form-select-small-control" id="trackCodeDropdown" size="1" style="${smallWidthStyle}; display: inline" ${properties}>
         <option value="${trackCodeDropdown.value}" selected hidden>${trackCodeDropdown.toShow}</option>
         <option value="0">0</option>
         <option value="1">1</option>
         <option value="2">2</option>
       </select>`;
     };
-    
+
     const directionChangedInfo = function (selected, isPartialReversed) {
       if (selected[0].status === ViiteEnumerations.RoadAddressChangeType.New.value) return '';
       if (isPartialReversed) {
@@ -382,7 +384,7 @@
         </div>
       </div>`;
     };
-    
+
     const staticField = function (labelText, dataField) {
       return `<div class="${prefix}form-group">
         <p class="form-control-static asset-log-info">${labelText} : ${dataField}</p>
@@ -408,7 +410,6 @@
       }
       return false;
     };
-    
 
     const getProjectErrors = function (projectErrors, links, projectCollection) {
       let buttonIndex = 0;

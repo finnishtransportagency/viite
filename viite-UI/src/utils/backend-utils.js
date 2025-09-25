@@ -39,10 +39,11 @@
     
     this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
-        // Add evk field to results array
-        if (data && Array.isArray(data.results)) {
-          data.results.forEach((item, index) => {
-            item.evk = (index % 3) + 1; // 1,2,3,1,2,3...
+        if (data && Array.isArray(data.changeInfos)) {
+          data.changeInfos.forEach((item, index) => {
+            item.oldEvk = (index % 3) + 1;
+            item.newEvk = ((index + 1) % 3) + 1;
+
           });
         }
         return _.isFunction(callback) && callback(data);
@@ -135,7 +136,7 @@
 
     this.getProjectLinksById = _.throttle(function (projectId, callback) {
       return $.getJSON('api/viite/project/links/' + projectId, function (data) {
-        // TODO Add mock EVK codes to the project links data, remove this later
+        // TODO EVK: Add mock EVK codes to the project links data, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -155,7 +156,7 @@
 
     this.getProjectLinkByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -163,7 +164,7 @@
 
     this.getRoadAddressByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -171,7 +172,7 @@
 
     this.getPrefillValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -179,7 +180,7 @@
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -187,7 +188,7 @@
 
     this.getRoadLinkByMtkId = _.throttle(function (mtkId, callback) {
       return $.getJSON('api/viite/roadlinks/mtkid/' + mtkId, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -198,7 +199,7 @@
       _.debounce(function (roadNumber, projectID, callback) {
         if (projectID !== 0 && roadNumber !== '') {
           return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
-            // TODO Add mock EVK codes, remove this later
+            // TODO EVK: Add mock EVK codes, remove this later
             const dataWithEvk = addMockEvkCodes(data);
             return _.isFunction(callback) && callback(dataWithEvk);
           });
@@ -268,7 +269,7 @@
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
       }).then(function (x) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO: EVK Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(x);
         eventbus.trigger('roadPartsValidation:checkRoadParts', dataWithEvk);
       });
@@ -312,7 +313,7 @@
 
     this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -329,7 +330,7 @@
         loadingProject.abort();
       }
       loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
-        // TODO Add mock EVK codes, remove this later
+        // TODO EVK: Add mock EVK codes, remove this later
         const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(dataWithEvk);
       });
@@ -337,7 +338,25 @@
     }, 1000);
 
     this.getChangeTable = _.throttle(function (id, callback) {
-      $.getJSON('api/viite/project/getchangetable/' + id, callback);
+      $.getJSON('api/viite/project/getchangetable/' + id, function(data) {
+        // Add mock EVK data to source and target objects
+        if (data && data.changeTable && data.changeTable.changeInfoSeq) {
+          data.changeTable.changeInfoSeq.forEach(change => {
+            if (change.source) {
+              // Add mock EVK (1-3) based on road number to ensure consistency
+              change.source.evk = (change.source.roadNumber % 3) + 1;
+            }
+            if (change.target) {
+              // Add mock EVK (1-3) based on road number to ensure consistency
+              change.target.evk = (change.target.roadNumber % 3) + 1;
+            }
+          });
+        }
+        callback(data);
+      }).fail(function(error) {
+        console.error('Error fetching change table:', error);
+        callback({ error: 'Failed to load change table data' });
+      });
     }, 500);
 
     this.recalculateAndValidateProject = function (id, callback) {
@@ -420,7 +439,7 @@
 
     // Mock function to convert ELY codes to EVK codes
     // This is a temporary solution until backend supports EVK codes
-    // TODO Remove this later
+    // TODO EVK Remove this later
     function addMockEvkCodes(data) {
       if (!data) return data;
 
