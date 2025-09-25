@@ -49,7 +49,8 @@ val env: String = sys.props.getOrElse("env", "-").toLowerCase
 dependencyOverrides ++= Seq(
   "org.scala-lang.modules" %% "scala-xml" % "1.3.0",
   "org.scalactic" %% "scalactic" % "3.2.17",
-  "org.scalatest" %% "scalatest" % "3.2.17"
+  "org.scalatest" %% "scalatest" % "3.2.17",
+  "org.apache.commons" % "commons-text" % "1.10.0"
 )
 
 enablePlugins(AssemblyPlugin)
