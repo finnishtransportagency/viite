@@ -482,8 +482,19 @@
                   situationDate: parsedDateString,
                   target: targetValue
               };
-              if (elyEvkSelector)
-                  params.ely = elyEvkSelector;
+
+              // Handle ELY/EVK selection
+              if (elyEvkSelector) {
+                if (elyEvkSelector.startsWith('EVK_')) {
+                    params.evk = elyEvkSelector.substring(4); // Remove 'EVK_' prefix
+                } else if (elyEvkSelector.startsWith('ELY_')) {
+                    params.ely = elyEvkSelector.substring(4); // Remove 'ELY_' prefix
+                } else {
+                    // Fallback in case the value doesn't have a prefix
+                    params.ely = elyEvkSelector;
+                }
+              }
+
               if (roadNumber.value)
                   params.roadNumber = roadNumber.value;
               if (minRoadPartNumber.value)
@@ -584,14 +595,7 @@
       function getElyEvkSelectorValue() {
           const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
           if (selectorComponents && selectorComponents.elyEvk) {
-              const value = selectorComponents.elyEvk.getSelectedValue();
-              if (value) {
-                  // Handle optional ELY_/EVK_ prefix
-                  if (typeof value === 'string' && (value.startsWith('ELY_') || value.startsWith('EVK_'))) {
-                      return value.substring(4);
-                  }
-                  return value;
-              }
+              return selectorComponents.elyEvk.getSelectedValue();
           }
           return null;
       }
