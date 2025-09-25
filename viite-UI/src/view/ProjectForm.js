@@ -285,6 +285,7 @@
         var text = '';
         var index = 0;
         _.each(list, function (line) {
+          console.log("LINE ::: ", line)
           if (!_.isUndefined(line.currentLength)) {
             text += '<div class="form-reserved-roads-list">' +
               addSmallLabel(line.roadNumber) +
@@ -707,6 +708,9 @@
         var id = this.id;
         var roadNumber = this.attributes.roadNumber.value;
         var roadPartNumber = this.attributes.roadPartNumber.value;
+
+
+        console.log("CLICKETI FUCKING CLICK")
 
         if (isProjectEditable()) {
           if (currentProject && projectCollection.getReservedParts()[id]) {

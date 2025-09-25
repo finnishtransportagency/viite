@@ -164,20 +164,22 @@ class ProjectService(
         //reservedParts
         val reserved: Seq[ProjectReservedPart] = if (sortedAddresses.nonEmpty) {
           val maxEly = sortedAddresses.map(_.ely).max
+          val maxRoadMaintainer = sortedAddresses.map(_.roadMaintainer).maxBy(a => a.number)
           val firstLink = sortedAddresses.head.linkId
           val maxDiscontinuity = sortedAddresses.last.discontinuity
           val maxEndAddr = sortedAddresses.last.addrMRange.end
-          Seq(rp.copy(addressLength = Some(maxEndAddr), discontinuity = Some(maxDiscontinuity), ely = Some(maxEly), startingLinkId = Some(firstLink)))
+          Seq(rp.copy(addressLength = Some(maxEndAddr), discontinuity = Some(maxDiscontinuity), ely = Some(maxEly), roadMaintainer = Some(maxRoadMaintainer), startingLinkId = Some(firstLink)))
         } else Seq()
 
         //formedParts
         val formed: Seq[ProjectReservedPart] = if (roadPartLinks.nonEmpty) {
           val sortedProjectLinks = roadPartLinks.head._2.sortBy(_.addrMRange.start)
           val maxEly = sortedProjectLinks.map(_.ely).max
+          val maxRoadMaintainer = sortedProjectLinks.map(_.roadMaintainer).maxBy(a => a.number)
           val firstLink = sortedProjectLinks.head.linkId
           val maxDiscontinuity = sortedProjectLinks.last.discontinuity
           val maxEndAddr = sortedProjectLinks.last.addrMRange.end
-          Seq(rp.copy(newLength = Some(maxEndAddr), newDiscontinuity = Some(maxDiscontinuity), newEly = Some(maxEly), startingLinkId = Some(firstLink)))
+          Seq(rp.copy(newLength = Some(maxEndAddr), newDiscontinuity = Some(maxDiscontinuity), newEly = Some(maxEly), newRoadMaintainer = Some(maxRoadMaintainer), startingLinkId = Some(firstLink)))
         } else Seq()
 
         reserved ++ formed
