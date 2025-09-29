@@ -252,7 +252,7 @@
 
         function exportDataAsCsvFile() {
             const params = me.getSearchParams();
-            const fileNameString = "Viite_" + params.dateTarget + "_" + params.startDate + "_" + params.endDate + "_" + params.ely + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".csv";
+            const fileNameString = "Viite_" + params.dateTarget + "_" + params.startDate + "_" + params.endDate + "_" + params.ely + "_" + params.evk + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".csv";
             const fileName = fileNameString.replaceAll("undefined", "-");
 
             const table = document.getElementById("roadAddressChangesBrowserTable");
@@ -333,22 +333,22 @@
                     startDate: parsedDateString,
                     dateTarget: dateTargetSelector && dateTargetSelector.getSelectedValue ? dateTargetSelector.getSelectedValue() : 'ProjectAcceptedDate'
                 };
-                if (roadAddrChangesEndDate.value)
-                    params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
+
+                // Add end date to params
+                if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
                 const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
                   ? elyEvkSelector.getSelectedValue()
                   : null;
-                // TODO EVK: Note: Backend currently supports only ELY. We still pass EVK proactively for future support.
-                // Only pass numeric ELY to backend
+
+                // Add ELY/EVK to params
                 if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
                     const parts = selected.split('_');
                     if (parts[1]) params.ely = parts[1];
+                } else if (selected && selected.startsWith('EVK_')) {
+                    const parts = selected.split('_');
+                    if (parts[1]) params.roadMaintainer = parts[1]; // Backend handles evk value as roadMaintainer, so convert evk to that
                 }
-                // Pass EVK as a separate parameter if chosen (backend may ignore this for now)
-                // if (selected && typeof selected === 'string' && selected.startsWith('EVK_')) {
-                //     const parts = selected.split('_');
-                //     if (parts[1]) params.evk = parts[1];
-                // }
+                
                 if (roadNumber.value)
                     params.roadNumber = roadNumber.value;
                 if (minRoadPartNumber.value)
@@ -361,7 +361,6 @@
             //reset roadAddrStartDate input fields' custom validity
             roadAddrChangesStartDate.setCustomValidity("");
             roadAddrChangesEndDate.setCustomValidity("");
-
 
             if (willPassValidations())
 
