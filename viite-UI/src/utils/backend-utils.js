@@ -209,9 +209,7 @@
         endPart: endPart,
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
-      }).then(function (x) {
-        // TODO: EVK Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(x);
+      }).then(function (data) {
         eventbus.trigger('roadPartsValidation:checkRoadParts', data);
       });
     });
@@ -254,8 +252,6 @@
 
     this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-       // const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -271,33 +267,13 @@
         loadingProject.abort();
       }
       loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      // const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
       return loadingProject;
     }, 1000);
 
     this.getChangeTable = _.throttle(function (id, callback) {
-      $.getJSON('api/viite/project/getchangetable/' + id, function(data) {
-        // Add mock EVK data to source and target objects
-        if (data && data.changeTable && data.changeTable.changeInfoSeq) {
-          data.changeTable.changeInfoSeq.forEach(change => {
-            if (change.source) {
-              // Add mock EVK (1-3) based on road number to ensure consistency
-              change.source.evk = (change.source.roadNumber % 3) + 1;
-            }
-            if (change.target) {
-              // Add mock EVK (1-3) based on road number to ensure consistency
-              change.target.evk = (change.target.roadNumber % 3) + 1;
-            }
-          });
-        }
-        callback(data);
-      }).fail(function(error) {
-        console.error('Error fetching change table:', error);
-        callback({ error: 'Failed to load change table data' });
-      });
+      $.getJSON('api/viite/project/getchangetable/' + id, callback);
     }, 500);
 
     this.recalculateAndValidateProject = function (id, callback) {
