@@ -486,7 +486,7 @@
               // Handle ELY/EVK selection
               if (elyEvkSelector) {
                 if (elyEvkSelector.startsWith('EVK_')) {
-                    params.evk = elyEvkSelector.substring(4); // Remove 'EVK_' prefix
+                    params.roadMaintainer = elyEvkSelector.substring(4); // Backend expects EVK as roadMaintainer
                 } else if (elyEvkSelector.startsWith('ELY_')) {
                     params.ely = elyEvkSelector.substring(4); // Remove 'ELY_' prefix
                 } else {
