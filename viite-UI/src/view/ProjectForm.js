@@ -14,7 +14,6 @@
       recalculatedAfterChangesFlag = bool;
     });
 
-    // Replace the existing event handler with this updated version
     eventbus.on('roadAddressProject:projectLinkSaved', function() {
       // Get the current state of the validate button if it exists
       const $buttons = $('.project-form.form-controls');
@@ -25,7 +24,7 @@
       // Rebuild the buttons with proper states
       let buttonsHtml = '';
       
-      // Add validate button if in dev mode
+      // Add validate button if user has dev role
       if (_.includes(startupParameters.roles, 'dev')) {
         buttonsHtml += '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"' + 
                      (isValidationButtonVisible ? '' : ' hidden="true"') + '>Validoi projekti</button>';
