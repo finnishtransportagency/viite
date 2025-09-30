@@ -597,6 +597,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       tags "ViiteAPI - Road Address Changes Browser"
       summary "Returns change info for road address changes browser based on the search criteria"
     )
+
   get("/roadaddresschangesbrowser", operation(getDataForRoadAddressChangesBrowser)) {
     time(logger, s"GET request for /roadaddresschangesbrowser") {
       def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
@@ -660,6 +661,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       val roadNumber = params.get("roadNumber").map(_.toLong)
       val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
       val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
+
+      println("getRoadAddressChangesBrowser roadMaintainer: ", roadMaintainer)
 
       try {
         if (validateInputs(startDate, endDate, dateTarget, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
@@ -1886,6 +1889,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "projectName" -> changeInfo.projectName,
       "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
       "oldEly" -> changeInfo.oldRoadAddress.ely,
+      "oldEvk" -> changeInfo.oldRoadAddress.roadMaintainer.toString.split("\\s+").find(_.matches("\\d+")).getOrElse(""), // Parse EVK number from roadMaintainer
       "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
       "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
@@ -1894,6 +1898,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
       "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
       "newEly" -> changeInfo.newRoadAddress.ely,
+      "newEvk" -> changeInfo.newRoadAddress.roadMaintainer.toString.split("\\s+").find(_.matches("\\d+")).getOrElse(""), // Parse EVK number from roadMaintainer
       "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
       "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
