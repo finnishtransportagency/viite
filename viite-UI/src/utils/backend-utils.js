@@ -24,81 +24,36 @@
       });
     }, 1000);
 
-    // TODO: Remove mock data
     this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddressbrowser', params, function (data) {
-        // Add evk field to results array
-        if (data && Array.isArray(data.results)) {
-          data.results.forEach((item, index) => {
-            item.evk = (index % 3) + 1; // 1,2,3,1,2,3...
-          });
-        }
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
     
     this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
-        if (data && Array.isArray(data.changeInfos)) {
-          data.changeInfos.forEach((item, index) => {
-            item.oldEvk = (index % 3) + 1;
-            item.newEvk = ((index + 1) % 3) + 1;
-
-          });
-        }
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
-
-    // Old implementation without mock
-    // this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
-    //   return $.get('api/viite/roadaddressbrowser', params, function (data) {
-    //     return _.isFunction(callback) && callback(data);
-    //   });
-    // }, 1000);
-
-    // this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
-    //   return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
-    //     return _.isFunction(callback) && callback(data);
-    //   });
-    // }, 1000);
     
     
+    // TODO: This doesn't return evkCode
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
         url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox,
-        dataType: 'json',
-        // TODO, Inject mock EVK values, remove later
-        dataFilter: function (raw) {
-          try {
-            var parsed = JSON.parse(raw);
-         //   var transformed = addMockEvkCodes(parsed);
-            return JSON.stringify(parsed);
-          } catch (e) {
-            return raw;
-          }
-        }
+        dataType: 'json'
       };
     });
 
+    // TODO: This doesn't return evkCodes either (probably)
     this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
       var roadNumber = params.roadNumber;
       var roadPart = params.roadPartNumber;
       return {
         url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart,
-        dataType: 'json',
-        // TODO, Inject mock EVK values, remove later
-        dataFilter: function (raw) {
-          try {
-            var parsed = JSON.parse(raw);
-         //   var transformed = addMockEvkCodes(parsed);
-            return JSON.stringify(parsed);
-          } catch (e) {
-            return raw;
-          }
-        }
+        dataType: 'json'
       };
     });
 
@@ -136,8 +91,6 @@
 
     this.getProjectLinksById = _.throttle(function (projectId, callback) {
       return $.getJSON('api/viite/project/links/' + projectId, function (data) {
-        // TODO EVK: Add mock EVK codes to the project links data, remove this later
-    //    const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -156,40 +109,30 @@
 
     this.getProjectLinkByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getRoadAddressByLinkId = _.throttle(function (linkId, callback) {
       return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getPrefillValuesForLink = _.throttle(function (linkId, currentProjectId, callback) {
       return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getRoadLinkByMmlId = _.throttle(function (mmlId, callback) {
       return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 
     this.getRoadLinkByMtkId = _.throttle(function (mtkId, callback) {
       return $.getJSON('api/viite/roadlinks/mtkid/' + mtkId, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -199,8 +142,6 @@
       _.debounce(function (roadNumber, projectID, callback) {
         if (projectID !== 0 && roadNumber !== '') {
           return $.getJSON('api/viite/roadlinks/roadname/' + roadNumber + '/' + projectID, function (data) {
-            // TODO EVK: Add mock EVK codes, remove this later
-        //    const dataWithEvk = addMockEvkCodes(data);
             return _.isFunction(callback) && callback(data);
           });
         } else {
@@ -268,9 +209,7 @@
         endPart: endPart,
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
-      }).then(function (x) {
-        // TODO: EVK Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(x);
+      }).then(function (data) {
         eventbus.trigger('roadPartsValidation:checkRoadParts', data);
       });
     });
@@ -313,8 +252,6 @@
 
     this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-       // const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -330,33 +267,13 @@
         loadingProject.abort();
       }
       loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
-        // TODO EVK: Add mock EVK codes, remove this later
-      // const dataWithEvk = addMockEvkCodes(data);
         return _.isFunction(callback) && callback(data);
       });
       return loadingProject;
     }, 1000);
 
     this.getChangeTable = _.throttle(function (id, callback) {
-      $.getJSON('api/viite/project/getchangetable/' + id, function(data) {
-        // Add mock EVK data to source and target objects
-        if (data && data.changeTable && data.changeTable.changeInfoSeq) {
-          data.changeTable.changeInfoSeq.forEach(change => {
-            if (change.source) {
-              // Add mock EVK (1-3) based on road number to ensure consistency
-              change.source.evk = (change.source.roadNumber % 3) + 1;
-            }
-            if (change.target) {
-              // Add mock EVK (1-3) based on road number to ensure consistency
-              change.target.evk = (change.target.roadNumber % 3) + 1;
-            }
-          });
-        }
-        callback(data);
-      }).fail(function(error) {
-        console.error('Error fetching change table:', error);
-        callback({ error: 'Failed to load change table data' });
-      });
+      $.getJSON('api/viite/project/getchangetable/' + id, callback);
     }, 500);
 
     this.recalculateAndValidateProject = function (id, callback) {
@@ -435,68 +352,6 @@
 
     function convertDatetoSimpleDate(date) {
       return moment(date, 'DD.MM.YYYY').format("YYYY-MM-DD");
-    }
-
-    // Mock function to convert ELY codes to EVK codes
-    // This is a temporary solution until backend supports EVK codes
-    // TODO EVK Remove this later
-    function addMockEvkCodes(data) {
-      console.log("HIIIJJOOHHHOOIIIIII")
-      if (!data) return data;
-
-      console.log("DATA :::: ", data)
-/*
-      // ELY to EVK mapping based on geographical regions
-      const elyToEvkMapping = {
-        1: 1,  // Uusimaa -> Uudenmaan elinvoimakeskus
-        2: 2,  // Varsinais-Suomi -> Lounais-Suomen elinvoimakeskus
-        3: 3,  // Kaakkois-Suomi -> Kaakkois-Suomen elinvoimakeskus
-        4: 4,  // Pirkanmaa -> Sisä-Suomen elinvoimakeskus
-        8: 6,  // Pohjois-Savo -> Itä-Suomen elinvoimakeskus
-        9: 5,  // Keski-Suomi -> Keski-Suomen elinvoimakeskus
-        10: 7, // Etelä-Pohjanmaa -> Etelä-Pohjanmaan elinvoimakeskus
-        12: 8, // Pohjois-Pohjanmaa -> Pohjanmaan elinvoimakeskus
-        14: 10 // Lappi -> Lapin elinvoimakeskus
-      };
-
-      // Helper function to add EVK code to a single item
-      function addEvkToItem(item) {
-        if (item && typeof item === 'object') {
-          if (item.currentEly !== undefined) {
-            item.currentEvk = elyToEvkMapping[item.currentEly] || item.currentEly;
-          }
-          if (item.newEly !== undefined) {
-            item.newEvk = elyToEvkMapping[item.newEly] || item.newEly;
-          }
-          if (item.ely !== undefined) {
-            item.evk = elyToEvkMapping[item.ely] || item.ely;
-          }
-          if (item.elyCode !== undefined) {
-            item.evkCode = elyToEvkMapping[item.elyCode] || item.elyCode;
-          }
-        }
-        return item;
-      }
-
-      // Handle different data structures
-      if (Array.isArray(data)) {
-        return data.map(function (item) {
-          if (Array.isArray(item)) {
-            return item.map(addEvkToItem);
-          }
-          return addEvkToItem(item);
-        });
-      } else if (data && typeof data === 'object') {
-        if (data.reservedInfo && Array.isArray(data.reservedInfo)) {
-          data.reservedInfo = data.reservedInfo.map(addEvkToItem);
-        }
-        if (data.formedInfo && Array.isArray(data.formedInfo)) {
-          data.formedInfo = data.formedInfo.map(addEvkToItem);
-        }
-        addEvkToItem(data);
-      }*/
-
-      return data;
     }
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
