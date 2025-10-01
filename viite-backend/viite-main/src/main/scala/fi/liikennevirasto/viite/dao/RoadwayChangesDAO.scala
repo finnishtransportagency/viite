@@ -521,7 +521,14 @@ class RoadwayChangesDAO extends BaseDAO {
         projectAcceptedDate = rs.jodaDateTime("accepted_date"),
         oldRoadAddress      = OldRoadAddress(
           ely               = rs.long("old_ely"),
-          roadMaintainer    = ArealRoadMaintainer.apply(rs.string("old_road_maintainer")),
+          roadMaintainer    = rs.stringOpt("old_road_maintainer").flatMap { rm =>
+            try {
+              val value = if (rm.startsWith("EVK")) rm else s"EVK$rm"
+              Some(ArealRoadMaintainer(value))
+            } catch {
+              case _: Throwable => None
+            }
+          }.getOrElse(ArealRoadMaintainer("EVK0")),
           roadPart          = {
             val oldRoadNumber     = rs.longOpt("old_road_number")
             val oldRoadPartNumber = rs.longOpt("old_road_part_number")
@@ -537,7 +544,14 @@ class RoadwayChangesDAO extends BaseDAO {
         ),
         newRoadAddress        = NewRoadAddress(
           ely                 = rs.long("new_ely"),
-          roadMaintainer      = ArealRoadMaintainer.apply(rs.string("new_road_maintainer")),
+          roadMaintainer      = rs.stringOpt("new_road_maintainer").flatMap { rm =>
+            try {
+              val value = if (rm.startsWith("EVK")) rm else s"EVK$rm"
+              Some(ArealRoadMaintainer(value))
+            } catch {
+              case _: Throwable => None
+            }
+          }.getOrElse(ArealRoadMaintainer("EVK0")),
           roadPart            = RoadPart(
             roadNumber        = rs.longOpt("new_road_number").getOrElse(0L),
             partNumber        = rs.longOpt("new_road_part_number").getOrElse(0L)
@@ -553,9 +567,17 @@ class RoadwayChangesDAO extends BaseDAO {
       )
   }
 
-  def fetchChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
-                                                   ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
-                                                   maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+  def fetchChangeInfosForRoadAddressChangesBrowser(
+    startDate: Option[String],
+    endDate: Option[String],
+    dateTarget: Option[String],
+    ely: Option[Long],
+    roadMaintainer: Option[String],
+    roadNumber: Option[Long],
+    minRoadPartNumber: Option[Long],
+    maxRoadPartNumber: Option[Long]
+  ): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+
 
     // Determine the date field to use based on dateTarget
     val dateField = dateTarget match {
@@ -568,23 +590,19 @@ class RoadwayChangesDAO extends BaseDAO {
       startDate.map(sd => sqls"$dateField >= TO_TIMESTAMP($sd, 'YYYY-MM-DD')") ++
       endDate.map(ed => sqls"$dateField <= TO_TIMESTAMP($ed, 'YYYY-MM-DD')")
 
-    // These conditions will determine which projects to include based on search criteria
-    // Return every roadway change within the projects matching the specific filters
-    val elyAndRoadNumberConditions = Seq.empty[SQLSyntax] ++
-      ely.map(e => sqls"(rc.new_ely = $e OR rc.old_ely = $e)") ++
-      roadNumber.map(rn => sqls"(rc.new_road_number = $rn OR rc.old_road_number = $rn)")
 
-    val roadMaintainerCondition = Seq.empty[SQLSyntax] ++
-      roadMaintainer.map(e => sqls"(rc.new_road_maintainer = $e OR rc.old_road_maintainer = $e)")
+    val elyCondition = ely.map(e => sqls"(rc.new_ely = $e OR rc.old_ely = $e)").toSeq
+    val roadMaintainerCondition = roadMaintainer.map(rm => sqls"(rc.new_road_maintainer = $rm OR rc.old_road_maintainer = $rm)").toSeq
+
+    val roadNumberCondition = roadNumber.map(rn => sqls"(rc.new_road_number = $rn OR rc.old_road_number = $rn)").toSeq
 
     val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
       case (Some(minPart), Some(maxPart)) =>
         Seq(sqls"(rc.new_road_part_number BETWEEN $minPart AND $maxPart OR rc.old_road_part_number BETWEEN $minPart AND $maxPart)")
-      case _ =>
-        Seq.empty[SQLSyntax]
+      case _ => Seq.empty[SQLSyntax]
     }
 
-    val projectRelatedConditions = elyAndRoadNumberConditions ++ roadPartCondition ++ roadMaintainerCondition
+    val projectRelatedConditions = elyCondition ++ roadNumberCondition ++ roadPartCondition ++ roadMaintainerCondition
 
     // Construct the WHERE clause based on the conditions
     val whereClause = (dateConditions ++ projectRelatedConditions) match {
@@ -592,8 +610,6 @@ class RoadwayChangesDAO extends BaseDAO {
       case conditions => sqls"WHERE ${sqls.join(conditions, sqls" AND ")}" // Join all conditions with AND
     }
 
-
-    // The final SQL fetches all changes for projects matching the initial criteria
     val query =
       sql"""
         WITH RelevantProjects AS (
@@ -615,14 +631,12 @@ class RoadwayChangesDAO extends BaseDAO {
         LEFT JOIN road_name rn ON rn.road_number = COALESCE(rc.new_road_number, rc.old_road_number)
           AND rn.valid_to IS NULL
           AND rn.start_date <= p.start_date
-           -- End date should be null if the change is not a termination (5).
-           -- If the road is terminated, the end date is the same as the end date of the road  (if the whole road was terminated in this project) or null if the start date of the road name start date is earlier than the start date of the project
-          AND ((rc.change_type != 5 and rn.end_date IS null) OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') or (rn.end_date is null and rn.start_date < p.start_date))))
-
+          AND ((rc.change_type != 5 and rn.end_date IS null)
+              OR (rc.change_type = 5 and (rn.end_date = (p.start_date - INTERVAL '1 DAY') 
+              or (rn.end_date is null and rn.start_date < p.start_date))))
         ORDER BY p.start_date, rc.new_road_number, rc.new_road_part_number, rc.new_start_addr_m, rc.new_track
       """
 
     runSelectQuery(query.map(ChangeInfoForRoadAddressChangesBrowser.apply))
   }
-
 }
