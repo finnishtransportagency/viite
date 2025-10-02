@@ -232,7 +232,7 @@ class JunctionDAO extends BaseDAO {
     if (roadwayNumbers.nonEmpty) {
       val query =
         sql"""
-         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely, rw.roadMaintainer
+         SELECT DISTINCT j.id, j.start_date, rw.road_number, rw.road_part_number, rw.track, rp.addr_m, rw.ely, rw.road_maintainer
          FROM junction j
          JOIN junction_point jp ON j.id = jp.junction_id AND jp.valid_to IS NULL
          JOIN roadway_point rp ON jp.roadway_point_id = rp.id
