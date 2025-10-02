@@ -240,7 +240,7 @@ class ProjectService(
           roadNumber,
           roadPartNumber,
           Try(municipalityToViiteELYMapping(municipalitycode)).getOrElse(-1),
-          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("ELY0")),
+          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("EVK0")),
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")
@@ -2291,7 +2291,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     }
 
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
-      case Some(rp) => rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("ELY0"))
+      case Some(rp) => rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
       case _ => ra.roadMaintainer
     }
 
@@ -2729,9 +2729,11 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     println(s"!!!!!!!")
     println(s"!!!!!!!")
     println(s"GETTING PROJECT EVK FOR PROJECT :: $projectId")
-    runWithReadOnlySession {
+    val result = runWithReadOnlySession {
       projectDAO.fetchProjectEvkById(projectId).map(e => ArealRoadMaintainer.getEVK(e).number.toLong)
     }
+    logger.info(s"FOUND EVK ::: $result")
+    result
   }
 
   /**

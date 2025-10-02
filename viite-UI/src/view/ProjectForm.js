@@ -710,8 +710,6 @@
         var roadPartNumber = this.attributes.roadPartNumber.value;
 
 
-        console.log("CLICKETI FUCKING CLICK")
-
         if (isProjectEditable()) {
           if (currentProject && projectCollection.getReservedParts()[id]) {
             new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {

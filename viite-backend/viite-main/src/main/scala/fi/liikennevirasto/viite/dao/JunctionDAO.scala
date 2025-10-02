@@ -53,7 +53,7 @@ class JunctionDAO extends BaseDAO {
       track     = Track(rs.int("track")),
       addrM     = rs.long("addr_m"),
       // roadMaintainer = ArealRoadMaintainer(rs.string("road_maintainer"))
-      elyCode   = rs.long("road_maintainer"),
+      elyCode   = rs.long("ely"),
       roadMaintainer   = ArealRoadMaintainer.apply(rs.string("road_maintainer"))
     )
   }

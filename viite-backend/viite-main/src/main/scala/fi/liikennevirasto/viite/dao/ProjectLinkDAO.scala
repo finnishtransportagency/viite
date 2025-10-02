@@ -470,7 +470,7 @@ class ProjectLinkDAO extends BaseDAO {
           if (pl.linearLocationId == 0) null else pl.linearLocationId,
           pl.connectedLinkId.orNull,
           pl.ely,
-          pl.roadMaintainer,
+          pl.roadMaintainer.id,
           pl.roadwayNumber, if (pl.reversed) 1 else 0,
           GeometryDbUtils.createJGeometry(pl.geometry),
           pl.linkId,
