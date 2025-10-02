@@ -238,8 +238,15 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"GET request for /roadlinks/project/prefill (linkId: $linkId, projectId: $currentProjectId)") {
       projectService.fetchPreFillData(linkId, currentProjectId) match {
         case Right(preFillInfo) =>
-          Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.PartNumber, "roadName" -> preFillInfo.roadName, "roadNameSource" -> preFillInfo.roadNameSource.value, "ely" -> preFillInfo.ely)
-        case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
+          Map("success" -> true,
+            "roadNumber" -> preFillInfo.RoadNumber,
+            "roadPartNumber" -> preFillInfo.PartNumber,
+            "roadName" -> preFillInfo.roadName,
+            "roadNameSource" -> preFillInfo.roadNameSource.value,
+            "ely" -> preFillInfo.ely,
+            "evk" -> preFillInfo.roadMaintainer.number)
+        case Left(failureMessage) =>
+          Map("success" -> false, "reason" -> failureMessage)
       }
     }
   }
@@ -722,8 +729,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       } catch {
         case _: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
+          logger.warn("Exception treating road links: " + e.getMessage, e)
+          val paramName = e.getMessage match {
+            case msg if msg.contains("No usable value") => 
+              """No usable value for [^\"]*""".r.findFirstIn(msg).getOrElse("unknown")
+            case _ => "unknown"
+          }
+          BadRequest(s"Missing mandatory ProjectLink parameter: $paramName")
         case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
         case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
         case ex: NameExistsException => Map("success" -> false, "errorMessage" -> ex.getMessage)
@@ -841,8 +853,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
+          logger.warn("Exception treating road links: " + e.getMessage, e)
+          val paramName = e.getMessage match {
+            case msg if msg.contains("No usable value") => 
+              """No usable value for [^\"]*""".r.findFirstIn(msg).getOrElse("unknown")
+            case _ => "unknown"
+          }
+          BadRequest(s"Missing mandatory ProjectLink parameter: $paramName")
       }
     }
   }
@@ -897,17 +914,9 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         projectService.getSingleProjectById(projectId) match {
           case Some(project) =>
             val projectMap = roadAddressProjectToApi(project, projectService.getProjectEly(project.id), projectService.getProjectEvk(project.id))
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"PROJECTMAP ::: $projectMap")
             val reservedparts = project.reservedParts.map(projectReservedPartToApi)
-            println(s"RESERVEDPARTS ::: $reservedparts")
             val formedparts = project.formedParts.map(projectFormedPartToApi(Some(project.id)))
-            println(s"FORMEDPARTS ::: $formedparts")
             val errorParts = projectService.validateProjectById(project.id)
-            println(s"ERRORPARTS ::: $errorParts")
             val publishable = errorParts.isEmpty
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
               "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi))
@@ -981,8 +990,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       } catch {
         case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
+          logger.warn("Exception treating road links: " + e.getMessage, e)
+          val paramName = e.getMessage match {
+            case msg if msg.contains("No usable value") => 
+              """No usable value for [^\"]*""".r.findFirstIn(msg).getOrElse("unknown")
+            case _ => "unknown"
+          }
+          BadRequest(s"Missing mandatory ProjectLink parameter: $paramName")
         case e: Exception =>
           logger.error(e.toString, e)
           InternalServerError(e.toString)
@@ -1000,6 +1014,12 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       summary "This will receive all the project link data in order to be created."
     )
   post("/roadlinks/roadaddress/project/links", operation(createProjectLinks)) {
+
+      logger.info("Raw request body: " + request.body)   // <--- add this
+      
+      val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
+      logger.info("Extracted links object: " + links)    // <--- and this
+
     time(logger, "POST request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser
       try {
@@ -1023,8 +1043,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         case e: RoadPartException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
+          logger.warn("Exception treating road links: " + e.getMessage, e)
+          val paramName = e.getMessage match {
+            case msg if msg.contains("No usable value") => 
+              """No usable value for [^\"]*""".r.findFirstIn(msg).getOrElse("unknown")
+            case _ => "unknown"
+          }
+          BadRequest(s"Missing mandatory ProjectLink parameter: $paramName")
         case e: Exception =>
           logger.error(e.toString, e)
           Map("success" -> false, "errorMessage" -> e.toString)
@@ -1045,7 +1070,11 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser
       try {
+
+        logger.info("Raw request body: " + request.body)   // log JSON as received
+
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
+        logger.info("Extracted links object: " + links)    // log after extraction
         if (links.roadNumber == 0)
           throw RoadPartException("Virheellinen tienumero")
         if (links.roadPartNumber == 0)
@@ -1068,8 +1097,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         case e: RoadPartException => Map("success" -> false, "errorMessage" -> e.getMessage)
         case _: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
+          logger.warn("Exception treating road links: " + e.getMessage, e)
+          val paramName = e.getMessage match {
+            case msg if msg.contains("No usable value") => 
+              """No usable value for [^\"]*""".r.findFirstIn(msg).getOrElse("unknown")
+            case _ => "unknown"
+          }
+          BadRequest(s"Missing mandatory ProjectLink parameter: $paramName")
         case e: Exception =>
           logger.error(e.toString, e)
           InternalServerError(e.toString)

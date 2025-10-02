@@ -24,24 +24,6 @@ object TrackSectionOrder {
     case class ProjectLinkNonConnectedDistance(projectLink: ProjectLink, point: Point, distance: Double)
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
 
-
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-
-    println(s"@findChainEndpoints with projectLinks count ::: ")
-    println(projectLinks.length)
-
-
-/*
-    println("!!!!!!!!!!")
-    println("!!!!!!!!!!")
-    println("!!!!!!!!!!")
-    println("!!!!!!!!!!")
-
-    println(s"PROJECT LINKS ::: ", projectLinks)*/
-
     @tailrec
     def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]): ProjectLinkChain = {
 //      println(s"PROJECTLINKCHAIN :: ", projectLinkChain)

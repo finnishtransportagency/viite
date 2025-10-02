@@ -235,23 +235,35 @@ object ArealRoadMaintainer {
    * Getter/constructor.
    * As the only allowed ArealRoadMaintainers are pre-defined, getter and "constructor" are the same.
    *
-   * @param nameString The string to be interpreted as an ArealRoadMaintainer.
-   * @return an ArealRoadMaintainer, according to the given nameString
+   * @param name The string to be interpreted as an ArealRoadMaintainer.
+   * @return an ArealRoadMaintainer, according to the given name
    * @throws ViiteException, if the given string does not correspond to any known ArealRoadMaintainer instance.
    */
-  def apply(nameString: String): ArealRoadMaintainer = {
 
-    // Interpret the nameString as it would be in the database: $typeName$number, and find an instance with that.
-    // Sole names, or numbers are not unique. And I doubt whether the shortNames either.
-    EVKset.find(evk => s"${evk.typeName}${evk.number}" == nameString).getOrElse(
-      ELYset.find(ely => s"${ely.typeName}${ely.number}" == nameString).getOrElse(
-                // If nothing was found, just throw an error. There is no such thing as asked, afawk.
-                throw ViiteException(s"Tuntematon tieverkon ylläpitäjätaho ($nameString)!")
-                // TODO Either:ify the throw?
+  def apply(name: String): ArealRoadMaintainer = {
+
+    println("ArealRoadMaintainer.apply: " + name)
+    println("EVKset: " + EVKset)
+    println("ELYset: " + ELYset)
+
+    // First try to find by database format (e.g., "EVK1", "ELY1")
+    EVKset.find(evk => s"${evk.typeName}${evk.number}" == name).orElse(
+      ELYset.find(ely => s"${ely.typeName}${ely.number}" == name)
+    ).orElse {
+      // If not found, try to find by name (e.g., "Uusimaa")
+      EVKset.find(_.name == name).orElse(
+        ELYset.find(_.name == name)
       )
-    )
+    }.orElse {
+      // If still not found, try to find by short name (e.g., "UUSI", "UUD")
+      EVKset.find(_.shortName == name).orElse(
+        ELYset.find(_.shortName == name)
+      )
+    }.getOrElse {
+      // If nothing was found, throw an error
+      throw ViiteException(s"Tuntematon tieverkon ylläpitäjätaho ($name)!")
+    }
   }
-
 }
 
 

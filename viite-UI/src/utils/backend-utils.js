@@ -273,30 +273,112 @@
       });
     });
 
-    this.createProjectLinks = _.throttle(function (data, success, failure) {
+    // Backend expects the roadMaintainer to be an object with 
+    // typeName, number, name and shortName properties
+    function normalizeRoadData(data) {
+      const payload = { ...data };
+    
+      // Convert roadEvk → roadMaintainer
+      if (payload.roadEvk !== undefined && payload.roadEvk !== null) {
+        const number = payload.roadEvk;
+    
+        // Find EVK entry from ViiteEnumerations
+        const evkEntry = Object.values(ViiteEnumerations.EVKCodes)
+          .find(entry => entry.value === number);
+    
+        if (evkEntry) {
+          payload.roadMaintainer = {
+            typeName: "EVK",
+            number: evkEntry.value,
+            name: evkEntry.name,
+            shortName: evkEntry.shortName
+          };
+        }
+    
+        delete payload.roadEvk; // remove the raw number
+      }
+    
+      return payload;
+    }
+    
+    this.createProjectLinks = function (data, success, failure) {
+      // Create a copy of the data to avoid mutating the original
+      const payload = { ...data };
+      
+      // Map of EVK numbers to their corresponding backend names and shortNames
+      // TODO: Use ViiteEnumerations instead
+      const evkMap = {
+        1: { name: "Uusimaa", shortName: "UUSI" },
+        2: { name: "Lounais-Suomi", shortName: "LOUS" },
+        3: { name: "Kaakkois-Suomi", shortName: "KAAS" },
+        4: { name: "Sisä-Suomi", shortName: "SISS" },
+        5: { name: "Keski-Suomi", shortName: "KESS" },
+        6: { name: "Itä-Suomi", shortName: "ITÄS" },
+        7: { name: "Etelä-Pohjanmaa", shortName: "ETPO" },
+        8: { name: "Pohjanmaa", shortName: "POHJ" },
+        9: { name: "Pohjois-Suomi", shortName: "POHS" },
+        10: { name: "Lappi", shortName: "LAPP" }
+      };
+      
+      // Helper function to get EVK data
+      const getEvkData = (evkNumber) => {
+        const evk = evkMap[evkNumber] || { 
+          name: `EVK ${evkNumber}`, 
+          shortName: `EVK${evkNumber}` 
+        };
+        return {
+          typeName: "EVK",
+          number: evkNumber,
+          name: evk.name,
+          shortName: evk.shortName
+        };
+      };
+    
+      // If we have a roadMaintainer object, ensure it has the required fields
+      if (payload.roadMaintainer) {
+        const evkNumber = payload.roadMaintainer.number;
+        payload.roadMaintainer = getEvkData(evkNumber);
+      }
+      
+      // If we have roadEvk but no roadMaintainer, create roadMaintainer from roadEvk
+      if (!payload.roadMaintainer && payload.roadEvk) {
+        const evkNumber = payload.roadEvk;
+        payload.roadMaintainer = getEvkData(evkNumber);
+        delete payload.roadEvk;
+      }
+      
+      console.log("Sending payload:", JSON.stringify(payload, null, 2));
+      
       $.ajax({
-        contentType: "application/json",
         type: "POST",
         url: "api/viite/roadlinks/roadaddress/project/links",
-        data: JSON.stringify(data),
+        data: JSON.stringify(payload),
+        contentType: "application/json",
         dataType: "json",
-        success: success,
-        error: failure
+        success: success || _.noop,
+        error: function(xhr, status, error) {
+          console.error("Error creating project links:", status, error, xhr.responseText);
+          if (failure) failure(xhr, status, error);
+        }
       });
-    }, 1000);
-
+    };
+    
     this.updateProjectLinks = _.throttle(function (data, success, error) {
+      const payload = normalizeRoadData(data);
+    
+      console.log(payload);
+    
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/roadlinks/roadaddress/project/links",
-        data: JSON.stringify(data),
+        data: JSON.stringify(payload),
         dataType: "json",
         success: success,
         error: error
       });
     }, 1000);
-
+    
     this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
       $.ajax({
         contentType: "application/json",

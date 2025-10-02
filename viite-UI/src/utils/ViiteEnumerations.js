@@ -209,7 +209,7 @@
     ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
   };
 
-  root.EVKCodes = { // Values might change, using placeholders for now
+  root.EVKCodes = {
     EVK_UUD: {value: 1, name: "Uudenmaan elinvoimakeskus", shortName: "UUD"},
     EVK_LOU: {value: 2, name: "Lounais-Suomen elinvoimakeskus", shortName: "LOU"},
     EVK_KAS: {value: 3, name: "Kaakkois-Suomen elinvoimakeskus", shortName: "KAS"},
