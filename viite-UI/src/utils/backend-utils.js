@@ -262,6 +262,7 @@
     }, 1000);
 
     this.checkIfRoadpartReserved = (function (roadNumber, startPart, endPart, projDate, projectId) {
+      console.log("LIIILEEELAAAAA")
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadNumber: roadNumber,
         startPart: startPart,
@@ -270,8 +271,9 @@
         projectId: projectId
       }).then(function (x) {
         // TODO: EVK Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(x);
-        eventbus.trigger('roadPartsValidation:checkRoadParts', data);
+        console.log("WE HAS X MAYBE? ")
+        console.log(x)
+        eventbus.trigger('roadPartsValidation:checkRoadParts', x);
       });
     });
 
@@ -441,10 +443,8 @@
     // This is a temporary solution until backend supports EVK codes
     // TODO EVK Remove this later
     function addMockEvkCodes(data) {
-      console.log("HIIIJJOOHHHOOIIIIII")
       if (!data) return data;
 
-      console.log("DATA :::: ", data)
 /*
       // ELY to EVK mapping based on geographical regions
       const elyToEvkMapping = {

@@ -68,7 +68,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       roadAddress.roadPart,
       roadAddress.track.value,
       0,
-      ArealRoadMaintainer.apply("ELY0"), //TODO: Make sure these hard coded municipality codes are actually what we want.
+      ArealRoadMaintainer.apply("EVK0"), //TODO: Make sure these hard coded municipality codes are actually what we want.
       roadAddress.discontinuity.value,
       roadAddress.addrMRange,
       roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""),
@@ -97,6 +97,6 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => unaddressedRoadLink.administrativeClass
     }
-    RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), RoadPart(0, 0), Track.Unknown.value, municipalityToViiteELYMapping.getOrElse(roadLink.municipalityCode, -1), ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "ELY0")), Discontinuity.Continuous.value, AddrMRange(0, 0), "", "", 0.0, length, SideCode.Unknown, None, None, newGeometry = Some(roadLink.geometry), sourceId = roadLink.sourceId)
+    RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), RoadPart(0, 0), Track.Unknown.value, municipalityToViiteELYMapping.getOrElse(roadLink.municipalityCode, -1), ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK0")), Discontinuity.Continuous.value, AddrMRange(0, 0), "", "", 0.0, length, SideCode.Unknown, None, None, newGeometry = Some(roadLink.geometry), sourceId = roadLink.sourceId)
   }
 }

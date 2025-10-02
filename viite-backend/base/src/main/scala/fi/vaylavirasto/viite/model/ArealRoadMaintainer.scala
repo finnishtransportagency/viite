@@ -147,6 +147,10 @@ object ArealRoadMaintainer {
     }
   }
 
+  def getEVKNumber(arm: ArealRoadMaintainer): Long = {
+    if (ArealRoadMaintainer.isEVK(arm)) {arm.number.toLong} else { 0L }
+  }
+
   /** Getter for EVKs only. You may search for an EVK by its number.
    *
    * @param number The number of the EVK you wish to get.
@@ -177,7 +181,7 @@ object ArealRoadMaintainer {
    * @return The EVK asked, when found.
    */
   def getEVK(string: String): EVK = {
-    if (string == "ELY0") {
+    if (string == "EVK0") {
       EVKTEST
     }
     else {
@@ -189,6 +193,19 @@ object ArealRoadMaintainer {
         )
       )
     )}
+  }
+
+  def getEVKFromLong(evkNumber: Long): EVK = {
+    EVKset.find(_.number == evkNumber.toInt).getOrElse(
+      throw ViiteException(s"Olematon EVK:n numero: $evkNumber")
+    )
+  }
+
+  def getEVKCodeForDB(evkNumber: Int): String = {
+    EVKset.find(_.number == evkNumber) match {
+      case Some(value) => s"${value.typeName}${value.number}"
+      case None => "EVK0"
+    }
   }
 
   /** Getter for ELYs only. You may search for an ELY by its DBname, name, or shortName.
