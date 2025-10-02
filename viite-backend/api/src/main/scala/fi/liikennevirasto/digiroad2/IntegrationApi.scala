@@ -789,7 +789,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "start_addr_m" -> roadAddressLink.addrMRange.start,
           "end_addr_m"   -> roadAddressLink.addrMRange.end,
           "ely_code" -> roadAddressLink.elyCode,
-          "evk_code" -> ArealRoadMaintainer.getEVK(roadAddressLink.roadMaintainer.id),
+          "evk_code" -> ArealRoadMaintainer.getEVKNumber(roadAddressLink.roadMaintainer),
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,
