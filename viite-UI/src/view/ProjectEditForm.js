@@ -175,42 +175,6 @@
       updateButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
     };
 
-    var changeDropDownValue = function (statusCode) {
-      var dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
-      var rootElement = $('#feature-attributes');
-      switch (statusCode) {
-        case RoadAddressChangeType.Unchanged.value:
-          dropdown_0_new.prop('disabled', true);
-          $("#dropDown_0 option[value=" + RoadAddressChangeType.Unchanged.description + "]").attr('selected', 'selected').change();
-          break;
-        case RoadAddressChangeType.New.value:
-          dropdown_0_new.attr('selected', 'selected').change();
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
-          rootElement.find('.new-road-address').prop("hidden", false);
-          if (selectedProjectLink[0].id !== 0)
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
-          break;
-        case RoadAddressChangeType.Transfer.value:
-          dropdown_0_new.prop('disabled', true);
-          $("#dropDown_0 option[value=" + RoadAddressChangeType.Transfer.description + "]").attr('selected', 'selected').change();
-          rootElement.find('.changeDirectionDiv').prop("hidden", true); // TODO remove this line when Velho integration can handle road reversing
-          break;
-        case RoadAddressChangeType.Numbering.value:
-          $("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").attr('selected', 'selected').change();
-          break;
-        case RoadAddressChangeType.Terminated.value:
-          $("#dropDown_0 option[value=" + RoadAddressChangeType.Terminated.description + "]").attr('selected', 'selected').change();
-          break;
-        default:
-          break;
-      }
-      $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
-    };
-
-    var removeNumberingFromDropdown = function () {
-      $("#dropDown_0").children("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").remove();
-    };
-
     const fillDistanceValues = (selectedLinks) => {
       const beginDistance = $('#beginDistance');
       const endDistance = $('#endDistance');
@@ -289,17 +253,6 @@
 
       const updateForm = () => {
         checkInputs();
-        changeDropDownValue(selectedProjectLink[0].status);
-        
-        // Disable numbering if the road part has any other status set
-        const hasOtherStatus = _.some(projectCollection.getAll(), (pl) => pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
-          pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
-          pl.status !== RoadAddressChangeType.NotHandled.value && 
-          pl.status !== RoadAddressChangeType.Numbering.value);
-        
-        if (selectedProjectLink[0].status !== RoadAddressChangeType.Numbering.value && hasOtherStatus) {
-          removeNumberingFromDropdown();
-        }
         
         disableFormInputs();
         
@@ -575,6 +528,7 @@
 
           case RoadAddressChangeType.Transfer.description:
             enableFields(true);
+            uiElements.newRoadAddress.prop('hidden', false);
             uiElements.devTool.prop('hidden', false);
             projectCollection.setDirty(selectedProjectLink.map(link => mapLinkData(link, RoadAddressChangeType.Transfer.value)));
             break;
