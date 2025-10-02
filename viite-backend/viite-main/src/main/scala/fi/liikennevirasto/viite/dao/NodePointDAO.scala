@@ -37,7 +37,7 @@ object NodePoint extends SQLSyntaxSupport[NodePoint] {
     ),
     track             = rs.longOpt("track").map(l  => Track.apply(l.toInt)).getOrElse(Track.Unknown),
     elyCode           = rs.longOpt("ely").map(l    => l).getOrElse(0L),
-    roadMaintainer    = ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("ELY0"))  // rs.longOpt("evk").map(l    => l).getOrElse(0L)
+    roadMaintainer    = ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("EVK0"))  // rs.longOpt("evk").map(l    => l).getOrElse(0L)
   )
 }
 

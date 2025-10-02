@@ -434,6 +434,9 @@
         const evkValue = parseInt($('#evk')[0].value);
         const isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
 
+        console.log("EVK VALUE :: ", evkValue)
+        console.log("IS VALID :: ", isValidEvk)
+
         if (!isValidEvk) {
           return new ModalConfirm('Tarkista antamasi EVK-koodi. Annettu arvo on virheellinen.');
         }
