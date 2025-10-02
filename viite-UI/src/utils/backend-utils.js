@@ -268,9 +268,7 @@
         endPart: endPart,
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
-      }).then(function (x) {
-        // TODO: EVK Add mock EVK codes, remove this later
-      //  const dataWithEvk = addMockEvkCodes(x);
+      }).then(function (data) {
         eventbus.trigger('roadPartsValidation:checkRoadParts', data);
       });
     });
@@ -435,68 +433,6 @@
 
     function convertDatetoSimpleDate(date) {
       return moment(date, 'DD.MM.YYYY').format("YYYY-MM-DD");
-    }
-
-    // Mock function to convert ELY codes to EVK codes
-    // This is a temporary solution until backend supports EVK codes
-    // TODO EVK Remove this later
-    function addMockEvkCodes(data) {
-      console.log("HIIIJJOOHHHOOIIIIII")
-      if (!data) return data;
-
-      console.log("DATA :::: ", data)
-/*
-      // ELY to EVK mapping based on geographical regions
-      const elyToEvkMapping = {
-        1: 1,  // Uusimaa -> Uudenmaan elinvoimakeskus
-        2: 2,  // Varsinais-Suomi -> Lounais-Suomen elinvoimakeskus
-        3: 3,  // Kaakkois-Suomi -> Kaakkois-Suomen elinvoimakeskus
-        4: 4,  // Pirkanmaa -> Sisä-Suomen elinvoimakeskus
-        8: 6,  // Pohjois-Savo -> Itä-Suomen elinvoimakeskus
-        9: 5,  // Keski-Suomi -> Keski-Suomen elinvoimakeskus
-        10: 7, // Etelä-Pohjanmaa -> Etelä-Pohjanmaan elinvoimakeskus
-        12: 8, // Pohjois-Pohjanmaa -> Pohjanmaan elinvoimakeskus
-        14: 10 // Lappi -> Lapin elinvoimakeskus
-      };
-
-      // Helper function to add EVK code to a single item
-      function addEvkToItem(item) {
-        if (item && typeof item === 'object') {
-          if (item.currentEly !== undefined) {
-            item.currentEvk = elyToEvkMapping[item.currentEly] || item.currentEly;
-          }
-          if (item.newEly !== undefined) {
-            item.newEvk = elyToEvkMapping[item.newEly] || item.newEly;
-          }
-          if (item.ely !== undefined) {
-            item.evk = elyToEvkMapping[item.ely] || item.ely;
-          }
-          if (item.elyCode !== undefined) {
-            item.evkCode = elyToEvkMapping[item.elyCode] || item.elyCode;
-          }
-        }
-        return item;
-      }
-
-      // Handle different data structures
-      if (Array.isArray(data)) {
-        return data.map(function (item) {
-          if (Array.isArray(item)) {
-            return item.map(addEvkToItem);
-          }
-          return addEvkToItem(item);
-        });
-      } else if (data && typeof data === 'object') {
-        if (data.reservedInfo && Array.isArray(data.reservedInfo)) {
-          data.reservedInfo = data.reservedInfo.map(addEvkToItem);
-        }
-        if (data.formedInfo && Array.isArray(data.formedInfo)) {
-          data.formedInfo = data.formedInfo.map(addEvkToItem);
-        }
-        addEvkToItem(data);
-      }*/
-
-      return data;
     }
 
     this.getRoadAddressesByRoadNumber = createCallbackRequestor(function (roadNumber) {
