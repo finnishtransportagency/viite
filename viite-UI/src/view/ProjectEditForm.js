@@ -175,6 +175,40 @@
       updateButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
     };
 
+    // This is called when a project link is selected to display the correct change type in the dropdown
+    // It also handles the visibility of the new road address form and the change direction div
+    const changeDropDownValue = function (statusCode) {
+      const dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
+      const rootElement = $('#feature-attributes');
+      switch (statusCode) {
+        case RoadAddressChangeType.Unchanged.value:
+          dropdown_0_new.prop('disabled', true);
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Unchanged.description + "]").attr('selected', 'selected').change();
+          break;
+        case RoadAddressChangeType.New.value:
+          dropdown_0_new.attr('selected', 'selected').change();
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          rootElement.find('.new-road-address').prop("hidden", false);
+          if (selectedProjectLink[0].id !== 0)
+            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+          break;
+        case RoadAddressChangeType.Transfer.value:
+          dropdown_0_new.prop('disabled', true);
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Transfer.description + "]").attr('selected', 'selected').change();
+          rootElement.find('.changeDirectionDiv').prop("hidden", true); // TODO remove this line when Velho integration can handle road reversing
+          break;
+        case RoadAddressChangeType.Numbering.value:
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").attr('selected', 'selected').change();
+          break;
+        case RoadAddressChangeType.Terminated.value:
+          $("#dropDown_0 option[value=" + RoadAddressChangeType.Terminated.description + "]").attr('selected', 'selected').change();
+          break;
+        default:
+          break;
+      }
+      $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
+    };
+
     const fillDistanceValues = (selectedLinks) => {
       const beginDistance = $('#beginDistance');
       const endDistance = $('#endDistance');
@@ -252,6 +286,7 @@
       });
 
       const updateForm = () => {
+        changeDropDownValue(selectedProjectLink[0].status);
         checkInputs();
         
         disableFormInputs();
