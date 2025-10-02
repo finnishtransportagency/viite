@@ -381,8 +381,7 @@
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
         roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
-        // TODO EVK: ADD EVK ONCE BACKEND SUPPORTS IT
-        // roadEvk: Number(roadAddressProjectForm.find('#evk')[0].value),
+        roadEvk: Number(roadAddressProjectForm.find('#evk')[0].value),
         roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
         administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
         userDefinedEndAddressM: userDefinedEndAddressM,
@@ -421,7 +420,8 @@
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
-          ely: (part.newEly ? part.newEly : part.currentEly)
+          ely: (part.newEly ? part.newEly : part.currentEly),
+          evk: part.newEvk ? part.newEvk : part.currentEvk
         };
       });
 

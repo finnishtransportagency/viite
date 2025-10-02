@@ -240,7 +240,7 @@ class ProjectService(
           roadNumber,
           roadPartNumber,
           Try(municipalityToViiteELYMapping(municipalitycode)).getOrElse(-1),
-          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("ELY0")),
+          Try(ArealRoadMaintainer(municipalityToViiteEVKMapping(municipalitycode))).getOrElse(ArealRoadMaintainer.EVKTEST), // Use the apply method to get the maintainer
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")
