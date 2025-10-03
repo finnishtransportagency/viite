@@ -203,7 +203,6 @@
     }, 1000);
 
     this.checkIfRoadpartReserved = (function (roadNumber, startPart, endPart, projDate, projectId) {
-      console.log("LIIILEEELAAAAA")
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadNumber: roadNumber,
         startPart: startPart,
