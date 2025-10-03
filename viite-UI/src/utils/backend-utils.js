@@ -203,18 +203,14 @@
     }, 1000);
 
     this.checkIfRoadpartReserved = (function (roadNumber, startPart, endPart, projDate, projectId) {
-      console.log("LIIILEEELAAAAA")
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadNumber: roadNumber,
         startPart: startPart,
         endPart: endPart,
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
-      }).then(function (x) {
-        // TODO: EVK Add mock EVK codes, remove this later
-        console.log("WE HAS X MAYBE? ")
-        console.log(x)
-        eventbus.trigger('roadPartsValidation:checkRoadParts', x);
+      }).then(function (data) {
+        eventbus.trigger('roadPartsValidation:checkRoadParts', data);
       });
     });
 

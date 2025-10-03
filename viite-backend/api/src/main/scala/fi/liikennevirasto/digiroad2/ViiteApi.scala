@@ -710,8 +710,6 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       summary "This is responsible of creating a new Road address project."
     )
   post("/roadlinks/roadaddress/project",operation(createRoadAddressProject)) {
-    logger.info(s"DOING A ROAD ADDRESS PROJECT CREATE ")
-
     time(logger, "POST request for /roadlinks/roadaddress/project") {
       val project = parsedBody.extract[RoadAddressProjectExtractor]
       val user = userProvider.getCurrentUser
