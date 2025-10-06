@@ -234,7 +234,7 @@
     };
     
     const nodeInputNumber = function (id, maxLength) {
-      return `<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode === 9 || event.keyCode === 8)" class="form-control node-input" id="${id}" ${_.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`}/>`;
+      return `<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || event.keyCode === 9 || event.keyCode === 8" class="form-control node-input" id="${id}" ${_.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`}/>`;
     };
     
     const addDiscontinuityDropdown = function () {
