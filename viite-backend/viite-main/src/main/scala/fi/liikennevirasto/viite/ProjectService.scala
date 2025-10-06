@@ -240,7 +240,7 @@ class ProjectService(
           roadNumber,
           roadPartNumber,
           Try(municipalityToViiteELYMapping(municipalitycode)).getOrElse(-1),
-          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("ELY0")),
+          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("EVK0")),
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")
@@ -2050,21 +2050,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
-
-    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
-    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
-    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
-    println(s"TULLAANKOS TÄÄLLÄ KÄYMÄÄN ???")
-
-    println(s"PROJECT ID ::: ${projectId} ")
-
-    println(s"USER NAME ::: ${userName} ")
-
-    println(s"ROADPARTS :: ${roadParts.size}")
-
-    roadParts.foreach(r => println(s" ROADNUMBER: ${r.roadNumber} :: PARTNUMBER: ${r.partNumber}"))
-
-
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
 
@@ -2082,6 +2067,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
           val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
           val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
+/*
 
           println(s"&/(&/(&/(")
           println(s"&/(&/(&/(")
@@ -2105,20 +2091,12 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
           println(s"recalculatedNonTerminated :: ${recalculatedNonTerminated.length}")
 
+*/
 
           // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
           (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
       }.toSeq
 
-
-      println(s"()()()()()()")
-      println(s"()()()()()()")
-      println(s"()()()()()()")
-      println(s"()()()()()()")
-      println(s"()()()()()()")
-      println(s"()()()()()()")
-
-      println(s"RECALCULATED ::: ${recalculated.length}")
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
@@ -2291,7 +2269,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     }
 
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
-      case Some(rp) => rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("ELY0"))
+      case Some(rp) => rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
       case _ => ra.roadMaintainer
     }
 
@@ -2724,14 +2702,11 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   }
 
   def getProjectEvk(projectId: Long): Seq[Long] = {
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"GETTING PROJECT EVK FOR PROJECT :: $projectId")
-    runWithReadOnlySession {
+    val result = runWithReadOnlySession {
       projectDAO.fetchProjectEvkById(projectId).map(e => ArealRoadMaintainer.getEVK(e).number.toLong)
     }
+    logger.info(s"FOUND EVK ::: $result")
+    result
   }
 
   /**

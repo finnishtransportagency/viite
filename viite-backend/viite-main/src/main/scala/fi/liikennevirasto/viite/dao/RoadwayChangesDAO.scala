@@ -21,7 +21,7 @@ case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long
 }
 
 case class RoadwayChangeInfo(changeType: RoadAddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
-                             discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.apply("ELY0"))
+                             discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.apply("EVK0"))
 
 case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, roadMaintainer: ArealRoadMaintainer, user: String, changeDate: DateTime, changeInfo: RoadwayChangeInfo, projectStartDate: DateTime)
 
@@ -102,7 +102,7 @@ object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
     old_discontinuity        = rs.longOpt("old_discontinuity").getOrElse(0L),
     old_administrative_class = rs.longOpt("old_administrative_class").getOrElse(0L),
     old_ely                  = rs.longOpt("old_ely").getOrElse(0L),
-    old_road_maintainer      = ArealRoadMaintainer.apply(rs.stringOpt("old_road_maintainer").getOrElse("ELY0")),
+    old_road_maintainer      = ArealRoadMaintainer.apply(rs.stringOpt("old_road_maintainer").getOrElse("EVK0")),
     new_road_number          = rs.longOpt("new_road_number").getOrElse(0L),
     new_road_part_number     = rs.longOpt("new_road_part_number").getOrElse(0L),
     new_track                = rs.longOpt("new_track").getOrElse(0L),

@@ -39,7 +39,7 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
                                        additionalInfo: String, reservedPartList: List[RoadPartElyExtractor], formedPartList: List[RoadPartElyExtractor], resolution: Int)
 
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long,
-                                            /*roadPart: RoadPart,*/ roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadMaintainer: ArealRoadMaintainer, roadLinkSource: Int, administrativeClass: Int,
+                                            /*roadPart: RoadPart,*/ roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadEvk: Long, roadLinkSource: Int, administrativeClass: Int,
                                             userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean], devToolData: Option[ProjectLinkDevToolData])
 
 case class RoadPartElyExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
@@ -698,6 +698,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   }
 
   private val createRoadAddressProject: SwaggerSupportSyntax.OperationBuilder = (
+
     apiOperation[Map[String, Any]]("createRoadAddressProject")
       .parameters(
         bodyParam[RoadAddressProjectExtractor]("RoadAddressProject").description("Full project object to create\r\n" +
@@ -1012,7 +1013,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         if (links.roadPartNumber == 0)
           throw RoadPartException("Virheellinen tieosanumero")
         logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
-        val response = projectService.createProjectLinks(links.linkIds, links.projectId, RoadPart(links.roadNumber, links.roadPartNumber), Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, links.roadMaintainer, user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates), links.devToolData)
+        val response = projectService.createProjectLinks(links.linkIds, links.projectId, RoadPart(links.roadNumber, links.roadPartNumber), Track.apply(links.trackCode), Discontinuity.apply(links.discontinuity), AdministrativeClass.apply(links.administrativeClass), LinkGeomSource.apply(links.roadLinkSource), links.roadEly, ArealRoadMaintainer.getEVKFromLong(links.roadEvk), user.username, links.roadName.getOrElse(halt(BadRequest("Road name is mandatory"))), Some(links.coordinates), links.devToolData)
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
