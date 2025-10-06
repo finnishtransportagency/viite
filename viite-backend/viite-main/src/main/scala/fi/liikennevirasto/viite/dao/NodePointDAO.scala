@@ -37,7 +37,7 @@ object NodePoint extends SQLSyntaxSupport[NodePoint] {
     ),
     track             = rs.longOpt("track").map(l  => Track.apply(l.toInt)).getOrElse(Track.Unknown),
     elyCode           = rs.longOpt("ely").map(l    => l).getOrElse(0L),
-    roadMaintainer    = ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("ELY0"))  // rs.longOpt("evk").map(l    => l).getOrElse(0L)
+    roadMaintainer    = ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("EVK0"))  // rs.longOpt("evk").map(l    => l).getOrElse(0L)
   )
 }
 
@@ -58,7 +58,7 @@ class NodePointDAO extends BaseDAO {
   lazy val selectFromNodePoint = sqls"""
                              SELECT np.id, np.before_after, np.roadway_point_id, np.node_number, np.type, n.start_date, n.end_date,
                                 np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m,
-                                rw.road_number, rw.road_part_number, rw.track, rw.ely
+                                rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
                              FROM node_point np
                              JOIN roadway_point rp ON (rp.id = roadway_point_id)
                              LEFT OUTER JOIN node n ON (n.node_number = np.node_number AND n.valid_to IS NULL AND n.end_date IS NULL)
@@ -337,7 +337,7 @@ class NodePointDAO extends BaseDAO {
             NULL AS start_date, NULL AS end_date,
             np.valid_from, np.valid_to, np.created_by, np.created_time,
             rp.roadway_number, rp.addr_m,
-            NULL AS road_number, NULL AS road_part_number, NULL AS track, NULL AS ely
+            NULL AS road_number, NULL AS road_part_number, NULL AS track, NULL AS ely, NULL as road_maintainer
        FROM node_point np
        JOIN roadway_point rp ON (rp.id = roadway_point_id)
        WHERE np.valid_to IS NULL AND np.node_number = $nodeNumber
@@ -504,7 +504,7 @@ class NodePointDAO extends BaseDAO {
       roadPart = RoadPart(0, 0),
       track =  null,
       elyCode = 8,                                              //TODO: Verify the validity of these default values
-      roadMaintainer = ArealRoadMaintainer.apply("ELY8"),       //TODO: Verify the validity of these default values
+      roadMaintainer = ArealRoadMaintainer.apply("EVK0"),       //TODO: Verify the validity of these default values
       coordinates = Point(0.0, 0.0)
 
     )))
@@ -528,27 +528,8 @@ class NodePointDAO extends BaseDAO {
       RoadPart(0, 0),
       null,
       8, //TODO: Verify the validity of these default values
-      roadMaintainer = ArealRoadMaintainer.apply("ELY8"),       //TODO: Verify the validity of these default values
+      ArealRoadMaintainer.apply("EVK0"),       //TODO: Verify the validity of these default values
 
     )))
   }
 }
-
-/* case class NodePoint(id: Long,
-beforeAfter: BeforeAfter,
-roadwayPointId: Long,
-nodeNumber: Option[Long],
-nodePointType: NodePointType = NodePointType.UnknownNodePointType,
-startDate: Option[DateTime],
-endDate: Option[DateTime],
-validFrom: DateTime,
-validTo: Option[DateTime],
-createdBy: String,
-createdTime: Option[DateTime],
-roadwayNumber: Long,
-addrM : Long,
-roadPart: RoadPart,
-track: Track,
-elyCode: Long,
-evkCode: Long,
-coordinates: Point = Point(0.0, 0.0))*/
