@@ -505,7 +505,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       queryParam[String]("situationDate").description("Situation date (yyyy-MM-dd)"),
       queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
-      queryParam[Long]("roadMaintainer").description("Evk number or older Ely number of a road address in road maintainer format").optional,
+      queryParam[String]("roadMaintainer").description("Evk number or older Ely number of a road address in road maintainer format").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
       queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
@@ -1048,6 +1048,11 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   put("/roadlinks/roadaddress/project/links", operation(updateProjectLinks)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser
+      println(s"/()=/(/()=/()=/()=/()=/")
+      println(s"/()=/(/()=/()=/()=/()=/")
+      println(s"/()=/(/()=/()=/()=/()=/")
+      println(s"/()=/(/()=/()=/()=/()=/")
+      println(s"/()=/(/()=/()=/()=/()=/")
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
         if (links.roadNumber == 0)
@@ -1055,7 +1060,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         if (links.roadPartNumber == 0)
           throw RoadPartException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates), links.devToolData) match {
+          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), Some(ArealRoadMaintainer.getEVKFromLong(links.roadEvk)), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates), links.devToolData) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)

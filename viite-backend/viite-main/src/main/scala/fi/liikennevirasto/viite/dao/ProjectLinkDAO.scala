@@ -497,6 +497,7 @@ class ProjectLinkDAO extends BaseDAO {
       val nonUpdatingStatus = Set[RoadAddressChangeType](RoadAddressChangeType.NotHandled)
       val maxInEachTracks = projectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).groupBy(_.track).map(p => p._2.maxBy(_.addrMRange.end).id).toSeq
       val links = projectLinks.map { pl =>
+        println(s"PROJECT LINK ROAD MAINTAINER ID :: ", {pl.roadMaintainer.id})
         if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
           val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
           // Discontinuity, administrative class and calibration points may change with Unchanged status
@@ -539,7 +540,7 @@ class ProjectLinkDAO extends BaseDAO {
           pl.startMValue,
           pl.endMValue,
           pl.ely,
-          pl.roadMaintainer,
+          pl.roadMaintainer.id,
           pl.roadwayNumber,
           pl.connectedLinkId.orNull,
           pl.id
@@ -824,13 +825,13 @@ class ProjectLinkDAO extends BaseDAO {
     * @param newRoadPart: RoadPart the new road part to apply
     * @param userName: String - user name
     */
-  def updateProjectLinkNumbering(projectId: Long, roadPart: RoadPart, roadAddressChangeType: RoadAddressChangeType, newRoadPart: RoadPart, userName: String, ely: Long ): Unit = {
+  def updateProjectLinkNumbering(projectId: Long, roadPart: RoadPart, roadAddressChangeType: RoadAddressChangeType, newRoadPart: RoadPart, userName: String, ely: Long, roadMaintainer: ArealRoadMaintainer): Unit = {
     time(logger, "Update project link numbering") {
       val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
       val query = sql"""
                   UPDATE project_link
                   SET status = ${roadAddressChangeType.value}, modified_by=$user, road_number = ${newRoadPart.roadNumber},
-                    road_part_number = ${newRoadPart.partNumber}, ely = $ely
+                    road_part_number = ${newRoadPart.partNumber}, ely = $ely, road_maintainer = ${roadMaintainer.id}
                   WHERE project_id = $projectId
                   AND road_number = ${roadPart.roadNumber}
                   AND road_part_number = ${roadPart.partNumber}
@@ -1317,7 +1318,7 @@ class ProjectLinkDAO extends BaseDAO {
   }
 
   def fetchProjectLinkRoadMaintainers(projectId: Long): Seq[String] = {
-    time(logger, "Get evks from project links.") {
+    time(logger, "Get road maintainers from project links.") {
       val query =
         sql"""
               SELECT DISTINCT road_maintainer
