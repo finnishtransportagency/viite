@@ -245,11 +245,11 @@ class RoadwayChangesDAO extends BaseDAO {
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
             roadwaySection.ely,
-            roadwaySection.roadMaintainer,
+            roadwaySection.roadMaintainer.id,
             roadwaySection.administrativeClass.value,
             roadwaySection.discontinuity.value,
             roadwaySection.ely,
-            roadwaySection.roadMaintainer,
+            roadwaySection.roadMaintainer.id,
             if (roadwaySection.reversed) 1 else 0,
             nextChangeOrderLink
           )
@@ -270,11 +270,11 @@ class RoadwayChangesDAO extends BaseDAO {
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
             roadwaySection.ely,
-            roadwaySection.roadMaintainer,
+            roadwaySection.roadMaintainer.id,
             roadwaySection.administrativeClass.value,
             roadwaySection.discontinuity.value,
             roadwaySection.ely,
-            roadwaySection.roadMaintainer,
+            roadwaySection.roadMaintainer.id,
             if (roadwaySection.reversed) 1 else 0,
             nextChangeOrderLink
           )
@@ -295,11 +295,11 @@ class RoadwayChangesDAO extends BaseDAO {
             roadwaySection.discontinuity.value,
             roadwaySection.administrativeClass.value,
             roadwaySection.ely,
-            roadwaySection.roadMaintainer,
+            roadwaySection.roadMaintainer.id,
             roadwaySection.administrativeClass.value,
             roadwaySection.discontinuity.value,
             roadwaySection.ely,
-            roadwaySection.roadMaintainer,
+            roadwaySection.roadMaintainer.id,
             if (roadwaySection.reversed) 1 else 0,
             nextChangeOrderLink
           )
@@ -384,7 +384,7 @@ class RoadwayChangesDAO extends BaseDAO {
               old_track,new_track,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,
               new_discontinuity,new_administrative_class,new_ely, new_road_maintainer, old_administrative_class, old_discontinuity, old_ely, old_road_maintainer, reversed, roadway_change_id
               )
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """
 
           val roadWayChangeLinkQuery =
