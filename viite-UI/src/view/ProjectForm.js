@@ -1,7 +1,7 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, startupParameters) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
-    const discontinuityColumnWidth = '80px !important';
+    const discontinuityColumnWidth = '80px';
     var currentProject = false;
     var formCommon = new FormCommon('');
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
