@@ -196,13 +196,9 @@ object ArealRoadMaintainer {
   }
 
   def getEVKFromLong(evkNumber: Long): EVK = {
-    println(s"GETTING EVK FOR LONG :: ", evkNumber)
-    val EVK = EVKset.find(_.number == evkNumber.toInt).getOrElse(
-      throw ViiteException(s"Olematon EVK:n numero: $evkNumber")
+    EVKset.find(_.number == evkNumber.toInt).getOrElse(
+      throw ViiteException(s"Olematon elinvoimakeskuksen numero: $evkNumber")
     )
-    println(s"EVK ::: ", EVK)
-    println(s"EVK.ID :: ", EVK.id)
-    return EVK
   }
 
   def getEVKCodeForDB(evkNumber: Int): String = {
