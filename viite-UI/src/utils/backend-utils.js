@@ -248,9 +248,27 @@
       });
     }, 1000);
 
+    // Backend returns an array of EVK shortnames, but frontend expects numbers. So [EVK0] -> [0]
+    const convertRoadMaintainersToNumbers = function(projects) {
+
+      return projects.map(project => {
+        if (project.roadMaintainers && Array.isArray(project.roadMaintainers)) {
+          // Extract numbers from each string in roadMaintainers
+          project.evks = project.roadMaintainers.map(rm => {
+            const match = rm.match(/\d+/); // find digits in the string
+            return match ? parseInt(match[0]) : null;
+          }).filter(num => num !== null); // remove nulls if no number found
+        } else {
+          project.evks = [];
+        }    
+        return project;
+      });
+    };    
+
     this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
-        return _.isFunction(callback) && callback(data);
+        const processedData = Array.isArray(data) ? convertRoadMaintainersToNumbers(data) : data;
+        return _.isFunction(callback) && callback(processedData);
       });
     }, 1000);
 

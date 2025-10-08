@@ -720,7 +720,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       try {
         val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
         val fetched = projectService.getSingleProjectById(projectSaved.id).get
-        println(s"FETCHED PROJECT ::: ${fetched.id}")
+
         val firstAddress: Map[String, Any] =
           fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
         Map("project" -> roadAddressProjectToApi(fetched, projectService.getProjectEly(fetched.id), projectService.getProjectEvk(fetched.id)),
