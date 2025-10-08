@@ -471,13 +471,6 @@ class ProjectService(
 
   def createProjectLinks(linkIds: Seq[String], projectId: Long, roadPart: RoadPart, track: Track, userGivenDiscontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, roadMaintainer: ArealRoadMaintainer, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None, devToolData: Option[ProjectLinkDevToolData] = None): Map[String, Any] = {
 
-println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"!!!!!!!")
-    println(s"roadnMaintainer ::: ", roadMaintainer)
-    println(s"roadMaintainer.id :: ", roadMaintainer.id)
-
 
     def createProjectRoadMaintainerCodes(): Unit = {
       val elysForProject = projectLinkDAO.fetchProjectLinkElys(projectId) :+ roadEly
@@ -1308,19 +1301,6 @@ println(s"!!!!!!!")
     ProjectReservedPart(0L, roadPart, None, None, Some(ely), Some(roadMaintainer), None, None, None, None, None)
   }
 
-  /* ProjectReservedPart(id: Long,
-                               roadPart: RoadPart,
-                               addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None,
-                               ely: Option[Long] = None,
-                               roadMaintainer: Option[ArealRoadMaintainer] = None,
-                               newLength: Option[Long] = None,
-                               newDiscontinuity: Option[Discontinuity] = None,
-                               newEly: Option[Long] = None,
-                               newRoadMaintainer: Option[ArealRoadMaintainer] = None,
-                               startingLinkId: Option[String] = None)*/
-
-
   /**
     * Splits the links to revert in two separate types, the modified (ones that came from road addresses) and the added (ones that were created in this project).
     * Also fetches the project links by road number, road part number and project id and supply them to the next step.
@@ -2103,31 +2083,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
           val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
           val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
-/*
-
-          println(s"&/(&/(&/(")
-          println(s"&/(&/(&/(")
-          println(s"&/(&/(&/(")
-          println(s"&/(&/(&/(")
-          println(s"&/(&/(&/(")
-
-          println(s"FUSED LINKS :: ${fusedLinks.length}")
-
-          println(s"calibrationPoints :: ${calibrationPoints.length}")
-
-          println(s"projectLinksWithAdjustedCalibrationPoints :: ${projectLinksWithAdjustedCalibrationPoints.length}")
-
-          println(s"newLinks :: ${newLinks.length}")
-
-          println(s"notNewLinks :: ${notNewLinks.length}")
-
-          println(s"adjustedTerminated :: ${adjustedTerminated.length}")
-
-          println(s"withoutTerminated :: ${withoutTerminated.length}")
-
-          println(s"recalculatedNonTerminated :: ${recalculatedNonTerminated.length}")
-
-*/
 
           // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
           (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
