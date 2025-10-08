@@ -320,17 +320,6 @@ class RoadwayChangesDAO extends BaseDAO {
                                 batchParams: Seq[Seq[Any]]): (Seq[Seq[Any]], Seq[Seq[Any]]) = {
       val nextChangeOrderLink = Sequences.nextRoadwayChangeLink
 
-      logger.info(s"ADDING BATCH STUFF")
-      logger.info(s"ADDING BATCH STUFF")
-      logger.info(s"ADDING BATCH STUFF")
-      logger.info(s"ADDING BATCH STUFF")
-
-      logger.info(s"NEW ROAD MAINTAINER ::: ${newRoadwaySection.roadMaintainer}")
-      logger.info(s"NEW ROAD MAINTAINER.ID ::: ${newRoadwaySection.roadMaintainer.id}")
-
-      logger.info(s"OLD ROAD MAINTAINER ::: ${oldRoadwaySection.roadMaintainer}")
-      logger.info(s"OLD ROAD MAINTAINER.ID ::: ${oldRoadwaySection.roadMaintainer.id}")
-
       // Main roadway change parameters
       val roadwayChangeParams = Seq(
         projectId,
