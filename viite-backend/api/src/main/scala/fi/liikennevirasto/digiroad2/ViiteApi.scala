@@ -1649,6 +1649,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> roadAddressLink.roadPart.roadNumber,
       "roadPartNumber" -> roadAddressLink.roadPart.partNumber,
       "elyCode" -> roadAddressLink.elyCode,
+      "evkCode" -> roadAddressLink.roadMaintainer.number,
       "trackCode" -> roadAddressLink.trackCode,
       "addrMRange" -> addrMRangeToApi(roadAddressLink.addrMRange),
       "discontinuity" -> roadAddressLink.discontinuity,
