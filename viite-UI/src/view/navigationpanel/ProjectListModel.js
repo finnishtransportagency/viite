@@ -21,7 +21,7 @@
     let projectArray = [];
     const headers = {
       "sortName": {
-        toStr: "PROJEKTIN NIMI", width: "255",
+        toStr: "PROJEKTIN NIMI", width: "200",
         sortFunc: function (a, b) {
           return a.name.localeCompare(b.name, 'fi');
         }
@@ -39,6 +39,21 @@
           return a.elys.length - b.elys.length;
         }
       },
+      "sortEVK": {
+        toStr: "ELINVOIMAKESKUS", width: "180",
+        sortFunc: function (a, b) {
+          const aEvks = a.evks || [];
+          const bEvks = b.evks || [];
+          let i = 0;
+          while (i < aEvks.length && i < bEvks.length) {
+            if (aEvks[i] !== bEvks[i]) {
+              return aEvks[i] - bEvks[i];
+            }
+            i++;
+          }
+          return aEvks.length - bEvks.length;
+        }
+      },
       "sortUser": {
         toStr: "KÄYTTÄJÄ", width: "115",
         sortFunc: function (a, b) {
@@ -46,7 +61,7 @@
         }
       },
       "sortDate": {
-        toStr: "LUONTIPVM", width: "110",
+        toStr: "LUONTIPVM", width: "158",
         sortFunc: function (a, b) {
           const aDate = a.createdDate.split('.').reverse().join('-');
           const bDate = b.createdDate.split('.').reverse().join('-');
@@ -105,7 +120,7 @@
       '<div class="actions">' +
       '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>');
+    projectList.append('<div id="project-list" style="width:1000px; height:390px; overflow:auto;"></div>');
     projectList.append('<div class="content-footer">' +
       '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="OldAcceptedProjectsVisible" value="OldAcceptedProjectsVisible" id="OldAcceptedProjectsVisibleCheckbox">Näytä kaikki tieverkolle päivitetyt projektit</label>' +
       '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
@@ -264,13 +279,15 @@
           let uniqueId = 0;
 
           sortedProjects.forEach(function(proj) {
+            console.log(proj)
             const info = proj.statusInfo || 'Ei lisätietoja';
             html += `<tr id="${uniqueId}" class="project-item">
-              <td class="innerName" style="width: 270px;">${staticFieldProjectName(proj.name)}</td>
-              <td style="width: 60px; word-break: break-word" title="${info}">${staticFieldProjectList(proj.elys)}</td>
-              <td class="innerCreatedBy" style="width: 120px;" title="${info}">${staticFieldProjectList(proj.createdBy)}</td>
-              <td style="width: 120px;" title="${info}">${staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate)))}</td>
-              <td style="width: 100px;" title="${info}">${staticFieldProjectList(proj.statusDescription)}</td>`;
+              <td class="innerName" style="width: 200px; vertical-align: middle;">${staticFieldProjectName(proj.name)}</td>
+              <td style="width: 50px; text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.elys)}</td>
+              <td style="width: 180px; text-align: center; vertical-align: middle; padding-right: 48px;" title="${info}">${staticFieldProjectList(proj.evks)}</td>
+              <td class="innerCreatedBy" style="width: 100px; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.createdBy)}</td>
+              <td style="width: 100px; text-align: center; vertical-align: middle; padding-right: 48px" title="${info}">${staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate)))}</td>
+              <td style="width: 80px; text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.statusDescription)}</td>`;
 
             const openButton = proj.statusCode === projectStatus.ErrorInViite.value
                 ? `<button class="project-open btn btn-new-error" style="margin-bottom: 6px; margin-left: 25px" id="reopen-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa uudelleen</button>`
