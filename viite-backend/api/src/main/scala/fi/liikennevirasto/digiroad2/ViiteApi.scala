@@ -45,7 +45,7 @@ case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String]
 case class RoadPartElyExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 case class RoadPartEvkExtractor(roadNumber: Long, roadPartNumber: Long, evk: Long)
 
-case class RoadPartRoadMaintainerExtractor(roadNumer: Long, roadPartNumber: Long, ely: Option[Long], evk: Option[Long])
+case class RoadPartRoadMaintainerExtractor(roadNumber: Long, roadPartNumber: Long, ely: Option[Long], evk: Option[Long])
 
 case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
                               startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
@@ -2134,7 +2134,7 @@ object ProjectConverter {
       case Some(value) => Some(ArealRoadMaintainer.getEVKFromLong(value))
       case None => None
     }
-    ProjectReservedPart(0L, RoadPart(rp.roadNumer, rp.roadPartNumber), None, None, rp.ely, arealRoadMaintainerOpt, None, None)
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, rp.ely, arealRoadMaintainerOpt, None, None)
   }
 
 }
