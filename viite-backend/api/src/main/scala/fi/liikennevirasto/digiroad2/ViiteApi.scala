@@ -35,19 +35,22 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class RevertRoadLinksExtractor(projectId: Long, /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
-case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, reservedPartList: List[RoadPartElyExtractor], formedPartList: List[RoadPartElyExtractor], resolution: Int)
+case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], projectRoadMaintainer: Option[Long], status: Long, name: String, startDate: String,
+                                       additionalInfo: String, reservedPartList: List[RoadPartRoadMaintainerExtractor], formedPartList: List[RoadPartRoadMaintainerExtractor], resolution: Int)
 
 case class RoadAddressProjectLinksExtractor(ids: Set[Long], linkIds: Seq[String], roadAddressChangeType: Int, projectId: Long,
                                             /*roadPart: RoadPart,*/ roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadEvk: Long, roadLinkSource: Int, administrativeClass: Int,
                                             userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates, roadName: Option[String], reversed: Option[Boolean], devToolData: Option[ProjectLinkDevToolData])
 
 case class RoadPartElyExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
+case class RoadPartEvkExtractor(roadNumber: Long, roadPartNumber: Long, evk: Long)
+
+case class RoadPartRoadMaintainerExtractor(roadNumer: Long, roadPartNumber: Long, ely: Option[Long], evk: Option[Long])
 
 case class NodePointExtractor(id: Long, beforeAfter: Int, roadwayPointId: Long, nodeNumber: Option[Long], `type`: Int = NodePointType.UnknownNodePointType.value,
                               startDate: Option[String], endDate: Option[String], validFrom: String, validTo: Option[String],
                               createdBy: String, createdTime: Option[String], roadwayNumber: Long, addrM : Long,
-                              /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long, roadMaintainer: ArealRoadMaintainer)
+                              /*roadPart: RoadPart,*/roadNumber: Long, roadPartNumber: Long, track: Int, elyCode: Long = 0L, roadMaintainer: Long)
 
 case class JunctionExtractor(id: Long, junctionNumber: Option[Long], nodeNumber: Option[Long],
                              junctionPoints: List[JunctionPointExtractor], startDate: String, endDate: Option[String],
@@ -505,7 +508,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       queryParam[String]("situationDate").description("Situation date (yyyy-MM-dd)"),
       queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
-      queryParam[Long]("roadMaintainer").description("Evk number or older Ely number of a road address in road maintainer format").optional,
+      queryParam[String]("roadMaintainer").description("Evk number or older Ely number of a road address in road maintainer format").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
       queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
@@ -901,17 +904,9 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         projectService.getSingleProjectById(projectId) match {
           case Some(project) =>
             val projectMap = roadAddressProjectToApi(project, projectService.getProjectEly(project.id), projectService.getProjectEvk(project.id))
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"?)=?)=?=?)=?)=?)")
-            println(s"PROJECTMAP ::: $projectMap")
             val reservedparts = project.reservedParts.map(projectReservedPartToApi)
-            println(s"RESERVEDPARTS ::: $reservedparts")
             val formedparts = project.formedParts.map(projectFormedPartToApi(Some(project.id)))
-            println(s"FORMEDPARTS ::: $formedparts")
             val errorParts = projectService.validateProjectById(project.id)
-            println(s"ERRORPARTS ::: $errorParts")
             val publishable = errorParts.isEmpty
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
               "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi))
@@ -1055,7 +1050,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         if (links.roadPartNumber == 0)
           throw RoadPartException("Virheellinen tieosanumero")
         if (projectService.validateLinkTrack(links.trackCode)) {
-          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates), links.devToolData) match {
+          projectService.updateProjectLinks(links.projectId, links.ids, links.linkIds, RoadAddressChangeType.apply(links.roadAddressChangeType), user.username, RoadPart(links.roadNumber, links.roadPartNumber), links.trackCode, links.userDefinedEndAddressM, links.administrativeClass, links.discontinuity, Some(links.roadEly), Some(ArealRoadMaintainer.getEVKFromLong(links.roadEvk)), links.reversed.getOrElse(false), roadName = links.roadName, Some(links.coordinates), links.devToolData) match {
             case Some(errorMessage) => Map("success" -> false, "errorMessage" -> errorMessage)
             case None =>
               val projectErrors = projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi)
@@ -1707,6 +1702,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "createdTime" -> nodePoint.createdTime,
       "track" -> nodePoint.track.value,
       "elyCode" -> nodePoint.elyCode,
+      "roadMaintainer" -> nodePoint.roadMaintainer.number,
       "coordinates" -> Map(
         "x" ->  nodePoint.coordinates.x,
         "y" ->  nodePoint.coordinates.y)
@@ -1724,6 +1720,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadwayNumber" -> nodePoint.roadwayNumber,
       "addrM" -> nodePoint.addrM,
       "elyCode" -> nodePoint.elyCode,
+      "roadMaintainer" -> nodePoint.roadMaintainer.number,
       "roadNumber" -> nodePoint.roadPart.roadNumber,
       "roadPartNumber" -> nodePoint.roadPart.partNumber,
       "track" -> nodePoint.track,
@@ -1845,6 +1842,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   def roadAddressBrowserNodesToApi(node: NodeForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> node.ely,
+      "evk" -> node.evk,
       "roadNumber" -> node.roadPart.roadNumber,
       "roadPartNumber" -> node.roadPart.partNumber,
       "addrM" -> node.addrM,
@@ -1875,6 +1873,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   def roadAddressBrowserRoadNamesToApi(roadName :RoadNameForRoadAddressBrowser): Map[String, Any] = {
     Map(
       "ely" -> roadName.ely,
+      "evk" -> roadName.evk,
       "roadNumber" -> roadName.roadNumber,
       "roadName" -> roadName.roadName
     )
@@ -1941,6 +1940,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "roadNumber"     -> projectAddressLink.roadPart.roadNumber,
         "roadPartNumber" -> projectAddressLink.roadPart.partNumber,
         "elyCode" -> projectAddressLink.elyCode,
+        "evkCode" -> projectAddressLink.roadMaintainer.number,
         "trackCode" -> projectAddressLink.trackCode,
         "addrMRange" -> addrMRangeToApi(projectAddressLink.addrMRange),
         "originalStartAddressM" -> originalAddrMRange.start,
@@ -2119,12 +2119,24 @@ object ProjectConverter {
     Project(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim, //TODO the name > 32 should be a handled exception since the user can't insert names with this size
       user.username, DateTime.now(), user.username, finnishDateFormatter.parseDateTime(project.startDate), DateTime.now(),
-      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPartEly), project.formedPartList.distinct.map(toReservedRoadPartEly), Option(project.additionalInfo), elys = Set())
+      project.additionalInfo, project.reservedPartList.distinct.map(toReservedRoadPartRoadMaintainer), project.formedPartList.distinct.map(toReservedRoadPartRoadMaintainer), Option(project.additionalInfo), elys = Set(), roadMaintainers = Set())
   }
 
   def toReservedRoadPartEly(rp: RoadPartElyExtractor): ProjectReservedPart = {
-    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(rp.ely), None, None, None, None)
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, Some(rp.ely), Some(ArealRoadMaintainer.getEVKFromLong(rp.ely)), None, None, None)
   }
+  def toReservedRoadPartEvk(rp: RoadPartEvkExtractor): ProjectReservedPart = {
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, None, Some(ArealRoadMaintainer.getEVKFromLong(rp.evk)), None, None, None)
+  }
+
+  def toReservedRoadPartRoadMaintainer(rp: RoadPartRoadMaintainerExtractor): ProjectReservedPart = {
+    val arealRoadMaintainerOpt: Option[ArealRoadMaintainer] = rp.evk match {
+      case Some(value) => Some(ArealRoadMaintainer.getEVKFromLong(value))
+      case None => None
+    }
+    ProjectReservedPart(0L, RoadPart(rp.roadNumer, rp.roadPartNumber), None, None, rp.ely, arealRoadMaintainerOpt, None, None)
+  }
+
 }
 
 object NodesAndJunctionsConverter {
@@ -2178,7 +2190,7 @@ object NodesAndJunctionsConverter {
       NodePoint(nodePoint.id, BeforeAfter.apply(nodePoint.beforeAfter), nodePoint.roadwayPointId, nodePoint.nodeNumber, NodePointType.apply(nodePoint.`type`),
         startDate, endDate, finnishDateFormatter.parseDateTime(nodePoint.validFrom), validTo,
         nodePoint.createdBy, createdTime, nodePoint.roadwayNumber, nodePoint.addrM,
-        RoadPart(nodePoint.roadNumber, nodePoint.roadPartNumber), Track.apply(nodePoint.track), nodePoint.elyCode, nodePoint.roadMaintainer)
+        RoadPart(nodePoint.roadNumber, nodePoint.roadPartNumber), Track.apply(nodePoint.track), nodePoint.elyCode,/* ArealRoadMaintainer.apply("EVK0") */ ArealRoadMaintainer.getEVKFromLong(nodePoint.roadMaintainer)) //TODO: UI:lta ei tule atm tätä kenttää
     }
   }
 }

@@ -197,7 +197,7 @@ object ArealRoadMaintainer {
 
   def getEVKFromLong(evkNumber: Long): EVK = {
     EVKset.find(_.number == evkNumber.toInt).getOrElse(
-      throw ViiteException(s"Olematon EVK:n numero: $evkNumber")
+      throw ViiteException(s"Olematon elinvoimakeskuksen numero: $evkNumber")
     )
   }
 

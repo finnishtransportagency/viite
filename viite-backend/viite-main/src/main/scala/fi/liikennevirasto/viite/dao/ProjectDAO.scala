@@ -48,7 +48,7 @@ case class Project(id            : Long,
                    statusInfo    : Option[String],
                    coordinates   : Option[ProjectCoordinates] = Some(ProjectCoordinates()),
                    elys          : Set[Int] = Set(),
-                   evks          : Set[Int] = Set()
+                   roadMaintainers : Set[String] = Set()
                   ) {
   def isReserved(roadPart: RoadPart): Boolean = {
     reservedParts.exists(p => p.roadPart == roadPart)
@@ -122,11 +122,15 @@ class ProjectDAO extends BaseDAO {
     runSelectQuery(query.map(_.string(1)))
   }
 
-  def fetchById(projectId: Long, withNullElyFilter: Boolean = false): Option[Project] = {
+  def fetchById(projectId: Long, withNullElyFilter: Boolean = false, withNullRoadMaintainerFilter: Boolean = false): Option[Project] = {
     time(logger, "Fetch project by id") {
       val whereClause = if (withNullElyFilter) {
         sqls"""WHERE id =$projectId AND ely is null"""
-      } else {
+      } else if (withNullRoadMaintainerFilter) {
+        sqls"""WHERE id =$projectId AND road_maintainer is null"""
+      }
+      else
+      {
         sqls"""WHERE id =$projectId"""
       }
 
@@ -136,7 +140,7 @@ class ProjectDAO extends BaseDAO {
 
   def fetchAllWithoutDeletedFilter(): List[Map[String, Any]] = {
     time(logger, s"Fetch all projects ") {
-      fetchProjects(query => sqls"""$query WHERE state != ${ProjectState.Deleted.value} ORDER BY name, id, elys""")
+      fetchProjects(query => sqls"""$query WHERE state != ${ProjectState.Deleted.value} ORDER BY name, id, elys, road_maintainers""")
     }
   }
 
@@ -149,7 +153,7 @@ class ProjectDAO extends BaseDAO {
             OR state=${ProjectState.ErrorInViite.value}
             OR state=${ProjectState.Incomplete.value}
             OR (state=${ProjectState.Accepted.value} and modified_date > now() - INTERVAL '2 DAY')
-            ORDER BY name, id, elys
+            ORDER BY name, id, elys, road_maintainers
            """)
     }
   }
@@ -290,7 +294,8 @@ class ProjectDAO extends BaseDAO {
         val z        = rs.intOpt("zoom").getOrElse(0)
         Some(ProjectCoordinates(x, y, z))
       },
-      elys           = Set()
+      elys           = Set(),
+      roadMaintainers = Set()
     )))
   }
 
@@ -316,7 +321,10 @@ class ProjectDAO extends BaseDAO {
       "zoomLevel" -> rs.intOpt("zoom").getOrElse(0),
       "elys" -> rs.arrayOpt("elys").map { pgArray =>
         pgArray.getArray.asInstanceOf[Array[Integer]].map(_.intValue).toSet
-      }.getOrElse(Set.empty[Int])
+      }.getOrElse(Set.empty[Int]),
+      "roadMaintainers" -> rs.arrayOpt("road_maintainers").map { pgArray =>
+        pgArray.getArray.asInstanceOf[Array[String]].toSet
+      }.getOrElse(Set.empty[String])
     )
   }
 
@@ -325,7 +333,7 @@ class ProjectDAO extends BaseDAO {
       sqls"""
            SELECT state,id,"name",created_by,created_date,modified_by,
             COALESCE(modified_date, created_date) as modified_date,
-            add_info,start_date,status_info,coord_x,coord_y,zoom,elys
+            add_info,start_date,status_info,coord_x,coord_y,zoom,elys,road_maintainers
            FROM project
            """
     val query = sql"$baseQuery ${queryFilter(SQLSyntax.empty)}"
@@ -353,7 +361,7 @@ class ProjectDAO extends BaseDAO {
         val query   =
           sql"""
                UPDATE project p
-               SET road_maintainers = ${roadMaintainers.sorted.toArray}::[]
+               SET road_maintainers = ${roadMaintainers.sorted.toArray}::varchar[]
                WHERE p.id = $projectId
                """
         runUpdateToDb(query)
