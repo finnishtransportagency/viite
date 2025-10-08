@@ -37,7 +37,6 @@
     }, 1000);
     
     
-    // TODO: This doesn't return evkCode
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
@@ -47,7 +46,6 @@
       };
     });
 
-    // TODO: This doesn't return evkCodes either (probably)
     this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
       var roadNumber = params.roadNumber;
       var roadPart = params.roadPartNumber;
