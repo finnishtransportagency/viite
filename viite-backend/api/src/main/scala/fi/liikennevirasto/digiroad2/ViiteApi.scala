@@ -1149,6 +1149,20 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     }
   }
 
+  private def mapChangeInfoToUI(change: RoadwayChangeSection) = {
+    Map(
+      "roadNumber" -> change.roadNumber,
+      "trackCode" -> change.trackCode,
+      "startRoadPartNumber" -> change.startRoadPartNumber,
+      "endRoadPartNumber" -> change.endRoadPartNumber,
+      "addrMRange" -> change.addrMRange,
+      "administrativeClass" -> change.administrativeClass,
+      "discontinuity" -> change.discontinuity,
+      "ely" -> change.ely,
+      "elinvoimakeskus" -> change.roadMaintainer.map(rm => ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(rm, elyContext = false))
+    )
+  }
+
   private val returnChangeTableById: SwaggerSupportSyntax.OperationBuilder =(
     apiOperation[Map[String, Any]]("returnChangeTableById")
       .parameters(
@@ -1170,8 +1184,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           "changeDate" -> project.changeDate,
           "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
             Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.administrativeClass.asRoadTypeValue,
-              "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
-              "target" -> changeInfo.target, "reversed" -> changeInfo.reversed)))
+              "discontinuity" -> changeInfo.discontinuity.value, "source" -> mapChangeInfoToUI(changeInfo.source),
+              "target" -> mapChangeInfoToUI(changeInfo.target), "reversed" -> changeInfo.reversed)))
       ).getOrElse(None)
       Map("changeTable" -> changeTableData, "warningMessage" -> warningMessage)
     }
@@ -1397,7 +1411,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"GET request for /templates") {
       val authorizedElys = userProvider.getCurrentUser.getAuthorizedElys
       val authorizedEvks = userProvider.getCurrentUser.getAuthorizedEvks
-      Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq).map(nodePointTemplateToApi),
+      Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq, authorizedEvks.toSeq).map(nodePointTemplateToApi),
         "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi))
     }
   }

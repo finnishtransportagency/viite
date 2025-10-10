@@ -228,7 +228,7 @@ println("Threading print test: Now in avoidRestrictions")
             Map(
               "roadpartnumber" -> key_RoadPARTNumber,
               "ely" -> uniqueAdmClassWithinRoadPARTMap.head.elyCode, // each row in the road part seq has the same roadName; take any (here: first)
-              "evk" -> ArealRoadMaintainer.getEVK(uniqueAdmClassWithinRoadPARTMap.head.roadMaintainer.id),
+              "elinvoimakeskus" -> uniqueAdmClassWithinRoadPARTMap.head.elinvoimakeskus,
               "administrative_class" -> uniqueAdmClassWithinRoadPARTMap.head.administrativeClass, //   -"-    seq has the same adm.class; take any (here: first)
               "tracks" ->
                 parseTracksForSummary( uniqueAdmClassWithinRoadPARTMap )
@@ -324,8 +324,8 @@ println("Threading print test: Now in avoidRestrictions")
           "endAddrMValue"   -> r.addrMRange.end,
           "discontinuity" -> r.discontinuity.value,
        //   "ely" -> r.ely,
-          "ely" -> ArealRoadMaintainer.getELY(r.ely.toString),
-          "evk" -> ArealRoadMaintainer.getEVK(r.roadMaintainer.id),
+          "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = true), //ArealRoadMaintainer.getELY(r.ely.toString),
+          "elinvoimakeskus" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = false), //ArealRoadMaintainer.getEVK(r.roadMaintainer.id),
           "roadType" -> r.administrativeClass.asRoadTypeValue,
           "administrativeClass" -> r.administrativeClass.value,
           "terminated" -> r.terminated.value,
@@ -400,7 +400,7 @@ println("Threading print test: Now in avoidRestrictions")
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.old_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.old_administrative_class,
                 "ely" -> roadwayChangesInfo.old_ely,
-                "evk" -> ArealRoadMaintainer.getEVK(roadwayChangesInfo.old_road_maintainer.id)
+                "elinvoimakeskus" -> roadwayChangesInfo.old_road_maintainer //ArealRoadMaintainer.getEVK(roadwayChangesInfo.old_road_maintainer.id)
               ),
             "kohde" ->
               Map(
@@ -413,7 +413,7 @@ println("Threading print test: Now in avoidRestrictions")
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.new_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.new_administrative_class,
                 "ely" -> roadwayChangesInfo.new_ely,
-                "evk" -> ArealRoadMaintainer.getEVK(roadwayChangesInfo.new_road_maintainer.id)
+                "elinvoimakeskus" -> roadwayChangesInfo.new_road_maintainer // ArealRoadMaintainer.getEVK(roadwayChangesInfo.new_road_maintainer.id)
               )
           )
         }
