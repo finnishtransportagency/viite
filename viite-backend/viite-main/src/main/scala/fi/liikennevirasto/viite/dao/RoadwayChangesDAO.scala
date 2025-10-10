@@ -21,7 +21,7 @@ case class RoadwayChangeSection(roadNumber: Option[Long], trackCode: Option[Long
 }
 
 case class RoadwayChangeInfo(changeType: RoadAddressChangeType, source: RoadwayChangeSection, target: RoadwayChangeSection,
-                             discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.apply("EVK0"))
+                             discontinuity: Discontinuity, administrativeClass: AdministrativeClass, reversed: Boolean, orderInChangeTable: Long, ely: Long = -1L, elinvoimakeskus: Long = -1L)
 
 case class ProjectRoadwayChange(projectId: Long, projectName: Option[String], ely: Long, roadMaintainer: ArealRoadMaintainer, user: String, changeDate: DateTime, changeInfo: RoadwayChangeInfo, projectStartDate: DateTime)
 
@@ -85,8 +85,8 @@ case class ChangeTableRows(adjustedSections: Iterable[((RoadwaySection, RoadwayS
 case class ChangeTableRows2(adjustedSections: Iterable[RoadwaySection], originalSections: Iterable[RoadwaySection])
 
 case class RoadwayChangesInfo(roadwayChangeId: Long, startDate: DateTime, acceptedDate: DateTime, change_type: Long, reversed: Long,
-                              old_road_number: Long, old_road_part_number: Long, old_track: Long, oldAddrMRange: AddrMRange, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long, old_road_maintainer: ArealRoadMaintainer, // TODO add RoadPart refactoring
-                              new_road_number: Long, new_road_part_number: Long, new_track: Long, newAddrMRange: AddrMRange, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long, new_road_maintainer: ArealRoadMaintainer)
+                              old_road_number: Long, old_road_part_number: Long, old_track: Long, oldAddrMRange: AddrMRange, old_discontinuity: Long, old_administrative_class: Long, old_ely: Long, old_road_maintainer: Long, // TODO add RoadPart refactoring
+                              new_road_number: Long, new_road_part_number: Long, new_track: Long, newAddrMRange: AddrMRange, new_discontinuity: Long, new_administrative_class: Long, new_ely: Long, new_road_maintainer: Long)
 
 object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
   def apply(rs: WrappedResultSet): RoadwayChangesInfo = new RoadwayChangesInfo(
@@ -102,7 +102,7 @@ object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
     old_discontinuity        = rs.longOpt("old_discontinuity").getOrElse(0L),
     old_administrative_class = rs.longOpt("old_administrative_class").getOrElse(0L),
     old_ely                  = rs.longOpt("old_ely").getOrElse(0L),
-    old_road_maintainer      = ArealRoadMaintainer.apply(rs.stringOpt("old_road_maintainer").getOrElse("EVK0")),
+    old_road_maintainer      = ArealRoadMaintainer.apply(rs.stringOpt("old_road_maintainer").getOrElse("EVK0")).number,
     new_road_number          = rs.longOpt("new_road_number").getOrElse(0L),
     new_road_part_number     = rs.longOpt("new_road_part_number").getOrElse(0L),
     new_track                = rs.longOpt("new_track").getOrElse(0L),
@@ -110,7 +110,7 @@ object RoadwayChangesInfo  extends SQLSyntaxSupport[RoadwayChangeInfo] {
     new_discontinuity        = rs.long("new_discontinuity"),
     new_administrative_class = rs.long("new_administrative_class"),
     new_ely                  = rs.long("new_ely"),
-    new_road_maintainer      = ArealRoadMaintainer.apply(rs.string("new_road_maintainer"))
+    new_road_maintainer      = ArealRoadMaintainer.apply(rs.string("new_road_maintainer")).number
   )
 
 }
@@ -130,13 +130,13 @@ case class ChangeInfoForRoadAddressChangesBrowser(startDate: DateTime, changeTyp
 
 class RoadwayChangesDAO extends BaseDAO {
 
-  private def toRoadwayChangeRecipient(row: ChangeRow) = {
+  private def toRoadwayChangeRecipient(row: ChangeRow): RoadwayChangeSection = {
     RoadwayChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetAddrMRange,
       Some(AdministrativeClass.apply(row.targetAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))), Some(row.targetEly), Some(row.targetRoadMaintainer))
   }
 
-  private def toRoadwayChangeSource(row: ChangeRow) = {
+  private def toRoadwayChangeSource(row: ChangeRow): RoadwayChangeSection = {
     RoadwayChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceAddrMRange,
       Some(AdministrativeClass.apply(row.sourceAdministrativeClass.getOrElse(AdministrativeClass("Unknown").value))),
       Some(Discontinuity.apply(row.sourceDiscontinuity.getOrElse(Discontinuity.Continuous.value))), row.sourceEly, row.sourceRoadMaintainer)
@@ -151,7 +151,7 @@ class RoadwayChangesDAO extends BaseDAO {
       row.reversed,
       row.orderInTable,
       target.ely.getOrElse(source.ely.get),
-      target.roadMaintainer.getOrElse(source.roadMaintainer.get)
+      target.roadMaintainer.getOrElse(source.roadMaintainer.get).number
     )
   }
 
@@ -521,14 +521,21 @@ class RoadwayChangesDAO extends BaseDAO {
         projectAcceptedDate = rs.jodaDateTime("accepted_date"),
         oldRoadAddress      = OldRoadAddress(
           ely               = rs.long("old_ely"),
-          roadMaintainer    = rs.stringOpt("old_road_maintainer").flatMap { rm =>
+          roadMaintainer    = rs.stringOpt("old_road_maintainer") match {
+            case Some(value) => ArealRoadMaintainer.apply(value)
+            case None => ArealRoadMaintainer.apply("EVK0")
+          },
+
+            /*.flatMap { rm =>
             try {
               val value = if (rm.startsWith("EVK")) rm else s"EVK$rm"
               Some(ArealRoadMaintainer(value))
             } catch {
               case _: Throwable => None
             }
-          }.getOrElse(ArealRoadMaintainer("EVK0")),
+          }*/
+
+          //  .getOrElse(ArealRoadMaintainer("EVK0")),
           roadPart          = {
             val oldRoadNumber     = rs.longOpt("old_road_number")
             val oldRoadPartNumber = rs.longOpt("old_road_part_number")
