@@ -1009,8 +1009,6 @@ class ProjectService(
         val (recalculate, warningMessage) = recalculateChangeTable(projectId)
         if (recalculate) {
           val roadwayChanges = roadwayChangesDAO.fetchRoadwayChangesResume(Set(projectId))
-          println(s"HAKUAMMUNNAKSI MENEE :: roadwayChanges.head.roadMaintainer :: ${roadwayChanges.head.roadMaintainer}")
-          println(s"HAKUAMMUNNAKSI MENEE :: roadwayChanges.head.changeInfo.elinvoimaKeskus :: ${roadwayChanges.head.changeInfo.elinvoimakeskus}")
           (Some(convertToChangeProject(roadwayChanges)), warningMessage)
         } else {
           (None, None)
@@ -1042,10 +1040,8 @@ class ProjectService(
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    println(s"CHANGEINFO @convertChangeDataToChangeProject ::roadMaintainer:: ${changeInfo.elinvoimakeskus}")
     val result = ChangeProject(nullRotatingChangeProjectId, changeData.projectName.getOrElse(""), changeData.user,
       ISOdateFormatter.print(changeData.projectStartDate), Seq(changeInfo))
-    logger.info(s"ONKOS TÄÄLLÄ VIELÄ TALLESSA ROAD MAINTAINER __result.changeInfoSeq.head.elinvoimaKeskus ${result.changeInfoSeq.head.elinvoimakeskus}")
     result
   }
 

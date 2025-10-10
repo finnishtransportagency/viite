@@ -265,8 +265,6 @@ object ArealRoadMaintainer {
    * @throws ViiteException, if the given string does not correspond to any known ArealRoadMaintainer instance.
    */
   def apply(nameString: String): ArealRoadMaintainer = {
-
-    println(s"APPLYING ROAD MAINTAINER FOR VALUE ::: ", nameString)
     // Interpret the nameString as it would be in the database: $typeName$number, and find an instance with that.
     // Sole names, or numbers are not unique. And I doubt whether the shortNames either.
     EVKset.find(evk => s"${evk.typeName}${evk.number}" == nameString).getOrElse(
