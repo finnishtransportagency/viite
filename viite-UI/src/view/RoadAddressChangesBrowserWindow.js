@@ -185,7 +185,7 @@
                                             <td>${results[i].oldLength}</td>
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
                                             <td>${EnumerationUtils.getChangeTypeDisplayText(results[i].changeType)}</td>
-                                            <td>${results[i].newRoadMaintainer}</td>
+                                            <td>${results[i].newEvk}</td>
                                             <td>${results[i].newEly}</td>
                                             <td>${results[i].newRoadNumber}</td>
                                             <td>${results[i].newTrack}</td>
