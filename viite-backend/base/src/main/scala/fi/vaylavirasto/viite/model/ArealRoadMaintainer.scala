@@ -140,6 +140,14 @@ object ArealRoadMaintainer {
   }
 
 
+  def getELYOrElinvoimakeskusNumber(arealRoadMaintainer: ArealRoadMaintainer, elyContext: Boolean): Option[Int] = {
+    if (arealRoadMaintainer.typeName == "ELY" && elyContext) {
+      Some(arealRoadMaintainer.number)
+    } else if (arealRoadMaintainer.typeName != "ELY" && !elyContext) {
+      Some(arealRoadMaintainer.number)
+    } else None
+  }
+
   def getEVKNumberOrNA(armOpt: Option[ArealRoadMaintainer]): Option[Long] = {
     armOpt match {
       case Some(arm) => if(ArealRoadMaintainer.isEVK(arm)) {  Some(arm.number.toLong)  } else {  Some(0L)  }
@@ -257,7 +265,6 @@ object ArealRoadMaintainer {
    * @throws ViiteException, if the given string does not correspond to any known ArealRoadMaintainer instance.
    */
   def apply(nameString: String): ArealRoadMaintainer = {
-
     // Interpret the nameString as it would be in the database: $typeName$number, and find an instance with that.
     // Sole names, or numbers are not unique. And I doubt whether the shortNames either.
     EVKset.find(evk => s"${evk.typeName}${evk.number}" == nameString).getOrElse(

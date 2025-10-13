@@ -1040,8 +1040,9 @@ class ProjectService(
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadwayChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(nullRotatingChangeProjectId, changeData.projectName.getOrElse(""), changeData.user,
+    val result = ChangeProject(nullRotatingChangeProjectId, changeData.projectName.getOrElse(""), changeData.user,
       ISOdateFormatter.print(changeData.projectStartDate), Seq(changeInfo))
+    result
   }
 
 

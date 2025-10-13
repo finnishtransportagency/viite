@@ -219,7 +219,8 @@
     EVK_EPO: {value: 7, name: "Etelä-Pohjanmaan elinvoimakeskus", shortName: "EPO"},
     EVK_POH: {value: 8, name: "Pohjanmaan elinvoimakeskus", shortName: "POH"},
     EVK_PSU: {value: 9, name: "Pohjois-Suomen elinvoimakeskus", shortName: "PSU"},
-    EVK_LAP: {value: 10, name: "Lapin elinvoimakeskus", shortName: "LAP"}
+    EVK_LAP: {value: 10, name: "Lapin elinvoimakeskus", shortName: "LAP"},
+    EVK_TST: {value: 0, name: "ELINVOIMAKESKUS_TESTI", shortName: "TST"}
   };
 
   root.NodeType = {

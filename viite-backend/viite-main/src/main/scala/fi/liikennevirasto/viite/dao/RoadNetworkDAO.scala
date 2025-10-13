@@ -12,7 +12,7 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 case class RoadwayNetworkSummaryRow
 (
   roadPart: RoadPart, roadName: String,
-  elyCode: Int, roadMaintainer: ArealRoadMaintainer, administrativeClass: Int,
+  elyCode: Int, elinvoimakeskus: Int, administrativeClass: Int,
   track: Int, startAddressM: Int, endAddressM: Int, continuity: Int
 )
 
@@ -122,7 +122,7 @@ class RoadNetworkDAO extends BaseDAO {
       ),
       roadName            = rs.string("road_name"),
       elyCode             = rs.int("ely"),
-      roadMaintainer      = ArealRoadMaintainer.apply(rs.string("road_maintainer")),
+      elinvoimakeskus     = ArealRoadMaintainer.apply(rs.string("road_maintainer")).number,
       administrativeClass = rs.int("administrative_class"),
       track               = rs.int("track"),
       startAddressM       = rs.int("start_addr_m"),

@@ -279,7 +279,6 @@
           let uniqueId = 0;
 
           sortedProjects.forEach(function(proj) {
-            console.log(proj)
             const info = proj.statusInfo || 'Ei lisätietoja';
             html += `<tr id="${uniqueId}" class="project-item">
               <td class="innerName" style="width: 200px; vertical-align: middle;">${staticFieldProjectName(proj.name)}</td>

@@ -116,15 +116,30 @@
             text += nodePointTemplateLink(nodePointTemplate) + '</br>';
           });
         });
+        _.each(groups, function (templatesByEvk) {
+          var sortedTemplates = _.chain(templatesByEvk).sortBy('addrM').sortBy('track').sortBy('roadPartNumber').sortBy('roadNumber').value();
+          text += evkLabel(sortedTemplates[0].roadMaintainer);
+          text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
+          _.each(sortedTemplates, function (nodePointTemplate) {
+            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
+          });
+        });
       }
       return text;
     };
-
+//          text += evkLabel(sortedTemplates[0].elinvoimakeskus);
     var elyNameLabel = function (elyCode) {
       var elyInfo = _.find(ViiteEnumerations.ElyCodes, function (obj) {
         return obj.value === elyCode;
       });
       return '</br><label class="control-label" style="color:#c09853;">' + elyInfo.name + ' ELY (' + elyInfo.value + ')</label></br>';
+    };
+
+    var evkLabel = function (evkCode) {
+      var evkInfo = _.find(ViiteEnumerations.EVKCodes, function (obj) {
+        return obj.value === evkCode;
+      });
+      return '</br><label class="control-label" style="color:#c09853;">' + evkInfo.name + ' Elinvoimakeskus (' + evkInfo.value + ')</label></br>';
     };
 
     var checkInputs = function (selector, disabled) {
