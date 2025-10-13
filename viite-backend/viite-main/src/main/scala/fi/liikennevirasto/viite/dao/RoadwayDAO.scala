@@ -1042,7 +1042,7 @@ class RoadwayDAO extends BaseDAO {
         roadway.createdBy,
         roadway.administrativeClass.value,
         roadway.ely,
-        roadway.roadMaintainer,
+        roadway.roadMaintainer.id,
         roadway.terminated.value
       )
     }.toSeq
