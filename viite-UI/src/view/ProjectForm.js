@@ -6,6 +6,7 @@
     var formCommon = new FormCommon('');
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
+    const datePickerFutureDateRestriction = new Date('2025-12-31');
 
     // flag to keep track if the project links have been recalculated after the changes made to the project links
     var recalculatedAfterChangesFlag = false;
@@ -258,9 +259,13 @@
     };
 
     var formIsInvalid = function (rootElement) {
-      const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
+      const dateRegex = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
       const startDateValue = rootElement.find('#projectStartDate').val();
-      return !((rootElement.find('#nimi').val() && startDateValue !== '') && dateRegex.test(startDateValue));
+      if (!rootElement.find('#nimi').val() || startDateValue === '' || !dateRegex.test(startDateValue)) {
+        return true;
+      }
+      const newDate = new Date(dateutil.parseDate(startDateValue));
+      return newDate >= datePickerFutureDateRestriction;
     };
 
     var projDateEmpty = function (rootElement) {
@@ -584,15 +589,20 @@
           projectNotificationText = 'Päivämäärä saa sisältää vain numeroita tai pisteitä';
         }
 
-        //Check the dat input field for dates older than 20 years or dates over 1 year in the future
-        var projectSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
-        var nowDate = new Date();
-        if (projectSD.getFullYear() < nowDate.getFullYear() - 20) {
-          projectNotificationText = 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+         // Validate project date
+        if (parts_DMY.length >= 3) {
+            var projectSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
+            var nowDate = new Date();
+
+            if (projectSD >= datePickerFutureDateRestriction) {
+                projectNotificationText = 'Projektin alkupäivämäärä ei voi olla vuosi 2026 tai uudempi.';
+            } else if (projectSD.getFullYear() < nowDate.getFullYear() - 20) {
+                projectNotificationText = 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+            } else if (projectSD.getFullYear() > nowDate.getFullYear() + 1) {
+                projectNotificationText = 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+            }
         }
-        else if (projectSD.getFullYear() > nowDate.getFullYear() + 1) {
-          projectNotificationText = 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
-        }
+
         return projectNotificationText;
       };
 

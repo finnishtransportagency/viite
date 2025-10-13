@@ -1,6 +1,7 @@
 (function (root) {
   root.NodeForm = function (selectedNodesAndJunctions, roadCollection, backend, startupParameters) {
     var formCommon = new FormCommon('node-');
+    const datePickerFutureDateRestriction = new Date('2025-12-31');
     var NodeType = ViiteEnumerations.NodeType;
 
     var NODE_POINTS_TITLE = 'Solmukohdat';
@@ -817,10 +818,12 @@
 
             var nodeSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
             var nowDate = new Date();
-            if(nodeSD.getFullYear() < nowDate.getFullYear()-20) {
+
+            if (nodeSD >= datePickerFutureDateRestriction) {
+              nodeNotificationText = 'Solmun alkupäivämäärä ei voi olla vuosi 2026 tai uudempi.';
+            } else if (nodeSD.getFullYear() < nowDate.getFullYear() - 20) {
               nodeNotificationText = 'Vanha päiväys. Solmun alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen tallennusta.';
-            }
-            else if(nodeSD.getFullYear() > nowDate.getFullYear()+1){
+            } else if (nodeSD.getFullYear() > nowDate.getFullYear() + 1) {
               nodeNotificationText = 'Tulevaisuuden päiväys. Solmun alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen tallennusta.';
             }
             return  '<div class="form-check-date-notifications"> ' +
