@@ -431,11 +431,11 @@
       };
 
       const saveChanges = () => {
-        const evkValue = parseInt($('#evk')[0].value);
+        const evkValue = parseInt($('#elinvoimakeskus')[0].value);
         const isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
 
         if (!isValidEvk) {
-          return new ModalConfirm('Tarkista antamasi EVK-koodi. Annettu arvo on virheellinen.');
+          return new ModalConfirm('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.');
         }
 
         const statusDropdownValue = $('#dropDown_0').val();

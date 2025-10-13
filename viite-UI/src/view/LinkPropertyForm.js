@@ -181,7 +181,7 @@
       var endAddress   = isOnlyOneRoadAndPartNumberSelected() ? staticField('LOPPUETÄISYYS', linkProperties.addrMRange.end) : constructField('LOPPUETÄISYYS', '');
       var combinedAddrLength = lengthDynamicField();
       var elys = selectedLinkProperty.count() === 1 ? staticField('ELY', firstSelectedLinkProperty.elyCode) : dynamicField('ELY', 'elyCode');
-      var evks = selectedLinkProperty.count() === 1 ? staticField('EVK', firstSelectedLinkProperty.evkCode) : dynamicField('EVK', 'evkCode');
+      var evks = selectedLinkProperty.count() === 1 ? staticField('Elinvoimakeskus', firstSelectedLinkProperty.evkCode) : dynamicField('Elinvoimakeskus', 'evkCode');
       var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
       var discontinuities = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '');
       var startDate = isOnlyOneRoadAndPartNumberSelected() ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '');

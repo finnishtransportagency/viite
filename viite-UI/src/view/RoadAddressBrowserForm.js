@@ -23,7 +23,7 @@
         const evkItems = [];
         const elyItems = [];
   
-        // Add EVK items to first column
+        // Add Elinvoimakeskus items to first column
         if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
           for (const evk in ViiteEnumerations.EVKCodes) {
             if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
@@ -51,7 +51,7 @@
   
         return {
           0: {
-            columnTitle: 'EVK',
+            columnTitle: 'Elinvoimakeskus',
             items: evkItems
           },
           1: {
@@ -64,8 +64,8 @@
       // ELY/EVK selector for address browser
       elyEvkSelector = new Selector({
         id: 'roadAddrInputElyEvk',
-        placeholder: 'Valitse ELY/EVK',
-        width: 200,
+        placeholder: 'Valitse Elinvoimakeskus/ELY',
+        width: 240,
         data: createElyEvkData()
       });
 
@@ -137,7 +137,7 @@
             </div>
           </div>
           <div class="input-container">
-            <label class="control-label-small">ELY/EVK</label>
+            <label class="control-label-small">Elinvoimakeskus/ELY</label>
             ${elyEvkSelector.render()}
           </div>
           ${createRoadNumberInputField('roadAddrInputRoad')}

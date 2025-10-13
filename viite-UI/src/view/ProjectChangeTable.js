@@ -41,7 +41,7 @@
                   <th class="project-change-table-dimension-h">JATK</th>
                   <th class="project-change-table-dimension-h wide-column">HALL</th>
                   <th class="project-change-table-dimension-h">ELY</th>
-                  <th class="project-change-table-dimension-h">EVK</th>
+                  <th class="project-change-table-dimension-h">Elinvoimakeskus</th>
                   <th class="project-change-table-dimension-h dimension-reversed">KÄÄNNETTY</th>
                   <th class="project-change-table-dimension-h wide-column">TIE</th>
                   <th class="project-change-table-dimension-h">AJR</th>
@@ -52,7 +52,7 @@
                   <th class="project-change-table-dimension-h">JATK</th>
                   <th class="project-change-table-dimension-h wide-column">HALL</th>
                   <th class="project-change-table-dimension-h">ELY</th>
-                  <th class="project-change-table-dimension-h">EVK</th>
+                  <th class="project-change-table-dimension-h">Elinvoimakeskus</th>
                 </tr>
               </thead>
               <tbody></tbody>
