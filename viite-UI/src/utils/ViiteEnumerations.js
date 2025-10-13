@@ -229,7 +229,7 @@
     YIntersection: {value: 4, description: "Y-liittymä"},
     Interchange: {value: 5, description: "Eritasoliittymä"},
     RoadBoundary: {value: 7, description: "Hallinnollinen raja"},
-    ELYBorder: {value: 8, description: "ELY-raja"},
+    ELYBorder: {value: 8, description: "Elinvoimakeskus raja"},
     MultiTrackIntersection: {value: 10, description: "Moniajoratainen liittymä"},
     AccessRoad: {value: 12, description: "Liityntätie"},
     EndOfRoad: {value: 13, description: "Tien alku/loppu"},
