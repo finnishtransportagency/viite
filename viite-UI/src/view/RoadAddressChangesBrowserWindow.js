@@ -63,7 +63,7 @@
             return true;
         }
 
-        // Create EVK/ELY data for the multi-column selector
+        // Create Elinvoimakeskus/ELY data for the multi-column selector
         function createElyEvkData() {
           const evkItems = [];
           const elyItems = [];
@@ -93,7 +93,7 @@
           }
 
           return {
-              0: { columnTitle: 'EVK', items: evkItems },
+              0: { columnTitle: 'Elinvoimakeskus', items: evkItems },
               1: { columnTitle: 'ELY', items: elyItems }
           };
       }
@@ -103,8 +103,8 @@
             // Render selector with id expected by getData()
             elyEvkSelector = new Selector({
                 id: 'roadAddrChangesInputEly',
-                placeholder: 'Valitse ELY/EVK',
-                width: 200,
+                placeholder: 'Valitse Elinvoimakeskus/ELY',
+                width: 240,
                 data: createElyEvkData()
             });
 
@@ -115,7 +115,7 @@
             // Build container matching existing style
             const $elyContainer = $([
                 '<div class="input-container">',
-                '  <label class="control-label-small">ELY/EVK</label>',
+                '  <label class="control-label-small">Elinvoimakeskus/ELY</label>',
                 `  ${elyEvkSelector.render()}`,
                 '</div>'
             ].join(''));
@@ -142,7 +142,7 @@
                                     <thead>
                                         <tr>
                                             <th>Voimaantulopvm</th>
-                                            <th>Evk</th>
+                                            <th>Elinvoimakeskus</th>
                                             <th>Ely</th>
                                             <th>Tie</th>
                                             <th>Ajr</th>
@@ -153,7 +153,7 @@
                                             <th>Pituus</th>
                                             <th>Hall. luokka</th>
                                             <th>Muutos</th>
-                                            <th>u_Evk</th>
+                                            <th>u_Elinvoimakeskus</th>
                                             <th>u_Ely</th>
                                             <th>u_Tie</th>
                                             <th>u_Ajr</th>

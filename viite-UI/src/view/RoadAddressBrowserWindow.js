@@ -22,7 +22,7 @@
       function createArrayOfArraysForTracks(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
+          array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
@@ -50,7 +50,7 @@
           arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
-                                          <th>Evk</th>
+                                          <th>Elinvoimakeskus</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Ajr</th>
@@ -111,7 +111,7 @@
           arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
-                                          <th>Evk</th>
+                                          <th>Elinvoimakeskus</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Osa</th>
@@ -171,7 +171,7 @@
           arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
-                                          <th>Evk</th>
+                                          <th>Elinvoimakeskus</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Osa</th>
@@ -301,7 +301,7 @@
           arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
                                   <thead>
                                       <tr>
-                                          <th>Evk</th>
+                                          <th>Elinvoimakeskus</th>
                                           <th>Ely</th>
                                           <th>Tie</th>
                                           <th>Nimi</th>
