@@ -160,14 +160,14 @@
       }
       return `<div class="${prefix}form-group new-road-address" hidden>
         <div><label></label></div><div><label style="margin-top: 20px">TIEOSOITTEEN TIEDOT</label></div>
-        ${addSmallLabel('TIE')}${addSmallLabel('OSA', smallWidthStyle)}${addSmallLabel('AJR', smallWidthStyle)}${addSmallLabel('EVK', smallWidthStyle)}${addSmallLabel('ELY', smallWidthStyle)}
+        ${addSmallLabel('TIE')}${addSmallLabel('OSA', smallWidthStyle)}${addSmallLabel('AJR', smallWidthStyle)}${addSmallLabel('ELINVOIMAKESKUS', smallWidthStyle)}${addSmallLabel('ELY', smallWidthStyle)}
         ${addSmallLabel('JATKUU', 'width: 82px !important;')}
         </div>
         <div class="${prefix}form-group new-road-address" id="new-address-input1" hidden>
           ${addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5)}
           ${addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3, smallWidthStyle)}
           ${addTrackCodeDropdown(trackCodeDropdown)}
-          ${addSmallInputNumber('evk', link.evkCode, !projectEditable, 2, smallWidthStyle)}
+          ${addSmallInputNumber('elinvoimakeskus', link.evkCode, !projectEditable, 2, smallWidthStyle)}
           ${addSmallInputNumber('ely', link.elyCode, true, 2, smallWidthStyle)}
           ${addDiscontinuityDropdown()}
           ${addWideLabel('HALL. LUOKKA')}
@@ -186,7 +186,7 @@
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
             $('#ely').val(response.ely);
-            $('#evk').val(response.evk);
+            $('#elinvoimakeskus').val(response.evk);
             if (response.roadName !== '') {
               roadNameField.val(response.roadName);
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
