@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, RoadAddressChangeType, Track}
+import fi.vaylavirasto.viite.model.{ArealRoadMaintainer, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, NodePointType, RoadAddressChangeType, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -348,10 +348,13 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodePointTemplates(authorizedElys: Seq[Int]): Seq[NodePoint] = {
+  def getNodePointTemplates(authorizedElys: Seq[Int], authorizedEVKs: Seq[Int]): Seq[NodePoint] = {
+    val evkRoadMaintainers: Seq[String] = authorizedEVKs.map(a => ArealRoadMaintainer.getEVK(a).id)
+    val elyRoadMaintainers: Seq[String] = authorizedElys.map(a => ArealRoadMaintainer.getELY(a).id)
+
     runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
-        nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode))
+        nodePointDAO.fetchTemplates().filter(template => evkRoadMaintainers.contains(template.roadMaintainer.id) || elyRoadMaintainers.contains(template.roadMaintainer.id) || authorizedElys.contains(template.elyCode))    //.filter(template => authorizedElys.contains(template.elyCode))
       }
     }
   }

@@ -337,7 +337,7 @@
         <td class="project-change-table-dimension">${t.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(t.administrativeClass)}</td>
         <td class="project-change-table-dimension">${t.ely}</td>
-        <td class="project-change-table-dimension">${t.evk}</td>
+        <td class="project-change-table-dimension">${t.elinvoimakeskus}</td>
       `;
     }
 
@@ -354,7 +354,7 @@
         <td class="project-change-table-dimension">${s.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(s.administrativeClass)}</td>
         <td class="project-change-table-dimension">${s.ely}</td>
-        <td class="project-change-table-dimension">${s.evk}</td>
+        <td class="project-change-table-dimension">${s.elinvoimakeskus}</td>
       `;
     }
 
