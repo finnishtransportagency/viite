@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.postgis.GeometryDbUtils
-import fi.vaylavirasto.viite.model.{NodePointType, NodeType, RoadPart}
+import fi.vaylavirasto.viite.model.{ArealRoadMaintainer, NodePointType, NodeType, RoadPart}
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -37,11 +37,12 @@ object Node extends SQLSyntaxSupport[Node] {
 
 case class RoadAttributes(roadPart: RoadPart, addrMValue: Long)
 
-case class NodeForRoadAddressBrowser(ely: Long, roadPart: RoadPart, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
+case class NodeForRoadAddressBrowser(ely: Long, evk: Long, roadPart: RoadPart, addrM: Long, startDate: DateTime, nodeType: NodeType, name: Option[String], nodeCoordinates: Point, nodeNumber: Long)
 
 object NodeForRoadAddressBrowserScalike extends SQLSyntaxSupport[NodeForRoadAddressBrowser] {
   def apply(rs: WrappedResultSet): NodeForRoadAddressBrowser = NodeForRoadAddressBrowser(
     ely = rs.long("ely"),
+    evk = ArealRoadMaintainer.getEVK(rs.string("road_maintainer")).number,
     roadPart = RoadPart(rs.long("road_number"), rs.long("road_part_number")),
     addrM = rs.long("addr_m"),
     startDate = rs.jodaDateTime("start_date"),
@@ -73,6 +74,7 @@ class NodeDAO extends BaseDAO {
 """
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
+    println(s"FETCHING BY NODE NUMBER ::: $nodeNumber")
     val query = sql"""
       $selectAllFromNodeQuery
       where node_number = $nodeNumber and valid_to IS NULL and end_date IS NULL
@@ -81,6 +83,7 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchById(nodeId: Long): Option[Node] = {
+    println(s"FETCHING BY ID ::: $nodeId")
     val query = sql"""
       $selectAllFromNodeQuery
       WHERE id = $nodeId and valid_to IS NULL and end_date IS NULL
@@ -89,16 +92,18 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchLatestId(nodeNumber: Long): Option[Long] = {
+    println(s"GETTING NODE NUMBER :::  $nodeNumber")
     val query = sql"""
       SELECT id
       FROM node
       WHERE node_number = $nodeNumber and valid_to IS NULL
       ORDER BY created_time DESC, end_date DESC
       """
-    runSelectSingleOption(query.map(_.long("id"))) // Return the id
+    runSelectFirst(query.map(_.long("id"))) // Return the id
   }
 
   def fetchAllValidNodes(): Seq[Node] = {
+    println(s"FETCHING ALL VALID NODES")
     val query =
       sql"""
       SELECT  n.id, n.node_number, ST_X(n.coordinates), ST_Y(n.coordinates), n."name", n."type", n.start_date, n.end_date,
@@ -109,11 +114,11 @@ class NodeDAO extends BaseDAO {
     queryList(query)
   }
 
-  def fetchNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+  def fetchNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long],
                                       minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
     val baseQuery =
       sqls"""
-      SELECT DISTINCT rw.ely, rw.road_number, rw.road_part_number, rp.addr_m, node.start_date, node.type, node.name,
+      SELECT DISTINCT rw.ely, rw.road_maintainer, rw.road_number, rw.road_part_number, rp.addr_m, node.start_date, node.type, node.name,
                       ST_X(node.coordinates), ST_Y(node.coordinates), node.node_number
 		  FROM node node
       JOIN node_POINT np ON node.node_number = np.node_number AND np.valid_to IS NULL
@@ -121,10 +126,11 @@ class NodeDAO extends BaseDAO {
       JOIN roadway rw ON rp.roadway_number = rw.roadway_number AND rw.valid_to IS NULL AND rw.end_date IS null
       """
 
-    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadNumber: Option[Long],
+    def withOptionalParameters(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long],
                                minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long])(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
       val dateCondition = situationDate.map { date => sqls"AND rw.start_date <= $date::date"}.getOrElse(sqls"")
       val elyCondition = ely.map(ely => sqls" AND rw.ely = $ely").getOrElse(sqls"")
+      val roadMaintainerCondition = roadMaintainer.map(roadMaintainer => sqls" AND rw.road_maintainer = $roadMaintainer").getOrElse(sqls"")
       val roadNumberCondition = roadNumber.map(roadNumber => sqls" AND rw.road_number = $roadNumber").getOrElse(sqls"")
 
       val roadPartCondition = {
@@ -142,13 +148,14 @@ class NodeDAO extends BaseDAO {
         WHERE node.valid_to IS NULL AND node.end_date IS NULL
         $dateCondition
         $elyCondition
+        $roadMaintainerCondition
         $roadNumberCondition
         $roadPartCondition
         ORDER BY rw.road_number, rw.road_part_number, rp.addr_m
         """
     }
 
-    val queryWithOptionalParameters = withOptionalParameters(situationDate, ely, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
+    val queryWithOptionalParameters = withOptionalParameters(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
     runSelectQuery(queryWithOptionalParameters.map(NodeForRoadAddressBrowserScalike.apply))
   }
 

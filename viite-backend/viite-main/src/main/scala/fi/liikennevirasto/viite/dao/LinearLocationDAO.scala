@@ -833,6 +833,15 @@ class LinearLocationDAO extends BaseDAO {
     queryList(query)
   }
 
+  def fetchCurrentLinearLocationsByEvk(evk: Int): Seq[LinearLocation] = {
+    val query =
+      sql"""
+            $selectFromLinearLocation
+            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM ROADWAY WHERE EVK = $evk AND valid_to IS NULL AND end_date IS NULL)
+         """
+    queryList(query)
+  }
+
   def fetchCurrentLinearLocations: Seq[LinearLocation] = {
     val query =
       sql"""

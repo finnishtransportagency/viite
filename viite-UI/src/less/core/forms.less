@@ -125,6 +125,11 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin;
 }
 
+// Wider form section to accomodate EVK addition
+.form-group.new-road-address{
+  width: 380px;
+}
+
 .form-group-metadata{
   margin-top: @input-margin-short;
   margin-bottom: @input-margin-short;
@@ -302,12 +307,14 @@ form.roadAddressProject .control-label-small {
   margin-bottom: -10px;
   width: 55px !important;
   text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .form-result .control-label-small{
   margin-bottom: 0px;
   margin-top: 7px;
-  width: 65px !important;
+  width: 55px !important;
   text-align: center;
   text-transform: none;
 }
@@ -315,6 +322,12 @@ form.roadAddressProject .control-label-small {
 form.roadAddressProject .form-control.small-input{
   width: 55px !important;
   margin-right: 11px;
+}
+
+#reservedDiscontinuity,
+#newReservedDiscontinuity {
+  white-space: nowrap;
+  width: 80px;
 }
 
 form.roadAddressProject .form-control,
@@ -344,7 +357,7 @@ form.roadAddressProject .form-select-small-control{
 
 .form-reserved-roads-list{
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
 }
 

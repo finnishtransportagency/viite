@@ -5,7 +5,8 @@ case class Configuration(
                         east: Option[Long] = None,
                         north: Option[Long] = None,
                         roles: Set[String] = Set(),
-                        authorizedElys: Set[Int] = Set()
+                        authorizedElys: Set[Int] = Set(),
+                        authorizedEvks: Set[Int] = Set()
                         )
 case class User(id: Long, username: String, configuration: Configuration) {
 
@@ -18,6 +19,11 @@ case class User(id: Long, username: String, configuration: Configuration) {
   def getAuthorizedElys : Set[Int] = {
     configuration.authorizedElys
   }
+
+  def getAuthorizedEvks : Set[Int] = {
+    configuration.authorizedEvks
+  }
+
 }
 
 object Role {

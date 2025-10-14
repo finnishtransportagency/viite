@@ -609,9 +609,7 @@ Taulukon kokoa saa muutettua taulukon yläkulmassa olevasta _Suurenna_-painikkee
 <!-- MITÄHÄN IHMETTÄ TÄLLÄ HAETAAN? :
 Viite-sovelluksen voi venyttää kahdelle näytölle, joista toisella voi tarkastella muutostaulukkoa ja toisella käyttää karttanäkymää.--> 
 Taulukkoa voi liikuttaa tarraamalla osoittimella yläpalkista. Yhteenvetotaulukko ei välttämättä näy oikeanlaisena, jos selaimen zoom-taso on liian suuri. 
-Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0). 
-
-Taulukon saa pois näkyvistä Sulje-painikkeesta (4).
+Ongelma korjaantuu palauttamalla selaimen zoom-taso normaaliksi (Firefox/Chrome Ctrl+0).
 
 ![Muutosilmoitustaulukko](k41.png)
 

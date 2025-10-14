@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.NewIdValue
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.postgis.{GeometryDbUtils, PostGISDatabaseScalikeJDBC}
-import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, NodePointType, RoadPart, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, ArealRoadMaintainer, BeforeAfter, NodePointType, RoadPart, Track}
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -14,7 +14,7 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 case class NodePoint(id: Long, beforeAfter: BeforeAfter, roadwayPointId: Long, nodeNumber: Option[Long], nodePointType: NodePointType = NodePointType.UnknownNodePointType,
                      startDate: Option[DateTime], endDate: Option[DateTime], validFrom: DateTime, validTo: Option[DateTime],
                      createdBy: String, createdTime: Option[DateTime], roadwayNumber: Long, addrM : Long,
-                     roadPart: RoadPart, track: Track, elyCode: Long, coordinates: Point = Point(0.0, 0.0))
+                     roadPart: RoadPart, track: Track, elyCode: Long, roadMaintainer: ArealRoadMaintainer, coordinates: Point = Point(0.0, 0.0))
 
 object NodePoint extends SQLSyntaxSupport[NodePoint] {
   def apply(rs: WrappedResultSet): NodePoint = NodePoint(
@@ -36,7 +36,8 @@ object NodePoint extends SQLSyntaxSupport[NodePoint] {
       partNumber      = rs.longOpt("road_part_number").map(l  => l).getOrElse(0L)
     ),
     track             = rs.longOpt("track").map(l  => Track.apply(l.toInt)).getOrElse(Track.Unknown),
-    elyCode           = rs.longOpt("ely").map(l    => l).getOrElse(0L)
+    elyCode           = rs.longOpt("ely").map(l    => l).getOrElse(0L),
+    roadMaintainer    = ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("EVK0"))  // rs.longOpt("evk").map(l    => l).getOrElse(0L)
   )
 }
 
@@ -57,7 +58,7 @@ class NodePointDAO extends BaseDAO {
   lazy val selectFromNodePoint = sqls"""
                              SELECT np.id, np.before_after, np.roadway_point_id, np.node_number, np.type, n.start_date, n.end_date,
                                 np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m,
-                                rw.road_number, rw.road_part_number, rw.track, rw.ely
+                                rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
                              FROM node_point np
                              JOIN roadway_point rp ON (rp.id = roadway_point_id)
                              LEFT OUTER JOIN node n ON (n.node_number = np.node_number AND n.valid_to IS NULL AND n.end_date IS NULL)
@@ -108,7 +109,7 @@ class NodePointDAO extends BaseDAO {
         sql"""
           SELECT np.id, np.before_after, np.roadway_point_id, np.node_number, np.type, n.start_date, n.end_date,
             np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m,
-            rw.road_number, rw.road_part_number, rw.track, rw.ely
+            rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
           FROM node_point np
           JOIN roadway_point rp ON (rp.id = roadway_point_id)
           LEFT OUTER JOIN node n ON (n.node_number = np.node_number AND n.valid_to IS NULL AND n.end_date IS NULL)
@@ -134,7 +135,7 @@ class NodePointDAO extends BaseDAO {
                   n.start_date, n.end_date,
                   np.valid_from, np.valid_to, np.created_by, np.created_time,
                   rp.roadway_number, rp.addr_m,
-                  rw.road_number, rw.road_part_number, rw.track, rw.ely
+                  rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
            FROM            node_point np
            INNER JOIN      roadway_point rp ON (rp.id = roadway_point_id)
            LEFT OUTER JOIN node n           ON (n.node_number = np.node_number AND n.valid_to IS NULL AND n.end_date IS NULL)
@@ -188,7 +189,7 @@ class NodePointDAO extends BaseDAO {
         SELECT  np.id, np.before_after, np.roadway_point_id, np.node_number, np.type,
                 NULL AS start_date, NULL AS end_date,
                 np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m,
-                NULL AS road_number, NULL AS road_part_number, NULL AS ElY, NULL AS track
+                NULL AS road_number, NULL AS road_part_number, NULL AS ElY, NULL AS road_maintainer, NULL AS track
         FROM node_point np
         JOIN roadway_point rp ON (rp.id = roadway_point_id)
         JOIN roadway rW ON (rp.roadway_number = rw.roadway_number AND rw.end_date is NULL AND rw.valid_to IS NULL)
@@ -204,7 +205,7 @@ class NodePointDAO extends BaseDAO {
       } else {
         sql"""
           SELECT  np.id, np.before_after, np.roadway_point_id, np.node_number, np.type, NULL, NULL,
-                  np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m, rw.road_number, rw.road_part_number, rw.track, rw.ely
+                  np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m, rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
           FROM node_point np
           JOIN roadway_point rp ON (rp.id = roadway_point_id)
           JOIN roadway rW ON (rp.roadway_number = rw.roadway_number AND rw.end_date is NULL AND rw.valid_to IS NULL)
@@ -219,7 +220,7 @@ class NodePointDAO extends BaseDAO {
       sql"""
          SELECT DISTINCT  np.id, np.before_after, np.roadway_point_id, NULL AS node_number, np.type, NULL AS start_date,
                           NULL AS end_date, np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number,
-                          rp.addr_m, rw.road_number, rw.road_part_number, rw.track, rw.ely
+                          rp.addr_m, rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
          FROM node_point np
          JOIN roadway_point rp ON (rp.id = roadway_point_id)
          JOIN linear_location ll ON (ll.roadway_number = rp.roadway_number AND ll.valid_to IS NULL)
@@ -234,7 +235,7 @@ class NodePointDAO extends BaseDAO {
       sql"""
          SELECT DISTINCT np.id, np.before_after, np.roadway_point_id, np.node_number, np.type,
                 NULL AS start_date, NULL AS end_date, np.valid_from, np.valid_to, np.created_by, np.created_time,
-                rp.roadway_number, rp.addr_m, rw.road_number, rw.road_part_number, rw.track, rw.ely
+                rp.roadway_number, rp.addr_m, rw.road_number, rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
          FROM node_point np
          JOIN roadway_point rp ON (rp.id = roadway_point_id)
          JOIN linear_location ll ON (ll.roadway_number = rp.roadway_number AND ll.valid_to IS NULL)
@@ -255,7 +256,7 @@ class NodePointDAO extends BaseDAO {
         sql"""
           SELECT  np.id, np.before_after, np.roadway_point_id, np.node_number, np.type, NULL AS start_date, NULL AS end_date,
                   np.valid_from, np.valid_to, np.created_by, np.created_time, rp.roadway_number, rp.addr_m, rw.road_number,
-                  rw.road_part_number, rw.track, rw.ely
+                  rw.road_part_number, rw.track, rw.ely, rw.road_maintainer
           FROM node_point np
           JOIN roadway_point rp ON (rp.id = roadway_point_id)
           JOIN linear_location ll ON (ll.roadway_number = rp.roadway_number AND ll.valid_to IS NULL)
@@ -336,7 +337,7 @@ class NodePointDAO extends BaseDAO {
             NULL AS start_date, NULL AS end_date,
             np.valid_from, np.valid_to, np.created_by, np.created_time,
             rp.roadway_number, rp.addr_m,
-            NULL AS road_number, NULL AS road_part_number, NULL AS track, NULL AS ely
+            NULL AS road_number, NULL AS road_part_number, NULL AS track, NULL AS ely, NULL as road_maintainer
        FROM node_point np
        JOIN roadway_point rp ON (rp.id = roadway_point_id)
        WHERE np.valid_to IS NULL AND np.node_number = $nodeNumber
@@ -447,7 +448,7 @@ class NodePointDAO extends BaseDAO {
     val query =
       sql"""
           SELECT  NULL AS id, NULL AS before_after, NULL AS roadway_point_id, NULL AS node_number, NULL AS type, NULL AS start_date, NULL AS end_date,
-                  rp.created_time, jp.valid_to, rp.created_time, rp.created_time, rp.roadway_number, rp.addr_m, r.road_number, r.road_part_number, r.track, r.ely
+                  rp.created_time, jp.valid_to, rp.created_time, rp.created_time, rp.roadway_number, rp.addr_m, r.road_number, r.road_part_number, r.track, r.ely, r.road_maintainer
           FROM roadway_point rp
           INNER JOIN roadway r
             ON (r.road_number = ${roadPart.roadNumber}
@@ -468,16 +469,67 @@ class NodePointDAO extends BaseDAO {
   }
 
   def insertRoadNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
-    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), NodePointType.RoadNodePoint,
-      None, None, DateTime.now(), None,
-      username, Some(DateTime.now()), 0L, 11,
-      RoadPart(0, 0), null, 8)))
+    /*create(Seq(
+    NodePoint(
+    NewIdValue,
+    beforeAfter,
+    roadwayPointId,
+    Some(nodeNumber),
+    NodePointType.RoadNodePoint,
+    None,
+    None,
+    DateTime.now(),
+    None,
+    username,
+    Some(DateTime.now()),
+    0L,
+    11,
+    RoadPart(0, 0),
+    null,
+    8
+    )))*/
+    create(Seq(NodePoint(id = NewIdValue,
+      beforeAfter = beforeAfter,
+      roadwayPointId = roadwayPointId,
+      nodeNumber = Some(nodeNumber),
+      nodePointType = NodePointType.RoadNodePoint,
+      startDate = None,
+      endDate = None,
+      validFrom = DateTime.now(),
+      validTo = None,
+      createdBy = username,
+      createdTime = Some(DateTime.now()),
+      roadwayNumber = 0L,
+      addrM = 11,
+      roadPart = RoadPart(0, 0),
+      track =  null,
+      elyCode = 8,                                              //TODO: Verify the validity of these default values
+      roadMaintainer = ArealRoadMaintainer.apply("EVK0"),       //TODO: Verify the validity of these default values
+      coordinates = Point(0.0, 0.0)
+
+    )))
   }
 
   def insertCalculatedNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
-    create(Seq(NodePoint(NewIdValue, beforeAfter, roadwayPointId, Some(nodeNumber), NodePointType.CalculatedNodePoint,
-      None, None, DateTime.now(), None,
-      username, Some(DateTime.now()), 0L, 11,
-      RoadPart(0, 0), null, 8)))
+    create(Seq(NodePoint(
+      NewIdValue,
+      beforeAfter,
+      roadwayPointId,
+      Some(nodeNumber),
+      NodePointType.CalculatedNodePoint,
+      None,
+      None,
+      DateTime.now(),
+      None,
+      username,
+      Some(DateTime.now()),
+      0L,
+      11,
+      RoadPart(0, 0),
+      null,
+      8, //TODO: Verify the validity of these default values
+      ArealRoadMaintainer.apply("EVK0"),       //TODO: Verify the validity of these default values
+
+    )))
   }
 }

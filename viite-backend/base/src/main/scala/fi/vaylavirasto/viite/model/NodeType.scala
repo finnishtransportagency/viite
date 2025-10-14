@@ -24,7 +24,7 @@ object NodeType {
   case object Interchange            extends NodeType {    def value =  5;    def displayValue = "Eritasoliittymä"          }
   case object InterchangeJunction    extends NodeType {    def value =  6;    def displayValue = "Eritasoristeys"           }
   case object RoadBoundary           extends NodeType {    def value =  7;    def displayValue = "Hallinnollinen raja"      }
-  case object ELYBorder              extends NodeType {    def value =  8;    def displayValue = "ELY-raja"                 }
+  case object ELYBorder              extends NodeType {    def value =  8;    def displayValue = "Elinvoimakeskus raja"                 }
   case object SupportingPoint        extends NodeType {    def value =  9;    def displayValue = "Apupiste"                 }
   case object MultitrackIntersection extends NodeType {    def value = 10;    def displayValue = "Moniajoratainen liittymä" }
   case object DropIntersection       extends NodeType {    def value = 11;    def displayValue = "Pisaraliittymä"           }

@@ -23,8 +23,35 @@ object ProjectSectionCalculator {
     */
   def assignAddrMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[UserDefinedCalibrationPoint] = Seq()): Seq[ProjectLink] = {
     logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
+    println(s"&&&&&&&&&&&")
+    println(s"&&&&&&&&&&&")
+    println(s"&&&&&&&&&&&")
+    println(s"&&&&&&&&&&&")
+
+    println(s"PROJECT LINKS ::: ")
+
+    projectLinks.foreach(p => println(s"ID: ${p.id} :: PROJECT ID: ${p.projectId} :: LINK ID: ${p.linkId} :: STATUS :: ${p.status}"))
+
+    println(s"USER GIVEN CALIBRATION POINTS :: ${userGivenCalibrationPoints.length} ")
+
+    userGivenCalibrationPoints.foreach(p => println(s"ID: ${p.id} :: PROJECT ID: ${p.projectId} :: PROJECT LINK ID: ${p.projectLinkId}"))
+
+
+
     val others = projectLinks.filterNot(_.status == RoadAddressChangeType.Termination)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == RoadAddressChangeType.New)
+
+    println(s"OTHERS ::: ${others.length}")
+    others.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
+
+    println(s"NEW LINKS ::: ${newLinks.length}")
+    newLinks.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
+
+
+    println(s"NON TERMINATED ::: ${nonTerminatedLinks.length}")
+    nonTerminatedLinks.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
+
+
     try {
 
       val calculator = RoadAddressSectionCalculatorContext.getStrategy(others)

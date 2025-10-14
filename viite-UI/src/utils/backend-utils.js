@@ -29,18 +29,20 @@
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
-
+    
     this.getDataForRoadAddressChangesBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
-
+    
+    
     this.getRoadLinks = createCallbackRequestor(function (params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
-        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox
+        url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox,
+        dataType: 'json'
       };
     });
 
@@ -48,7 +50,8 @@
       var roadNumber = params.roadNumber;
       var roadPart = params.roadPartNumber;
       return {
-        url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart
+        url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart,
+        dataType: 'json'
       };
     });
 
@@ -204,8 +207,8 @@
         endPart: endPart,
         projDate: convertDatetoSimpleDate(projDate),
         projectId: projectId
-      }).then(function (x) {
-        eventbus.trigger('roadPartsValidation:checkRoadParts', x);
+      }).then(function (data) {
+        eventbus.trigger('roadPartsValidation:checkRoadParts', data);
       });
     });
 
@@ -245,16 +248,34 @@
       });
     }, 1000);
 
+    // Backend returns an array of EVK shortnames, but frontend expects numbers. So [EVK0] -> [0]
+    const convertRoadMaintainersToNumbers = function(projects) {
+
+      return projects.map(project => {
+        if (project.roadMaintainers && Array.isArray(project.roadMaintainers)) {
+          // Extract numbers from each string in roadMaintainers
+          project.evks = project.roadMaintainers.map(rm => {
+            const match = rm.match(/\d+/); // find digits in the string
+            return match ? parseInt(match[0]) : null;
+          }).filter(num => num !== null); // remove nulls if no number found
+        } else {
+          project.evks = [];
+        }    
+        return project;
+      });
+    };    
+
     this.getRoadAddressProjects = _.throttle(function (onlyActive, callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
-        return _.isFunction(callback) && callback(data);
+        const processedData = Array.isArray(data) ? convertRoadMaintainersToNumbers(data) : data;
+        return _.isFunction(callback) && callback(processedData);
       });
     }, 1000);
 
     this.getRoadAddressProjectStates = _.throttle(function (projectIDs, callback) {
-            return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
-                return _.isFunction(callback) && callback(data);
-            });
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
     }, 1000);
 
     this.getProjectsWithLinksById = _.throttle(function (id, callback) {
@@ -303,7 +324,7 @@
     };
 
     this.getSearchResults = function (searchString) {
-      return $.get("api/viite/roadlinks/search", {search: searchString}).then(function (x) {
+      return $.get("api/viite/roadlinks/search", { search: searchString }).then(function (x) {
         return x;
       });
     };

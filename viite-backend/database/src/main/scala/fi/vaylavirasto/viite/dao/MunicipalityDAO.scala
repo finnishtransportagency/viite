@@ -30,6 +30,19 @@ object MunicipalityDAO extends BaseDAO {
       .toMap
   }
 
+  /** Viite municipality to EVK code mapping.
+   * Viite EVK codes for each municipality are persisted in the ROAD_MAINTAINER column in the DB.*/
+  def getViiteMunicipalityToEvkMapping: Map[Long, String] = {
+    sql"""
+      SELECT id, road_maintainer
+      FROM municipality
+    """
+      .map(rs => rs.long("id") -> rs.string("ROAD_MAINTAINER"))
+      .list()
+      .apply()
+      .toMap
+  }
+
   /** Municipality to municipality name mapping */
   def getMunicipalityNames: Map[Long, String] = {
     sql"""

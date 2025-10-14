@@ -43,6 +43,7 @@ trait EVK extends ArealRoadMaintainer {
   val    number: Int
   val      name: String
   val shortName: String
+  val isELY: Boolean = true
 }
 
 /** A specialized trait for ELYs, with pre-defined typeName and typeInfo for them. */
@@ -52,6 +53,7 @@ trait ELY extends ArealRoadMaintainer {
   val    number: Int
   val      name: String
   val shortName: String
+  val isELY: Boolean = false
 }
 
 /** Companion object for the abstract ArealRoadMaintainer trait.
@@ -69,6 +71,7 @@ object ArealRoadMaintainer {
   case object EVKPohjanmaa         extends EVK {    val number =  8;  val name = "Pohjanmaa";         val shortName = "POHJ"    }
   case object EVKPohjoisSuomi      extends EVK {    val number =  9;  val name = "Pohjois-Suomi";     val shortName = "POHS"    }
   case object EVKLappi             extends EVK {    val number = 10;  val name = "Lappi";             val shortName = "LAPP"    }
+  case object EVKTEST              extends EVK {    val number =  0;  val name =  "TESTI_EVK";        val shortName = "TEST"    }
 
   /* Create pre-defined (traffic responsibility) ELY instances */
   case object ELYUusimaa           extends ELY {    val number =  1;  val name = "Uusimaa";           val shortName = "UUD"    }
@@ -87,7 +90,8 @@ object ArealRoadMaintainer {
     EVKKaakkoisSuomi,    EVKSisäSuomi,
     EVKKeskiSuomi,       EVKItäSuomi,
     EVKEteläPohjanmaa,   EVKPohjanmaa,
-    EVKPohjoisSuomi,     EVKLappi
+    EVKPohjoisSuomi,     EVKLappi,
+    EVKTEST
   )
 
   /* List of pre-defined (traffic responsibility) ELY instances. These are the only ELYs Viite accepts. */
@@ -98,6 +102,71 @@ object ArealRoadMaintainer {
     ELYEteläPohjanmaa,  ELYPohjoisPohjanmaa,
     ELYLappi
   )
+
+  /*
+  * @param arm The ArealRoadMaintainer to be checked, if it is a proper ELY.
+    * @return true, if the arm asked is an ELY, false else. */
+
+  def isELY(arm: ArealRoadMaintainer): Boolean = {
+    if(arm.typeName!="ELY")
+      false
+    else
+      ELYset.find(_ == arm) match {
+        case Some(_) => true
+        case None    => false
+      }
+  }
+
+
+  def getELYNumberOrNA(armOpt: Option[ArealRoadMaintainer]): Option[Long] = {
+    armOpt match {
+      case Some(arm) => if(ArealRoadMaintainer.isELY(arm)) {  Some(arm.number.toLong)  } else {  Some(0L)  }
+      case None      => None
+    }
+  }
+
+  /*
+* @param arm The ArealRoadMaintainer to be checked, if it is a proper EVK.
+  * @return true, if the arm asked is an EVK, false else. */
+
+  def isEVK(arm: ArealRoadMaintainer): Boolean = {
+    if(arm.typeName!="EVK")
+      false
+    else
+      EVKset.find(_ == arm) match {
+        case Some(_) => true
+        case None    => false
+      }
+  }
+
+  def fromLongToRoadMaintainerId(id: Option[Long], elyContext: Boolean): Option[String] = {
+    id match {
+      case Some(value) => if (elyContext) {
+        ELYset.find(ely => ely.number.toLong == value).map(elyOpt => elyOpt.id)
+      } else EVKset.find(evk => evk.number.toLong == value).map(evkOpt => evkOpt.id)
+      case None => None
+    }
+
+  }
+
+  def getELYOrElinvoimakeskusNumber(arealRoadMaintainer: ArealRoadMaintainer, elyContext: Boolean): Option[Int] = {
+    if (arealRoadMaintainer.typeName == "ELY" && elyContext) {
+      Some(arealRoadMaintainer.number)
+    } else if (arealRoadMaintainer.typeName != "ELY" && !elyContext) {
+      Some(arealRoadMaintainer.number)
+    } else None
+  }
+
+  def getEVKNumberOrNA(armOpt: Option[ArealRoadMaintainer]): Option[Long] = {
+    armOpt match {
+      case Some(arm) => if(ArealRoadMaintainer.isEVK(arm)) {  Some(arm.number.toLong)  } else {  Some(0L)  }
+      case None      => None
+    }
+  }
+
+  def getEVKNumber(arm: ArealRoadMaintainer): Long = {
+    if (ArealRoadMaintainer.isEVK(arm)) {arm.number.toLong} else { 0L }
+  }
 
   /** Getter for EVKs only. You may search for an EVK by its number.
    *
@@ -129,6 +198,10 @@ object ArealRoadMaintainer {
    * @return The EVK asked, when found.
    */
   def getEVK(string: String): EVK = {
+    if (string == "EVK0") {
+      EVKTEST
+    }
+    else {
     EVKset.find( _.id == string).getOrElse(             // look for "EVK1"
       EVKset.find(  _.name == string).getOrElse(        // look for "Uusimaa"
         EVKset.find(_.shortName == string).getOrElse(   // look for "UUSI"
@@ -136,7 +209,20 @@ object ArealRoadMaintainer {
           throw ViiteException(s"Olematon EVK ('$string')!")   // found nothing resembling the string
         )
       )
+    )}
+  }
+
+  def getEVKFromLong(evkNumber: Long): EVK = {
+    EVKset.find(_.number == evkNumber.toInt).getOrElse(
+      throw ViiteException(s"Olematon elinvoimakeskuksen numero: $evkNumber")
     )
+  }
+
+  def getEVKCodeForDB(evkNumber: Int): String = {
+    EVKset.find(_.number == evkNumber) match {
+      case Some(value) => s"${value.typeName}${value.number}"
+      case None => "EVK0"
+    }
   }
 
   /** Getter for ELYs only. You may search for an ELY by its DBname, name, or shortName.
@@ -188,7 +274,6 @@ object ArealRoadMaintainer {
    * @throws ViiteException, if the given string does not correspond to any known ArealRoadMaintainer instance.
    */
   def apply(nameString: String): ArealRoadMaintainer = {
-
     // Interpret the nameString as it would be in the database: $typeName$number, and find an instance with that.
     // Sole names, or numbers are not unique. And I doubt whether the shortNames either.
     EVKset.find(evk => s"${evk.typeName}${evk.number}" == nameString).getOrElse(

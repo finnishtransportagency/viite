@@ -209,13 +209,27 @@
     ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
   };
 
+  root.EVKCodes = { // Values might change, using placeholders for now
+    EVK_UUD: {value: 1, name: "Uudenmaan elinvoimakeskus", shortName: "UUD"},
+    EVK_LOU: {value: 2, name: "Lounais-Suomen elinvoimakeskus", shortName: "LOU"},
+    EVK_KAS: {value: 3, name: "Kaakkois-Suomen elinvoimakeskus", shortName: "KAS"},
+    EVK_SIS: {value: 4, name: "Sisä-Suomen elinvoimakeskus", shortName: "SIS"},
+    EVK_KES: {value: 5, name: "Keski-Suomen elinvoimakeskus", shortName: "KES"},
+    EVK_ITA: {value: 6, name: "Itä-Suomen elinvoimakeskus", shortName: "ITA"},
+    EVK_EPO: {value: 7, name: "Etelä-Pohjanmaan elinvoimakeskus", shortName: "EPO"},
+    EVK_POH: {value: 8, name: "Pohjanmaan elinvoimakeskus", shortName: "POH"},
+    EVK_PSU: {value: 9, name: "Pohjois-Suomen elinvoimakeskus", shortName: "PSU"},
+    EVK_LAP: {value: 10, name: "Lapin elinvoimakeskus", shortName: "LAP"},
+    EVK_TST: {value: 0, name: "ELINVOIMAKESKUS_TESTI", shortName: "TST"}
+  };
+
   root.NodeType = {
     NormalIntersection: {value: 1, description: "Normaali tasoliittymä"},
     Roundabout: {value: 3, description: "Kiertoliittymä"},
     YIntersection: {value: 4, description: "Y-liittymä"},
     Interchange: {value: 5, description: "Eritasoliittymä"},
     RoadBoundary: {value: 7, description: "Hallinnollinen raja"},
-    ELYBorder: {value: 8, description: "ELY-raja"},
+    ELYBorder: {value: 8, description: "Elinvoimakeskus raja"},
     MultiTrackIntersection: {value: 10, description: "Moniajoratainen liittymä"},
     AccessRoad: {value: 12, description: "Liityntätie"},
     EndOfRoad: {value: 13, description: "Tien alku/loppu"},
