@@ -139,6 +139,15 @@ object ArealRoadMaintainer {
       }
   }
 
+  def fromLongToRoadMaintainerId(id: Option[Long], elyContext: Boolean): Option[String] = {
+    id match {
+      case Some(value) => if (elyContext) {
+        ELYset.find(ely => ely.number.toLong == value).map(elyOpt => elyOpt.id)
+      } else EVKset.find(evk => evk.number.toLong == value).map(evkOpt => evkOpt.id)
+      case None => None
+    }
+
+  }
 
   def getELYOrElinvoimakeskusNumber(arealRoadMaintainer: ArealRoadMaintainer, elyContext: Boolean): Option[Int] = {
     if (arealRoadMaintainer.typeName == "ELY" && elyContext) {
