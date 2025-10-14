@@ -1,10 +1,27 @@
+/**
+ * @typedef {Object} Project
+ * @property {string} name
+ * @property {number} statusCode
+ * @property {string} statusDescription
+ * @property {string} createdBy
+ * @property {string} createdDate
+ * @property {string} [statusInfo]
+ * @property {number[]} elys
+ * @property {number} id
+ */
+
+/**
+ * An array of project data models used for project list rendering.
+ * @param {Project[]} projects - List of project objects to be processed.
+ */
+
 (function (root) {
   root.ProjectListModel = function (projectCollection) {
-    var projectStatus = ViiteEnumerations.ProjectStatus;
-    var projectArray = [];
-    var headers = {
+    const projectStatus = ViiteEnumerations.ProjectStatus;
+    let projectArray = [];
+    const headers = {
       "sortName": {
-        toStr: "PROJEKTIN NIMI", width: "255",
+        toStr: "PROJEKTIN NIMI", width: "200",
         sortFunc: function (a, b) {
           return a.name.localeCompare(b.name, 'fi');
         }
@@ -22,6 +39,21 @@
           return a.elys.length - b.elys.length;
         }
       },
+      "sortEVK": {
+        toStr: "ELINVOIMAKESKUS", width: "180",
+        sortFunc: function (a, b) {
+          const aEvks = a.evks || [];
+          const bEvks = b.evks || [];
+          let i = 0;
+          while (i < aEvks.length && i < bEvks.length) {
+            if (aEvks[i] !== bEvks[i]) {
+              return aEvks[i] - bEvks[i];
+            }
+            i++;
+          }
+          return aEvks.length - bEvks.length;
+        }
+      },
       "sortUser": {
         toStr: "KÄYTTÄJÄ", width: "115",
         sortFunc: function (a, b) {
@@ -29,10 +61,10 @@
         }
       },
       "sortDate": {
-        toStr: "LUONTIPVM", width: "110",
+        toStr: "LUONTIPVM", width: "158",
         sortFunc: function (a, b) {
-          var aDate = a.createdDate.split('.').reverse().join('-');
-          var bDate = b.createdDate.split('.').reverse().join('-');
+          const aDate = a.createdDate.split('.').reverse().join('-');
+          const bDate = b.createdDate.split('.').reverse().join('-');
           return new Date(bDate) - new Date(aDate);
         }
       },
@@ -44,15 +76,15 @@
       }
     };
 
-    var orderBy = {
+    const orderBy = {
       id: "sortStatus", reversed: false
     };
 
-    var filterBox = {
+    const filterBox = {
       input: "", visible: false
     };
 
-    var getIcon = function (id) {
+    const getIcon = function (id) {
       if (orderBy.id === id) {
         if (orderBy.reversed) {
           return 'fa-sort-down';
@@ -64,12 +96,13 @@
       }
     };
 
-    var headersToHtml = function () {
-      var html = "";
-      _.forEach(Object.keys(headers), function(id) {
-          var header = headers[id];
-          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id=' + id + ' class="btn-icon sort fas ' + getIcon(id) + '"></i>';
-          if (id === "sortUser") {
+    const headersToHtml = function () {
+      let html = "";
+      Object.keys(headers).forEach(function(id) {
+          const header = headers[id];
+          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id="' + id + '" class="btn-icon sort fas ' + getIcon(id) + '"></i>';
+
+        if (id === "sortUser") {
             html += '<i id="filterUser" class="btn-icon fas fa-filter"></i></label>' +
               '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
               '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>';
@@ -79,7 +112,7 @@
       return html;
     };
 
-    var projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
+    const projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
@@ -87,29 +120,25 @@
       '<div class="actions">' +
       '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:820px; height:390px; overflow:auto;"></div>');
+    projectList.append('<div id="project-list" style="width:1000px; height:390px; overflow:auto;"></div>');
     projectList.append('<div class="content-footer">' +
       '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="OldAcceptedProjectsVisible" value="OldAcceptedProjectsVisible" id="OldAcceptedProjectsVisibleCheckbox">Näytä kaikki tieverkolle päivitetyt projektit</label>' +
       '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
       '</div>');
 
-    var staticFieldProjectName = function (dataField) {
-      var field;
-      field = '<div>' +
-        '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
-        '</div>';
-      return field;
+    const staticFieldProjectName = function (dataField) {
+      return '<div>' +
+          '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
+          '</div>';
     };
 
-    var staticFieldProjectList = function (dataField) {
-      var field;
-      field = '<div>' +
-        '<label class="control-label-projects-list">' + dataField + '</label>' +
-        '</div>';
-      return field;
+    const staticFieldProjectList = function (dataField) {
+      return '<div>' +
+          '<label class="control-label-projects-list">' + dataField + '</label>' +
+          '</div>';
       };
 
-    var pollProjects = null;
+    let pollProjects = null;
 
     function show() {
       $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
@@ -133,32 +162,32 @@
     }
 
     function fetchProjectStates() {
-      projectCollection.getProjectStates(_.map(projectArray, "id"));
+      projectCollection.getProjectStates(projectArray.map((project) => project.id));
     }
 
     function onlyActive() {
       return !$('#OldAcceptedProjectsVisibleCheckbox')[0].checked;
     }
 
-    var filterByUser = function () {
-      var input = $('#userNameBox').val();
-      var rows = $('#project-list').find('tr');
+    const filterByUser = function () {
+      const input = $('#userNameBox').val();
+      const rows = $('#project-list').find('tr');
       if (input === "") {
         rows.show();
         return;
       }
       rows.hide();
       rows.each(function () {
-        var label = $(this).find('.innerCreatedBy').find("label").text();
+        const label = $(this).find('.innerCreatedBy').find("label").text();
         if (label.toLowerCase().indexOf(input.toLowerCase()) !== -1)
           $(this).show();
       });
     };
 
 
-    var userFilterVisibility = function () {
-      var searchBox = $('#userFilterSpan');
-      var textField = $('#userNameBox');
+    const userFilterVisibility = function () {
+      const searchBox = $('#userFilterSpan');
+      const textField = $('#userNameBox');
       if (filterBox.visible) {
         searchBox.show();
         if (textField.val() === "") {
@@ -174,7 +203,7 @@
     function bindEvents() {
 
       eventbus.on('roadAddressProjects:fetched', function (projects) {
-        projectArray = _.filter(projects, function (proj) {
+        projectArray = projects.filter(function(proj) {
           return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
         });
         createProjectList(projectArray);
@@ -183,8 +212,8 @@
       });
 
       eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
-        projectArray = _.map(projectArray, (project) => {
-          const statusCode = idsAndStates.find((idState) => idState._1 === project.id)._2;
+        projectArray = projectArray.map((project) => {
+          const statusCode = idsAndStates.find((idState) => idState[0] === project.id)[1];
           project.statusCode = statusCode;
           project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === statusCode).description;
           return project;
@@ -194,15 +223,45 @@
         $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
       });
 
-      var createProjectList = function (projects) {
-        var sortedProjects = projects.sort(function (a, b) {
-          var cmp = headers[orderBy.id].sortFunc(a, b);
-          return (cmp === 0) ? a.name.localeCompare(b.name, 'fi') : cmp;
-        });
-        if (orderBy.reversed)
-          sortedProjects.reverse();
+      // Helper: Compare projects by createdDate (newest first)
+      function compareByCreatedDateDesc(a, b) {
+        const dateA = new Date(a.createdDate);
+        const dateB = new Date(b.createdDate);
+        return dateB - dateA;
+      }
 
-        var triggerOpening = function (event, button) {
+      // Main sort function for the project list
+      function sortProjects(projects) {
+        const sortedProjects = projects.slice().sort((a, b) => {
+          const primaryCmp = headers[orderBy.id].sortFunc(a, b);
+
+          // Adjust primary comparison based on reversed flag
+          const primaryCmpAdjusted = orderBy.reversed ? -primaryCmp : primaryCmp;
+
+          if (primaryCmpAdjusted !== 0) return primaryCmpAdjusted;
+
+          // Secondary sort by createdDate DESC (latest first)
+          return compareByCreatedDateDesc(a, b);
+        });
+
+        // Special case: if sorting by statusCode ascending and not reversed
+        if (orderBy.id === 'sortStatus' && !orderBy.reversed) {
+          return projects.slice().sort((a, b) => {
+            if (a.statusCode !== b.statusCode) {
+              return a.statusCode - b.statusCode;
+            }
+            return compareByCreatedDateDesc(a, b);
+          });
+        }
+
+        return sortedProjects;
+      }
+
+
+      const createProjectList = function (projects) {
+        const sortedProjects = sortProjects(projects, orderBy, headers);
+
+        const triggerOpening = function (event, button) {
           $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
           if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
             projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
@@ -214,48 +273,50 @@
           }
         };
 
-        var html = '<table style="table-layout: fixed; width: 100%;">';
-        // eslint-disable-next-line no-negated-condition
-        if (!_.isEmpty(sortedProjects)) {
-          var uniqueId = 0;
-          _.each(sortedProjects, function (proj) {
-            var info = (proj.statusInfo) ? proj.statusInfo : 'Ei lisätietoja';
-            html += '<tr id="' + uniqueId + '" class="project-item">' +
-              '<td class="innerName" style="width: 270px;">' + staticFieldProjectName(proj.name) + '</td>' +
-              '<td style="width: 60px; word-break: break-word" title="' + info + '">' + staticFieldProjectList(proj.elys) + '</td>' +
-              '<td class="innerCreatedBy" style="width: 120px;" title="' + info + '">' + staticFieldProjectList(proj.createdBy) + '</td>' +
-              '<td style="width: 120px;" title="' + info + '">' + staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate))) + '</td>' +
-              '<td style="width: 100px;" title="' + info + '">' + staticFieldProjectList(proj.statusDescription) + '</td>';
-            switch (proj.statusCode) {
-              case projectStatus.ErrorInViite.value:
-                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new-error" style="alignment: right; margin-bottom: 6px; margin-left: 25px" id="reopen-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="'+ proj.statusCode + '">Avaa uudelleen</button></td>' +
-                  '</tr>';
-                break;
-              default:
-                html += '<td id="innerOpenProjectButton"><button class="project-open btn btn-new" style="alignment: right; margin-bottom: 6px; margin-left: 50px" id="open-project-' + proj.id + '" value="' + proj.id + '" data-projectStatus="' + proj.statusCode + '">Avaa</button></td>' +
-                  '</tr>';
-            }
+        let html = '<table style="table-layout: fixed; width: 100%;">';
+
+        if (sortedProjects.length) {
+          let uniqueId = 0;
+
+          sortedProjects.forEach(function(proj) {
+            const info = proj.statusInfo || 'Ei lisätietoja';
+            html += `<tr id="${uniqueId}" class="project-item">
+              <td class="innerName" style="width: 200px; vertical-align: middle;">${staticFieldProjectName(proj.name)}</td>
+              <td style="width: 50px; text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.elys)}</td>
+              <td style="width: 180px; text-align: center; vertical-align: middle; padding-right: 48px;" title="${info}">${staticFieldProjectList(proj.evks)}</td>
+              <td class="innerCreatedBy" style="width: 100px; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.createdBy)}</td>
+              <td style="width: 100px; text-align: center; vertical-align: middle; padding-right: 48px" title="${info}">${staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate)))}</td>
+              <td style="width: 80px; text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.statusDescription)}</td>`;
+
+            const openButton = proj.statusCode === projectStatus.ErrorInViite.value
+                ? `<button class="project-open btn btn-new-error" style="margin-bottom: 6px; margin-left: 25px" id="reopen-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa uudelleen</button>`
+                : `<button class="project-open btn btn-new" style="margin-bottom: 6px; margin-left: 50px" id="open-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa</button>`;
+
+            html += `<td id="innerOpenProjectButton">${openButton}</td></tr>`;
+
             uniqueId += 1;
           });
+
           html += '</table>';
           $('#project-list').html(html);
+
           $('[id*="open-project"]').click(function (event) {
-            var button = $(this);
-            if (parseInt(button.attr("data-projectStatus")) === projectStatus.InUpdateQueue.value ||
-                parseInt(button.attr("data-projectStatus")) === projectStatus.UpdatingToRoadNetwork.value) {
+            const button = $(this);
+            const status = parseInt(button.attr("data-projectStatus"));
+            if (status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
               new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
                 successCallback: function () {
                   clearInterval(pollProjects);
                   triggerOpening(event, button);
                 },
-                closeCallback: function () {
-                }
+                closeCallback: function () {}
               });
             } else {
               clearInterval(pollProjects);
               triggerOpening(event, button);
             }
           });
+
         } else {
           html += '</table>';
           $('#project-list').html(html);
@@ -267,7 +328,7 @@
         userFilterVisibility();
       });
 
-      var openProjectSteps = function (event) {
+      const openProjectSteps = function (event) {
         applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function (result) {
           setTimeout(function () {
@@ -283,9 +344,9 @@
       User can sort project list by clicking the sort arrows next to column headers. By clicking same arrows again, user can reverse the order.
        */
       projectList.on('click', '[id^=sort]', function (event) {
-        var eventId = event.target.id;
-        _.forEach(Object.keys(headers), function(id) {
-          var icon = 'fa-sort';
+        const eventId = event.target.id;
+        Object.keys(headers).forEach(function(id) {
+          let icon = 'fa-sort';
           if (id === eventId) {
             orderBy.reversed = orderBy.id === id && !orderBy.reversed;
             orderBy.id = id;

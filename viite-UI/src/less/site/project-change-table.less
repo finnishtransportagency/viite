@@ -1,180 +1,164 @@
-// Styles used in project change table //
-
+/* General table wrapper */
 .change-table-frame {
-  position: absolute;
-  bottom: 115px;
-  left: 250px;
-  right: 500px;
-  top: 620px;
-  background-color: #e3e3e1;
-  z-index: 1020;
-}
-.change-table-header {
-  padding: 10px 250px 10px 10px;
-  border-bottom: 1px solid #171717;
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
-  color: #fff;
-  background-color: #282826;
-  font-size: 150%;
-  font-weight: bold;
   display: flex;
-  justify-content: space-between;
-}
-.change-table-sections {
-  color: #5a5a57;
-  font-weight: bold;
-  height: @change-table-sections-height;
-  font-size: 15px;
-  background-color: #cbcbc9;
-  display: inline-flex;
-  width: 100%;
-}
-.change-header {
- margin-left: 10%;
-}
-.change-table-heading-label {
-  font-size: 13px;
-  height: 30px;
-  margin-top: 10px;
-  margin-left: 10px;
-  display: inline-block;
-  float: left;
-  text-transform: none;
-}
-#change-table-button-close {
-  float: right;
-  width: 100px;
-  margin-right: 17px;
-  margin-top: 6px;
-}
-.change-table {
-  display: block;
-  height: inherit;
-}
-.change-table-dimensions{
-  width:100%;
-}
-.project-change-table-dimension-header {
-  width: 5.15%;
-  color: #5a5a57;
-  font-weight: bold;
-  font-size: 12px;
+  flex-direction: column;
   overflow: hidden;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-.target {
-  margin-left: 1%;
-  margin-right: 1%;
+  width: 80%;
+  max-width: 100%;
+  min-width: 1280px;
+  min-height: 116px;
+  background-color: #e3e3e1;
+  border: 2px solid #282826;
+  border-radius: 3px;
+  z-index: 2021;
 }
 
-.project-change-table-dimension-first-h {
-  min-width: 65px;
-  max-width: 65px;
-  font-weight: bold;
-  font-size: 12px;
-  text-transform: uppercase;
-  text-align: center;
-}
-.project-change-table-dimension-h {
-  min-width: 30px;
-  max-width: 30px;
-  height: 28px;
-  color: #5a5a57;
-  font-weight: bold;
-  font-size: 12px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-.project-change-table-dimension-first {
-  min-width: 65px;
-  max-width: 65px;
-  font-weight: bold;
-  font-size: 12px;
-  text-transform: uppercase;
-  text-align: center;
-}
-.project-change-table-dimension {
-  min-width: 30px;
-  max-width: 45px;
-  height: 28px;
-  color: #5a5a57;
-  font-size: 12px;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-.change-borders-frames {
-  position: absolute;
-  width: 100%;
-  height: 145px;
-}
-#change-table-borders-changetype {
-  position: absolute;
-  height: @table-borders-height;
-  width: 10%;
-  border-right: 1px solid #a4a4a2;
-  z-index: 1;
-  pointer-events: none;
-}
-#change-table-borders-reversed {
-  position: absolute;
-  height: @table-borders-height;
-  width: 10%;
-  border-right: 1px solid #a4a4a2;
-  z-index: 1;
-  pointer-events: none;
-  padding-left: 47.5%;
-}
-#change-table-borders-source {
-  position: absolute;
-  height: @table-borders-height;
-  width: 42%;
-  border-right: 1px solid #a4a4a2;
-  z-index: 1;
-  pointer-events: none;
-  padding-left: 10%;
-}
-#change-table-borders-target {
-  position: absolute;
-  height: @table-borders-height;
-  width: 32%;
-  z-index: 1;
-  pointer-events: none;
-  padding-left: 68%;
-}
-#label-type {
-  width: 10%;
-}
-#label-reverse {
-  width: 10%;
-}
-#label-source {
-  width: 40%;
-}
-#label-target {
-  width: 45%;
-}
-.dimension-reversed {
+/* Header Bar */
+.change-table-header {
+  min-width: 1020px;
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
   padding-right: 8px;
+  background-color: #282826;
+  color: #fff;
+  z-index: 2021;
+  font-weight: bold;
+  font-size: 1.1rem;
 }
+
+.change-table-header .left {
+  flex: 1;
+}
+
+.change-table-header .center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.change-table-header .right {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.change-table-dimensions {
+  width: 100%;
+  border-spacing: 0;
+  border-collapse: separate;
+  table-layout: auto;
+}
+
+/* Column headings */
+.project-change-table-dimension-header th,
+.project-change-table-dimension-header td,
+.project-change-table-dimension-h,
+.project-change-table-dimension,
+.project-change-table-dimension-first {
+  border: 1px solid #bbb;
+  padding: 4px 2px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+// Make headers stay on top when scrolled
+.project-change-table-dimension-header:first-child th {
+  position: sticky;
+  top: 0;
+  z-index: 2020;
+  background-color: #e3e3e1;
+  border-bottom: 1px solid #282826;
+}
+.project-change-table-dimension-header:nth-child(2) th {
+  position: sticky;
+  top: 28px; /* Header first row height */
+  z-index: 2019;
+  background-color: #e3e3e1;
+}
+
+//Header Cell Styles
+.project-change-table-dimension-h {
+  height: 28px;
+  color: #5a5a57;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
+.project-change-table-dimension-first-h,
+.project-change-table-dimension-first {
+  font-weight: bold;
+  text-transform: uppercase;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+.wide-column {
+  white-space: nowrap;
+  width: auto;
+  min-width: 50px;
+}
+
+.dimension-reversed {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+}
+
+// Row styling
 .white-row {
-  background-color: #FFFFFF;
+  background-color: #fff;
 }
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+
+// Utility
+.btn-icon {
+  margin-left: 5px;
+  cursor: pointer;
 }
-::-webkit-scrollbar-button {
-  background: #888
+
+.left p,
+.warning {
+  margin: 8px;
 }
-::-webkit-scrollbar-track-piece {
-  background: #888
+
+.warning {
+  color: rgb(255, 255, 0);
 }
-::-webkit-scrollbar-thumb {
-  background: #1c7fdd
+
+// Scrollbar
+.change-table-dimension-headers {
+  overflow: auto;
+  flex-grow: 1;
+
+  /* Firefox scrollbar */
+  scrollbar-width: auto;
+  scrollbar-color: #1c7fdd #f0f0f0;
+}
+
+/* Chrome & Webkit scrollbar */
+.change-table-dimension-headers::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 3px;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-thumb {
+  background: #1c7fdd;
+  border-radius: 3px;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-thumb:hover {
+  background: #0f6ac4;
+}
+
+.change-table-dimension-headers::-webkit-scrollbar-button {
+  display: none;
 }

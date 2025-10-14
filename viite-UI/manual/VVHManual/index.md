@@ -164,7 +164,7 @@ _J&auml;rjestelm&auml; ilmoittaa k&auml;ytt&auml;j&auml;lle, jos jokin MTK-p&aum
 
 Add Layers -ty&ouml;kalulla voi lis&auml;t&auml; j&auml;rjestelm&auml;ss&auml; valmiiksi olevia karttatasoja kartalle. Add Layersin saa auki Digiroad Tools -alasvetovalikosta tai sen oikealla puolella olevasta kuvakkeesta. Haluttu karttataso ruksitaan valikosta ja painetaan Apply. Tasot tulevat n&auml;kyviin kartalle ja sis&auml;llysluetteloon (Table of Contents). OK-painikkeesta tasot lis&auml;t&auml;&auml;n kartalle ja Add Layers sulkeutuu. Add Layersin voi sulkea my&ouml;s ruksista.
 
-Add Layers -valikossa ylimp&auml;n&auml; ovat “perusgeometriatasot”, jotka ovat Maanmittauslaitoksen Maastotietokannasta. Lis&auml;ksi valittavana ovat historiatasot, suunnitelmalinkkeihin liittyv&auml;t tasot, kuntarajat, maakuntarajat, Ely-rajat, V&auml;yl&auml;n raiteet sek&auml; erilaisia MML:n taustakarttoja WMTS-tasoina.
+Add Layers -valikossa ylimp&auml;n&auml; ovat “perusgeometriatasot”, jotka ovat Maanmittauslaitoksen Maastotietokannasta. Lis&auml;ksi valittavana ovat historiatasot, suunnitelmalinkkeihin liittyv&auml;t tasot, kuntarajat, maakuntarajat, Elinvoimakeskus rajat, V&auml;yl&auml;n raiteet sek&auml; erilaisia MML:n taustakarttoja WMTS-tasoina.
 
 Add Layerisist&auml; voi valita my&ouml;s vain tietyn kunnan kohteet tielinkki-tasolta lis&auml;tt&auml;v&auml;ksi municipality alasvetovalikosta (oletuksena koko Suomi) ja zoomata ko. kuntaan valitsemalla ruksin kohtaan Zoom to selected.
 

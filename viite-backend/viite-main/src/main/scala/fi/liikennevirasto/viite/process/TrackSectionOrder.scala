@@ -24,31 +24,75 @@ object TrackSectionOrder {
     case class ProjectLinkNonConnectedDistance(projectLink: ProjectLink, point: Point, distance: Double)
     case class ProjectLinkChain(sortedProjectLinks: Seq[ProjectLink], startPoint: Point, endPoint: Point)
 
+
+    println(s"!!!!!!!")
+    println(s"!!!!!!!")
+    println(s"!!!!!!!")
+    println(s"!!!!!!!")
+
+    println(s"@findChainEndpoints with projectLinks count ::: ")
+    println(projectLinks.length)
+
+
+/*
+    println("!!!!!!!!!!")
+    println("!!!!!!!!!!")
+    println("!!!!!!!!!!")
+    println("!!!!!!!!!!")
+
+    println(s"PROJECT LINKS ::: ", projectLinks)*/
+
     @tailrec
     def recursiveFindNearestProjectLinks(projectLinkChain: ProjectLinkChain, unprocessed: Seq[ProjectLink]): ProjectLinkChain = {
+//      println(s"PROJECTLINKCHAIN :: ", projectLinkChain)
+//      println(s"UNPROCESSED ::: ", unprocessed)
+
       def mapDistances(point: Point)(pl: ProjectLink): ProjectLinkNonConnectedDistance = {
+  //      println(s"POINT :: ", point)
         val (startPointPL, endPointPL) = pl.getEndPoints // get the start- and endPoint of the project link
+  //      println(s"STARTPOINT :: ", startPointPL)
+  //      println(s"ENDPOINT :: ", endPointPL)
         val (distanceFromPointToPLStartPoint, distanceFromPointToPLEndPoint) = (startPointPL.distance2DTo(point), endPointPL.distance2DTo(point)) // calculate the distance from the point to the start- and endPoint of the projectLink
-        if (distanceFromPointToPLStartPoint < distanceFromPointToPLEndPoint)
+  //      println(s"DISTANCEFROMPOINTTOPLSTARTPOINT :: ", distanceFromPointToPLStartPoint)
+  //      println(s"DISTANCEFROMPOINTTOPLENDPOINT :: ", distanceFromPointToPLEndPoint)
+        if (distanceFromPointToPLStartPoint < distanceFromPointToPLEndPoint) {
+    //      println(s"distanceFromPointToPLStartPoint < distanceFromPointToPLEndPoint TRUE")
           ProjectLinkNonConnectedDistance(pl, endPointPL, distanceFromPointToPLStartPoint)
-        else
+        } else {
+    //      println(s"distanceFromPointToPLStartPoint < distanceFromPointToPLEndPoint FALSE")
           ProjectLinkNonConnectedDistance(pl, startPointPL, distanceFromPointToPLEndPoint)
+        }
       }
 
       val startPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.startPoint)).minBy(_.distance)
       val endPointMinDistance = unprocessed.map(mapDistances(projectLinkChain.endPoint)).minBy(_.distance)
+
+    /*  println(s"startPointMinDistance :: ", startPointMinDistance)
+      println(s"endPointMinDistance :: ", endPointMinDistance)
+*/
       val calculatedEndPoint = if (endPointMinDistance.projectLink.status == RoadAddressChangeType.New && endPointMinDistance.projectLink.addrMRange.end == 0) endPointMinDistance.point else endPointMinDistance.projectLink.endPoint
-      val (resultProjectLinkChain, newUnprocessed) =
+
+    //  println(s"calculatedEndPoint :: ", calculatedEndPoint)
+
+      val (resultProjectLinkChain, newUnprocessed) = {
         if (startPointMinDistance.distance > endPointMinDistance.distance
           || endPointMinDistance.projectLink.addrMRange.continuesFrom(projectLinkChain.sortedProjectLinks.last.addrMRange)
           && endPointMinDistance.projectLink.addrMRange.end != 0
           && projectLinkChain.sortedProjectLinks.last.addrMRange.end != 0)
         (projectLinkChain.copy(sortedProjectLinks = projectLinkChain.sortedProjectLinks :+ endPointMinDistance.projectLink, endPoint = calculatedEndPoint), unprocessed.filterNot(pl => pl.id == endPointMinDistance.projectLink.id))
-      else
-        (projectLinkChain.copy(sortedProjectLinks = startPointMinDistance.projectLink +: projectLinkChain.sortedProjectLinks, startPoint = startPointMinDistance.point), unprocessed.filterNot(pl => pl.id == startPointMinDistance.projectLink.id))
+        else {
+          (projectLinkChain.copy(sortedProjectLinks = startPointMinDistance.projectLink +: projectLinkChain.sortedProjectLinks, startPoint = startPointMinDistance.point), unprocessed.filterNot(pl => pl.id == startPointMinDistance.projectLink.id))
+        }
+      }
+   //   println(s"resultProjectLinkChain :: ", resultProjectLinkChain )
+   //   println(s"newUnprocessed :: ", newUnprocessed )
       newUnprocessed match {
-        case Seq() => resultProjectLinkChain
-        case _ => recursiveFindNearestProjectLinks(resultProjectLinkChain, newUnprocessed)
+        case Seq() => {
+   //       println(s"CASE Seq() => ")
+          resultProjectLinkChain }
+        case _ => {
+  //        println(s"CASE _ =>")
+          recursiveFindNearestProjectLinks(resultProjectLinkChain, newUnprocessed) }
       }
     }
 

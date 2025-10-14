@@ -5,7 +5,7 @@ import fi.liikennevirasto.viite.dao.ProjectCalibrationPoint
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.RoadName
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, LifecycleStatus, LinkGeomSource, RoadPart, SideCode}
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.ArgumentMatchers.any
@@ -40,7 +40,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   test("Test integrationApi.roadAddressLinksToApi() When supplying a simple Road Address Link Then return a Sequence of a String to Value mappings that represent the Road Address Link.") {
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
-    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, ArealRoadMaintainer.apply("EVK0"), 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)) should be(Seq(Map(
       "muokattu_viimeksi" -> "",
       "geometryWKT" -> "LINESTRING ZM (0.000 0.000 0.000 0.000, 1.000 0.000 0.500 1.000, 4.000 4.000 1.500 6.000)",
@@ -54,6 +54,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
       "ely_code" -> 0,
+      "evk_code" -> 0,
       "road_type" -> 3,
       "administrative_class" -> 2,
       "discontinuity" -> 0,
@@ -66,25 +67,25 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
   test("Test integrationApi.roadAddressLinksToApi() for administrative class When AdministrativeClass is State.") {
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
-    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.State, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.State, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, ArealRoadMaintainer.apply("EVK0"), 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe  1
   }
   test("Test integrationApi.roadAddressLinksToApi() When for administrative class When AdministrativeClass is Municipality.") {
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
-    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Municipality, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Municipality, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, ArealRoadMaintainer.apply("EVK0"), 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe 3
   }
   test("Test integrationApi.roadAddressLinksToApi() When for administrative class When AdministrativeClass is Private.") {
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
-    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Private, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Private, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Private, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Private, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, ArealRoadMaintainer.apply("EVK0"), 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe 5
   }
   test("Test integrationApi.roadAddressLinksToApi() When for administrative class When AdministrativeClass is Unknown.") {
     val geometry = Seq(Point(0.0, 0.0), Point(1.0, 0.0, 0.5), Point(4.0, 4.0, 1.5))
     // This roadAddressLink has linearLocationId equal to zero, just to compile.
-    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Unknown, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Unknown, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
+    val roadAdressLink = RoadAddressLink(63298, 0, 5171208.toString, geometry, GeometryUtils.geometryLength(geometry), AdministrativeClass.Unknown, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, AdministrativeClass.Unknown, None, BigInt(0), "", None, None, RoadPart(5, 205), 1, 0, ArealRoadMaintainer.apply("EVK0"), 0, AddrMRange(0, 6), "2015-01-01", "2015-12-31", 0.0, 0.0, SideCode.TowardsDigitizing, Some(ProjectCalibrationPoint(120.toString, 1, 2)), None, sourceId = "")
     integrationApi.roadAddressLinksToApi(Seq(roadAdressLink)).head("road_type") shouldBe 99
   }
 

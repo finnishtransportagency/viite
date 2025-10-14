@@ -34,9 +34,9 @@
 
       // Prevent update when cursor is in the box
       if (!(event.originalEvent.clientX < popupBox.right &&
-          event.originalEvent.clientX > popupBox.left &&
-          event.originalEvent.clientY > popupBox.top &&
-          event.originalEvent.clientY < popupBox.bottom)) {
+        event.originalEvent.clientX > popupBox.left &&
+        event.originalEvent.clientY > popupBox.top &&
+        event.originalEvent.clientY < popupBox.bottom)) {
 
         // Ignore if target feature is marker
         if (!_.isNil(featureAtPixel) && featureAtPixel.linkData) {
@@ -64,9 +64,9 @@
                     <div class="popup-line-div"><div>MunicipalityCode:&nbsp;</div><div class="selectable">${roadData.municipalityCode}</div></div>
                   `;
                 }
-
                 infoContent.innerHTML += `
                   <div class="popup-line-div"><div>Ely:&nbsp;</div><div class="selectable">${roadData.elyCode}</div></div>
+                  <div class="popup-line-div"><div>Elinvoimakeskus:&nbsp;</div><div class="selectable">${roadData.evkCode}</div></div>
                   <div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linkId}</div></div>
                   <div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linearLocationId}</div></div>
                   <div class="popup-line-div"><div>Roadway&nbsp;id:&nbsp;</div><div class="selectable">${roadData.roadwayId}</div></div>

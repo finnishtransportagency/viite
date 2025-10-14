@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.dao.ProjectLinkDAO
 import fi.liikennevirasto.viite.util.{DigiroadSerializers, JsonSerializer}
 import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, ArealRoadMaintainer, LifecycleStatus, LinkGeomSource, RoadLink, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateTimeFormatter
 import org.json4s._
@@ -44,7 +44,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
 
-  val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1)
+  val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1, ArealRoadMaintainer.apply("EVK0"))
   private val testProjectId = roadNameService.runWithReadOnlySession { projectDAO.fetchAllWithoutDeletedFilter().head("id").toString.toLong }
 
   when(mockProjectService.fetchPreFillData("6117675", testProjectId)).thenReturn(Right(preFilledRoadName))
@@ -88,6 +88,9 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       get("/roadaddress?zoom=7&bbox=527800.0,6991096.0,538002.0,6992512.0") {
       status should equal(200)
       val links = read[Seq[Seq[Map[String, Any]]]](body)
+        println(s"LINKS COUNT :: ${links.size}")
+        println(s"LINKS IDS ::: ")
+        links.foreach(l => println(s"LINK ID :: ${l.head.head}"))
       links should have size 2
       links.head.head should have size 32 // Count of level 1 parameters
     }

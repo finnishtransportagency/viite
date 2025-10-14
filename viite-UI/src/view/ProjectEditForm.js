@@ -1,202 +1,185 @@
 (function (root) {
   root.ProjectEditForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend, startupParameters) {
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var CalibrationCode = ViiteEnumerations.CalibrationCode;
-    var editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
-    var ValidElys = _.map(ViiteEnumerations.ElyCodes, function (ely) {
-      return ely;
-    });
-    var selectedProjectLink = false;
-    var editedNameByUser = false;
-    var LinkSources = ViiteEnumerations.LinkGeomSource;
-    var ProjectStatus = ViiteEnumerations.ProjectStatus;
-    var formCommon = new FormCommon('');
+    const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    const CalibrationCode = ViiteEnumerations.CalibrationCode;
+    const editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.Unknown.value];
+    const validEvks = _.map(ViiteEnumerations.EVKCodes, evk => evk);
+    let selectedProjectLink = false;
+    let editedNameByUser = false;
+    const LinkSources = ViiteEnumerations.LinkGeomSource;
+    const ProjectStatus = ViiteEnumerations.ProjectStatus;
+    const formCommon = new FormCommon('');
 
-    var endDistanceOriginalValue = '--';
+    let endDistanceOriginalValue = '--';
 
 
-    var showProjectButtonsDisabled = function () {
-      let devToolValidationButton = '';
-      if (_.includes(startupParameters.roles, 'dev')) {
-        devToolValidationButton = '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>';
-      }
-      return '<div class="project-form form-controls">' +
-          devToolValidationButton +
-          formCommon.projectButtonsDisabled() +
-          '</div>';
+    const transitionModifiers = (targetStatus, currentStatus) => {
+      const mod = _.includes(targetStatus.transitionFrom, currentStatus) ? '' : 'disabled hidden';
+      return currentStatus === targetStatus.value ? `${mod} selected` : mod;
     };
 
-    var transitionModifiers = function (targetStatus, currentStatus) {
-      var mod;
-      if (_.includes(targetStatus.transitionFrom, currentStatus))
-        mod = '';
-      else
-        mod = 'disabled hidden';
-      if (currentStatus === targetStatus.value)
-        return mod + ' selected';
-      else
-        return mod;
-    };
-
-    var defineOptionModifiers = function (option, selection) {
-      var roadAddressChangeType = selection[0].status;
-      var targetRoadAddressChangeType = _.find(RoadAddressChangeType, function (ls) {
-        return ls.description === option || (option === '' && ls.value === 99);
-      });
+    const defineOptionModifiers = (option, selection) => {
+      const roadAddressChangeType = selection[0].status;
+      const targetRoadAddressChangeType = _.find(RoadAddressChangeType, 
+        ls => ls.description === option || (option === '' && ls.value === 99)
+      );
       return transitionModifiers(targetRoadAddressChangeType, roadAddressChangeType);
     };
 
-    var selectedProjectLinkTemplate = function (project, selected, errorMessage) {
-      var road = {
+    const selectedProjectLinkTemplate = (project, selected, errorMessage) => {
+      const road = {
         roadNumber: selected[0].roadNumber,
         roadPartNumber: selected[0].roadPartNumber,
         trackCode: selected[0].trackCode
       };
 
-      var roadLinkSources = _.chain(selected).map(function (s) {
-        return s.roadLinkSource;
-      }).uniq().map(function (a) {
-        var linkGeom = _.find(LinkSources, function (source) {
-          return source.value === parseInt(a);
-        });
-        if (_.isUndefined(linkGeom))
-          return LinkSources.Unknown.descriptionFI;
-        else
-          return linkGeom.descriptionFI;
-      }).uniq().join(", ").value();
+      const roadLinkSources = _.chain(selected)
+        .map(s => s.roadLinkSource)
+        .uniq()
+        .map(a => {
+          const linkGeom = _.find(LinkSources, source => source.value === parseInt(a));
+          return _.isUndefined(linkGeom) ? LinkSources.Unknown.descriptionFI : linkGeom.descriptionFI;
+        })
+        .uniq()
+        .join(", ")
+        .value();
 
-      var selection = formCommon.selectedData(selected);
-      return _.template('' +
-        '<header>' +
-        formCommon.title(project.name) +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<div class="edit-control-group project-choice-group">' +
-        insertErrorMessage(errorMessage) +
-        formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate) +
-        formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
-        formCommon.staticField('Geometrian lähde', roadLinkSources) +
-        showLinkId(selected) +
-        showLinkLength(selected) +
-        '<div class="form-group editable form-editable-roadAddressProject"> ' +
-
-        selectionForm(project, selection, selected, road) +
-        formCommon.changeDirection(selected, project) +
-        formCommon.actionSelectedField() +
-        '</div>' +
-        '</div>' +
-        '</div>' +
-        '</div>' +
-        '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
+      const selection = formCommon.selectedData(selected);
+      return `
+        <header>${formCommon.title(project.name)}</header>
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <div class="edit-control-group project-choice-group">
+              ${insertErrorMessage(errorMessage)}
+              ${formCommon.staticField('Lisätty järjestelmään', `${project.createdBy} ${project.startDate}`)}
+              ${formCommon.staticField('Muokattu viimeksi', `${project.modifiedBy} ${project.dateModified}`)}
+              ${formCommon.staticField('Geometrian lähde', roadLinkSources)}
+              ${showLinkId(selected)}
+              ${showLinkLength(selected)}
+              <div class="form-group editable form-editable-roadAddressProject">
+                ${selectionForm(project, selection, selected, road)}
+                ${formCommon.changeDirection(selected, project)}
+                ${formCommon.actionSelectedField()}
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer>${formCommon.actionButtons('project-', projectCollection.isDirty())}</footer>`;
     };
 
-    var showLinkId = function (selected) {
+    const showLinkId = (selected) => {
+      if (selected.length !== 1) return '';
+      return String(formCommon.staticField('Linkin ID', selected[0].linkId));
+    };
+
+    const showLinkLength = (selected) => {
       if (selected.length === 1) {
-        return String(formCommon.staticField('Linkin ID', selected[0].linkId));
+        const length = Math.round(selected[0].endMValue - selected[0].startMValue);
+        return String(formCommon.staticField('Geometrian pituus', length));
       } else {
-        return '';
+        const combinedLength = _.reduce(selected, (sum, roadLink) => sum + 
+          Math.round(roadLink.endMValue - roadLink.startMValue), 0);
+        return `
+          <div class="form-group-metadata">
+            <p class="form-control-static asset-log-info-metadata">
+              Geometrioiden yhteenlaskettu pituus: ${combinedLength}
+            </p>
+          </div>`;
       }
     };
 
-    var showLinkLength = function (selected) {
-      if (selected.length === 1) {
-        return String(formCommon.staticField('Geometrian pituus', Math.round(selected[0].endMValue - selected[0].startMValue)));
-      } else {
-        var combinedLength = 0;
-        _.map(selected, function(roadLink){
-          combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
-        });
-        return '<div class="form-group-metadata">' +
-            '<p class="form-control-static asset-log-info-metadata">Geometrioiden yhteenlaskettu pituus: ' + combinedLength + '</p>' +
-            '</div>';
-      }
+    const selectionForm = (project, selection, selected, road) => {
+      const devTool = _.includes(startupParameters.roles, 'dev') 
+        ? formCommon.devAddressEditTool(selected, project) 
+        : '';
+      
+      const defaultOption = selected[0].status === RoadAddressChangeType.NotHandled.value 
+        ? RoadAddressChangeType.NotHandled.description 
+        : RoadAddressChangeType.Undefined.description;
+      
+      const changeTypes = [
+        RoadAddressChangeType.Unchanged,
+        RoadAddressChangeType.Transfer,
+        RoadAddressChangeType.New,
+        RoadAddressChangeType.Terminated,
+        RoadAddressChangeType.Numbering,
+        RoadAddressChangeType.Revert
+      ];
+
+      const createOption = (type) => `
+        <option 
+          id="drop_0_${type.description}" 
+          value="${type.description}" 
+          ${defineOptionModifiers(type.description, selected)}>
+          ${type.displayText}
+        </option>`;
+
+      return `
+        <form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">
+          <label>Toimenpiteet,${selection}</label>
+          <div class="input-unit-combination">
+            <select class="action-select" id="dropDown_0" size="1">
+              <option id="drop_0_" ${defineOptionModifiers(defaultOption, selected)}>Valitse</option>
+              ${changeTypes.map(createOption).join('')}
+            </select>
+          </div>
+          ${formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road)}
+          ${devTool}
+        </form>`;
     };
 
-    var selectionForm = function (project, selection, selected, road) {
-      let devTool = '';
-      if (_.includes(startupParameters.roles, 'dev')) {
-        devTool = formCommon.devAddressEditTool(selected, project);
-      }
-      var defaultOption = (selected[0].status === RoadAddressChangeType.NotHandled.value ? RoadAddressChangeType.NotHandled.description : RoadAddressChangeType.Undefined.description);
-      return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">' +
-        '<label>Toimenpiteet,' + selection + '</label>' +
-        '<div class="input-unit-combination">' +
-        '<select class="action-select" id="dropDown_0" size="1">' +
-        '<option id="drop_0_" ' + defineOptionModifiers(defaultOption, selected) + '>Valitse</option>' +
-        '<option id="drop_0_' + RoadAddressChangeType.Unchanged.description + '" value=' + RoadAddressChangeType.Unchanged.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Unchanged.description, selected) + '>' + RoadAddressChangeType.Unchanged.displayText + '</option>' +
-        '<option id="drop_0_' + RoadAddressChangeType.Transfer.description + '" value=' + RoadAddressChangeType.Transfer.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Transfer.description, selected) + '>' + RoadAddressChangeType.Transfer.displayText + '</option>' +
-        '<option id="drop_0_' + RoadAddressChangeType.New.description + '" value=' + RoadAddressChangeType.New.description + ' ' + defineOptionModifiers(RoadAddressChangeType.New.description, selected) + '>' + RoadAddressChangeType.New.displayText + '</option>' +
-        '<option id="drop_0_' + RoadAddressChangeType.Terminated.description + '" value=' + RoadAddressChangeType.Terminated.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Terminated.description, selected) + '>' + RoadAddressChangeType.Terminated.displayText + '</option>' +
-        '<option id="drop_0_' + RoadAddressChangeType.Numbering.description + '" value=' + RoadAddressChangeType.Numbering.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Numbering.description, selected) + '>' + RoadAddressChangeType.Numbering.displayText + '</option>' +
-        '<option id="drop_0_' + RoadAddressChangeType.Revert.description + '" value=' + RoadAddressChangeType.Revert.description + ' ' + defineOptionModifiers(RoadAddressChangeType.Revert.description, selected) + '>' + RoadAddressChangeType.Revert.displayText +'</option>' +
-        '</select>' +
-        '</div>' +
-        formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road) +
-          devTool +
-        '</form>';
+    const insertErrorMessage = (errorMessage) => {
+      if (_.isUndefined(errorMessage) || errorMessage === "") return "";
+      return addSmallLabelLowercase(`VIRHE: ${errorMessage}`);
     };
 
-    var insertErrorMessage = function (errorMessage) {
-      if (!_.isUndefined(errorMessage) && errorMessage !== "") {
-        return addSmallLabelLowercase('VIRHE: ' + errorMessage);
-      } else return "";
+    const addSmallLabelLowercase = (label) => `<label class="control-label-small" style="text-transform: none">${label}</label>`;
+
+    const emptyTemplateDisabledButtons = (project) => _.template(`
+      <header>${formCommon.titleWithEditingTool(project)}</header>
+      <div class="wrapper read-only">
+        <div class="form form-horizontal form-dark">
+          <label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>
+          <div class="form-group" id="project-errors"></div>
+        </div>
+      </div>
+      <footer>${formCommon.actionButtons('project-', false)}</footer>
+    `)();
+
+    const isProjectPublishable = () => projectCollection.getPublishableStatus();
+    const isProjectEditable = () => _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+
+    const checkInputs = () => {
+      const rootElement = $('#feature-attributes');
+      const inputs = rootElement.find('input');
+      const pedestrianRoads = 70000;
+      
+      let filled = _.every(inputs, input => {
+        if (input.type !== 'text') return true;
+        if (input.value) return true;
+        const isPedestrian = $('#tie')[0].value >= pedestrianRoads;
+        return isPedestrian && input.id === 'roadName';
+      });
+
+      const trackCodeDropdown = $('#trackCodeDropdown')[0];
+      filled = filled && trackCodeDropdown && trackCodeDropdown.value && trackCodeDropdown.value !== '99';
+
+      const administrativeClassCodeDropdown = $('#administrativeClassDropdown')[0];
+      filled = filled && 
+        administrativeClassCodeDropdown && 
+        administrativeClassCodeDropdown.value && 
+        administrativeClassCodeDropdown.value !== '0' && 
+        administrativeClassCodeDropdown.value !== '99';
+
+      const updateButton = rootElement.find('.project-form button.update');
+      updateButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
     };
 
-    var addSmallLabelLowercase = function (label) {
-      return '<label class="control-label-small" style="text-transform: none">' + label + '</label>';
-    };
-
-    var emptyTemplateDisabledButtons = function (project) {
-      return _.template('' +
-          '<header>' +
-          formCommon.titleWithEditingTool(project) +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<label class="highlighted">JATKA VALITSEMALLA KOHDE KARTALTA.</label>' +
-          '<div class="form-group" id="project-errors"></div>' +
-          '</div></div></br></br>' +
-          '<footer>' + showProjectButtonsDisabled() + '</footer>');
-    };
-
-    var isProjectPublishable = function () {
-      return projectCollection.getPublishableStatus();
-    };
-
-    var isProjectEditable = function () {
-      return _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
-    };
-
-    var checkInputs = function () {
-      var rootElement = $('#feature-attributes');
-      var inputs = rootElement.find('input');
-      var filled = true;
-      var pedestrianRoads = 70000;
-      for (var i = 0; i < inputs.length; i++) {
-        var isPedestrian = $('#tie')[0].value >= pedestrianRoads;
-        if (inputs[i].type === 'text' && !inputs[i].value && !(isPedestrian && inputs[i].id === 'roadName')) {
-          filled = false;
-        }
-      }
-
-      var trackCodeDropdown = $('#trackCodeDropdown')[0];
-      filled = filled && !_.isUndefined(trackCodeDropdown) && !_.isUndefined(trackCodeDropdown.value) && trackCodeDropdown.value !== '99';
-
-      var administrativeClassCodeDropdown = $('#administrativeClassDropdown')[0];
-      filled = filled && !_.isUndefined(administrativeClassCodeDropdown) && !_.isUndefined(administrativeClassCodeDropdown.value) && administrativeClassCodeDropdown.value !== '0'  && administrativeClassCodeDropdown.value !== '99';
-
-      if (filled && !projectChangeTable.isChangeTableOpen()) {
-        rootElement.find('.project-form button.update').prop("disabled", false);
-      } else {
-        rootElement.find('.project-form button.update').prop("disabled", true);
-      }
-
-    };
-
-    var changeDropDownValue = function (statusCode) {
-      var dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
-      var rootElement = $('#feature-attributes');
+    // This is called when a project link is selected to display the correct change type in the dropdown
+    // It also handles the visibility of the new road address form and the change direction div
+    const changeDropDownValue = function (statusCode) {
+      const dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
+      const rootElement = $('#feature-attributes');
       switch (statusCode) {
         case RoadAddressChangeType.Unchanged.value:
           dropdown_0_new.prop('disabled', true);
@@ -226,137 +209,130 @@
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
     };
 
-    var removeNumberingFromDropdown = function () {
-      $("#dropDown_0").children("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").remove();
-    };
-
-    var fillDistanceValues = function (selectedLinks) {
+    const fillDistanceValues = (selectedLinks) => {
+      const beginDistance = $('#beginDistance');
+      const endDistance = $('#endDistance');
+      
       if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
-        $('#beginDistance').val(selectedLinks[0].addrMRange.start);
+        beginDistance.val(selectedLinks[0].addrMRange.start);
         if (isProjectEditable()) {
-            $('#endDistance').prop("readonly", false).val(selectedLinks[0].addrMRange.end);
+          endDistance.prop('readonly', false).val(selectedLinks[0].addrMRange.end);
         } else {
-          $('#endDistance').val(selectedLinks[0].addrMRange.end);
+          endDistance.val(selectedLinks[0].addrMRange.end);
         }
       } else {
-        var orderedByStartM = _.sortBy(selectedLinks, function (l) {
-          return l.addrMRange.start;
-        });
+        const orderedByStartM = _.sortBy(selectedLinks, l => l.addrMRange.start);
         if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
-          $('#beginDistance').val(orderedByStartM[0].addrMRange.start);
+          beginDistance.val(orderedByStartM[0].addrMRange.start);
         }
-        if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === CalibrationCode.AtEnd.value) {
+        
+        const lastLink = orderedByStartM[orderedByStartM.length - 1];
+        if (lastLink.calibrationCode === CalibrationCode.AtEnd.value) {
           if (isProjectEditable()) {
-            $('#endDistance').prop("readonly", false).val(orderedByStartM[orderedByStartM.length - 1].addrMRange.end);
+            endDistance.prop('readonly', false).val(lastLink.addrMRange.end);
           } else {
-            $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].addrMRange.end);
+            endDistance.val(lastLink.addrMRange.end);
           }
-          endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].addrMRange.end;
+          endDistanceOriginalValue = lastLink.addrMRange.end;
         }
       }
     };
 
-    var disableFormInputs = function () {
+    const disableFormInputs = () => {
       if (!isProjectEditable()) {
-        $('#roadAddressProjectForm select').prop('disabled', true);
-        $('#roadAddressProjectFormCut select').prop('disabled', true);
-        $('.update').prop('disabled', true);
-        $('.btn-pencil-edit').prop('disabled', true);
-        if (projectCollection.getCurrentProject().project.statusCode === ProjectStatus.InUpdateQueue.value ||
-            projectCollection.getCurrentProject().project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value) {
-          $(":input").prop('disabled', true);
-          $(".project-form button.cancelLink").prop('disabled', false);
+        const project = projectCollection.getCurrentProject().project;
+        const formSelects = $('#roadAddressProjectForm select, #roadAddressProjectFormCut select');
+        const updateButtons = $('.update, .btn-pencil-edit');
+        
+        formSelects.prop('disabled', true);
+        updateButtons.prop('disabled', true);
+        
+        if ([ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode)) {
+          $(':input').prop('disabled', true);
+          $('.project-form button.cancelLink').prop('disabled', false);
         }
       }
     };
 
-    var setFormDirty = function () {
+    const setFormDirty = () => {
       selectedProjectLinkProperty.setDirty(true);
       eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
     };
 
-    var bindEvents = function () {
+    const bindEvents = () => {
+      const rootElement = $('#feature-attributes');
 
-      var rootElement = $('#feature-attributes');
-
-      eventbus.on('projectLink:clicked', function (selected) {
+      eventbus.on('projectLink:clicked', (selected) => {
         selectedProjectLink = selected;
-        var currentProject = projectCollection.getCurrentProject();
+        const currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         updateForm();
+        
         // disable form interactions (action dropdown, save and cancel buttons) if change table is open
         if (projectChangeTable.isChangeTableOpen()) {
           formCommon.disableFormInteractions();
         }
-        _.defer(function () {
-          $('#beginDistance').on("change", function (changedData) {
+        
+        _.defer(() => {
+          $('#beginDistance').on('change', (changedData) => {
             eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
           });
-          $('#endDistance').on("change", function (changedData) {
+          $('#endDistance').on('change', (changedData) => {
             eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
           });
         });
       });
 
-      function updateForm() {
-        checkInputs();
+      const updateForm = () => {
         changeDropDownValue(selectedProjectLink[0].status);
-        /* Disable numbering if the road part has any other status set. */
-        if (selectedProjectLink[0].status !== RoadAddressChangeType.Numbering.value &&
-            _.filter(projectCollection.getAll(), function (pl) {
-                return pl.roadAddressRoadNumber === selectedProjectLink[0].roadNumber &&
-                    pl.roadAddressRoadPart === selectedProjectLink[0].roadPartNumber &&
-                    (pl.status !== RoadAddressChangeType.NotHandled.value && pl.status !== RoadAddressChangeType.Numbering.value);
-            }).length !== 0) {
-              removeNumberingFromDropdown();
-        }
+        checkInputs();
+        
         disableFormInputs();
-        const projectLinkMaxByEndAddressM = _.maxBy(selectedProjectLink, function (projectLink) {
-              return projectLink.addrMRange.end;
-          });
-          // If there are non-calculated new links, display the lowest value of discontinuity in selection (i.e. the most significant).
-        var selectedDiscontinuity;
-        if (projectLinkMaxByEndAddressM.addrMRange.end === 0) {
-            selectedDiscontinuity = _.minBy(selectedProjectLink, function (projectLink) {
-                return projectLink.discontinuity;
-            }).discontinuity;
-        } else
-            selectedDiscontinuity = projectLinkMaxByEndAddressM.discontinuity;
+        
+        const projectLinkMaxByEndAddressM = _.maxBy(
+          selectedProjectLink, 
+          projectLink => projectLink.addrMRange.end
+        );
+        
+        // If there are non-calculated new links, display the lowest value of discontinuity in selection
+        const selectedDiscontinuity = projectLinkMaxByEndAddressM.addrMRange.end === 0
+          ? _.minBy(selectedProjectLink, pl => pl.discontinuity).discontinuity
+          : projectLinkMaxByEndAddressM.discontinuity;
+          
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
-      }
+      };
 
-      eventbus.on('projectLink:errorClicked', function (selected, errorMessage) {
+      eventbus.on('projectLink:errorClicked', (selected, errorMessage) => {
         selectedProjectLink = [selected[0]];
-        var currentProject = projectCollection.getCurrentProject();
+        const currentProject = projectCollection.getCurrentProject();
         formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink, errorMessage));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         updateForm();
       });
 
-      eventbus.on('roadAddress:projectFailed', function () {
+      eventbus.on('roadAddress:projectFailed', () => {
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('roadAddress:projectLinksUpdateFailed', function (errorCode) {
+      eventbus.on('roadAddress:projectLinksUpdateFailed', (errorCode) => {
         applicationModel.removeSpinner();
-        switch (errorCode) {
-          case 400:
-            return new ModalConfirm("Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.");
-          case 401:
-            return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
-          case 412:
-            return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
-          case 500:
-            return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
-          default:
-            return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
-        }
+        const errorMessages = {
+          400: 'Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.',
+          401: 'Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.',
+          412: 'Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.',
+          500: 'Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.'
+        };
+        
+        const message = errorMessages[errorCode] || 
+          'Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.';
+        
+        return new ModalConfirm(message);
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated', function (response) {
+      eventbus.on('roadAddress:projectLinksUpdated', (response) => {
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -364,9 +340,11 @@
         selectedProjectLinkProperty.setDirty(false);
         selectedProjectLink = false;
         selectedProjectLinkProperty.cleanIds();
-        var projectErrors = response.projectErrors;
+        
+        const { projectErrors } = response;
         // show disabled buttons
         rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
+        
         if (Object.keys(projectErrors).length === 0) {
           // if no (high priority) validation errors are present, then show recalculate button and remove title
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
@@ -386,100 +364,48 @@
         }
       });
 
-      eventbus.on('roadAddress:projectSentSuccess', function () {
-        new ModalConfirm("Muutoksia viedään tieosoiteverkolle.");
-        //TODO: make more generic layer change/refresh
+      eventbus.on('roadAddress:projectSentSuccess', () => {
+        new ModalConfirm('Muutoksia viedään tieosoiteverkolle.');
+        // TODO: make more generic layer change/refresh
         applicationModel.selectLayer('linkProperty');
         selectedProjectLinkProperty.close();
         projectCollection.clearRoadAddressProjects();
         projectCollection.reset();
         applicationModel.setOpenProject(false);
-        eventbus.trigger('layer:enableButtons', true);
-        eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
-        eventbus.trigger('roadLinks:refreshView');
+        
+        // Trigger cleanup and UI update events
+        [
+          'layer:enableButtons',
+          'roadAddressProject:deselectFeaturesSelected',
+          'roadLinks:refreshView'
+        ].forEach(event => eventbus.trigger(event, event === 'layer:enableButtons'));
       });
 
-      eventbus.on('roadAddress:projectSentFailed', function (error) {
+      eventbus.on('roadAddress:projectSentFailed', (error) => {
         new ModalConfirm(error);
       });
 
-      eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+      eventbus.on('roadAddress:projectLinksCreateSuccess', () => {
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         selectedProjectLinkProperty.cleanIds();
-        rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        rootElement.find('.changeDirectionDiv').prop('hidden', false);
       });
 
-      eventbus.on('roadAddress:changeDirectionFailed', function (error) {
+      eventbus.on('roadAddress:changeDirectionFailed', (error) => {
         new ModalConfirm(error);
       });
 
-      rootElement.on('click', '.changeDirection', function () {
-        projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+      rootElement.on('click', '.changeDirection', () => {
+        const projectId = projectCollection.getCurrentProject().project.id;
+        projectCollection.changeNewProjectLinkDirection(projectId, selectedProjectLinkProperty.get());
       });
 
-      eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
+      eventbus.on('roadAddress:projectLinksSaveFailed', (result) => {
         new ModalConfirm(result.toString());
       });
 
-      eventbus.on('roadAddressProject:discardChanges', function () {
-        cancelChanges();
-      });
-
-      var canChangeDirection = function () {
-        if (_.isUndefined(_.find(selectedProjectLink, function (link) {
-          return (link.status === RoadAddressChangeType.Terminated.value || link.status === RoadAddressChangeType.NotHandled.value);
-        }))) {
-          rootElement.find('.changeDirectionDiv').prop("hidden", false);
-        } else {
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
-        }
-      };
-
-      var saveChanges = function () {
-        //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var isValidEly = _.find(ValidElys, function (ely) {
-          return ely.value === parseInt($('#ely')[0].value);
-        });
-        if (!isValidEly) {
-          return new ModalConfirm("Tarkista antamasi ELY-koodi. Annettu arvo on virheellinen.");
-        }
-
-        var statusDropdown_0 = $('#dropDown_0').val();
-
-        var objectDropdown_0 = _.find(RoadAddressChangeType, function (obj) {
-          return obj.description === statusDropdown_0;
-        });
-
-        if (objectDropdown_0.value === RoadAddressChangeType.Revert.value) {
-          projectCollection.revertChangesRoadlink(selectedProjectLink);
-        }
-        else {
-          projectCollection.saveProjectLinks(
-              _.isEmpty(projectCollection.getTmpDirty()) ? selectedProjectLink : projectCollection.getTmpDirty() // Case Terminated: getTmpDirty() is empty.
-              , objectDropdown_0.value, _.isEmpty(projectCollection.getTmpDirty()) ? false : isEndDistanceTouched());
-        }
-        return true;
-      };
-
-        var isEndDistanceTouched = function () {
-            const endDistance = $('#endDistance')[0];
-            var changedValue;
-
-            if (endDistance)
-                changedValue = Number(endDistance.value);
-
-            const orderedByStartM = _.sortBy(selectedProjectLink, function (l) {
-                return -l.addrMRange.start;
-            });
-
-            // EndDistance is correct and changed.
-            return !isNaN(changedValue) &&
-                    typeof changedValue === 'number' &&
-                    changedValue !== orderedByStartM[0].addrMRange.end;
-        };
-
-      var cancelChanges = function () {
+      const cancelChanges = () => {
         projectCollection.revertRoadAddressChangeType();
         projectCollection.setDirty([]);
         projectCollection.setTmpDirty([]);
@@ -487,180 +413,226 @@
         selectedProjectLinkProperty.cleanIds();
         selectedProjectLinkProperty.clean();
         $('.wrapper').remove();
-        eventbus.trigger('roadAddress:projectLinksEdited');
-        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-        eventbus.trigger('roadAddressProject:reOpenCurrent');
+        
+        // Trigger cleanup events
+        [
+          'roadAddress:projectLinksEdited',
+          'roadAddressProject:toggleEditingRoad',
+          'roadAddressProject:reOpenCurrent'
+        ].forEach(event => eventbus.trigger(event, event.includes('toggleEditingRoad') ? true : undefined));
       };
 
-      rootElement.on('change', '#endDistance', function (eventData) {
+      eventbus.on('roadAddressProject:discardChanges', cancelChanges);
+
+      const canChangeDirection = () => {
+        const hasTerminatedOrNotHandled = _.some(selectedProjectLink, link => link.status === RoadAddressChangeType.Terminated.value || 
+          link.status === RoadAddressChangeType.NotHandled.value);
+        rootElement.find('.changeDirectionDiv').prop('hidden', hasTerminatedOrNotHandled);
+      };
+
+      const saveChanges = () => {
+        const evkValue = parseInt($('#elinvoimakeskus')[0].value);
+        const isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
+
+        if (!isValidEvk) {
+          return new ModalConfirm('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.');
+        }
+
+        const statusDropdownValue = $('#dropDown_0').val();
+        const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
+
+        if (changeType.value === RoadAddressChangeType.Revert.value) {
+          projectCollection.revertChangesRoadlink(selectedProjectLink);
+        } else {
+          const linksToSave = projectCollection.getTmpDirty().length > 0 
+            ? projectCollection.getTmpDirty() 
+            : selectedProjectLink;
+          const isEndDistanceModified = projectCollection.getTmpDirty().length > 0 
+            ? isEndDistanceTouched() 
+            : false;
+            
+          projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified);
+        }
+        return true;
+      };
+
+      const isEndDistanceTouched = () => {
+        const endDistance = $('#endDistance')[0];
+        if (!endDistance) return false;
+        
+        const changedValue = Number(endDistance.value);
+        const orderedByStartM = _.sortBy(selectedProjectLink, l => -l.addrMRange.start);
+        
+        // Check if end distance is a valid number and has changed from the original value
+        return !isNaN(changedValue) && 
+               typeof changedValue === 'number' &&
+               changedValue !== orderedByStartM[0].addrMRange.end;
+      };
+
+      rootElement.on('change', '#endDistance', (eventData) => {
         setFormDirty();
-        var changedValue = parseInt(eventData.target.value);
-        if (!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
-          $('#manualCPWarning').css('display', 'inline-block');
-        else $('#manualCPWarning').css('display', 'none');
+        const changedValue = parseInt(eventData.target.value);
+        const originalValue = parseInt(endDistanceOriginalValue);
+        const shouldShowWarning = !isNaN(changedValue) && !isNaN(originalValue) && 
+                               changedValue !== originalValue;
+        $('#manualCPWarning').css('display', shouldShowWarning ? 'inline-block' : 'none');
       });
 
-      rootElement.on('change', '#administrativeClassDropdown', function () {
-        setFormDirty();
-      });
+      // Handle form control changes
+      rootElement.on('change', '#administrativeClassDropdown, .form-select-control', setFormDirty);
 
-        rootElement.on('change', '.form-select-control', function () {
-            setFormDirty();
-        });
-
-      rootElement.on('click', '.project-form button.update', function () {
+      rootElement.on('click', '.project-form button.update', () => {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
       });
 
-      rootElement.on('change', '#roadAddressProjectForm #dropDown_0', function () {
-        $('#tie').prop('disabled', false);
-        $('#osa').prop('disabled', false);
-        $('#trackCodeDropdown').prop('disabled', false);
-        $('#discontinuityDropdown').prop('disabled', false);
-        $('#administrativeClassDropdown').prop('disabled', false);
-        if (this.value === RoadAddressChangeType.Terminated.description) {
-          rootElement.find('.dev-address-tool').prop("hidden", false);
-          rootElement.find('.new-road-address').prop("hidden", true);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
-          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
-            return {
-              'id': link.id,
-              'linkId': link.linkId,
-              'status': RoadAddressChangeType.Terminated.value,
-              'roadLinkSource': link.roadLinkSource,
-              'points': link.points,
-              'linearLocationId': link.linearLocationId
-            };
-          }));
-          projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.project-form button.update').prop("disabled", false);
-        } else if (this.value === RoadAddressChangeType.New.description) {
-          rootElement.find('.dev-address-tool').prop("hidden", false);
-          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
-            return {
-              'id': link.id,
-              'linkId': link.linkId,
-              'status': RoadAddressChangeType.New.value,
-              'roadLinkSource': link.roadLinkSource,
-              'points': link.points,
-              'linearLocationId': link.linearLocationId
-            };
-          }));
-          projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
-          if (selectedProjectLink[0].id !== -1) {
-            fillDistanceValues(selectedProjectLink);
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
-            rootElement.find('#distanceValue').prop("hidden", false);
-          }
-        } else if (this.value === RoadAddressChangeType.Unchanged.description) {
-          rootElement.find('.dev-address-tool').prop("hidden", false);
-          rootElement.find('.new-road-address').prop("hidden", false);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
-          $('#tie').prop('disabled', true);
-          $('#osa').prop('disabled', true);
-          $('#trackCodeDropdown').prop('disabled', true);
-          $('#discontinuityDropdown').prop('disabled', false);
-          $('#administrativeClassDropdown').prop('disabled', false);
-          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
-            return {
-              'id': link.id,
-              'linkId': link.linkId,
-              'status': RoadAddressChangeType.Unchanged.value,
-              'roadLinkSource': link.roadLinkSource,
-              'points': link.points,
-              'linearLocationId': link.linearLocationId
-            };
-          }));
-          projectCollection.setTmpDirty(projectCollection.getDirty());
-        } else if (this.value === RoadAddressChangeType.Transfer.description) {
-          rootElement.find('.dev-address-tool').prop("hidden", false);
-          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
-            return {
-              'id': link.id,
-              'linkId': link.linkId,
-              'status': RoadAddressChangeType.Transfer.value,
-              'roadLinkSource': link.roadLinkSource,
-              'points': link.points,
-              'linearLocationId': link.linearLocationId
-            };
-          }));
-          projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
-          canChangeDirection();
-        } else if (this.value === RoadAddressChangeType.Numbering.description) {
-          rootElement.find('.dev-address-tool').prop("hidden", false);
-          new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
-          $('#trackCodeDropdown').prop('disabled', true);
-          $('#discontinuityDropdown').prop('disabled', false);
-          $('#administrativeClassDropdown').prop('disabled', true);
-          projectCollection.setDirty(_.map(selectedProjectLink, function (link) {
-            return {
-              'id': link.id,
-              'linkId': link.linkId,
-              'status': RoadAddressChangeType.Numbering.value,
-              'roadLinkSource': link.roadLinkSource,
-              'points': link.points,
-              'linearLocationId': link.linearLocationId
-            };
-          }));
-          projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
-          rootElement.find('.project-form button.update').prop("disabled", false);
-          canChangeDirection();
-        } else if (this.value === RoadAddressChangeType.Revert.description) {
-          rootElement.find('.dev-address-tool').prop("hidden", true);
-          rootElement.find('.new-road-address').prop("hidden", true);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
-          rootElement.find('.project-form button.update').prop("disabled", false);
+      const updateFormControls = (changeType) => {
+        // Common form controls
+        const formControls = {
+          tie: $('#tie'),
+          osa: $('#osa'),
+          trackCode: $('#trackCodeDropdown'),
+          discontinuity: $('#discontinuityDropdown'),
+          adminClass: $('#administrativeClassDropdown')
+        };
+
+        // UI elements
+        const uiElements = {
+          devTool: rootElement.find('.dev-address-tool'),
+          newRoadAddress: rootElement.find('.new-road-address'),
+          changeDirection: rootElement.find('.changeDirectionDiv'),
+          distanceValue: rootElement.find('#distanceValue'),
+          updateButton: rootElement.find('.project-form button.update')
+        };
+
+        // Enable/disable common fields
+        const enableFields = (enabled) => {
+          Object.values(formControls).forEach(control => control.prop('disabled', !enabled));
+        };
+
+        // Map link data for project collection
+        const mapLinkData = (link, status) => ({
+          id: link.id,
+          linkId: link.linkId,
+          status: status,
+          roadLinkSource: link.roadLinkSource,
+          points: link.points,
+          linearLocationId: link.linearLocationId
+        });
+
+        // Handle different change types
+        switch (changeType) {
+          case RoadAddressChangeType.Terminated.description:
+            enableFields(false);
+            uiElements.devTool.prop('hidden', false);
+            uiElements.newRoadAddress.prop('hidden', true);
+            uiElements.changeDirection.prop('hidden', true);
+            
+            projectCollection.setDirty(selectedProjectLink.map(link => mapLinkData(link, RoadAddressChangeType.Terminated.value)));
+            break;
+
+          case RoadAddressChangeType.New.description:
+            enableFields(true);
+            uiElements.devTool.prop('hidden', false);
+            uiElements.newRoadAddress.prop('hidden', false);
+            projectCollection.setDirty(selectedProjectLink.map(link => mapLinkData(link, RoadAddressChangeType.New.value)));
+
+            if (selectedProjectLink[0].id !== -1) {
+              fillDistanceValues(selectedProjectLink);
+              uiElements.changeDirection.prop('hidden', false);
+              uiElements.distanceValue.prop('hidden', false);
+            }
+            break;
+
+          case RoadAddressChangeType.Unchanged.description:
+            formControls.tie.prop('disabled', true);
+            formControls.osa.prop('disabled', true);
+            formControls.trackCode.prop('disabled', true);
+            formControls.discontinuity.prop('disabled', false);
+            formControls.adminClass.prop('disabled', false);
+            
+            uiElements.devTool.prop('hidden', false);
+            uiElements.newRoadAddress.prop('hidden', false);
+            uiElements.changeDirection.prop('hidden', true);
+            
+            projectCollection.setDirty(selectedProjectLink.map(link => mapLinkData(link, RoadAddressChangeType.Unchanged.value)));
+            break;
+
+          case RoadAddressChangeType.Transfer.description:
+            enableFields(true);
+            uiElements.newRoadAddress.prop('hidden', false);
+            uiElements.devTool.prop('hidden', false);
+            projectCollection.setDirty(selectedProjectLink.map(link => mapLinkData(link, RoadAddressChangeType.Transfer.value)));
+            break;
+
+          case RoadAddressChangeType.Numbering.description:
+            uiElements.devTool.prop('hidden', false);
+            new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
+            formControls.trackCode.prop('disabled', true);
+            formControls.discontinuity.prop('disabled', false);
+            formControls.adminClass.prop('disabled', true);
+            
+            projectCollection.setDirty(selectedProjectLink.map(link => mapLinkData(link, RoadAddressChangeType.Numbering.value)));
+            uiElements.newRoadAddress.prop('hidden', false);
+            uiElements.updateButton.prop('disabled', false);
+            canChangeDirection();
+            break;
+
+          case RoadAddressChangeType.Revert.description:
+            uiElements.devTool.prop('hidden', true);
+            uiElements.newRoadAddress.prop('hidden', true);
+            uiElements.changeDirection.prop('hidden', true);
+            uiElements.updateButton.prop('disabled', false);
+            break;
+
+          default:
+            uiElements.devTool.prop('hidden', true);
+            uiElements.newRoadAddress.prop('hidden', true);
+            uiElements.changeDirection.prop('hidden', true);
+            break;
         }
-        else {
-          rootElement.find('.dev-address-tool').prop("hidden", true);
-          rootElement.find('.new-road-address').prop("hidden", true);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
-        }
+
+        // Update the project collection with the dirty state
+        projectCollection.setTmpDirty(projectCollection.getDirty());
+      };
+
+      // Initialize event handlers
+      rootElement.on('change', '#roadAddressProjectForm #dropDown_0', (e) => {
+        updateFormControls(e.target.value);
       });
 
-      rootElement.on('change', '#trackCodeDropdown', function () {
-        checkInputs();
+      rootElement.on('change', '#trackCodeDropdown, #administrativeClassDropdown', checkInputs);
+      
+      rootElement.on('change', '.form-group', () => {
+        rootElement.find('.action-selected-field').prop('hidden', false);
       });
 
-      rootElement.on('change', '#administrativeClassDropdown', function () {
-        checkInputs();
-      });
+      rootElement.on('click', '.project-form button.cancelLink', cancelChanges);
 
-
-      rootElement.on('change', '.form-group', function () {
-        rootElement.find('.action-selected-field').prop("hidden", false);
-      });
-
-      rootElement.on('click', ' .project-form button.cancelLink', function () {
-        cancelChanges();
-      });
-
-      rootElement.on('click', '.project-form button.send', function () {
+      rootElement.on('click', '.project-form button.send', () => {
         new GenericConfirmPopup("Haluatko hyväksyä projektin muutokset osaksi tieosoiteverkkoa?", {
-          successCallback: function () {
+          successCallback: () => {
             projectCollection.publishProject();
             closeProjectMode(true, true);
           },
-          closeCallback: function () {
-          }
+          closeCallback: () => {}
         });
-
       });
 
-      var closeProjectMode = function (changeLayerMode, noSave) {
-        eventbus.trigger("roadAddressProject:startAllInteractions");
+      const closeProjectMode = (changeLayerMode, noSave) => {
+        eventbus.trigger('roadAddressProject:startAllInteractions');
         eventbus.trigger('projectChangeTable:hide');
         applicationModel.setOpenProject(false);
-        rootElement.find('header').toggle();
-        rootElement.find('.wrapper').toggle();
-        rootElement.find('footer').toggle();
+        
+        // Toggle UI elements
+        ['header', '.wrapper', 'footer'].forEach(selector => {
+          rootElement.find(selector).toggle();
+        });
+        
         projectCollection.clearRoadAddressProjects();
         eventbus.trigger('layer:enableButtons', false);
         eventbus.trigger('form:showPropertyForm');
+        
         if (changeLayerMode) {
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
@@ -672,6 +644,7 @@
         if (isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
+          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
         }
       });
 
@@ -714,16 +687,16 @@
           // if recalculation and validation did not throw exceptions in the backend
           if (response.success) {
 
-              const trackGeometryLengthDeviationErrorCode = 38;
-              if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
-                  const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
-                      // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
-                  new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
-                      type: "alert"
-                  });
-                  $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
-                  response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
-              }
+            const trackGeometryLengthDeviationErrorCode = 38;
+            if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+              const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
+              // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+              new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
+                type: "alert"
+              });
+              $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+              response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
+            }
 
             // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
             projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
@@ -741,8 +714,8 @@
           }
           // if something went wrong during recalculation or validation, show error to user
           else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
-              // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
-              projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
           } else {
             new ModalConfirm(response.errorMessage);
             applicationModel.removeSpinner();
@@ -786,10 +759,10 @@
       // show project errors' link id list in a popup window
       rootElement.on('click', '.linkIdList', function (event) {
         const error = projectCollection.getProjectErrors()[event.currentTarget.id];
-        if (error.linkIds.length > 0) {
+
           const linkIdsText = error.linkIds.join(', ');
-          GenericConfirmPopup(linkIdsText, {type: "alert"});
-        }
+          new GenericConfirmPopup(linkIdsText, {type: "alert"});
+
       });
 
       rootElement.on('click', '.projectErrorButton', function (event) {
@@ -821,14 +794,14 @@
         }
       });
 
-      rootElement.on('input', '#addrStart, #addrEnd', function (event) {
+      rootElement.on('input', '#addrStart, #addrEnd', function () {
         const start = Number(document.getElementById("addrStart").value) || 0;
         const end = Number(document.getElementById("addrEnd").value) || 0;
         const res = end - start;
         document.getElementById("addrLength").textContent = res.toString();
       });
 
-      rootElement.on('input', '#origAddrStart, #origAddrEnd', function (event) {
+      rootElement.on('input', '#origAddrStart, #origAddrEnd', function () {
         const start = Number(document.getElementById("origAddrStart").value) || 0;
         const end = Number(document.getElementById("origAddrEnd").value) || 0;
         const res = end - start;

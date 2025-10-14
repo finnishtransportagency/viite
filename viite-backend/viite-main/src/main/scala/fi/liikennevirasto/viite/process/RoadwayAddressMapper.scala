@@ -127,7 +127,7 @@ class RoadwayAddressMapper(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLoca
             address, linearLocation.endCalibrationPointType))
         )
 
-        RoadAddress(roadway.id, linearLocation.id, roadway.roadPart, roadway.administrativeClass, roadway.track, Discontinuity.Continuous, AddrMRange(st, en), Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode, linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.terminated, roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
+        RoadAddress(roadway.id, linearLocation.id, roadway.roadPart, roadway.administrativeClass, roadway.track, Discontinuity.Continuous, AddrMRange(st, en), Some(roadway.startDate), roadway.endDate, Some(roadway.createdBy), linearLocation.linkId, linearLocation.startMValue, linearLocation.endMValue, linearLocation.sideCode, linearLocation.adjustedTimestamp, calibrationPoints, linearLocation.geometry, linearLocation.linkGeomSource, roadway.ely, roadway.roadMaintainer, roadway.terminated, roadway.roadwayNumber, linearLocation.validFrom, linearLocation.validTo, roadway.roadName)
     }
   }
 
