@@ -432,7 +432,11 @@
 
       const saveChanges = () => {
         const evkValue = parseInt($('#elinvoimakeskus')[0].value);
-        const isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
+        let isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
+
+        if (evkValue === 0) {
+          isValidEvk = false;
+        }
 
         if (!isValidEvk) {
           return new ModalConfirm('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.');
