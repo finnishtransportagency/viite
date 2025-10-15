@@ -144,7 +144,7 @@
         '</div>' +
         '</div><div class = "form-result"><label >PROJEKTIIN VALITUT TIEOSAT:</label>' +
         '<div>' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('EVK') +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
         '</div>' +
         '<div id ="reservedRoads">' +
         '</div></div>' +
@@ -264,8 +264,8 @@
       if (!rootElement.find('#nimi').val() || startDateValue === '' || !dateRegex.test(startDateValue)) {
         return true;
       }
-      const newDate = new Date(dateutil.parseDate(startDateValue));
-      return newDate >= datePickerFutureDateRestriction;
+  //    const newDate = new Date(dateutil.parseDate(startDateValue));
+  //    return newDate >= datePickerFutureDateRestriction;
     };
 
     var projDateEmpty = function (rootElement) {
@@ -594,9 +594,10 @@
             var projectSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
             var nowDate = new Date();
 
-            if (projectSD >= datePickerFutureDateRestriction) {
-                projectNotificationText = 'Projektin alkupäivämäärä ei voi olla vuosi 2026 tai uudempi.';
-            } else if (projectSD.getFullYear() < nowDate.getFullYear() - 20) {
+     //       if (projectSD >= datePickerFutureDateRestriction) {
+     //           projectNotificationText = 'Projektin alkupäivämäärä ei voi olla vuosi 2026 tai uudempi.';
+     //       } else
+            if (projectSD.getFullYear() < nowDate.getFullYear() - 20) {
                 projectNotificationText = 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
             } else if (projectSD.getFullYear() > nowDate.getFullYear() + 1) {
                 projectNotificationText = 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
