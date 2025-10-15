@@ -6,7 +6,7 @@
     var formCommon = new FormCommon('');
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
-    const datePickerFutureDateRestriction = new Date('2025-12-31');
+   // const datePickerFutureDateRestriction = new Date('2025-12-31');
 
     // flag to keep track if the project links have been recalculated after the changes made to the project links
     var recalculatedAfterChangesFlag = false;
@@ -261,9 +261,7 @@
     var formIsInvalid = function (rootElement) {
       const dateRegex = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
       const startDateValue = rootElement.find('#projectStartDate').val();
-      if (!rootElement.find('#nimi').val() || startDateValue === '' || !dateRegex.test(startDateValue)) {
-        return true;
-      }
+      return !rootElement.find('#nimi').val() || startDateValue === '' || !dateRegex.test(startDateValue);
   //    const newDate = new Date(dateutil.parseDate(startDateValue));
   //    return newDate >= datePickerFutureDateRestriction;
     };
