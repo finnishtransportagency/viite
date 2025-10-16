@@ -39,7 +39,7 @@ object Discontinuity {
   case object ChangingEVKCode extends Discontinuity {
     def value = 3
 
-    def description = "ELY:n raja"
+    def description = "Elinvoimakeskuksen raja"
   }
 
   case object MinorDiscontinuity extends Discontinuity {
