@@ -970,7 +970,7 @@ class ProjectValidator {
        */
       val evkCodeChangeButSameEvkNumber = validatePreviousRoadAddress(prevLeftRoadAddress)(ra =>
         ra.discontinuity == Discontinuity.ChangingEVKCode
-          && ra.roadMaintainer.number == nextRoadAddress.head.roadMaintainer.number
+          && ra.roadMaintainer.number != 0 && nextRoadAddress.head.roadMaintainer.number != 0 && ra.roadMaintainer.number == nextRoadAddress.head.roadMaintainer.number
       )(ValidationErrorList.ElinvoimakeskusDiscontinuityCodeBeforeProjectButNoElinvoimakeskusChange)
 
       /**
@@ -978,6 +978,7 @@ class ProjectValidator {
        * if the EVK number of previous RoadAddress and road part reserved in the project aren't equal.
        */
       val wrongDiscontinuityWithEvkChange = validatePreviousRoadAddress(prevLeftRoadAddress)(ra =>
+        ra.roadMaintainer.number != 0 && nextRoadAddress.head.roadMaintainer.number != 0 &&
         ra.roadMaintainer.number != nextRoadAddress.head.roadMaintainer.number
           && (ra.discontinuity != Discontinuity.Discontinuous && ra.discontinuity != Discontinuity.ChangingEVKCode)
       )(ValidationErrorList.WrongDiscontinuityBeforeProjectWithElinvoimakeskusChangeInProject)
@@ -1121,7 +1122,7 @@ class ProjectValidator {
                 val coords = prepareCoordinates(affectedProjectLinks)
                 Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElinvoimakeskusCodeChangeDetected, affectedProjectLinks.map(_.id), affectedProjectLinks.map(_.linkId), coords, Option("")))
               case (false, true) =>
-                val affectedProjectLinks = unprocessed.head._2.filter(p => p.roadMaintainer.number == biggestPrevious.roadMaintainer.number)
+                val affectedProjectLinks = unprocessed.head._2.filter(p => p.roadMaintainer.number != 0 && biggestPrevious.roadMaintainer.number != 0 && p.roadMaintainer.number == biggestPrevious.roadMaintainer.number)
                 if (affectedProjectLinks.nonEmpty) {
                   val coords = prepareCoordinates(affectedProjectLinks)
                   Seq(ValidationErrorDetails(project.id, ValidationErrorList.ElinvoimakeskusCodeChangeButNoElinvoimakeskusChange, affectedProjectLinks.map(_.id), affectedProjectLinks.map(_.linkId), coords, Option("")))
