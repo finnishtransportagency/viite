@@ -165,10 +165,6 @@ class ProjectReservedPartDAO extends BaseDAO {
   }
 
   def fetchHistoryRoadParts(projectId: Long): Seq[ProjectReservedPart] = {
-    logger.info(s"FETCHUING HISTORY ROAD PARTS")
-    logger.info(s"FETCHUING HISTORY ROAD PARTS")
-    logger.info(s"FETCHUING HISTORY ROAD PARTS")
-    logger.info(s"FETCHUING HISTORY ROAD PARTS")
     time(logger, s"Fetch reserved road parts for project $projectId") {
       val sql =
         sql"""
@@ -326,11 +322,6 @@ class ProjectReservedPartDAO extends BaseDAO {
   }
 
   def fetchPlannedRoadParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    logger.info(s"FETCHUING PLANNED ROAD PARTS")
-    logger.info(s"FETCHUING PLANNED ROAD PARTS")
-    logger.info(s"FETCHUING PLANNED ROAD PARTS")
-    logger.info(s"FETCHUING PLANNED ROAD PARTS")
-    logger.info(s"FETCHUING PLANNED ROAD PARTS")
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val projectFilter = if (withProjectId && projectId != 0) sqls"rp.project_id = $projectId" else sqls"rp.project_id != $projectId"
       val query = sql"""
@@ -443,10 +434,6 @@ class ProjectReservedPartDAO extends BaseDAO {
   }
 
   def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
-    logger.info(s"FETCHUING AFFFECTED EXISTING ROAD PARTS")
-    logger.info(s"FETCHUING AFFFECTED EXISTING ROAD PARTS")
-    logger.info(s"FETCHUING AFFFECTED EXISTING ROAD PARTS")
-    logger.info(s"FETCHUING AFFFECTED EXISTING ROAD PARTS")
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
       val query =
@@ -634,10 +621,6 @@ ORDER BY gr.road_number, gr.road_part_number;
 
 
   def fetchReservedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
-    logger.info(s"FETCHUING RESERVED ROAD PARTS")
-    logger.info(s"FETCHUING RESERVED ROAD PARTS")
-    logger.info(s"FETCHUING RESERVED ROAD PARTS")
-    logger.info(s"FETCHUING RESERVED ROAD PARTS")
     time(logger, "Fetch reserved road part") {
       val query =
         sql"""
@@ -705,10 +688,6 @@ ORDER BY gr.road_number, gr.road_part_number;
 
 
   def fetchFormedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
-    logger.info(s"FETCHUING FORMED ROAD PARTS")
-    logger.info(s"FETCHUING FORMED ROAD PARTS")
-    logger.info(s"FETCHUING FORMED ROAD PARTS")
-    logger.info(s"FETCHUING FORMED ROAD PARTS")
     time(logger, "Fetch reserved road part") {
       val sql =
         sql"""

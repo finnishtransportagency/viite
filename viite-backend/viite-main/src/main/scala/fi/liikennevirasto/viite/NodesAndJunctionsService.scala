@@ -352,9 +352,12 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     val evkRoadMaintainers: Seq[String] = authorizedEVKs.map(a => ArealRoadMaintainer.getEVK(a).id)
     val elyRoadMaintainers: Seq[String] = authorizedElys.map(a => ArealRoadMaintainer.getELY(a).id)
 
+    println(s"GETTING NODE TEMPLATES FOR ELYS ::: ", elyRoadMaintainers)
+    println(s"GETTING NODE TEMPLATES FOR EVKS ::: ", evkRoadMaintainers)
+
     runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
-        nodePointDAO.fetchTemplates().filter(template => evkRoadMaintainers.contains(template.roadMaintainer.id) || elyRoadMaintainers.contains(template.roadMaintainer.id) || authorizedElys.contains(template.elyCode))    //.filter(template => authorizedElys.contains(template.elyCode))
+        nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode) || authorizedEVKs.contains(template.roadMaintainer.number))//.filter(template => evkRoadMaintainers.contains(template.roadMaintainer.id) || elyRoadMaintainers.contains(template.roadMaintainer.id) || authorizedElys.contains(template.elyCode))    //.filter(template => authorizedElys.contains(template.elyCode))
       }
     }
   }
