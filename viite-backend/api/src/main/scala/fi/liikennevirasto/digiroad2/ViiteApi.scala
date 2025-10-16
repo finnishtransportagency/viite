@@ -738,7 +738,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     }
   }
 
-  private val saveRoadAddressProject: SwaggerSupportSyntax.OperationBuilder = ( //TODO: Olisiko tämä?
+  private val saveRoadAddressProject: SwaggerSupportSyntax.OperationBuilder = (
     apiOperation[Map[String, Any]]("saveRoadAddressProject")
       .parameters(
         bodyParam[RoadAddressProjectExtractor]("RoadAddressProject").description("Full project object to save \r\n" +
@@ -1410,7 +1410,11 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   get("/templates", operation(getNodePointAndJunctionTemplates)) {
     time(logger, s"GET request for /templates") {
       val authorizedElys = userProvider.getCurrentUser.getAuthorizedElys
-      val authorizedEvks = userProvider.getCurrentUser.getAuthorizedEvks
+      val authorizedEvks = userProvider.getCurrentUser.getAuthorizedEKeskus
+
+      println(s"AUTHORIZED ELY ::: ", authorizedElys)
+      println(s"AUTHORIZED EVK ::: ", authorizedEvks)
+
       Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedElys.toSeq, authorizedEvks.toSeq).map(nodePointTemplateToApi),
         "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedElys.toSeq).map(junctionTemplateToApi))
     }
