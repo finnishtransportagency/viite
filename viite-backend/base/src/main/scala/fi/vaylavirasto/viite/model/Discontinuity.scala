@@ -10,7 +10,7 @@ sealed trait Discontinuity {
 }
 
 object Discontinuity {
-  private val values = Set(EndOfRoad, Discontinuous, ChangingELYCode, ChangingEVKCode, MinorDiscontinuity, Continuous)
+  private val values = Set(EndOfRoad, Discontinuous, /*ChangingELYCode, */ChangingEVKCode, MinorDiscontinuity, Continuous)
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)
@@ -36,7 +36,7 @@ object Discontinuity {
     def description = "Epäjatkuva"
   }
 
-  case object ChangingELYCode extends Discontinuity {
+  case object ChangingEVKCode extends Discontinuity {
     def value = 3
 
     def description = "ELY:n raja"
@@ -53,10 +53,10 @@ object Discontinuity {
 
     def description = "Jatkuva"
   }
-
+/*
   case object ChangingEVKCode extends Discontinuity {
     def value = 6
 
-    def description = "EVK:n raja"
-  }
+    def description = "Elinvoimakeskuksen raja"
+  }*/
 }
