@@ -228,12 +228,12 @@
      * sending them to the selectedNode.open for further processing.
      */
     nodeLayerSelectInteraction.on('select', function (event) {
-      console.log("CLICK EVENT ON A NODE ::: ", event)
+      console.log("CLICK EVENT ON A NODE ::: ", event);
       var selectedNode = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.node);
       });
 
-      console.log("SELECTED NODE ::: ", selectedNode)
+      console.log("SELECTED NODE ::: ", selectedNode);
 
       // Update starting coordinates before translate happens for precise coordinates
       selectedNodeStartingCoordinates = selectedNode.node.coordinates;
