@@ -39,7 +39,7 @@
       '<label class="project-change-table-dimension-header">PIT</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
       '<label class="project-change-table-dimension-header">HALL</label>' +
-      '<label class="project-change-table-dimension-header">Elinvoimakeskus</label>' +
+      '<label class="project-change-table-dimension-header">ELY</label>' +
       '<label class="project-change-table-dimension-header target">KÄÄNTÖ</label>' +
       '<label class="project-change-table-dimension-header">TIE</label>' +
       '<label class="project-change-table-dimension-header">AJR</label>' +
@@ -49,7 +49,7 @@
       '<label class="project-change-table-dimension-header">PIT</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
       '<label class="project-change-table-dimension-header">HALL</label>' +
-      '<label class="project-change-table-dimension-header">Elinvoimakeskus</label>');
+      '<label class="project-change-table-dimension-header">ELY</label>');
 
     changeTableHeader.append('<div class="change-table-dimension-headers" style="overflow-y: auto;">' +
       '<table class="change-table-dimensions">' +
@@ -295,7 +295,7 @@
         '<td class="project-change-table-dimension">' + (changeInfoSeq.target.addrMRange.end - changeInfoSeq.target.addrMRange.start) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.discontinuity + '</td>' +
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass ) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.elinvoimakeskus + '</td>';
+        '<td class="project-change-table-dimension">' + changeInfoSeq.target.ely + '</td>';
     }
 
     function getSourceInfo(changeInfoSeq) {
@@ -308,7 +308,7 @@
         '<td class="project-change-table-dimension">' + (changeInfoSeq.source.addrMRange.end - changeInfoSeq.source.addrMRange.start) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.discontinuity + '</td>' +
         '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass ) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.elinvoimakeskus + '</td>';
+        '<td class="project-change-table-dimension">' + changeInfoSeq.source.ely + '</td>';
     }
 
     function dragListener(event) {
