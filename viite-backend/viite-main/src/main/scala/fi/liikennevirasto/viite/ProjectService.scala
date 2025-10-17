@@ -469,7 +469,21 @@ class ProjectService(
     else None
   }
 
-  def createProjectLinks(linkIds: Seq[String], projectId: Long, roadPart: RoadPart, track: Track, userGivenDiscontinuity: Discontinuity, administrativeClass: AdministrativeClass, roadLinkSource: LinkGeomSource, roadEly: Long, roadMaintainer: ArealRoadMaintainer, user: String, roadName: String, coordinates: Option[ProjectCoordinates] = None, devToolData: Option[ProjectLinkDevToolData] = None): Map[String, Any] = {
+  def createProjectLinks(
+                          linkIds: Seq[String],
+                          projectId: Long,
+                          roadPart: RoadPart,
+                          track: Track,
+                          userGivenDiscontinuity: Discontinuity,
+                          administrativeClass: AdministrativeClass,
+                          roadLinkSource: LinkGeomSource,
+                          roadEly: Long,
+                          roadMaintainer: ArealRoadMaintainer,
+                          user: String,
+                          roadName: String,
+                          coordinates: Option[ProjectCoordinates] = None,
+                          devToolData: Option[ProjectLinkDevToolData] = None
+                        ): Map[String, Any] = {
 
 
     def createProjectRoadMaintainerCodes(): Unit = {
@@ -481,7 +495,7 @@ class ProjectService(
         logger.warn(s"Ely-codes for project: $projectId were not updated.")
       }
       if (updatedEVKCount == 0) {
-        logger.warn(s"Evk-codes for project: $projectId were not updated.")
+        logger.warn(s"Elinvoimakeskus-codes for project: $projectId were not updated.")
       }
     }
 
@@ -1768,8 +1782,12 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                 if (roadAddresses.exists(x =>
                   x.roadPart == newRoadPart)) // check the original numbering wasn't exactly the same
                   throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
-                if (currentAddresses.nonEmpty)
+                if (currentAddresses.nonEmpty) {
+                  logger.info(s"ERROR IN PROJECT SERVICE")
+                  logger.info(s"CURRENT ADDRESS NOT EMPTY ::: ")
+                  currentAddresses.foreach(ca => logger.info(s"CURRENT ADDRESS :::: id: ${ca.id} :: linkId: ${ca.linkId} :: roadMaintainer: ${ca.roadMaintainer.name} :: roadPart: ${ca.roadPart} :: roadName: ${ca.roadName} ely: ${ca.ely} :: discontinity: ${ca.discontinuity}"))
                   throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+                }
                 if (toUpdateLinks.map(pl => (pl.roadPart)).distinct.lengthCompare(1) != 0 ||
                     roadAddresses.map(ra => (ra.roadPart)).distinct.lengthCompare(1) != 0) {
                   throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)

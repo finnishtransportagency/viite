@@ -44,8 +44,13 @@ class ProjectValidator {
   def checkReservedExistence(currentProject: Project, newRoadPart: RoadPart, roadAddressChangeType: RoadAddressChangeType, projectLinks: Seq[ProjectLink]): Unit = {
     if (RoadAddressChangeType.New.value == roadAddressChangeType.value) {
       if (roadAddressService.getRoadAddressesFiltered(newRoadPart).nonEmpty) {
-        if (projectReservedPartDAO.fetchProjectReservedPart(newRoadPart, currentProject.id, withProjectId = Some(false)).nonEmpty) {
-          throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+       // if (projectReservedPartDAO.fetchProjectReservedPart(newRoadPart, currentProject.id, withProjectId = Some(false)).nonEmpty) {
+        val roadstuff = projectReservedPartDAO.fetchProjectReservedPart(newRoadPart, currentProject.id, withProjectId = Some(false))
+        if (roadstuff.nonEmpty) {
+          logger.info(s"ERROR IN PROJECT VALIDATOR checkReservedExistence")
+          roadstuff.foreach(rs => logger.info(s"ROAD STUFFF ${rs._1} ::: ${rs._2}"))
+
+        throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
         } else if (!projectReservedPartDAO.fetchReservedRoadParts(currentProject.id).exists(p => p.roadPart == newRoadPart)) {
           throw new ProjectValidationException(RoadNotAvailableMessage)
         }
@@ -70,8 +75,14 @@ class ProjectValidator {
 
   def checkFormationInOtherProject(currentProject: Project, newRoadPart: RoadPart, roadAddressChangeType: RoadAddressChangeType): Unit = {
       val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
-      if (formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadPart == newRoadPart))
+      if (formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadPart == newRoadPart)) {
+
+        logger.info(s"ERROR IN PROJECT VALIDATOR :: checkFormationInOtherProject")
+        logger.info(s"if (formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadPart == newRoadPart)) {")
+        logger.info(s"NEW ROADPART :::: partnumber:: ${newRoadPart.partNumber} :: roadnumber :: ${newRoadPart.roadNumber} :: maxroadnumber :: ${newRoadPart.maxRoadNumber} :: maxpartnumber :: ${newRoadPart.maxPartNumber}")
+        formedPartsOtherProjects.foreach(fp => logger.info(s"!!!!!! part :: ${fp.id} :: roadPart :: ${fp.roadPart} :: old roadMaintainer :: ${fp.roadMaintainer.map(rm => rm.name)} :: new roadMaintainer :: ${fp.newRoadMaintainer.map(_.name)} :: discontinuity ::  ${fp.discontinuity} :: addressLength :: ${fp.addressLength} :: newLength :: ${fp.newLength}" ))
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
+      }
   }
 
   def checkAvailable(roadPart: RoadPart, currentProject: Project): Unit = {
