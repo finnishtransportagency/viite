@@ -162,7 +162,7 @@ println("Threading print test: Now in avoidRestrictions")
       description "Returns the current state of the whole road network address space that contains all the latest changes " +
               "to every part of any road found in Viite (also those addresses that will be valid not until in the future).\n" +
               "The returned JSON contains data about: road number, road name, " +
-              "road part number, ely code, evk code, administrative class, track, start address, end address, and discontinuity.\n" +
+              "road part number, ely code, elinvoimakeskus code, administrative class, track, start address, end address, and discontinuity.\n" +
               "Or, with the optional <i>date</i> parameter, a historical summary state can be requested."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[String]("date").optional
@@ -789,7 +789,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "start_addr_m" -> roadAddressLink.addrMRange.start,
           "end_addr_m"   -> roadAddressLink.addrMRange.end,
           "ely_code" -> roadAddressLink.elyCode,
-          "evk_code" -> ArealRoadMaintainer.getEVKNumber(roadAddressLink.roadMaintainer),
+          "elinvoimakeskus_code" -> ArealRoadMaintainer.getEVKNumber(roadAddressLink.roadMaintainer),
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,
