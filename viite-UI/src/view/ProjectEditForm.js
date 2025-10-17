@@ -431,19 +431,22 @@
       };
 
       const saveChanges = () => {
-        const evkValue = parseInt($('#elinvoimakeskus')[0].value);
-        let isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
-
-        if (evkValue === 0) {
-          isValidEvk = false;
-        }
-
-        if (!isValidEvk) {
-          return new ModalConfirm('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.');
-        }
-
         const statusDropdownValue = $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
+
+        // Skip EVK validation for Terminated (Lakkautus) action
+        if (changeType.value !== RoadAddressChangeType.Terminated.value) {
+          const evkValue = parseInt($('#elinvoimakeskus')[0].value);
+          let isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
+
+          if (evkValue === 0) {
+            isValidEvk = false;
+          }
+
+          if (!isValidEvk) {
+            return new ModalConfirm('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.');
+          }
+        }
 
         if (changeType.value === RoadAddressChangeType.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
