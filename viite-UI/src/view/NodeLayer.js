@@ -232,8 +232,6 @@
         return !_.isUndefined(selectionTarget.node);
       });
 
-      // Update starting coordinates before translate happens for precise coordinates
-      selectedNodeStartingCoordinates = selectedNode.node.coordinates;
 
       // select all node point templates in same place.
       var selectedNodePointTemplate = _.find(event.selected, function (selectionTarget) {
@@ -255,6 +253,9 @@
         case ViiteEnumerations.Tool.Select.value:
           if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
             selectNode(selectedNode.node);
+
+            // Update starting coordinates before translate happens for precise coordinates (only for nodes, not junctions)
+            selectedNodeStartingCoordinates = selectedNode.node.coordinates;
           }
           break;
         case ViiteEnumerations.Tool.Attach.value:
