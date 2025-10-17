@@ -242,7 +242,7 @@
         <option value="5" selected disabled hidden>5 Jatkuva</option>
         <option value="1">1 Tien loppu</option>
         <option value="2">2 Epäjatkuva</option>
-        <option value="3">3 ELY:n raja</option>
+        <option value="3">3 Elinvoimakeskuksen raja</option>
         <option value="4">4 Lievä epäjatkuvuus</option>
         <option value="5">5 Jatkuva</option>
       </select>`;

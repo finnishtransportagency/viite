@@ -1,6 +1,6 @@
 package fi.vaylavirasto.viite.model
 
-//JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 = ELY:n raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
+//JATKUVUUS (1 = Tien loppu, 2 = epäjatkuva (esim. vt9 välillä Akaa-Tampere), 3 Elinvoimakeskuksen raja, 4 = Lievä epäjatkuvuus (esim kiertoliittymä), 5 = jatkuva)
 sealed trait Discontinuity {
   def value: Int
 
