@@ -154,7 +154,6 @@
                                             <th>Hall. luokka</th>
                                             <th>Muutos</th>
                                             <th>u_Elinvoimakeskus</th>
-                                            <th>u_Ely</th>
                                             <th>u_Tie</th>
                                             <th>u_Ajr</th>
                                             <th>u_Aosa</th>
@@ -186,7 +185,7 @@
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
                                             <td>${EnumerationUtils.getChangeTypeDisplayText(results[i].changeType)}</td>
                                             <td>${results[i].newEvk}</td>
-                                            <td>${results[i].newEly}</td>
+
                                             <td>${results[i].newRoadNumber}</td>
                                             <td>${results[i].newTrack}</td>
                                             <td>${results[i].newRoadPartNumber}</td>
