@@ -85,7 +85,7 @@
       function createArrayOfArraysForRoadParts(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
+          array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
@@ -142,7 +142,7 @@
       function createArrayOfArraysForNodes(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Evk', 'Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
+          array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
@@ -279,7 +279,7 @@
       function createArrayOfArraysForRoadNames(results) {
           const array = [];
           let arrayPointer = -1;
-          array[++arrayPointer] = ['Evk', 'Ely', 'Tie', 'Nimi'];
+          array[++arrayPointer] = ['Elinvoimakeskus', 'Ely', 'Tie', 'Nimi'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,

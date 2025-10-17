@@ -64,7 +64,7 @@
       // ELY/EVK selector for address browser
       elyEvkSelector = new Selector({
         id: 'roadAddrInputElyEvk',
-        placeholder: 'Valitse Elinvoimakeskus/ELY',
+        placeholder: 'Valitse Elinvoimakeskus / ELY',
         width: 240,
         data: createElyEvkData()
       });
@@ -137,7 +137,7 @@
             </div>
           </div>
           <div class="input-container">
-            <label class="control-label-small">Elinvoimakeskus/ELY</label>
+            <label class="control-label-small">Elinvoimakeskus / ELY</label>
             ${elyEvkSelector.render()}
           </div>
           ${createRoadNumberInputField('roadAddrInputRoad')}

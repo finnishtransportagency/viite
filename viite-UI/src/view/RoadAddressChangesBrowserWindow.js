@@ -103,7 +103,7 @@
             // Render selector with id expected by getData()
             elyEvkSelector = new Selector({
                 id: 'roadAddrChangesInputEly',
-                placeholder: 'Valitse Elinvoimakeskus/ELY',
+                placeholder: 'Valitse Elinvoimakeskus / ELY',
                 width: 240,
                 data: createElyEvkData()
             });
@@ -115,7 +115,7 @@
             // Build container matching existing style
             const $elyContainer = $([
                 '<div class="input-container">',
-                '  <label class="control-label-small">Elinvoimakeskus/ELY</label>',
+                '  <label class="control-label-small">Elinvoimakeskus / ELY</label>',
                 `  ${elyEvkSelector.render()}`,
                 '</div>'
             ].join(''));
