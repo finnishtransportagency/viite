@@ -1,6 +1,7 @@
 (function (root) {
   root.NodeSearchForm = function (instructionsPopup, map, nodeCollection, backend) {
     var formCommon = new FormCommon('node-search-');
+
     var header = function () {
       return '<header>' +
         '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
@@ -64,7 +65,6 @@
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
         junctionTemplate.addrM + '</a>';
-
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
@@ -78,70 +78,83 @@
       });
       return text;
     };
+    
+    // Shared helper for both template types
+    var groupedTemplatesHtml = function ({
+      templates,
+      topLabel,
+      groupKey,
+      linkRenderer,
+      addressHeader,
+      titleColor = '#c09853'
+    }) {
+      if (!templates || templates.length === 0) return '';
 
+      const text = [];
+      text.push(`<br><label class="control-label" style="color:${titleColor}; font-size: 12px;">${topLabel}</label><br>`);
+
+      // Group by the given key
+      const grouped = _.groupBy(templates, groupKey);
+      const sortedGroups = _.sortBy(Object.entries(grouped), ([code]) => parseInt(code));
+
+      sortedGroups.forEach(([code, group]) => {
+        // Skip empty groups
+        if (!group || group.length === 0) return;
+
+        text.push(evkLabel(parseInt(code)));
+        text.push(`<label class="control-label-small" style="text-transform:none;color:white;">${addressHeader}</label><br>`);
+
+        const sortedTemplates = _.chain(group)
+          .sortBy('addrM')
+          .sortBy('track')
+          .sortBy('roadPartNumber')
+          .sortBy('roadNumber')
+          .value();
+
+        sortedTemplates.forEach(template => {
+          text.push(`${linkRenderer(template)}<br>`);
+        });
+
+        text.push('<br>');
+      });
+
+      return text.join('');
+    };
+    
     var junctionTemplatesHtml = function (junctionTemplates) {
-      var groups = _.groupBy(junctionTemplates, function (template) {
-        return template.elyCode;
+      return groupedTemplatesHtml({
+        templates: junctionTemplates,
+        topLabel: 'Käsittelemättömät liittymäaihiot',
+        groupKey: 'elinvoimakeskusCode',
+        linkRenderer: junctionTemplateLink,
+        addressHeader: '(TIE / AJR / OSA / AET)'
       });
-      var text = "";
-      if (!_.isEmpty(groups)) {
-        text = '<label class="control-label-small" style="color:#c09853;">Käsittelemättömät liittymäaihiot</label>';
-        _.each(groups, function (templatesByEly) {
-          var sortedTemplates = _.chain(templatesByEly).sortBy('addrM').sortBy('track').sortBy('roadPartNumber').sortBy('roadNumber').value();
-          text += elyNameLabel(sortedTemplates[0].elyCode);
-          text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / AJR / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function (junctionTemplate) {
-            text += junctionTemplateLink(junctionTemplate) + '</br>';
-          });
-        });
-      }
-      return text;
     };
-
+    
     var nodePointTemplatesHtml = function (nodePointTemplates) {
-      var uniqueNPTemplates = _.uniqWith(nodePointTemplates, function (o1, o2) {
-        return o1.roadNumber === o2.roadNumber && o1.roadPartNumber === o2.roadPartNumber && o1.addrM === o2.addrM;
+      const uniqueNPTemplates = _.uniqWith(nodePointTemplates, (o1, o2) => o1.roadNumber === o2.roadNumber &&
+        o1.roadPartNumber === o2.roadPartNumber && o1.addrM === o2.addrM
+      );
+
+      return groupedTemplatesHtml({
+        templates: uniqueNPTemplates,
+        topLabel: 'Käsittelemättömät solmukohta-aihiot',
+        groupKey: 'roadMaintainer',
+        linkRenderer: nodePointTemplateLink,
+        addressHeader: '(TIE / OSA / AET)'
       });
-      var groups = _.groupBy(uniqueNPTemplates, function (template) {
-        return template.elyCode;
-      });
-      var text = "";
-      if (!_.isEmpty(groups)) {
-        text = '</br></br><label class="control-label-small" style="color:#c09853;">Käsittelemättömät solmukohta-aihiot</label>';
-        _.each(groups, function (templatesByEly) {
-          var sortedTemplates = _.chain(templatesByEly).sortBy('addrM').sortBy('track').sortBy('roadPartNumber').sortBy('roadNumber').value();
-          text += elyNameLabel(sortedTemplates[0].elyCode);
-          text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function (nodePointTemplate) {
-            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
-          });
-        });
-        _.each(groups, function (templatesByEvk) {
-          var sortedTemplates = _.chain(templatesByEvk).sortBy('addrM').sortBy('track').sortBy('roadPartNumber').sortBy('roadNumber').value();
-          text += evkLabel(sortedTemplates[0].roadMaintainer);
-          text += '<label class="control-label-small" style="text-transform:none;color:white;">(TIE / OSA / AET)</label></br>';
-          _.each(sortedTemplates, function (nodePointTemplate) {
-            text += nodePointTemplateLink(nodePointTemplate) + '</br>';
-          });
-        });
-      }
-      return text;
-    };
-//          text += evkLabel(sortedTemplates[0].elinvoimakeskus);
-    var elyNameLabel = function (elyCode) {
-      var elyInfo = _.find(ViiteEnumerations.ElyCodes, function (obj) {
-        return obj.value === elyCode;
-      });
-      return '</br><label class="control-label" style="color:#c09853;">' + elyInfo.name + ' ELY (' + elyInfo.value + ')</label></br>';
     };
 
-    var evkLabel = function (evkCode) {
-      var evkInfo = _.find(ViiteEnumerations.EVKCodes, function (obj) {
-        return obj.value === evkCode;
-      });
-      return '</br><label class="control-label" style="color:#c09853;">' + evkInfo.name + ' Elinvoimakeskus (' + evkInfo.value + ')</label></br>';
-    };
 
+    var evkLabel = (evkCode) => {
+      if (!evkCode && evkCode !== 0) return '';
+      const evkInfo = _.find(ViiteEnumerations.EVKCodes,
+        obj => obj.value === evkCode || obj.value === evkCode.toString());
+      return evkInfo
+        ? `</br><label class="control-label" style="color:#c09853;">${evkInfo.name} (${evkInfo.value})</label></br>`
+        : '';
+    };
+    
     var checkInputs = function (selector, disabled) {
       var rootElement = $('#feature-attributes');
       rootElement.find(selector).prop('disabled', disabled);
@@ -155,7 +168,10 @@
           var nodePointTemplates = data.nodePointTemplates;
           var junctionTemplates = data.junctionTemplates;
           eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
-          $('#nodes-and-junctions-content').html(junctionTemplatesHtml(junctionTemplates) + nodePointTemplatesHtml(nodePointTemplates));
+          $('#nodes-and-junctions-content').html(
+            junctionTemplatesHtml(junctionTemplates) +
+            nodePointTemplatesHtml(nodePointTemplates)
+          );
           applicationModel.removeSpinner();
         });
       };
@@ -198,17 +214,11 @@
         rootElement.on('click', '#node-search-btn', function () {
           applicationModel.addSpinner();
           $('#nodes-and-junctions-content').html("");
-          var data = {
-            roadNumber: $("#tie").val()
-          };
+          var data = { roadNumber: $("#tie").val() };
           var minPart = $("#aosa").val();
           var maxPart = $("#losa").val();
-          if (minPart) {
-            data.minRoadPartNumber = minPart;
-          }
-          if (maxPart) {
-            data.maxRoadPartNumber = maxPart;
-          }
+          if (minPart) data.minRoadPartNumber = minPart;
+          if (maxPart) data.maxRoadPartNumber = maxPart;
           nodeCollection.getNodesByRoadAttributes(data);
         });
 
@@ -221,13 +231,12 @@
         });
 
         rootElement.on('click', '.junction-template-link', function (event) {
-          // Trigger event to handle junction template click
           eventbus.trigger('nodeSearchTool:clickJunctionTemplate', event.currentTarget.id);
-          // Update url hash to match clicked template
           window.location.hash = `node/junctionTemplate/${event.currentTarget.id}`;
         });
       });
     };
+
     bindEvents();
   };
 }(this));
