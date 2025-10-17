@@ -1758,7 +1758,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadPartNumber" -> junctionTemplate.roadPart.partNumber,
       "track" -> junctionTemplate.track,
       "addrM" -> junctionTemplate.addrM,
-      "elyCode" -> junctionTemplate.elyCode)
+      "elyCode" -> junctionTemplate.elyCode,
+      "elinvoimakeskusCode" -> junctionTemplate.roadMaintainer.number)
   }
 
   def junctionTemplatesWithPointsToApi(junctionPointTemplate: (JunctionTemplate, Seq[JunctionPoint])) : Map[String, Any] = {
