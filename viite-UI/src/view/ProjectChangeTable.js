@@ -51,7 +51,6 @@
                   <th class="project-change-table-dimension-h">PIT</th>
                   <th class="project-change-table-dimension-h">JATK</th>
                   <th class="project-change-table-dimension-h wide-column">HALL</th>
-                  <th class="project-change-table-dimension-h">ELY</th>
                   <th class="project-change-table-dimension-h">Elinvoimakeskus</th>
                 </tr>
               </thead>
@@ -321,7 +320,6 @@
         <td class="project-change-table-dimension"></td>
         <td class="project-change-table-dimension"></td>
         <td class="project-change-table-dimension"></td>
-        <td class="project-change-table-dimension"></td>
       `;
     }
 
@@ -336,7 +334,6 @@
         <td class="project-change-table-dimension">${t.addrMRange.end - t.addrMRange.start}</td>
         <td class="project-change-table-dimension">${t.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(t.administrativeClass)}</td>
-        <td class="project-change-table-dimension">${t.ely}</td>
         <td class="project-change-table-dimension">${t.elinvoimakeskus}</td>
       `;
     }
