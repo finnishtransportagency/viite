@@ -54,7 +54,7 @@ class IntegrationApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAf
       "start_addr_m" -> 0,
       "end_addr_m" -> 6,
       "ely_code" -> 0,
-      "evk_code" -> 0,
+      "elinvoimakeskus_code" -> 0,
       "road_type" -> 3,
       "administrative_class" -> 2,
       "discontinuity" -> 0,
