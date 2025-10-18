@@ -82,7 +82,7 @@ class ProjectValidator {
         logger.info(s"NEW ROADPART :::: partnumber:: ${newRoadPart.partNumber} :: roadnumber :: ${newRoadPart.roadNumber} :: maxroadnumber :: ${newRoadPart.maxRoadNumber} :: maxpartnumber :: ${newRoadPart.maxPartNumber}")
         formedPartsOtherProjects.foreach(fp => logger.info(s"!!!!!! part :: ${fp.id} :: roadPart :: ${fp.roadPart} :: old roadMaintainer :: ${fp.roadMaintainer.map(rm => rm.name)} :: new roadMaintainer :: ${fp.newRoadMaintainer.map(_.name)} :: discontinuity ::  ${fp.discontinuity} :: addressLength :: ${fp.addressLength} :: newLength :: ${fp.newLength}" ))
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
-      }
+      } else logger.info(s"NOT EVERY PART IS WRONG")
   }
 
   def checkAvailable(roadPart: RoadPart, currentProject: Project): Unit = {
