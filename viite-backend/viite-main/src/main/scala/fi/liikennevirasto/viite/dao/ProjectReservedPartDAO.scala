@@ -349,7 +349,6 @@ class ProjectReservedPartDAO extends BaseDAO {
           pl.road_number,
           pl.road_part_number,
           MAX(pl.end_addr_m) AS length_new,
-          MAX(pl.ely) AS ely_new,
           MAX(pl.road_maintainer) AS road_maintainer_new
         FROM pl_filtered pl
         GROUP BY pl.project_id, pl.road_number, pl.road_part_number
@@ -381,7 +380,6 @@ class ProjectReservedPartDAO extends BaseDAO {
         rp.road_number,
         rp.road_part_number,
         mv.length_new,
-        mv.ely_new,
         mv.road_maintainer_new,
         dn.discontinuity_type AS discontinuity_new,
         fl.link_id AS first_link
