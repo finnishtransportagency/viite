@@ -430,7 +430,7 @@ class ProjectReservedPartDAO extends BaseDAO {
 
     }
   }
-/*
+
 
   def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts for project: $projectId") {
@@ -490,11 +490,11 @@ ORDER BY gr.road_number, gr.road_part_number;
     }
   }
 
-*/
 
 
 
 
+/*
     def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
       time(logger, s"Fetch formed road parts for project: $projectId") {
         val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
@@ -549,7 +549,7 @@ ORDER BY gr.road_number, gr.road_part_number;
     }
 
 
-
+*/
 
   def fetchReservedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
