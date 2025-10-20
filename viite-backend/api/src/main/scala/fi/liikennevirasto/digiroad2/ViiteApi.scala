@@ -1043,8 +1043,17 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   put("/roadlinks/roadaddress/project/links", operation(updateProjectLinks)) {
     time(logger, "PUT request for /roadlinks/roadaddress/project/links") {
       val user = userProvider.getCurrentUser
+
       try {
         val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
+
+        logger.info(s"IS THERE SOEM STUFF HERE ::: ")
+        logger.info(s"LINKS ROADEVK ::: ${links.roadEvk}")
+        logger.info(s"LINKS ROADELY ::: ${links.roadEly}")
+        logger.info(s"LINKS roadName ::: ${links.roadName}")
+        logger.info(s"LINKS roadNumber ::: ${links.roadNumber}")
+        logger.info(s"LINKS roadPartNumber ::: ${links.roadPartNumber}")
+
         if (links.roadNumber == 0)
           throw RoadPartException("Virheellinen tienumero")
         if (links.roadPartNumber == 0)
@@ -2040,7 +2049,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "currentEvk" -> reservedRoadPart.roadMaintainer.map(r => ArealRoadMaintainer.getEVK(r.id).number),
       "currentLength" -> reservedRoadPart.addressLength,
       "currentDiscontinuity" -> reservedRoadPart.discontinuity.map(_.description),
-      "newEly" -> reservedRoadPart.newEly,
+    //  "newEly" -> reservedRoadPart.newEly,
       "newEvk" -> reservedRoadPart.newRoadMaintainer.map(r => ArealRoadMaintainer.getEVK(r.id).number),
       "newLength" -> reservedRoadPart.newLength,
       "newDiscontinuity" -> reservedRoadPart.newDiscontinuity.map(_.description),
@@ -2056,7 +2065,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "currentEvk" -> formedRoadPart.roadMaintainer.map(r => ArealRoadMaintainer.getEVK(r.id).number),
       "currentLength" -> formedRoadPart.addressLength,
       "currentDiscontinuity" -> formedRoadPart.discontinuity.map(_.description),
-      "newEly" -> formedRoadPart.newEly,
+   //   "newEly" -> formedRoadPart.newEly,
       "newEvk" -> formedRoadPart.newRoadMaintainer.map(r => ArealRoadMaintainer.getEVK(r.id).number),
       "newLength" -> formedRoadPart.newLength,
       "newDiscontinuity" -> formedRoadPart.newDiscontinuity.map(_.description),
