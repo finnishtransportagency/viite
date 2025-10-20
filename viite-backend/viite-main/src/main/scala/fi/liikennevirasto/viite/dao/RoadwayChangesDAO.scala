@@ -521,10 +521,7 @@ class RoadwayChangesDAO extends BaseDAO {
         projectAcceptedDate = rs.jodaDateTime("accepted_date"),
         oldRoadAddress      = OldRoadAddress(
           ely               = rs.long("old_ely"),
-          roadMaintainer    = rs.stringOpt("old_road_maintainer") match {
-            case Some(value) => ArealRoadMaintainer.apply(value)
-            case None => ArealRoadMaintainer.apply("EVK0")
-          },
+          roadMaintainer    = ArealRoadMaintainer.apply(rs.string("old_road_maintainer")),
 
             /*.flatMap { rm =>
             try {
@@ -551,14 +548,15 @@ class RoadwayChangesDAO extends BaseDAO {
         ),
         newRoadAddress        = NewRoadAddress(
           ely                 = rs.long("new_ely"),
-          roadMaintainer      = rs.stringOpt("new_road_maintainer").flatMap { rm =>
+          roadMaintainer      = ArealRoadMaintainer.apply(rs.string("new_road_maintainer")),
+        /*  roadMaintainer      = rs.stringOpt("new_road_maintainer").flatMap { rm =>
             try {
               val value = if (rm.startsWith("EVK")) rm else s"EVK$rm"
               Some(ArealRoadMaintainer(value))
             } catch {
               case _: Throwable => None
             }
-          }.getOrElse(ArealRoadMaintainer("EVK0")),
+          }.getOrElse(ArealRoadMaintainer("EVK0")),*/
           roadPart            = RoadPart(
             roadNumber        = rs.longOpt("new_road_number").getOrElse(0L),
             partNumber        = rs.longOpt("new_road_part_number").getOrElse(0L)

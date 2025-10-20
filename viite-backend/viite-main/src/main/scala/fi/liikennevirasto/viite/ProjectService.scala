@@ -179,7 +179,7 @@ class ProjectService(
           val firstLink = sortedProjectLinks.head.linkId
           val maxDiscontinuity = sortedProjectLinks.last.discontinuity
           val maxEndAddr = sortedProjectLinks.last.addrMRange.end
-          Seq(rp.copy(newLength = Some(maxEndAddr), newDiscontinuity = Some(maxDiscontinuity), newEly = Some(maxEly), newRoadMaintainer = Some(maxRoadMaintainer), startingLinkId = Some(firstLink)))
+          Seq(rp.copy(newLength = Some(maxEndAddr), newDiscontinuity = Some(maxDiscontinuity),/* newEly = Some(maxEly),*/ newRoadMaintainer = Some(maxRoadMaintainer), startingLinkId = Some(firstLink)))
         } else Seq()
 
         reserved ++ formed
@@ -433,7 +433,7 @@ class ProjectService(
         roadMaintainer = Some(detail.roadMaintainer),
         newLength = Some(detail.endAddrM),
         newDiscontinuity = Some(Discontinuity.apply(detail.discontinuity.toInt)),
-        newEly = Some(detail.ely),
+     //   newEly = Some(detail.ely),
         newRoadMaintainer = Some(detail.roadMaintainer),
         startingLinkId = Some(detail.linkId)
       )
@@ -491,6 +491,13 @@ class ProjectService(
       val roadMaintainersForProject = projectLinkDAO.fetchProjectLinkRoadMaintainers(projectId) :+ roadMaintainer.id
       val updatedELYCount = projectDAO.updateProjectElys(projectId, elysForProject.toSet.toSeq)
       val updatedEVKCount = projectDAO.updateProjectRoadMaintainers(projectId, roadMaintainersForProject.toSet.toSeq)
+
+      logger.info(s"FOUND ELYS FOR PROJECT :: ")
+      elysForProject.foreach(e => logger.info(s"$e"))
+
+      logger.info(s"FOUND EVKS FOR PROJECTS")
+      roadMaintainersForProject.foreach(rm => logger.info(s"${rm}"))
+
       if (updatedELYCount == 0) {
         logger.warn(s"Ely-codes for project: $projectId were not updated.")
       }
@@ -571,6 +578,10 @@ class ProjectService(
     */
   private def addNewLinksToProjectInTX(newLinks: Seq[ProjectLink], projectId: Long, user: String, firstLinkId: String, discontinuity: Discontinuity, devToolData: Option[ProjectLinkDevToolData] = None): Option[String] = {
     val newRoadPart = newLinks.head.roadPart
+    logger.info(s"THE HEAD OF THIS NEW LINKS LIST IS SENT FORWARD AS newRoadPart ::: ${newRoadPart}")
+
+    newLinks.foreach(nl => logger.info(s"linkId : ${nl.linkId} :: roadMaintainer.id : ${nl.roadMaintainer.id} :: roadPart.roadNumber : ${nl.roadPart.roadNumber} :: roadPart.partNumber : ${nl.roadPart.partNumber} :: projectId : ${nl.projectId} :: status.description : ${nl.status.description} :: "))
+
     val roadAddressChangeType = newLinks.head.status
     try {
       val project = getProjectWithReservationChecks(projectId, newRoadPart, roadAddressChangeType, newLinks)
@@ -1313,7 +1324,7 @@ class ProjectService(
   }
 
   def toReservedRoadPart(roadPart: RoadPart, ely: Long, roadMaintainer: ArealRoadMaintainer): ProjectReservedPart = {
-    ProjectReservedPart(0L, roadPart, None, None, Some(ely), Some(roadMaintainer), None, None, None, None, None)
+    ProjectReservedPart(0L, roadPart, None, None, Some(ely), Some(roadMaintainer), None, None, None, None)
   }
 
   /**

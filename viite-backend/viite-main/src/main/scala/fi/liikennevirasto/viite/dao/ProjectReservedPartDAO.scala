@@ -16,7 +16,7 @@ case class ProjectReservedPart(id: Long,
                                roadMaintainer: Option[ArealRoadMaintainer] = None,
                                newLength: Option[Long] = None,
                                newDiscontinuity: Option[Discontinuity] = None,
-                               newEly: Option[Long] = None,
+                           //    newEly: Option[Long] = None,
                                newRoadMaintainer: Option[ArealRoadMaintainer] = None,
                                startingLinkId: Option[String] = None) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
@@ -45,7 +45,7 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
     ely              = rs.longOpt("ely"),
     newLength        = rs.longOpt("length"), // same as addressLength
     newDiscontinuity = rs.longOpt("discontinuity_type").map(Discontinuity.apply), // same as discontinuity
-    newEly           = rs.longOpt("ely"), // same as ely
+  //  newEly           = rs.longOpt("ely"), // same as ely
     // newRoadMaintainer = Some(ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("EVK0"))),
     newRoadMaintainer = rs.stringOpt("roadMaintainer") match {
       case Some(value) => Some(ArealRoadMaintainer.apply(value))
@@ -67,7 +67,7 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
     roadMaintainer = None,
     newLength        = rs.longOpt("length_new"),
     newDiscontinuity = rs.longOpt("discontinuity_new").map(Discontinuity.apply),
-    newEly           = rs.longOpt("ely_new"),
+  //  newEly           = rs.longOpt("ely_new"),
     newRoadMaintainer = rs.stringOpt("road_maintainer_new") match {
       case Some(value) => Some(ArealRoadMaintainer.apply(value))
       case None => None
@@ -93,7 +93,7 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
     },
     newLength        = None,
     newDiscontinuity = None,
-    newEly           = None,
+  //  newEly           = None,
     newRoadMaintainer = None,
     startingLinkId   = rs.stringOpt("first_link")
   )
@@ -349,7 +349,6 @@ class ProjectReservedPartDAO extends BaseDAO {
           pl.road_number,
           pl.road_part_number,
           MAX(pl.end_addr_m) AS length_new,
-          MAX(pl.ely) AS ely_new,
           MAX(pl.road_maintainer) AS road_maintainer_new
         FROM pl_filtered pl
         GROUP BY pl.project_id, pl.road_number, pl.road_part_number
@@ -381,7 +380,6 @@ class ProjectReservedPartDAO extends BaseDAO {
         rp.road_number,
         rp.road_part_number,
         mv.length_new,
-        mv.ely_new,
         mv.road_maintainer_new,
         dn.discontinuity_type AS discontinuity_new,
         fl.link_id AS first_link
@@ -433,12 +431,13 @@ class ProjectReservedPartDAO extends BaseDAO {
     }
   }
 
+
   def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
     time(logger, s"Fetch formed road parts for project: $projectId") {
       val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
       val query =
         sql"""
-           SELECT id, road_number, road_part_number, length_new, ely_new, road_maintainer_new,
+           SELECT id, road_number, road_part_number, length_new, road_maintainer_new,
        (
          SELECT discontinuity_type
          FROM project_link pl
@@ -464,7 +463,6 @@ FROM (
   SELECT DISTINCT rp.id, pl.project_id AS projectid,
                   rw.road_number, rw.road_part_number,
                   MAX(pl.end_addr_m) AS length_new,
-                  MAX(pl.ely) AS ely_new,
                   MAX(pl.road_maintainer) AS road_maintainer_new
   FROM linear_location lc
   JOIN roadway rw ON rw.roadway_number = lc.roadway_number
@@ -494,14 +492,15 @@ ORDER BY gr.road_number, gr.road_part_number;
 
 
 
-  /*
 
+
+/*
     def fetchAffectedExistingParts(projectId: Long, withProjectId: Boolean = true): Seq[ProjectReservedPart] = {
       time(logger, s"Fetch formed road parts for project: $projectId") {
         val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
         val query =
           sql"""
-              SELECT id, road_number, road_part_number, length_new, ely_new, road_maintainer_new, (
+              SELECT id, road_number, road_part_number, length_new, road_maintainer_new, (
                 SELECT discontinuity_type
                 FROM project_link pl
                 WHERE pl.project_id = projectid
@@ -521,7 +520,7 @@ ORDER BY gr.road_number, gr.road_part_number;
               LIMIT 1) AS first_link
               FROM (
                 SELECT DISTINCT rp.id, pl.project_id AS projectid, rw.road_number AS road_number, rw.road_part_number AS road_part_number, MAX(pl.end_addr_m) AS length_new,
-                MAX(pl.ely) AS ely_new,
+              --  MAX(pl.ely) AS ely_new,
                 MAX(pl.road_maintainer) AS road_maintainer_new
                 FROM linear_location lc, roadway rw, project_link pl, project_reserved_road_part rp
                 WHERE rw.roadway_number = lc.roadway_number
@@ -548,9 +547,9 @@ ORDER BY gr.road_number, gr.road_part_number;
         runSelectQuery(query.map(ProjectReservedPart.fromFormedQuery))
       }
     }
-  */
 
-/*
+
+*/
 
   def fetchReservedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
@@ -616,9 +615,16 @@ ORDER BY gr.road_number, gr.road_part_number;
       runSelectQuery(query.map(ProjectReservedPart.fromReservedQuery)).headOption
     }
   }
-*/
 
 
+/*   (SELECT link_id FROM project_link pl
+          WHERE pl.project_id = gr.project_id
+            AND pl.road_number = gr.road_number
+            AND pl.road_part_number = gr.road_part_number
+            AND pl.status != ${RoadAddressChangeType.Termination.value}
+            AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})
+            LIMIT 1) AS first_link*/
+/*
 
   def fetchReservedRoadPart(roadPart: RoadPart): Option[ProjectReservedPart] = {
     time(logger, "Fetch reserved road part") {
@@ -684,6 +690,7 @@ ORDER BY gr.road_number, gr.road_part_number;
       runSelectQuery(query.map(ProjectReservedPart.fromReservedQuery)).headOption
     }
   }
+*/
 
 
 
@@ -691,7 +698,7 @@ ORDER BY gr.road_number, gr.road_part_number;
     time(logger, "Fetch reserved road part") {
       val sql =
         sql"""
-          SELECT id, road_number, road_part_number, length_new, ely_new, road_maintainer_new,
+          SELECT id, road_number, road_part_number, length_new, road_maintainer_new,
         (SELECT discontinuity_type FROM project_link pl
           WHERE pl.project_id = gr.project_id
             AND pl.road_number = gr.road_number
@@ -716,7 +723,7 @@ ORDER BY gr.road_number, gr.road_part_number;
             LIMIT 1) AS first_link FROM
           (SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
             MAX(pl.end_addr_m) AS length_new,
-            MAX(pl.ely) AS ely_new, MAX(pl.road_maintainer) AS road_maintainer_new FROM project_reserved_road_part rp
+            MAX(pl.road_maintainer) AS road_maintainer_new FROM project_reserved_road_part rp
           LEFT JOIN project_link pl ON (
             pl.project_id = rp.project_id
             AND pl.road_number = rp.road_number
