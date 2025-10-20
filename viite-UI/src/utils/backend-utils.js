@@ -278,15 +278,25 @@
       });
     }, 1000);
 
-    this.getProjectsWithLinksById = _.throttle(function (id, callback) {
+    this.getProjectsWithLinksById = function (id, callback) {
+      // Abort any previous request
       if (loadingProject) {
         loadingProject.abort();
       }
-      loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function (data) {
-        return _.isFunction(callback) && callback(data);
-      });
+
+      // Start new request
+      loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id)
+        .done(function (data) {
+          if (_.isFunction(callback)) callback(data);
+        })
+        .always(function () {
+          // Clear reference when request completes
+          loadingProject = null;
+        });
+
       return loadingProject;
-    }, 1000);
+    };
+
 
     this.getChangeTable = _.throttle(function (id, callback) {
       $.getJSON('api/viite/project/getchangetable/' + id, callback);
