@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
+import fi.vaylavirasto.viite.model.ArealRoadMaintainer.{getEVKNumber, isEVK}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
@@ -469,6 +470,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "createdBy" -> rw.createdBy,
       "administrativeClass" -> rw.administrativeClass,
       "ely" -> rw.ely,
+      "elinvoimakeskus" -> getEVKNumber(rw.roadMaintainer),
       "terminated" -> rw.terminated,
       "validFrom" -> rw.validFrom,
       "validTo" -> rw.validTo
@@ -490,6 +492,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "createdBy" -> rw.roadway.createdBy,
       "administrativeClass" -> rw.roadway.administrativeClass,
       "ely" -> rw.roadway.ely,
+      "elinvoimakeskus" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(rw.roadway.roadMaintainer, elyContext = false),
       "terminated" -> rw.roadway.terminated,
       "validFrom" -> rw.roadway.validFrom,
       "validTo" -> rw.roadway.validTo,
