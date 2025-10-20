@@ -349,6 +349,7 @@ class ProjectReservedPartDAO extends BaseDAO {
           pl.road_number,
           pl.road_part_number,
           MAX(pl.end_addr_m) AS length_new,
+          MAX(pl.ely) AS ely_new,
           MAX(pl.road_maintainer) AS road_maintainer_new
         FROM pl_filtered pl
         GROUP BY pl.project_id, pl.road_number, pl.road_part_number
@@ -380,6 +381,7 @@ class ProjectReservedPartDAO extends BaseDAO {
         rp.road_number,
         rp.road_part_number,
         mv.length_new,
+        mv.ely_new,
         mv.road_maintainer_new,
         dn.discontinuity_type AS discontinuity_new,
         fl.link_id AS first_link
@@ -426,6 +428,8 @@ class ProjectReservedPartDAO extends BaseDAO {
             GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number
             ) gr"""
      */
+
+      logger.info(s"QUERY ::: $query")
       runSelectQuery(query.map(ProjectReservedPart.fromFormedQuery))
 
     }
@@ -437,55 +441,50 @@ class ProjectReservedPartDAO extends BaseDAO {
       val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
       val query =
         sql"""
-           SELECT id, road_number, road_part_number, length_new, road_maintainer_new,
-       (
-         SELECT discontinuity_type
-         FROM project_link pl
-         WHERE pl.project_id = gr.projectid
-           AND pl.road_number = gr.road_number
-           AND pl.road_part_number = gr.road_part_number
-           AND pl.status != ${RoadAddressChangeType.Termination.value}
-           AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})
-           AND pl.end_addr_m = gr.length_new
-         LIMIT 1
-       ) AS discontinuity_new,
-       (
-         SELECT link_id
-         FROM project_link pl
-         WHERE pl.project_id = gr.projectid
-           AND pl.road_number = gr.road_number
-           AND pl.road_part_number = gr.road_part_number
-           AND pl.status != ${RoadAddressChangeType.Termination.value}
-           AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})
-         LIMIT 1
-       ) AS first_link
-FROM (
-  SELECT DISTINCT rp.id, pl.project_id AS projectid,
-                  rw.road_number, rw.road_part_number,
-                  MAX(pl.end_addr_m) AS length_new,
-                  MAX(pl.road_maintainer) AS road_maintainer_new
-  FROM linear_location lc
-  JOIN roadway rw ON rw.roadway_number = lc.roadway_number
-  JOIN project_link pl ON rw.road_number = pl.road_number AND rw.road_part_number = pl.road_part_number
-  JOIN project_reserved_road_part rp ON rp.project_id = pl.project_id
-                                     AND rp.road_number = pl.road_number
-                                     AND rp.road_part_number = pl.road_part_number
-  WHERE rw.end_date IS NULL
-    AND rw.valid_to IS NULL
-    AND lc.valid_to IS NULL
-    AND lc.id NOT IN (
-      SELECT pl2.linear_location_id
-      FROM project_link pl2
-      WHERE pl2.road_number = rw.road_number
-        AND pl2.road_part_number = rw.road_part_number
-    )
-    AND pl.status = ${RoadAddressChangeType.NotHandled.value}  -- Assuming 1 = NotHandled
-    -- AND additional filters if needed
-  GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number
-) gr
-ORDER BY gr.road_number, gr.road_part_number;
+           SELECT id, road_number, road_part_number, length_new, road_maintainer_new, (
+              SELECT discontinuity_type
+              FROM project_link pl
+              WHERE pl.project_id = projectid
+              AND pl.road_number = road_number
+              AND pl.road_part_number = road_part_number
+              AND PL.status != ${RoadAddressChangeType.Termination.value}
+              AND PL.track IN (${Track.Combined.value}, ${Track.RightSide.value})
+              AND end_addr_m = length_new
+              LIMIT 1) AS discontinuity_new,
+            (SELECT link_id
+            FROM project_link pl
+            WHERE pl.project_id = projectid
+            AND pl.road_number = road_number
+            AND pl.road_part_number = road_part_number
+            AND PL.status != ${RoadAddressChangeType.Termination.value}
+            AND PL.track IN (${Track.Combined.value}, ${Track.RightSide.value})
+            LIMIT 1) AS first_link
+            FROM (
+              SELECT DISTINCT rp.id, pl.project_id AS projectid, rw.road_number AS road_number, rw.road_part_number AS road_part_number, MAX(pl.end_addr_m) AS length_new,
+              MAX(pl.road_maintainer) AS road_maintainer_new
+              FROM linear_location lc, roadway rw, project_link pl, project_reserved_road_part rp
+              WHERE rw.roadway_number = lc.roadway_number
+              AND rw.road_Number = pl.road_number
+              AND rw.road_part_number = pl.road_part_number
+              AND rp.project_id = pl.project_id
+              AND rp.road_number = pl.road_number
+              AND rp.road_part_number = pl.road_part_number
+              AND rw.end_date IS NULL
+              AND rw.valid_to IS NULL
+              AND lc.valid_to IS NULL
+              AND lc.id NOT IN (
+                SELECT pl2.linear_location_id
+                FROM project_link pl2
+                WHERE pl2.road_number = rw.road_number
+                AND pl2.road_part_number = rw.road_part_number
+                )
+              and $filter
+              AND pl.status = ${RoadAddressChangeType.NotHandled.value}
+              GROUP BY rp.id, pl.project_id, rw.road_number, rw.road_part_number) gr
+            ORDER BY gr.road_number, gr.road_part_number
             """
 
+      logger.info(s"QUERY2 :: $query")
       runSelectQuery(query.map(ProjectReservedPart.fromFormedQuery))
     }
   }
@@ -577,13 +576,13 @@ ORDER BY gr.road_number, gr.road_part_number;
               AND ra.road_part_number = rp.road_part_number
               AND ra.end_date IS NULL
               AND ra.valid_to IS NULL) as length,
-            (SELECT MAX(ra.ely)
+              (SELECT MAX(ra.ely)
               FROM roadway ra
               WHERE ra.road_number = rp.road_number
               AND ra.road_part_number = rp.road_part_number
               AND ra.end_date IS NULL AND ra.valid_to
               IS NULL) as ely,
-              (SELECT road_maintainer
+            (SELECT MAX(ra.road_maintainer)
               FROM roadway ra
               WHERE ra.road_number = rp.road_number
               AND ra.road_part_number = rp.road_part_number
@@ -612,9 +611,71 @@ ORDER BY gr.road_number, gr.road_part_number;
             AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})))
           GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number) gr
           """
+
+      logger.info(s"RESERVED ROAR PARTS QUERY :: ${query.statement}")
       runSelectQuery(query.map(ProjectReservedPart.fromReservedQuery)).headOption
     }
   }
+
+  /* SELECT id, road_number, road_part_number, length, ely, road_maintainer,
+        (SELECT DISCONTINUITY FROM roadway ra
+          WHERE ra.road_number = gr.road_number
+            AND ra.road_part_number = gr.road_part_number
+            AND ra.end_date IS NULL
+            AND ra.valid_to IS NULL
+            AND end_addr_m = gr.length
+            LIMIT 1) AS discontinuity,
+        (SELECT link_id FROM project_link pl
+          WHERE pl.project_id = gr.project_id
+            AND pl.road_number = gr.road_number
+            AND pl.road_part_number = gr.road_part_number
+            AND pl.status != ${RoadAddressChangeType.Termination.value}
+            AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})
+            LIMIT 1) AS first_link
+            FROM (SELECT rp.id, rp.project_id, rp.road_number, rp.road_part_number,
+            (SELECT MAX(ra.end_addr_m)
+              FROM roadway ra
+              WHERE ra.road_number = rp.road_number
+              AND ra.road_part_number = rp.road_part_number
+              AND ra.end_date IS NULL
+              AND ra.valid_to IS NULL) as length,
+              (SELECT MAX(ra.ely)
+              FROM roadway ra
+              WHERE ra.road_number = rp.road_number
+              AND ra.road_part_number = rp.road_part_number
+              AND ra.end_date IS NULL AND ra.valid_to
+              IS NULL) as ely,
+            (SELECT MAX(ra.road_maintainer)
+              FROM roadway ra
+              WHERE ra.road_number = rp.road_number
+              AND ra.road_part_number = rp.road_part_number
+              AND ra.end_date IS NULL AND ra.valid_to
+              IS NULL) as road_maintainer
+            FROM project_reserved_road_part rp
+          LEFT JOIN project_link pl ON (
+            pl.project_id = rp.project_id
+            AND pl.road_number = rp.road_number
+            AND pl.road_part_number = rp.road_part_number
+            AND pl.status != ${RoadAddressChangeType.Termination.value})
+          LEFT JOIN roadway ra ON
+            ((ra.road_number = rp.road_number
+            AND ra.road_part_number = rp.road_part_number
+            AND ra.end_date IS NULL
+            AND ra.valid_to IS NULL)
+            OR ra.id = pl.roadway_id)
+          LEFT JOIN linear_location lc ON
+            (lc.id = pl.linear_location_id)
+          WHERE rp.road_number = ${roadPart.roadNumber}
+            AND rp.road_part_number = ${roadPart.partNumber}
+            AND ra.end_date IS NULL
+            AND ra.valid_to IS NULL
+            AND (pl.status IS NULL
+            OR (pl.status != ${RoadAddressChangeType.Termination.value}
+            AND pl.track IN (${Track.Combined.value}, ${Track.RightSide.value})))
+          GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number) gr*/
+
+
+
 
 
 /*   (SELECT link_id FROM project_link pl
