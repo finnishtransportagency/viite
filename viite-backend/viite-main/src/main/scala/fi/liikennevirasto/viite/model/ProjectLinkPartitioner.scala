@@ -10,7 +10,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
 
   def partition[T <: ProjectAddressLinkLike](projectLinks: Seq[T]): Seq[Seq[T]] = {
     val (outside, inProject) = projectLinks.partition(_.status == RoadAddressChangeType.Unknown)
-    val inProjectGroups = inProject.groupBy(l => (l.status, l.roadPart, l.trackCode, l.administrativeClass, l.roadMaintainer.id/* l.elyCode*/))
+    val inProjectGroups = inProject.groupBy(l => (l.status, l.roadPart, l.trackCode, l.administrativeClass, l.roadMaintainer.id, l.elyCode))
     val (outsideWithRoadName, outsideWithoutRoadName) = outside.partition(link => link.roadPart.roadNumber != 0 && link.roadPart.partNumber != 0)
     val groupedUnnamedRoads = groupRoadsWithoutName(Seq(), Seq(), outsideWithoutRoadName, outsideWithoutRoadName)
     val outsideGroup = outsideWithRoadName.groupBy(link => (link.roadLinkSource, link.partitioningName))

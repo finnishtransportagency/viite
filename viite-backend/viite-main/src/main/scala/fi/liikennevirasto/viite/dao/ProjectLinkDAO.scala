@@ -608,10 +608,10 @@ class ProjectLinkDAO extends BaseDAO {
   def fetchEvkFromProjectLinks(projectId:Long): Option[Long]= {
     val query =
       sql"""
-           SELECT evk
+           SELECT road_maintainer
            FROM project_link
            WHERE project_id=$projectId
-           AND evk IS NOT NULL
+           AND road_maintainer IS NOT NULL
            LIMIT 1
            """
     runSelectSingleFirstOptionWithType[Long](query)
@@ -974,7 +974,7 @@ class ProjectLinkDAO extends BaseDAO {
             pl.calibrationPointTypes._2.value,
             pl.sideCode.value,
             pl.ely,
-            pl.roadMaintainer,
+            pl.roadMaintainer.id,
             pl.startMValue,
             pl.endMValue,
             RoadAddressChangeType.Termination.value,
