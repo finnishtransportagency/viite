@@ -914,7 +914,7 @@ class ProjectLinkDAO extends BaseDAO {
             end_calibration_point = ${roadAddress.endCalibrationPointType.value},
             orig_start_calibration_point = ${roadAddress.startCalibrationPointType.value},
             orig_end_calibration_point = ${roadAddress.endCalibrationPointType.value},
-            side = ${roadAddress.sideCode.value}, ely = ${roadAddress.ely}, roadMaintainer = ${roadAddress.roadMaintainer.id},
+            side = ${roadAddress.sideCode.value}, ely = ${roadAddress.ely}, road_maintainer = ${roadAddress.roadMaintainer.id},
             start_measure = ${roadAddress.startMValue}, end_measure = ${roadAddress.endMValue} $geometryUpdate
           WHERE linear_location_id = ${roadAddress.linearLocationId}
           AND project_id = $projectId $idFilter
