@@ -441,7 +441,7 @@ class ProjectReservedPartDAO extends BaseDAO {
       val filter = if (withProjectId && projectId != 0) sqls" rp.project_id = $projectId " else sqls" rp.project_id != $projectId "
       val query =
         sql"""
-           SELECT id, road_number, road_part_number, length_new, road_maintainer_new, (
+           SELECT id, road_number, road_part_number, length_new, ely_new, road_maintainer_new, (
               SELECT discontinuity_type
               FROM project_link pl
               WHERE pl.project_id = projectid
@@ -461,6 +461,7 @@ class ProjectReservedPartDAO extends BaseDAO {
             LIMIT 1) AS first_link
             FROM (
               SELECT DISTINCT rp.id, pl.project_id AS projectid, rw.road_number AS road_number, rw.road_part_number AS road_part_number, MAX(pl.end_addr_m) AS length_new,
+              MAX(pl.ely) AS ely_new,
               MAX(pl.road_maintainer) AS road_maintainer_new
               FROM linear_location lc, roadway rw, project_link pl, project_reserved_road_part rp
               WHERE rw.roadway_number = lc.roadway_number
@@ -612,7 +613,6 @@ class ProjectReservedPartDAO extends BaseDAO {
           GROUP BY rp.id, rp.project_id, rp.road_number, rp.road_part_number) gr
           """
 
-      logger.info(s"RESERVED ROAR PARTS QUERY :: ${query.statement}")
       runSelectQuery(query.map(ProjectReservedPart.fromReservedQuery)).headOption
     }
   }
