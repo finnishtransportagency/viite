@@ -17,10 +17,12 @@
 
     eventbus.on('roadAddressProject:projectLinkSaved', function() {
       // Get the current state of the validate button if it exists
+      $('#actionButtons').empty();
       const $buttons = $('.project-form.form-controls');
       const $validateButton = $buttons.find('#validate-button');
       const hasValidationButton = $validateButton.length > 0;
       const isValidationButtonVisible = hasValidationButton && $validateButton.is(':visible');
+
 
       // Rebuild the buttons with proper states
       let buttonsHtml = '';
@@ -68,7 +70,7 @@
 
       // Rebind event handlers
       if (typeof bindEvents === 'function') {
-        bindEvents();
+//        bindEvents();
       }
     });
 
