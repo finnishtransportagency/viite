@@ -69,6 +69,7 @@ class ProjectValidator {
   }
 
   def checkFormationInOtherProject(currentProject: Project, newRoadPart: RoadPart, roadAddressChangeType: RoadAddressChangeType): Unit = {
+    println(s"Kunhan on joku muutos")
       val formedPartsOtherProjects = projectReservedPartDAO.fetchFormedRoadParts(currentProject.id, withProjectId = false)
       if (formedPartsOtherProjects.nonEmpty && formedPartsOtherProjects.exists(p => p.roadPart == newRoadPart))
         throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
