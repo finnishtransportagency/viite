@@ -287,6 +287,7 @@
       // Start new request
       loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id)
         .done(function (data) {
+          // eslint-disable-next-line callback-return
           if (_.isFunction(callback)) callback(data);
         })
         .always(function () {
@@ -296,7 +297,6 @@
 
       return loadingProject;
     };
-
 
     this.getChangeTable = _.throttle(function (id, callback) {
       $.getJSON('api/viite/project/getchangetable/' + id, callback);
