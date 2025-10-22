@@ -5,8 +5,6 @@
     // Helper function to convert ViiteEnumerations objects so they can be used here
     var createAttributesFromEnum = function(enumObj, useNameProperty) {
       return _.map(enumObj, function(item) {
-        console.log({          value: item.value,
-          description: useNameProperty ? item.name : item.description});
         return {
           value: item.value,
           description: useNameProperty ? item.name : item.description
