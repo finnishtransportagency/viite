@@ -305,7 +305,7 @@ form.roadAddressProject .control-label-small {
   margin-right: 11px;
   margin-top: 30px;
   margin-bottom: -10px;
-  width: 55px !important;
+  width: 55px;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -348,7 +348,6 @@ form.roadAddressProject .form-select-small-control{
   width: 55px !important;
   height: 27px;
   margin-top: 6px !important;
-  margin-right: 11px !important;
 }
 
 /*form.roadAddressProject p { // commented out at VIITE-2536 (project start date notifications)
@@ -827,4 +826,57 @@ form.roadAddressProject .junction-label-projects.header {
 .dev-addressfield {
   display: flex;
   flex-direction: column;
+}
+
+//// Road Address Form Styling (TIEOSOITTEEN TIEDOT) - Wrapper with horizontal scroll
+.road-address-fields-wrapper {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 15px;
+  margin-top: 2px;
+}
+
+.road-address-fields {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  width: fit-content;
+  min-width: 100%;
+}
+
+.road-address-field {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  
+  // Style inputs within road address fields
+  .road-address-input {
+    width: 100% !important;
+    height: 27px;
+    margin: 0 !important;
+    padding: 2px 4px !important;
+    margin: 0 !important
+  }
+  
+  // Remove any default spacing
+  > * {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// Form sections
+.road-address-section {
+  margin-top: 15px;
+  width: 100%;
+}
+
+// Discontinuity dropdown
+#reservedDiscontinuity,
+#newReservedDiscontinuity {
+  &.road-address-input {
+    width: 100% !important;
+  }
 }
