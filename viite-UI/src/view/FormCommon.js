@@ -158,30 +158,66 @@
       } else {
         trackCodeDropdown = track;
       }
-      return `<div class="${prefix}form-group new-road-address" hidden>
-        <div><label></label></div><div><label style="margin-top: 20px">TIEOSOITTEEN TIEDOT</label></div>
-        ${addSmallLabel('TIE')}${addSmallLabel('OSA', smallWidthStyle)}${addSmallLabel('AJR', smallWidthStyle)}${addSmallLabel('ELINVOIMAKESKUS', smallWidthStyle)}${addSmallLabel('ELY', smallWidthStyle)}
-        ${addSmallLabel('JATKUU', 'width: 82px !important;')}
+    return `
+      <div class="${prefix}form-group new-road-address" hidden>
+        <div><label style="margin-top: 20px; display: block;">TIEOSOITTEEN TIEDOT</label></div>
+        <div class="road-address-fields-wrapper">
+          <div class="road-address-fields">
+            <!-- TIE -->
+            <div class="road-address-field">
+              ${addSmallLabel('TIE', 'margin: 0; width: 100%;')}
+              ${addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5, "margin-right: 0")}
+            </div>
+
+            <!-- OSA -->
+            <div class="road-address-field">
+              ${addSmallLabel('OSA', 'margin: 0; width: 100%;')}
+              ${addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3, "margin-right: 0; width:40px !important")}
+            </div>
+
+            <!-- AJR -->
+            <div class="road-address-field">
+              ${addSmallLabel('AJR', 'margin: 0; width: 100%;')}
+              ${addTrackCodeDropdown(trackCodeDropdown)}
+            </div>
+
+            <!-- ELINVOIMAKESKUS -->
+            <div class="road-address-field">
+              ${addSmallLabel('ELINVOIMAKESKUS', 'margin: 0; width: 100px;')}
+              ${addElinvoimakeskusDropdown(link.evkCode, !projectEditable)}
+            </div>
+
+            <!-- ELY -->
+            <div class="road-address-field">
+              ${addSmallLabel('ELY', 'width:40px; margin: 0;')}
+              ${addSmallInputNumber('ely', link.elyCode, true, 2, 'margin-right: 0; width:40px !important')}
+            </div>
+
+            <!-- JATKUU -->
+            <div class="road-address-field">
+              ${addSmallLabel('JATKUU', 'margin: 0; width: 100%;')}
+              ${addDiscontinuityDropdown('road-address-input')}
+            </div>
+          </div>
         </div>
-        <div class="${prefix}form-group new-road-address" id="new-address-input1" hidden>
-          ${addSmallInputNumber('tie', (roadNumber === 0 ? '' : roadNumber), !projectEditable, 5)}
-          ${addSmallInputNumber('osa', (part === 0 ? '' : part), !projectEditable, 3, smallWidthStyle)}
-          ${addTrackCodeDropdown(trackCodeDropdown)}
-          ${addSmallInputNumber('elinvoimakeskus', link.evkCode, !projectEditable, 2, smallWidthStyle)}
-          ${addSmallInputNumber('ely', link.elyCode, true, 2, smallWidthStyle)}
-          ${addDiscontinuityDropdown()}
+        
+        <!-- Additional fields -->
+        <div class="road-address-section">
           ${addWideLabel('HALL. LUOKKA')}
-          ${administrativeClassDropdown(administrativeClass)}<br>
+          ${administrativeClassDropdown(administrativeClass)}
+        </div>
+        <div class="road-address-section">
           ${addWideLabel('NIMI')}
           ${addRoadNameField(roadName, selected[0].roadNameBlocked, 50)}
-          ${(selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()}
-        </div>`;
+        </div>
+        ${(selected.length === 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()}
+      </div>`;
     };
-    
     const replaceAddressInfo = function (backend, selectedProjectLink, currentProjectId) {
       const roadNameField = $('#roadName');
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
         backend.getPrefillValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
+          console.log(response)
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
@@ -238,13 +274,28 @@
     };
     
     const addDiscontinuityDropdown = function () {
-      return `<select class="form-select-control" id="discontinuityDropdown" size="1">
+      return `<select class="form-select-control" id="discontinuityDropdown" size="1" style="width: 85px !important">
         <option value="5" selected disabled hidden>5 Jatkuva</option>
         <option value="1">1 Tien loppu</option>
         <option value="2">2 Epäjatkuva</option>
         <option value="3">3 Elinvoimakeskuksen raja</option>
         <option value="4">4 Lievä epäjatkuvuus</option>
         <option value="5">5 Jatkuva</option>
+      </select>`;
+    };
+
+    const addElinvoimakeskusDropdown = function (selectedValue) {
+      const evkOptions = Object.entries(ViiteEnumerations.EVKCodes)
+        .sort((a, b) => a[1].value - b[1].value) // Sort from smallest value to largest
+        .map(([key, value]) => {
+          const selected = selectedValue === value.value ? 'selected' : '';
+          return `<option value="${value.value}" ${selected}>${value.value} ${value.name}</option>`;
+        })
+        .join('');
+
+      return `<select class="form-select-control" id="elinvoimakeskus" size="1" style="width: 85px;">
+        <option value="" disabled ${!selectedValue ? 'selected' : ''} hidden>Valitse elinvoimakeskus</option>
+        ${evkOptions}
       </select>`;
     };
 
