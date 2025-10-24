@@ -13,6 +13,12 @@
       return changeTableOpen;
     };
 
+    // Add styles for invalid rows and values
+    $('<style>' +
+      '.invalid-row { background-color: rgba(255, 200, 200, 0.3) !important; }' +
+      '.invalid-value { color: #ff0000; font-weight: bold; }' +
+      '</style>').appendTo('head');
+
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -36,7 +42,7 @@
       '<label class="project-change-table-dimension-header">OSA</label>' +
       '<label class="project-change-table-dimension-header">AET</label>' +
       '<label class="project-change-table-dimension-header">LET</label>' +
-      '<label class="project-change-table-dimension-header">PIT</label>' +
+      '<label class="project-change-table-dimension-header">PITUUS</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
       '<label class="project-change-table-dimension-header">HALL</label>' +
       '<label class="project-change-table-dimension-header">Elinvoimakeskus</label>' +
@@ -46,7 +52,7 @@
       '<label class="project-change-table-dimension-header">OSA</label>' +
       '<label class="project-change-table-dimension-header">AET</label>' +
       '<label class="project-change-table-dimension-header">LET</label>' +
-      '<label class="project-change-table-dimension-header">PIT</label>' +
+      '<label class="project-change-table-dimension-header">PITUUS</label>' +
       '<label class="project-change-table-dimension-header">JATK</label>' +
       '<label class="project-change-table-dimension-header">HALL</label>' +
       '<label class="project-change-table-dimension-header">Elinvoimakeskus</label>');
@@ -120,52 +126,128 @@
       $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);// scroll size = total - header - border
     }
 
+    // Check if length values match for existing and new addresses
+    function validateLengthValues(changeTableData) {
+      if (!changeTableData || !changeTableData.changeInfoSeq) return { isValid: true };
+      
+      let allValid = true;
+      const validationResults = changeTableData.changeInfoSeq.map(function(change) {
+        // Skip validation for New and Terminated changes as they don't have both source and target
+        if (change.changetype === RoadAddressChangeType.New.value || 
+            change.changetype === RoadAddressChangeType.Terminated.value) {
+          return { isValid: true };
+        }
+        
+        // Calculate length values
+        const sourceLength = change.source.addrMRange.end - change.source.addrMRange.start;
+        const targetLength = change.target.addrMRange.end - change.target.addrMRange.start;
+        const isValid = sourceLength === targetLength;
+        
+        if (!isValid) {
+          allValid = false;
+        }
+        
+        return {
+          isValid,
+          sourceLength: sourceLength,
+          targetLength: targetLength,
+          change
+        };
+      });
+      
+      return {
+        isValid: allValid,
+        results: validationResults
+      };
+    }
+
     function showChangeTable(projectChangeData) {
       var htmlTable = "";
       var warningM = projectChangeData.warningMessage;
+      var hasLengthMismatch = false;
+      
       if (!_.isUndefined(warningM))
         new ModalConfirm(warningM);
+        
       if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
+        // Validate length values
+        const validation = validateLengthValues(projectChangeData.changeTable);
+        hasLengthMismatch = !validation.isValid;
+        
+        if (hasLengthMismatch) {
+          $('.change-table-header').html($('<div class="font-resize" style="color: red">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>'));
+        }
+        
+        // Store validation results for row rendering and make it available for later use
+        window.currentValidations = {};
+        if (validation.results) {
+          validation.results.forEach((result, index) => {
+            if (!result.isValid && result.change) {
+              window.currentValidations[result.change.id || index] = result;
+            }
+          });
+        }
         _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
           var rowColorClass = '';
           if (index % 2 !== 1) {
             rowColorClass = 'white-row';
           }
-          htmlTable += '<tr class="row-changes ' + rowColorClass + '">';
+          // Add invalid-row class if this row has length mismatch
+          const rowValidation = window.currentValidations[changeInfoSeq.id || index];
+          const hasLengthError = rowValidation && !rowValidation.isValid;
+          const rowClass = rowColorClass + (hasLengthError ? ' invalid-row' : '');
+          
+          htmlTable += '<tr class="row-changes ' + rowClass + '" data-row-id="' + (changeInfoSeq.id || index) + '">';
           if (changeInfoSeq.changetype === RoadAddressChangeType.New.value) {
             htmlTable += getEmptySource(changeInfoSeq);
           } else {
-            htmlTable += getSourceInfo(changeInfoSeq);
+            htmlTable += getSourceInfo(changeInfoSeq, changeInfoSeq.id || index);
           }
           htmlTable += getReversed(changeInfoSeq);
           if (changeInfoSeq.changetype === RoadAddressChangeType.Terminated.value) {
             htmlTable += getEmptyTarget();
           } else {
-            htmlTable += getTargetInfo(changeInfoSeq);
+            htmlTable += getTargetInfo(changeInfoSeq, changeInfoSeq.id || index);
           }
           htmlTable += '</tr>';
         });
         setTableHeight();
       }
-      $('.row-changes').remove();
-      $('.change-table-dimensions').append($(htmlTable));
-      // set change table state to open
-      changeTableOpen = true;
-      if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
-        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
-        $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
-        var currentProject = projectCollection.getCurrentProject();
-        // disable recalculate button if changetable is open and set title attribute
-        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
-        // disable changes button if changetable is open and set title attribute
-        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
-        if ($('.change-table-frame').css('display') === "block" && (currentProject.project.statusCode === ProjectStatus.Incomplete.value)) {
-          //enable send button if changetable is open and remove title attribute
-          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+        $('.row-changes').remove();
+        $('.change-table-dimensions').append($(htmlTable));
+        // set change table state to open
+        changeTableOpen = true;
+        if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
+          var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
+          
+          // Only show success message if there are no length mismatches
+          if (!hasLengthMismatch) {
+            $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
+          }
+          
+          var currentProject = projectCollection.getCurrentProject();
+          // disable recalculate button if changetable is open and set title attribute
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
+          // disable changes button if changetable is open and set title attribute
+          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
+          
+          // Handle send button state and validation results
+          if ($('.change-table-frame').css('display') === "block" && 
+              currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
+            
+          if (hasLengthMismatch) {
+            // Disable send button if there are length mismatches
+            formCommon.setDisabledAndTitleAttributesById("send-button", true);
+          } else {
+              // Enable send button if no issues
+              formCommon.setDisabledAndTitleAttributesById("send-button", false);
+              // Clear validation results if no mismatches
+              window.currentValidations = {};
+            }
+          }
+        } else {
+          $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
         }
-      } else {
-        $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
-      }
     }
 
     function bindEvents() {
@@ -286,29 +368,47 @@
         '<td class="project-change-table-dimension"></td>';
     }
 
-    function getTargetInfo(changeInfoSeq) {
+    function getTargetInfo(changeInfoSeq, rowId) {
+      const targetLength = changeInfoSeq.target.addrMRange.end - changeInfoSeq.target.addrMRange.start;
+      const rowValidation = rowId && window.currentValidations && window.currentValidations[rowId];
+      const isLengthInvalid = rowValidation && !rowValidation.isValid;
+      
+      const formatLength = (value) => {
+        const lengthClass = isLengthInvalid ? 'invalid-value' : '';
+        return '<span class="' + lengthClass + '">' + value + '</span>';
+      };
+      
       return '<td class="project-change-table-dimension">' + changeInfoSeq.target.roadNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.trackCode + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.addrMRange.start + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.addrMRange.end + '</td>' +
-        '<td class="project-change-table-dimension">' + (changeInfoSeq.target.addrMRange.end - changeInfoSeq.target.addrMRange.start) + '</td>' +
+        '<td class="project-change-table-dimension">' + formatLength(targetLength, false) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.target.discontinuity + '</td>' +
-        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass ) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.target.elinvoimakeskus + '</td>';
+        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.target.administrativeClass) + '</td>' +
+        '<td class="project-change-table-dimension">' + (changeInfoSeq.target.elinvoimakeskus || '') + '</td>';
     }
 
-    function getSourceInfo(changeInfoSeq) {
+    function getSourceInfo(changeInfoSeq, rowId) {
+      const sourceLength = changeInfoSeq.source.addrMRange.end - changeInfoSeq.source.addrMRange.start;
+      const rowValidation = rowId && window.currentValidations && window.currentValidations[rowId];
+      const isLengthInvalid = rowValidation && !rowValidation.isValid;
+      
+      const formatLength = (value) => {
+        const lengthClass = isLengthInvalid ? 'invalid-value' : '';
+        return '<span class="' + lengthClass + '">' + value + '</span>';
+      };
+      
       return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.roadNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.trackCode + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.addrMRange.start + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.addrMRange.end + '</td>' +
-        '<td class="project-change-table-dimension">' + (changeInfoSeq.source.addrMRange.end - changeInfoSeq.source.addrMRange.start) + '</td>' +
+        '<td class="project-change-table-dimension">' + formatLength(sourceLength, true) + '</td>' +
         '<td class="project-change-table-dimension">' + changeInfoSeq.source.discontinuity + '</td>' +
-        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass ) + '</td>' +
-        '<td class="project-change-table-dimension">' + changeInfoSeq.source.elinvoimakeskus + '</td>';
+        '<td class="project-change-table-dimension">' + getAdministrativeClassText(changeInfoSeq.source.administrativeClass) + '</td>' +
+        '<td class="project-change-table-dimension">' + (changeInfoSeq.source.elinvoimakeskus || '') + '</td>';
     }
 
     function dragListener(event) {
