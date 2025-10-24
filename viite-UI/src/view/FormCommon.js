@@ -217,7 +217,6 @@
       const roadNameField = $('#roadName');
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99) {
         backend.getPrefillValuesForLink(selectedProjectLink[0].linkId, currentProjectId, function (response) {
-          console.log(response)
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
@@ -287,7 +286,7 @@
     const addElinvoimakeskusDropdown = function (selectedValue) {
       const evkOptions = Object.entries(ViiteEnumerations.EVKCodes)
         .sort((a, b) => a[1].value - b[1].value) // Sort from smallest value to largest
-        .map(([key, value]) => {
+        .map(([, value]) => {
           const selected = selectedValue === value.value ? 'selected' : '';
           return `<option value="${value.value}" ${selected}>${value.value} ${value.name}</option>`;
         })
