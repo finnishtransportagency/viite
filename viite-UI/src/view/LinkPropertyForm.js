@@ -22,7 +22,7 @@
         ]
       },
       {
-        id: 'EVK',
+        id: 'Elinvoimakeskus',
         attributes: createAttributesFromEnum(ViiteEnumerations.EVKCodes, true)
       },
       {
@@ -167,22 +167,6 @@
       return isOnlyOneRoadNumberSelected() && isOnlyOneRoadPartNumberSelected();
     };
 
-    // This function takes an EVK code number (like 1, 2, 3, etc.)
-    // and returns a readable text, like: "1 – Uudenmaan elinvoimakeskus"
-    function getEVKDisplayValue(code) {
-      for (var key in ViiteEnumerations.EVKCodes) {
-        if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, key)) {
-          var evk = ViiteEnumerations.EVKCodes[key];
-          if (evk.value === code) {
-            return evk.value + " – " + evk.name;
-          }
-        }
-      }
-
-      // If nothing matches, just return the code itself
-      return code;
-    }
-
     var template = function (firstSelectedLinkProperty, linkProperties) {
       var mtkId = selectedLinkProperty.count() === 1 ? '; MTKID: ' + linkProperties.mmlId : '';
       var roadNames = selectedLinkProperty.count() === 1 ? staticField('TIEN NIMI', "roadName" in firstSelectedLinkProperty ? firstSelectedLinkProperty.roadName : '') : textDynamicField('TIEN NIMI', 'roadName');
@@ -193,9 +177,8 @@
       var endAddress   = isOnlyOneRoadAndPartNumberSelected() ? staticField('LOPPUETÄISYYS', linkProperties.addrMRange.end) : constructField('LOPPUETÄISYYS', '');
       var combinedAddrLength = lengthDynamicField();
       var evks = selectedLinkProperty.count() === 1
-        ? staticField('Elinvoimakeskus', getEVKDisplayValue(firstSelectedLinkProperty.evkCode))
+        ? staticField('Elinvoimakeskus', firstSelectedLinkProperty.evkCode)
         : dynamicField('Elinvoimakeskus', 'evkCode');
-
       var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
       var discontinuities = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '');
       var startDate = isOnlyOneRoadAndPartNumberSelected() ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '');
