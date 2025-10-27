@@ -285,6 +285,7 @@
 
     const addElinvoimakeskusDropdown = function (selectedValue) {
       const evkOptions = Object.entries(ViiteEnumerations.EVKCodes)
+        .filter(([, value]) => value.value !== 0) // Exclude 0 from dropdown options
         .sort((a, b) => a[1].value - b[1].value) // Sort from smallest value to largest
         .map(([, value]) => {
           const selected = selectedValue === value.value ? 'selected' : '';
@@ -292,8 +293,13 @@
         })
         .join('');
 
+      // If selectedValue is 0, show it as selected in the dropdown
+      const defaultOption = selectedValue === 0 
+        ? `<option value="0" selected>0 Tuntematon elinvoimakeskus</option>`
+        : `<option value="" disabled ${!selectedValue ? 'selected' : ''} hidden>Valitse elinvoimakeskus</option>`;
+
       return `<select class="form-select-control" id="elinvoimakeskus" size="1" style="width: 85px;">
-        <option value="" disabled ${!selectedValue ? 'selected' : ''} hidden>Valitse elinvoimakeskus</option>
+        ${defaultOption}
         ${evkOptions}
       </select>`;
     };

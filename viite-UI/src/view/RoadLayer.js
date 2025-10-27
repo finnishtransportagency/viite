@@ -65,7 +65,6 @@
                   `;
                 }
                 infoContent.innerHTML += `
-                  <div class="popup-line-div"><div>Ely:&nbsp;</div><div class="selectable">${roadData.elyCode}</div></div>
                   <div class="popup-line-div"><div>Elinvoimakeskus:&nbsp;</div><div class="selectable">${roadData.evkCode}</div></div>
                   <div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linkId}</div></div>
                   <div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linearLocationId}</div></div>
