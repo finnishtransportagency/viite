@@ -175,7 +175,7 @@
         hasLengthMismatch = !validation.isValid;
         
         if (hasLengthMismatch) {
-          $('.change-table-header').html($('<div class="font-resize" style="color: red">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>'));
+          $('.change-table-header').html($('<div class="font-resize" style="color: yellow">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>'));
         }
         
         // Store validation results for row rendering and make it available for later use
@@ -246,7 +246,7 @@
             }
           }
         } else {
-          $('.change-table-header').html($('<div class="font-resize" style="color: rgb(255, 255, 0)">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
+          $('.change-table-header').html($('<div class="font-resize" style="color: yellow">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>'));
         }
     }
 

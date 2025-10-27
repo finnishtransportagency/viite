@@ -344,7 +344,7 @@
                 addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                 addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
                 addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
-                addSmallLabelWithIds((line.currentEly), 'reservedEly') +
+                addSmallLabelWithIds((line.currentEly || '0'), 'reservedEly') +
                 addSmallLabelWithIds((line.currentEvk), 'reservedEvk') +
                 projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
                 '</div>';
@@ -363,7 +363,7 @@
                 addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                 addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
                 addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
-                addSmallLabelWithIds((line.newEly), 'reservedEly') +
+                addSmallLabelWithIds((line.newEly || '0'), 'reservedEly') +
                 addSmallLabelWithIds((line.newEvk), 'reservedEvk') +
                 projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
                 '</div>';
@@ -405,7 +405,7 @@
           _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
             text += '<div class="form-reserved-roads-list">' + button +
-                addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) + addSmallLabel(line.evk || line.ely) +
+                addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely || '0') + addSmallLabel(line.evk || line.ely || '0') +
                 '</div>';
           });
           rootElement.html(openProjectTemplate(currentProject, text, ''));
