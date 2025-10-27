@@ -9,6 +9,7 @@
       dateTargetSelector = new Selector({
         id: 'dateTarget',
         placeholder: 'Valitse rajausperuste',
+        value: 'ProjectAcceptedDate',
         data: {
           0: {
             items: [

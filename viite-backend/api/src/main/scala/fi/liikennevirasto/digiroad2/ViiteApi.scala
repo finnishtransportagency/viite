@@ -1927,15 +1927,20 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
 
   def roadAddressChangeInfoToApi(changeInfo: ChangeInfoForRoadAddressChangesBrowser): Map[String, Any] = {
     val oldPart = changeInfo.oldRoadAddress.roadPart
-    Map(
+    val fmt = new SimpleDateFormat("dd.MM.yyyy")
+
+    val result = Map(
       "startDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.startDate.toDate),
       "changeType" -> changeInfo.changeType,
       "reversed" -> changeInfo.reversed,
       "roadName" -> changeInfo.roadName.getOrElse(""),
       "projectName" -> changeInfo.projectName,
-      "projectAcceptedDate" -> new SimpleDateFormat("dd.MM.yyyy").format(changeInfo.projectAcceptedDate.toDate),
+      "projectAcceptedDate" -> Option(changeInfo.projectAcceptedDate)
+        .map(_.toDate)
+        .map(fmt.format)
+        .getOrElse(""),
       "oldEly" -> changeInfo.oldRoadAddress.ely,
-      "oldEvk" -> changeInfo.oldRoadAddress.roadMaintainer.toString.split("\\s+").find(_.matches("\\d+")).getOrElse(""), // Parse EVK number from roadMaintainer
+      "oldEvk" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(changeInfo.oldRoadAddress.roadMaintainer, elyContext = false),
       "oldRoadNumber"     -> (if(oldPart.nonEmpty) oldPart.get.roadNumber else ""),
       "oldTrack" -> changeInfo.oldRoadAddress.track.getOrElse(""),
       "oldRoadPartNumber" -> (if(oldPart.nonEmpty) oldPart.get.partNumber else ""),
@@ -1944,7 +1949,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "oldLength" -> changeInfo.oldRoadAddress.length.getOrElse(""),
       "oldAdministrativeClass" -> changeInfo.oldRoadAddress.administrativeClass,
       "newEly" -> changeInfo.newRoadAddress.ely,
-      "newEvk" -> changeInfo.newRoadAddress.roadMaintainer.toString.split("\\s+").find(_.matches("\\d+")).getOrElse(""), // Parse EVK number from roadMaintainer
+      "newEvk" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(changeInfo.newRoadAddress.roadMaintainer, elyContext = false),
       "newRoadNumber" -> changeInfo.newRoadAddress.roadPart.roadNumber,
       "newTrack" -> changeInfo.newRoadAddress.track,
       "newRoadPartNumber" -> changeInfo.newRoadAddress.roadPart.partNumber,
@@ -1952,6 +1957,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "newLength" -> changeInfo.newRoadAddress.length,
       "newAdministrativeClass" -> changeInfo.newRoadAddress.administrativeClass
     )
+    result
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink, roadNames: Seq[RoadName] = Seq()): Map[String, Any] = {
