@@ -439,7 +439,7 @@
           const evkValue = parseInt($('#elinvoimakeskus')[0].value);
           let isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
 
-          if (evkValue === 0) {
+          if (evkValue === 0 && changeType !== RoadAddressChangeType.Revert) {
             isValidEvk = false;
           }
 
