@@ -177,7 +177,7 @@ println("Threading print test: Now in avoidRestrictions")
       try {
         val dateOption = dateParameterOptionGetValidOrThrow("date")
         val roadNetworkSummary = {
-          roadAddressService.getRoadwayNetworkSummary(dateOption)
+          roadAddressService.getRoadwayNetworkSummary(dateOption)                           //TODO: <------ /api/viite/integration/summary
         }
         currentRoadNetworkSummaryToAPI(roadNetworkSummary)
       } catch {
@@ -313,7 +313,7 @@ println("Threading print test: Now in avoidRestrictions")
     time(logger, s"GET request for /roadway/changes", params=Some(params.toMap)) {
       try {
         val since: DateTime = dateParameterGetValidOrThrow("since")
-        val roadways : Seq[Roadway] = fetchUpdatedRoadways(since)
+        val roadways : Seq[Roadway] = fetchUpdatedRoadways(since)     //TODO: <------ /api/viite/integration/roadway/changes
         roadways.map(r => Map(
           "id" -> r.id,
           "roadwayNumber" -> r.roadwayNumber,
@@ -323,8 +323,8 @@ println("Threading print test: Now in avoidRestrictions")
           "startAddrMValue" -> r.addrMRange.start,
           "endAddrMValue"   -> r.addrMRange.end,
           "discontinuity" -> r.discontinuity.value,
-       //   "ely" -> r.ely,
-          "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = true), //ArealRoadMaintainer.getELY(r.ely.toString),
+          "ely" -> r.ely,
+        //  "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = true), //ArealRoadMaintainer.getELY(r.ely.toString),
           "elinvoimakeskus" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = false), //ArealRoadMaintainer.getEVK(r.roadMaintainer.id),
           "roadType" -> r.administrativeClass.asRoadTypeValue,
           "administrativeClass" -> r.administrativeClass.value,
