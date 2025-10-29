@@ -786,7 +786,7 @@ class RoadNetworkDAO extends BaseDAO {
     * Fetches the data required for /summary API result generation.
     * @return The road address information, and road names of the whole latest road network
     */
-  def fetchRoadwayNetworkSummary(date: Option[DateTime] = None): Seq[RoadwayNetworkSummaryRow] = {
+  def fetchRoadwayNetworkSummary(date: Option[DateTime] = None): Seq[RoadwayNetworkSummaryRow] = { //TODO: <<-- api/viite/integration/summary
     time(logger, "Get whole network summary") {
       val dateFilter = date match {
         case Some(date) =>

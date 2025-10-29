@@ -642,7 +642,7 @@ class RoadwayDAO extends BaseDAO {
     }
   }
 
-  private def fetch(queryFilter: SQLSyntax => SQL[Nothing, NoExtractor]): Seq[Roadway] = {
+  private def fetch(queryFilter: SQLSyntax => SQL[Nothing, NoExtractor]): Seq[Roadway] = { //TODO: <<-- api/viite/integration/roadway/change
     val query =
       sqls"""
         SELECT
@@ -886,7 +886,7 @@ class RoadwayDAO extends BaseDAO {
     """
   }
 
-  private def withUpdatedSince(sinceDate: DateTime)(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
+  private def withUpdatedSince(sinceDate: DateTime)(query: SQLSyntax): SQL[Nothing, NoExtractor] = {  //TODO: <<--api/viite/integration/roadway/change
     sql"""
         $query
         WHERE valid_FROM >= $sinceDate::date
