@@ -107,6 +107,7 @@
         }
 
         function toggle() {
+            // eslint-disable-next-line no-unused-expressions
             $('.road-address-browser-modal-overlay').length === 0 ? show() : hide();
         }
 

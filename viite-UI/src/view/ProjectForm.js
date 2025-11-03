@@ -289,7 +289,7 @@
 
       var reservedHtmlList = function (list) {
         return _.chain(list)
-          .filter(line => !_.isUndefined(line.currentLength))
+          .filter((line) => !_.isUndefined(line.currentLength))
           .map((line, index) => `
               <div class="form-reserved-roads-list">
                 ${projectCollection.getDeleteButton(index, line.roadNumber, line.roadPartNumber, 'reservedList')}
@@ -305,7 +305,7 @@
 
     var formedHtmlList = function (list) {
       return _.chain(list)
-        .filter(line => !_.isUndefined(line.newLength))
+        .filter((line) => !_.isUndefined(line.newLength))
         .map((line, index) => `
             <div class="form-reserved-roads-list">
               ${projectCollection.getDeleteButton(index, line.roadNumber, line.roadPartNumber, 'formedList')}
