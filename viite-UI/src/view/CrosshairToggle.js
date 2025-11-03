@@ -198,8 +198,6 @@ window.CrosshairToggle = function (parentElement, map) {
         });
       });
 
-      //console.log('Features at click position:', features.length);
-
       // Dispatch custom event for E2E test automation
       window.dispatchEvent(new CustomEvent('crosshairFeatureClick', {
         detail: {
