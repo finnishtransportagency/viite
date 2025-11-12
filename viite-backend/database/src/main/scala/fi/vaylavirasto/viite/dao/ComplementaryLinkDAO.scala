@@ -61,8 +61,8 @@ class ComplementaryLinkDAO extends BaseDAO {
 
     def apply(rs: WrappedResultSet): RoadLink = {
       val linkId              = rs.string("id")
-      val administrativeClass = AdministrativeClass(rs.intOpt("adminclass").getOrElse(UnknownMunicipality))
-      val municipalityCode    = rs.intOpt("municipalitycode").getOrElse(0)
+      val administrativeClass = AdministrativeClass(rs.intOpt("adminclass").getOrElse(0))
+      val municipalityCode    = rs.intOpt("municipalitycode").getOrElse(UnknownMunicipality)
       val lifecycleStatus     = LifecycleStatus(rs.intOpt("lifecyclestatus").getOrElse(0))
       val length              = rs.doubleOpt("horizontallength").getOrElse(0.0)
 
