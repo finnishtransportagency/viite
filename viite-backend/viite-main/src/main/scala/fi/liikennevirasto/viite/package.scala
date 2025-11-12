@@ -124,7 +124,7 @@ package object viite {
   val RoadNotReservedMessage = s"Toimenpidettä ei saa tehdä tieosalle, jota ei ole varattu projektiin. Varaa tieosa %s."
 
   //Elinvoimakeskus related error messages
-  val MultipleElinvoimakeskusInPartMessage = s"Samalla tieosalla eri elinvoimakeskusnumeroita. Tieosan tulee vaihtua Elinvoimakeskus rajalla. Korjaa tieosa- tai elinvoimakeskusnumeroa."
+  val MultipleElinvoimakeskusInPartMessage = s"Samalla tieosalla eri elinvoimakeskusnumeroita. Tieosan tulee vaihtua Elinvoimakeskus rajalla. Korjaa tieosa- tai elinvoimakeskusnumero."
   val IncorrectOperationTypeOnElinvoimakeskusCodeChangeMessage =  s"Elinvoimakeskus-koodin muutos ei onnistu, ota yhteyttä pääkäyttäjään."
   val ElinvoimakeskusCodeChangeButNoRoadPartChangeMessage = s"Elinvoimakeskus-numeromuutos havaittu mutta tieosoitemuutos puuttuu. Tieosanumeron tulee vaihtua Elinvoimakeskus rajalla."
   val ElinvoimakeskusCodeChangeButNoElinvoimakeskusChangeMessage = s"Elinvoimakeskus-numeromuutos havaittu mutta  ${ChangingEVKCode.description}(${ChangingEVKCode.value}) jatkuvuuskoodi on väärä. Elinvoimakeskuksen rajalla jatkuvuuskoodin tulee olla 3."
