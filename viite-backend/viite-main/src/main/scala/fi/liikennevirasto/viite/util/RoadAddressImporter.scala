@@ -576,9 +576,8 @@ def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
         val y2                    = rs.doubleOpt("loppuy")
         val roadwayNumber         = rs.long("ajorataid")
         val directionFlag         = rs.long("kaannetty")
-        val startCalibrationPoint = rs.long("alku_kalibrointipiste")
-        val endCalibrationPoint   = rs.long("loppu_kalibrointipiste")
-
+        val startCalibrationPoint = rs.longOpt("alku_kalibrointipiste").getOrElse(0L)
+        val endCalibrationPoint   = rs.longOpt("loppu_kalibrointipiste").getOrElse(0L)
         def getCalibrationCode(startCalibrationPoint: Long, endCalibrationPoint: Long, addrMRange: AddrMRange): CalibrationCode = {
           if (addrMRange.start < addrMRange.end) {
             (startCalibrationPoint, endCalibrationPoint) match {
