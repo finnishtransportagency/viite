@@ -154,3 +154,4 @@ or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrat
 
 [Deployment and Infra related instructions](https://github.com/finnishtransportagency/viite-infra?tab=readme-ov-file#viite-infrastructure)
 =================================================
+ 
