@@ -1508,8 +1508,8 @@ class ProjectValidator {
                 val normalDiscontinuity = discontinuity match {
                   case Discontinuity.Continuous =>
                     if (!isConnected) error(project.id, ValidationErrorList.DiscontinuousFound)(Seq(last)) else None
-                  // case Discontinuity.Discontinuous =>
-                  //   if (isConnected) error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(Seq(last)) else None
+                  case Discontinuity.Discontinuous =>
+                    if (isConnected) error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(Seq(last)) else None
                   case Discontinuity.MinorDiscontinuity =>
                     if (isConnected)
                       error(project.id, ValidationErrorList.ConnectedDiscontinuousLink)(Seq(last))
