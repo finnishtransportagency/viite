@@ -1463,15 +1463,15 @@ class ProjectValidator {
     def checkDiscontinuityOnLastLinkPart: Seq[ValidationErrorDetails] = {
       
       // Skip validation for roundabouts (where first and last links have same road number)
-      if (roadProjectLinks.nonEmpty) {
-        val firstLinkRoadpart = roadProjectLinks.minBy(_.addrMRange.start).roadPart
-        val lastLinkRoadpart = roadProjectLinks.maxBy(_.addrMRange.end).roadPart
+      // if (roadProjectLinks.nonEmpty) {
+      //   val firstLinkRoadpart = roadProjectLinks.minBy(_.addrMRange.start).roadPart
+      //   val lastLinkRoadpart = roadProjectLinks.maxBy(_.addrMRange.end).roadPart
         
 
-        if (firstLinkRoadpart.roadNumber == lastLinkRoadpart.roadNumber) {
-          return Seq.empty
-        }
-      }
+      //   if (firstLinkRoadpart.roadNumber == lastLinkRoadpart.roadNumber) {
+      //     return Seq.empty
+      //   }
+      // }
       
       val discontinuityErrors = roadProjectLinks.groupBy(_.roadPart.roadNumber).flatMap { g =>
         val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
