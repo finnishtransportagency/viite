@@ -95,7 +95,7 @@ class NodeDAO extends BaseDAO {
       WHERE node_number = $nodeNumber and valid_to IS NULL
       ORDER BY created_time DESC, end_date DESC
       """
-    runSelectFirst(query.map(_.long("id"))) // Return the id
+    runSelectSingleOption(query.map(_.long("id"))) // Return the id (TODO: this might need to be changed to runSelectFirst to avoid corner case bugs, but needs testing)
   }
 
   def fetchAllValidNodes(): Seq[Node] = {
