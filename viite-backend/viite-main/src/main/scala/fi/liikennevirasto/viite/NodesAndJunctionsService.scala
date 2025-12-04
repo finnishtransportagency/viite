@@ -800,8 +800,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           RoadAddressFilters.continuousTopology(projectLink)(tr)
         })
-
-      CategorizedRoads(roadsToHead, roadsFromHead, roadsToTail, roadsFromTail)
+      CategorizedRoads(findTrueTailForToHead(roadsToHead), findTrueTailForFromHead(roadsFromHead), findTrueTailForToTail(roadsToTail), findTrueTailForFromTail(roadsFromTail))
+     // CategorizedRoads(roadsToHead, roadsFromHead, roadsToTail, roadsFromTail)
     }
 
     /**
@@ -848,6 +848,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def createStartJunctionPoint(projectLink: BaseRoadAddress,
                                  categorizedRoads: CategorizedRoads,
                                  reversed: Boolean): Option[(Long, String, CalibrationPointLocation)] = {
+/*
+
+      println(s"CREATE START JUNCTION POINT")
+      println(s"CREATE START JUNCTION POINT")
+      println(s"${projectLink.linkId}")
+      println(s"CREATE START JUNCTION POINT")
+      println(s"CREATE START JUNCTION POINT")
+*/
 
       if ((categorizedRoads.roadsToHead ++ categorizedRoads.roadsFromHead).nonEmpty) {
 
@@ -899,6 +907,14 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     def createEndJunctionPoint(projectLink: BaseRoadAddress,
                                categorizedRoads: CategorizedRoads,
                                reversed: Boolean): Option[(Long, String, CalibrationPointLocation)] = {
+/*
+
+      println(s"CREATE END JUNCTION POINT")
+      println(s"CREATE END JUNCTION POINT")
+      println(s"${projectLink.linkId}")
+      println(s"CREATE END JUNCTION POINT")
+      println(s"CREATE END JUNCTION POINT")
+*/
 
       // Filter roads that end at the project link's end point
       if ((categorizedRoads.roadsToTail ++ categorizedRoads.roadsFromTail).nonEmpty) {
@@ -952,8 +968,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                                           categorizedRoads: CategorizedRoads,
                                           reversed: Boolean): Seq[(Long, String, CalibrationPointLocation)] = {
 
+/*
+
+      println(s"CREATE CONNECTED ROAD JUNCTION POINT")
+      println(s"CREATE CONNECTED ROAD JUNCTION POINT")
+      println(s"${projectLink.linkId}")
+      println(s"CREATE CONNECTED ROAD JUNCTION POINT")
+      println(s"CREATE CONNECTED ROAD JUNCTION POINT")
+*/
+
       // Create junction points for roads that end at the start of the project link
       val toHeadCpLocation = categorizedRoads.roadsToHead.flatMap { roadAddress: BaseRoadAddress =>
+        println(s"FLATMAPPING ROADS TO HEAD ::: ${roadAddress.linkId} :: addrMRange.start : ${roadAddress.addrMRange.start} :: addrMRange.start.end : ${roadAddress.addrMRange.end}")
+        println(s"TO HEAD CP LOCATION")
         val junctionId = getJunctionIdIfConnected(
           roadAddress.endPoint, if (reversed) projectLink.newStartingPoint else projectLink.startingPoint,
           roadwayNumber = projectLink.roadwayNumber, addr = projectLink.addrMRange.start, pos = BeforeAfter.After
@@ -965,6 +992,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       // Create junction points for roads that start from the start of the project link
       val fromHeadCpLocation = categorizedRoads.roadsFromHead.flatMap { roadAddress: BaseRoadAddress =>
+        println(s"FLATMAPPING ROADS FROM HEAD ::: ${roadAddress.linkId} :: addrMRange.start : ${roadAddress.addrMRange.start} :: addrMRange.start.end : ${roadAddress.addrMRange.end}")
+        println(s"FROM HEAD CP LOCATION")
         val junctionId = getJunctionIdIfConnected(
           roadAddress.startingPoint, if (reversed) projectLink.newStartingPoint else projectLink.startingPoint,
           roadwayNumber = projectLink.roadwayNumber, addr = projectLink.addrMRange.start, pos = BeforeAfter.After
@@ -974,6 +1003,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       // Create junction points for roads that end at the end of the project link
       val toTailCpLocation = categorizedRoads.roadsToTail.flatMap { roadAddress: BaseRoadAddress =>
+        println(s"FLATMAPPING ROADS TO TAIL ::: ${roadAddress.linkId} :: addrMRange.start : ${roadAddress.addrMRange.start} :: addrMRange.start.end : ${roadAddress.addrMRange.end}")
+        println(s"TO TAIL CP LOCATION")
         val junctionId = getJunctionIdIfConnected(
           roadAddress.endPoint, if (reversed) projectLink.newEndPoint else projectLink.endPoint,
           roadwayNumber = projectLink.roadwayNumber, addr = projectLink.addrMRange.end, pos = BeforeAfter.Before
@@ -983,16 +1014,19 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       // Create junction points for roads that start from the end of the project link
       val fromTailCpLocation = categorizedRoads.roadsFromTail.flatMap { roadAddress: BaseRoadAddress =>
+        println(s"FLATMAPPING ROADS FROM TAIL ::: ${roadAddress.linkId} :: addrMRange.start : ${roadAddress.addrMRange.start} :: addrMRange.start.end : ${roadAddress.addrMRange.end}")
+        println(s"FROM TAIL CP LOCATION")
         val junctionId = getJunctionIdIfConnected(
           roadAddress.startingPoint, if (reversed) projectLink.newEndPoint else projectLink.endPoint,
           roadwayNumber = projectLink.roadwayNumber, addr = projectLink.addrMRange.end, pos = BeforeAfter.Before
         )
         createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.addrMRange.start, username = username)
       }
-
       // Return all created junction point locations for calibration points
       toHeadCpLocation ++ fromHeadCpLocation ++ toTailCpLocation ++ fromTailCpLocation
     }
+
+    //TODO: Implement functionality to identify true end points for the connected links
 
     /**
      * Determines if a project link is at the actual start or end of a link.
@@ -1017,14 +1051,47 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
       val isAtLinkStart = projectLink.addrMRange.start == minAddrM
       val isAtLinkEnd = projectLink.addrMRange.end == maxAddrM
 
+
+      println(s"/()=/()=/()=/()=/()=")
+      println(s"/()=/()=/()=/()=/()=")
+      println(s"/()=/()=/()=/()=/()=")
+      println(s"PROJECT LINK LINK ID ::::: ${projectLink.linkId}")
+      println(s"/()=/()=/()=/()=/()=")
+      println(s"ALL LINKS LENGTH:::: ${allLinks.length}")
+      println(s"/()=/()=/()=/()=/()=")
+
+      println(s"projectLink.addrMRange.start ::: ${projectLink.addrMRange.start}")
+      println(s"projectLink.addrMRange.end ::: ${projectLink.addrMRange.end}")
+
+      println(s"minAddrM ::: ${minAddrM}")
+      println(s"maxAddrM ::: ${maxAddrM}")
+
+      println(s"projectLink.addrMRange.start == minAddrM ::: ${isAtLinkStart}")
+      println(s"projectLink.addrMRange.end == maxAddrM ::: ${isAtLinkEnd}")
+
+
+      allLinks.foreach(l => println(s"ALL LINKS LINK :: linkId: ${l.linkId} :: addrMRange.start: ${l.addrMRange.start} :: addrMRange.end: ${l.addrMRange.end} "))
+
+
+
       (isAtLinkStart, isAtLinkEnd)
     }
 
     // === MAIN PROCESSING LOGIC == //
     val processedJunctions = nonTerminatedLinks.flatMap { projectLink =>
 
+      println(s"AT MAIN PROCESSING LOGIC ::::")
+      println(s"AT MAIN PROCESSING LOGIC ::::")
+      println(s"AT MAIN PROCESSING LOGIC ::::")
+      println(s"AT MAIN PROCESSING LOGIC ::::")
+
+      println(s"PROJECGT LINK ID :: ${projectLink.linkId} :: addrMRange.start :: ${projectLink.addrMRange.start} :: addrMRange.end :: ${projectLink.addrMRange.end} ::::")
+
       // Identify if the projectLink is at the true start or end of the link
       val (isAtLinkStart, isAtLinkEnd) = identifyLinkEndpoints(projectLink, nonTerminatedLinks)
+
+      println(s" IS AT LINK START :: $isAtLinkStart")
+      println(s" IS AT LINK END :: $isAtLinkEnd")
 
       // If neither end is a true link endpoint (PL in middle of a link), skip this project link entirely
       if (!isAtLinkStart && !isAtLinkEnd) {
@@ -1036,6 +1103,8 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         // Check if projectLink has been reversed
         val reversed = isProjectLinkReversed(projectLink, roadwayChanges)
+
+        println(s"IS REVERSED :: $reversed")
 
         // Find connected roads
         val (roadsInFirstPoint, roadsInLastPoint) = findConnectedRoads(
@@ -1050,6 +1119,22 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         // Categorize roads based on connection type
         val roadConnections = categorizeRoadConnections(projectLink, headRoads, tailRoads, reversed)
 
+        println(s"ROAD CONNECTIONS. ROADS TO HEAD ::")
+        roadConnections.roadsToHead.foreach(rth => println(s"ROAD TO HEAD :: linkId: ${rth.linkId} :: addrMRange.start: ${rth.addrMRange.start} :: addrMRange.end: ${rth.addrMRange.end}"))
+
+
+        println(s"ROAD CONNECTIONS. ROADS FROM HEAD ::")
+        roadConnections.roadsFromHead.foreach(rth => println(s"ROAD FROM HEAD :: linkId: ${rth.linkId} :: addrMRange.start: ${rth.addrMRange.start} :: addrMRange.end: ${rth.addrMRange.end}"))
+
+        println(s"ROAD CONNECTIONS. ROADS TO TAIL ::")
+        roadConnections.roadsToTail.foreach(rth => println(s"ROAD TO TAIL :: linkId: ${rth.linkId} :: addrMRange.start: ${rth.addrMRange.start} :: addrMRange.end: ${rth.addrMRange.end}"))
+
+
+        println(s"ROAD CONNECTIONS. ROADS FROM TAIL ::")
+        roadConnections.roadsFromTail.foreach(rth => println(s"ROAD FROM TAIL :: linkId: ${rth.linkId} :: addrMRange.start: ${rth.addrMRange.start} :: addrMRange.end: ${rth.addrMRange.end}"))
+
+       // findTrueTailForToTail(roadConnections.roadsToTail)
+
         // Create junction points
         val jpAtStartCpLocation = createStartJunctionPoint(projectLink, roadConnections, reversed)
         val jpAtEndCpLocation = createEndJunctionPoint(projectLink, roadConnections, reversed)
@@ -1062,6 +1147,142 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     processedJunctions
   }
 
+
+  def findTrueTailForToTail(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
+    /**
+     * In order to weed out extra junction points from linear locations not at the true end of link
+     * Return only the last linear location of the link
+     * */
+
+
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"FOR TO TAIL")
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"THE LAST LINEAR LOCATION OF THE LINK")
+    println(s"/=)&=&=&=&=&=&&")
+
+      println(s"BEFORE STUFF ::: ")
+    linearLocations.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+      val result = linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.maxBy(g => g.addrMRange.end)).toSeq
+
+
+    println(s"AFTER STUFF ::: ")
+    result.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+
+
+    //linearLocations
+
+    result
+
+  }
+
+  def findTrueTailForFromTail(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
+
+
+    /**
+     * In order to weed out extra junction points from linear locations not at the true start of link
+     * Return only the first linear location of the link
+     * */
+
+
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"FOR FROM HEAD")
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"THE FIRST LINEAR LOCATION OF THE LINK")
+    println(s"/=)&=&=&=&=&=&&")
+
+    println(s"BEFORE STUFF ::: ")
+    linearLocations.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+    val result = linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.minBy(g => g.addrMRange.start)).toSeq
+
+
+    println(s"AFTER STUFF ::: ")
+    result.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+
+
+    //linearLocations
+
+    result
+
+
+
+
+
+
+
+  }
+
+  def findTrueTailForToHead(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
+
+    /**
+     * In order to weed out extra junction points from linear locations not at the true end of link
+     * Return only the last linear location of the link
+     * */
+
+
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"FOR TO HEAD")
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"THE LAST LINEAR LOCATION OF THE LINK")
+    println(s"/=)&=&=&=&=&=&&")
+
+    println(s"BEFORE STUFF ::: ")
+    linearLocations.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+    val result = linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.maxBy(g => g.addrMRange.end)).toSeq
+
+
+    println(s"AFTER STUFF ::: ")
+    result.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+
+
+    //linearLocations
+
+    result
+
+
+
+
+  }
+
+  def findTrueTailForFromHead(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
+
+
+    /**
+     * In order to weed out extra junction points from linear locations not at the true start of link
+     * Return only the first linear location of the link
+     * */
+
+
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"FOR FROM HEAD")
+    println(s"/=)&=&=&=&=&=&&")
+    println(s"THE FIRST LINEAR LOCATION OF THE LINK")
+    println(s"/=)&=&=&=&=&=&&")
+
+    println(s"BEFORE STUFF ::: ")
+    linearLocations.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+    val result = linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.minBy(g => g.addrMRange.start)).toSeq
+
+
+    println(s"AFTER STUFF ::: ")
+    result.foreach(ll => println(s" LINEAR LOCATION ::: ${ll.linkId} :: addrMRange.start: ${ll.addrMRange.start} addrMRange.end: ${ll.addrMRange.end}"))
+
+
+
+    //linearLocations
+
+    result
+
+
+
+  }
 
 
   /**
@@ -1089,6 +1310,16 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
                                                      roadsTo: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress],
                                                      roadsFrom: Seq[BaseRoadAddress] = Seq.empty[BaseRoadAddress],
                                                      username: String): Option[(Long, String, CalibrationPointLocation)] = {
+
+/*
+
+    println(s"CREATE JUNCTION AND JUNCTION POINT IF NEEDED")
+    println(s"CREATE JUNCTION AND JUNCTION POINT IF NEEDED")
+    println(s"TARGET ::: ${target.linkId}")
+    println(s"CREATE JUNCTION AND JUNCTION POINT IF NEEDED")
+    println(s"CREATE JUNCTION AND JUNCTION POINT IF NEEDED")
+
+*/
 
     val roadwayPointId = getIdOrCreateNewRoadwayPoint(target.roadwayNumber, addr, username)
     val existingJunctionPoint = junctionPointDAO.fetchByRoadwayPoint(target.roadwayNumber, addr, pos)
@@ -1127,13 +1358,31 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       // Create the junction point that links the roadway point to the junction
       logger.info(s"Creating JunctionPoint with junctionId: $junctionId, beforeAfter: ${pos.value}, addrM: $addr for roadwayNumber: ${target.roadwayNumber}, (${target.roadPart}, ${target.track}, $addr)")
+      println(s"!!!!!!!!!!!!!!!!")
+      println(s"!!!!!!!!!!!!!!!!")
+      println(s"${target.linkId}")
+      println(s"!!!!!!!!!!!!!!!!")
+      println(s"!!!!!!!!!!!!!!!!")
+      println(s"NEW ID VALUE ::: ${NewIdValue}")
+      println(s"pos.value ::: ${pos.value}")
+      println(s"roadwayPointId ::: ${roadwayPointId}")
+      println(s"target.roadwayNumber ::: ${target.roadwayNumber}")
+      println(s"addr ::: ${addr}")
+      println(s"target.roadPart ::: ${target.roadPart}")
+      println(s"target.track ::: ${target.track}")
+      println(s"target.discontinuity ::: ${target.discontinuity}")
       junctionPointDAO.create(Seq(JunctionPoint(
         NewIdValue, pos, roadwayPointId, junctionId, None, None, DateTime.now, None, username, Some(DateTime.now),
         target.roadwayNumber, addr, target.roadPart, target.track, target.discontinuity
       )))
 
       // Return data needed for calibration point creation
-      Some((roadwayPointId, target.linkId, CalibrationPointLocation.apply(pos)))
+      val result = Some((roadwayPointId, target.linkId, CalibrationPointLocation.apply(pos)))
+
+      println(s"Return data needed for calibration point creation :::: ${result}")
+
+
+      result
     } else {
       None
     }
