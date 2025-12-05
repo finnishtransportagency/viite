@@ -1061,6 +1061,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
 
+
   def findTrueTail(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
     /**
      * In order to weed out extra junction points from linear locations not at the true end of link
@@ -1081,6 +1082,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
    linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.minBy(g => g.addrMRange.start)).toSeq
 
   }
+
 
 
   /**
