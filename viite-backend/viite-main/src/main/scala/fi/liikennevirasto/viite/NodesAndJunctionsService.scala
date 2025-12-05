@@ -349,12 +349,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   }
 
   def getNodePointTemplates(authorizedElys: Seq[Int], authorizedEVKs: Seq[Int]): Seq[NodePoint] = {
-    val evkRoadMaintainers: Seq[String] = authorizedEVKs.map(a => ArealRoadMaintainer.getEVK(a).id)
-    val elyRoadMaintainers: Seq[String] = authorizedElys.map(a => ArealRoadMaintainer.getELY(a).id)
-
-    println(s"GETTING NODE TEMPLATES FOR ELYS ::: ", elyRoadMaintainers)
-    println(s"GETTING NODE TEMPLATES FOR EVKS ::: ", evkRoadMaintainers)
-
     runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
         nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode) || authorizedEVKs.contains(template.roadMaintainer.number))//.filter(template => evkRoadMaintainers.contains(template.roadMaintainer.id) || elyRoadMaintainers.contains(template.roadMaintainer.id) || authorizedElys.contains(template.elyCode))    //.filter(template => authorizedElys.contains(template.elyCode))
@@ -806,8 +800,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         } else {
           RoadAddressFilters.continuousTopology(projectLink)(tr)
         })
-
-      CategorizedRoads(roadsToHead, roadsFromHead, roadsToTail, roadsFromTail)
+      CategorizedRoads(findTrueTail(roadsToHead), findTrueHead(roadsFromHead), findTrueTail(roadsToTail), findTrueHead(roadsFromTail))
     }
 
     /**
@@ -995,7 +988,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
         )
         createJunctionAndJunctionPointIfNeeded(roadAddress, junctionId, BeforeAfter.After, roadAddress.addrMRange.start, username = username)
       }
-
       // Return all created junction point locations for calibration points
       toHeadCpLocation ++ fromHeadCpLocation ++ toTailCpLocation ++ fromTailCpLocation
     }
@@ -1068,6 +1060,27 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     processedJunctions
   }
 
+
+  def findTrueTail(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
+    /**
+     * In order to weed out extra junction points from linear locations not at the true end of link
+     * Return only the last linear location of the link
+     * */
+
+    linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.maxBy(g => g.addrMRange.end)).toSeq
+
+  }
+
+  def findTrueHead(linearLocations: Seq[BaseRoadAddress]): Seq[BaseRoadAddress] = {
+
+    /**
+     * In order to weed out extra junction points from linear locations not at the true start of link
+     * Return only the first linear location of the link
+     * */
+
+   linearLocations.groupBy(l => l.linkId).map(grouped => grouped._2.minBy(g => g.addrMRange.start)).toSeq
+
+  }
 
 
   /**
@@ -1299,7 +1312,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
         val groupedRoadLinks: Map[Long, Seq[RoadAddressLink]] = raLinks.groupBy(_.roadwayNumber)
 
-        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) => 
+        val junctionPointsWithCoords = junctionPoints.groupBy(_.roadwayNumber).par.flatMap { case (k, v) =>
           groupedRoadLinks.get(k).map(rls => enrichJunctionPointCoordinates(rls, v)).getOrElse(v)
         }.toSeq.seq
 
