@@ -7,8 +7,13 @@
 
     const propertyLayerConfig = {
       maxResolution: 5,
-      visible: true,
+      visible: false,
       extent: [-548576, 6291456, 1548576, 8388608]
+    };
+
+    const regionBordersConfig = {
+      maxResolution: 5,
+      visible: false
     };
 
     const sourceConfig = {
@@ -43,12 +48,23 @@
       url: 'wmts/maasto/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
+    const regionsBordersMapConfig = _.merge({}, sourceConfig, {
+      url: 'wmts/teema/1.0.0/hallinnolliset_yksikot/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+    });
+
     const aerialMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, aerialMapConfig))
     }, layerConfig));
     aerialMapLayer.set('name', 'aerialMapLayer');
+
+    const regionBordersLayer = new ol.layer.Tile(_.merge({
+      source: new ol.source.XYZ(_.merge({
+        tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
+      }, regionsBordersMapConfig))
+    }, regionBordersConfig));
+    regionBordersLayer.set('name', 'regionsBorderLayer');
 
     const backgroundMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
@@ -75,28 +91,38 @@
       background: backgroundMapLayer,
       aerial: aerialMapLayer,
       terrain: terrainMapLayer,
-      propertyBorder: propertyBorderLayer
+      propertyBorder: propertyBorderLayer,
+      regionsBorder: regionBordersLayer
     };
 
     var selectMap = function (tileMap) {
       _.forEach(tileMapLayers, function (layer, key) {
+        // Don't hide the property and region borders when changing base maps
+        if (key === 'propertyBorder' || key === 'regionsBorder') {
+          return;
+        }
         layer.setVisible(key === tileMap);
       });
     };
-
 
     const togglePropertyBorderVisibility = function (showPropertyBorder) {
       propertyBorderLayer.setVisible(showPropertyBorder);
     };
 
+    const toggleRegionalBordersVisibility = function (showRegionalBorders) {
+      regionBordersLayer.setVisible(showRegionalBorders); 
+    };
+
     selectMap('background');
     eventbus.on('tileMap:selected', selectMap);
     eventbus.on('tileMap:togglepropertyBorder', togglePropertyBorderVisibility);
+    eventbus.on('tileMap:toggleRegionalBorders', toggleRegionalBordersVisibility);
 
     return {
-      layers: _.map(tileMapLayers, function (layer) {
-        return layer;
-      })
+      layers: Object.values(tileMapLayers),
+      getLayer: function(name) {
+        return tileMapLayers[name];
+      }
     };
   };
 }(this));
