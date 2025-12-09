@@ -61,47 +61,12 @@ trait DigiroadServer {
       new HttpClient(new SslContextFactory)
     }
 
-override def rewriteTarget(req: HttpServletRequest): String = {
-  val uri = req.getRequestURI
-  
-  // CASE 1: The Raster Service (Old WMTS layers)
-  if (uri.contains("/wmts/")) {
-     val wmtsIndex = uri.indexOf("/wmts")
-     val relativePath = uri.substring(wmtsIndex)
-     var targetUrl = ViiteProperties.rasterServiceURL + "/rasteripalvelu-mml" + relativePath
-     
-     val query = req.getQueryString
-     if (query != null && !query.isEmpty) targetUrl += "?" + query
-     
-     logger.debug(s"Proxying WMTS: $targetUrl")
-     return targetUrl
-  }
-
-  // CASE 2: The Paikkatiedot Service (New WMS layer)
-  if (uri.contains("/paikkatiedot/")) {
-     // We map localhost/viite/paikkatiedot/wms -> api.vaylapilvi.fi/paikkatiedot/wms
-     // We assume ViiteProperties.rasterServiceURL is "https://api.vaylapilvi.fi"
-     
-     // Be careful with the path. If your servlet is at /paikkatiedot/*
-     // req.getRequestURI might include /viite/paikkatiedot/wms
-     
-     // We simply want to append the incoming path to the domain, 
-     // ensuring we strip local context if necessary.
-     
-     // Simplest approach: Just target the WMS endpoint directly + query params
-     var targetUrl = ViiteProperties.rasterServiceURL + "/paikkatiedot/wms"
-     
-     val query = req.getQueryString
-     if (query != null && !query.isEmpty) {
-        targetUrl += "?" + query
-     }
-     
-     logger.debug(s"Proxying WMS: $targetUrl")
-     return targetUrl
-  }
-
-  return null
-}
+    override def rewriteTarget(req: HttpServletRequest): String = {
+      val url = ViiteProperties.rasterServiceURL + req.getRequestURI
+      logger.debug(req.getRequestURI)
+      logger.debug(url)
+      url
+    }
 
     override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {
 
