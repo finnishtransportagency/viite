@@ -45,6 +45,15 @@
           </div>
         </div>
 
+        <div class="roads-visible-wrapper">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" id="regionalBordersVisibleCheckbox">
+              Näytä maakuntarajat
+            </label>
+          </div>
+        </div>
+
         <!-- Dropdown version for small screens -->
         <div class="checkbox-dropdown-wrapper">
           <button class="dropdown-toggle" aria-expanded="false">Valitse karttavaihtoehdot</button>
@@ -52,7 +61,8 @@
             <label><input type="checkbox" value="propertyBoundariesVisible"  id="dropdown-propertyBoundariesVisible"> Näytä kiinteistörajat</label><br>
             <label><input type="checkbox" value="unAddressedRoadsVisible" id="dropdown-unAddressedRoadsVisible"> Näytä tieosoitteettomat-linkit</label><br>
             <label><input type="checkbox" value="underConstructionVisible" id="dropdown-underConstructionVisible"> Näytä rakenteilla-linkit</label><br>
-            <label><input type="checkbox" value="roadsVisible" id="dropdown-roadsVisible"> Näytä tieosoiteverkko</label>
+            <label><input type="checkbox" value="roadsVisible" id="dropdown-roadsVisible"> Näytä tieosoiteverkko</label><br>
+            <label><input type="checkbox" value="regionalBordersVisible" id="dropdown-regionalBordersVisible"> Näytä maakuntarajat</label>
           </div>
         </div>
       </div>
@@ -70,7 +80,8 @@
       propertyBoundariesVisible: 'propertyBoundariesVisibleCheckbox',
       unAddressedRoadsVisible: 'unAddressedRoadsVisibleCheckbox',
       underConstructionVisible: 'underConstructionVisibleCheckbox',
-      roadsVisible: 'roadsVisibleCheckbox'
+      roadsVisible: 'roadsVisibleCheckbox',
+      regionalBordersVisible: 'regionalBordersVisibleCheckbox'
     };
 
     // Sync dropdown checkboxes to match main checkboxes (no events triggered)
@@ -97,7 +108,7 @@
       });
     }
 
-    // Per-checkbox handlers (match original behavior)
+    // Checkbox handlers
     container.on('change', '#propertyBoundariesVisibleCheckbox', function () {
       eventbus.trigger('tileMap:togglepropertyBorder', this.checked);
     });
@@ -112,11 +123,14 @@
       eventbus.trigger('underConstructionProjectRoads:toggleVisibility', this.checked);
     });
 
-    // keep same signature as original: call toggleRoadVisibility() (no arg) so existing applicationModel logic is preserved
     container.on('change', '#roadsVisibleCheckbox', function () {
       applicationModel.toggleRoadVisibility();
       eventbus.trigger('linkProperty:visibilityChanged');
       eventbus.trigger('roadAddressProject:visibilityChanged');
+    });
+
+    container.on('change', '#regionalBordersVisibleCheckbox', function () {
+      eventbus.trigger('tileMap:toggleRegionalBorders', this.checked);
     });
 
     // Tile map selection (keeps single-selection behavior for base maps)
@@ -156,7 +170,7 @@
     });
 
     // When any main checkbox changes, sync dropdown checkboxes when on small screens
-    container.on('change', '#propertyBoundariesVisibleCheckbox, #unAddressedRoadsVisibleCheckbox, #underConstructionVisibleCheckbox, #roadsVisibleCheckbox', function () {
+    container.on('change', '#propertyBoundariesVisibleCheckbox, #unAddressedRoadsVisibleCheckbox, #underConstructionVisibleCheckbox, #roadsVisibleCheckbox, #regionalBordersVisibleCheckbox', function () {
       if (window.innerWidth <= BREAKPOINT_PX) {
         syncDropdownCheckboxesFromMain();
       }
