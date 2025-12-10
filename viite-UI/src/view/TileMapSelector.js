@@ -70,7 +70,7 @@
 
     container.append(element);
 
-    const BREAKPOINT_PX = 1220;
+    const BREAKPOINT_PX = 1470;
 
     const $checkboxDropdownWrapper = container.find('.checkbox-dropdown-wrapper');
     const $dropdownToggle = $checkboxDropdownWrapper.find('.dropdown-toggle');
