@@ -71,7 +71,30 @@
       "sortStatus": {
         toStr: "TILA", width: "60",
         sortFunc: function (a, b) {
-          return a.statusCode - b.statusCode;
+          // By default sort projects based on this status order
+          const statusOrder = {
+            [projectStatus.ErrorInViite.value]: 1,
+            [projectStatus.InUpdateQueue.value]: 2,
+            [projectStatus.UpdatingToRoadNetwork.value]: 3,
+            [projectStatus.Incomplete.value]: 4,
+            [projectStatus.Accepted.value]: 5,
+            [projectStatus.Deleted.value]: 6,
+            [projectStatus.Unknown.value]: 99
+          };
+
+          // Get the numeric order value, defaulting to 99 if status not found
+          const aOrder = statusOrder[a.statusCode] || 99;
+          const bOrder = statusOrder[b.statusCode] || 99;
+
+          // Compare the numeric order first
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+
+          // Secondary sort: By creation date (newest first) if status priority is the same
+          const aDate = a.createdDate ? new Date(a.createdDate.split('.').reverse().join('-')) : new Date(0);
+          const bDate = b.createdDate ? new Date(b.createdDate.split('.').reverse().join('-')) : new Date(0);
+          return bDate - aDate; // Sort descending (newest first)
         }
       }
     };
@@ -245,14 +268,14 @@
         });
 
         // Special case: if sorting by statusCode ascending and not reversed
-        if (orderBy.id === 'sortStatus' && !orderBy.reversed) {
-          return projects.slice().sort((a, b) => {
-            if (a.statusCode !== b.statusCode) {
-              return a.statusCode - b.statusCode;
-            }
-            return compareByCreatedDateDesc(a, b);
-          });
-        }
+        // if (orderBy.id === 'sortStatus' && !orderBy.reversed) {
+        //   return projects.slice().sort((a, b) => {
+        //     if (a.statusCode !== b.statusCode) {
+        //       return a.statusCode - b.statusCode;
+        //     }
+        //     return compareByCreatedDateDesc(a, b);
+        //   });
+        // }
 
         return sortedProjects;
       }
