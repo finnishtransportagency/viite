@@ -20,3 +20,4 @@ WebContent/
 /local-dev/postgis/data/
 revision.properties
 bonecp.properties
+env.properties
