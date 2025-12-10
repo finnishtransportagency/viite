@@ -267,16 +267,6 @@
           return compareByCreatedDateDesc(a, b);
         });
 
-        // Special case: if sorting by statusCode ascending and not reversed
-        // if (orderBy.id === 'sortStatus' && !orderBy.reversed) {
-        //   return projects.slice().sort((a, b) => {
-        //     if (a.statusCode !== b.statusCode) {
-        //       return a.statusCode - b.statusCode;
-        //     }
-        //     return compareByCreatedDateDesc(a, b);
-        //   });
-        // }
-
         return sortedProjects;
       }
 
