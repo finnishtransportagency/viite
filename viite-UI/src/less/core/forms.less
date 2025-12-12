@@ -326,8 +326,9 @@ form.roadAddressProject .form-control.small-input{
 
 #reservedDiscontinuity,
 #newReservedDiscontinuity {
-  white-space: nowrap;
-  width: 80px;
+  word-wrap: break-word;
+  word-break: break-all;
+  width: 70px !important;
 }
 
 form.roadAddressProject .form-control,
@@ -877,6 +878,6 @@ form.roadAddressProject .junction-label-projects.header {
 #reservedDiscontinuity,
 #newReservedDiscontinuity {
   &.road-address-input {
-    width: 100% !important;
+    width: 100%;
   }
 }

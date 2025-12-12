@@ -1,7 +1,7 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, startupParameters) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
-    const discontinuityColumnWidth = '80px';
+    const discontinuityColumnWidth = '80px !important';
     var currentProject = false;
     var formCommon = new FormCommon('');
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
@@ -140,7 +140,7 @@
           largeInputField() +
           '<div class="form-group">' +
           '<label class="control-label"></label>' +
-          addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
           '</div>' +
           '<div class="form-group">' +
           '<label class="control-label">Tieosat</label>' +
@@ -150,7 +150,7 @@
           '</div>' +
           '</div><div class = "form-result"><label >PROJEKTIIN VALITUT TIEOSAT:</label>' +
           '<div>' +
-          addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('EVK') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('Elinvoimakeskus') +
           '</div>' +
           '<div id ="reservedRoads">' +
           '</div></div>' +
@@ -178,7 +178,7 @@
           largeInputField(project.additionalInfo) +
           '<div class="form-group">' +
           '<label class="control-label"></label>' +
-          addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
           '</div>' +
           '<div class="form-group">' +
           '<label class="control-label">Tieosat</label>' +
@@ -190,7 +190,7 @@
           '<div class = "form-result">' +
           '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
           '<div>' +
-          addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
           '</div>' +
           '<div id ="reservedRoads">' +
           reservedRoads +
@@ -198,7 +198,7 @@
           '<div class = "form-result">' +
           '<label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>' +
           '<div>' +
-          addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
           '</div>' +
           '<div id ="newReservedRoads">' +
           newReservedRoads +
@@ -340,7 +340,7 @@
         _.each(list, function (line) {
           if (!_.isUndefined(line.currentLength)) {
             text += '<div class="form-reserved-roads-list">' +
-                addSmallLabel(line.roadNumber) +
+                addSmallLabel(line.roadNumber, '30px !important') +
                 addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                 addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
                 addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
@@ -359,7 +359,7 @@
         _.each(list, function (line) {
           if (!_.isUndefined(line.newLength)) {
             text += '<div class="form-reserved-roads-list">' +
-                addSmallLabel(line.roadNumber) +
+                addSmallLabel(line.roadNumber, "30px !important") +
                 addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                 addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
                 addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
