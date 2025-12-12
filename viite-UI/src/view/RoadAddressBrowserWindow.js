@@ -616,6 +616,20 @@
 
       function bindEvents() {
 
+          // Bind the enter key to the search button
+          $(document).on('keydown', function(e) {
+
+              if (!roadAddrBrowserWindow.is(':visible')) {
+                  return;
+              }
+
+              if (e.key === 'Enter') {
+                  e.preventDefault();
+                  clearResultsAndDisableCsvButton();
+                  getData();
+              }
+          });
+
           // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
           document.getElementById('roadAddressBrowser').onchange = function () {
               clearResultsAndDisableCsvButton();
