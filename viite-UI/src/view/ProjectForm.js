@@ -140,7 +140,7 @@
           largeInputField() +
           '<div class="form-group">' +
           '<label class="control-label"></label>' +
-          addSmallLabel('TIE', '30px !important') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
+          addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
           '</div>' +
           '<div class="form-group">' +
           '<label class="control-label">Tieosat</label>' +
@@ -178,7 +178,7 @@
           largeInputField(project.additionalInfo) +
           '<div class="form-group">' +
           '<label class="control-label"></label>' +
-          addSmallLabel('TIE', '30px !important') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
+          addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA') +
           '</div>' +
           '<div class="form-group">' +
           '<label class="control-label">Tieosat</label>' +
