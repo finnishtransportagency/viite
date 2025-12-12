@@ -437,7 +437,7 @@
           endOnly: true
         },
         restrictSize: {
-          min: {width: 650, height: 300}
+          min: {width: 650, height: 158}
         },
         inertia: true
       }).on('resizemove', function (event) {
