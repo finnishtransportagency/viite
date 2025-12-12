@@ -151,6 +151,11 @@
     }
 
     function hide() {
+      // Reset filter state
+      filterBox.visible = false;
+      $('#userNameBox').val('');
+      $('#userFilterSpan').hide();
+      
       projectList.hide();
       eventbus.trigger("roadAddressProject:startAllInteractions");
       $('.modal-overlay').remove();
