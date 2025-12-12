@@ -48,8 +48,14 @@
       url: 'wmts/maasto/1.0.0/maastokartta/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
     });
 
-    const regionsBordersMapConfig = _.merge({}, sourceConfig, {
-      url: 'wmts/teema/1.0.0/hallinnolliset_yksikot/default/ETRS-TM35FIN/{z}/{y}/{x}.png'
+    const regionBordersSource = new ol.source.TileWMS({
+      url: 'wms/paikkatiedot',
+      params: {
+        'LAYERS': 'paikkatiedot:maakuntarajat_10k',
+        'FORMAT': 'image/png'
+      },
+      projection: 'EPSG:3067',
+      tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig)) 
     });
 
     const aerialMapLayer = new ol.layer.Tile(_.merge({
@@ -60,10 +66,8 @@
     aerialMapLayer.set('name', 'aerialMapLayer');
 
     const regionBordersLayer = new ol.layer.Tile(_.merge({
-      source: new ol.source.XYZ(_.merge({
-        tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
-      }, regionsBordersMapConfig))
-    }, regionBordersConfig));
+      source: regionBordersSource
+    }, layerConfig));
     regionBordersLayer.set('name', 'regionsBorderLayer');
 
     const backgroundMapLayer = new ol.layer.Tile(_.merge({

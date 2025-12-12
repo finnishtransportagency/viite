@@ -50,19 +50,19 @@ module.exports = function (grunt) {
     }
   });
 
-  // This is used to get "maakuntarajat" from MML
-  const teemaProxy = createProxyMiddleware({
+  // This is used to get "maakuntarajat" from PTP
+  const paikkatiedotProxy = createProxyMiddleware({
     target: 'https://api.vaylapilvi.fi:443',
     changeOrigin: false,
-    pathFilter: '/wmts/teema',
+    pathFilter: '/wms/paikkatiedot', 
     secure: true,
     xfwd: true,
     headers: {
-      "X-API-Key": process.env.rasterServiceApiKey,
+      "X-API-Key": process.env.kgvApiKey, 
       host: 'api.vaylapilvi.fi'
     },
     pathRewrite: {
-      '^/wmts/teema': '/rasteripalvelu-mml/wmts/teema'
+      '^/wms/paikkatiedot': '/paikkatiedot/wms' 
     }
   });
 
@@ -189,8 +189,8 @@ module.exports = function (grunt) {
             middlewares.unshift(rasteriProxy);
             middlewares.unshift(maastokarttaProxy);
             middlewares.unshift(kiinteistoProxy);
-            middlewares.unshift(teemaProxy);
             middlewares.unshift(testComponentProxy);
+            middlewares.unshift(paikkatiedotProxy);
             return middlewares;
           }
         }
