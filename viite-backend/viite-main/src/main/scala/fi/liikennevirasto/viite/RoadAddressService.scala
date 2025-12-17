@@ -243,7 +243,7 @@ class RoadAddressService(
   def getAllByMunicipality(municipality: Int, searchDate: Option[DateTime] = None): Seq[RoadAddressLink] = {
     val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
 
-    val linearLocations = runWithReadOnlySession {
+    val linearLocations = runWithTransaction {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchRoadwayByLinkId(roadLinks.map(_.linkId).toSet)
       }
@@ -255,7 +255,7 @@ class RoadAddressService(
     }
 
 
-    val roadAddresses = runWithReadOnlySession {
+    val roadAddresses = runWithTransaction {
       roadwayAddressMapper.getCurrentRoadAddressesByLinearLocation(adjustedLinearLocations, searchDate)
     }
 
