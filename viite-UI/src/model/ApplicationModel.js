@@ -175,22 +175,6 @@
       } else if (layer === 'linkProperty' && toggleStart) {
         eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
       }
-      const underConstructionVisibleCheckbox = $('#underConstructionVisibleCheckbox')[0];
-      if (layer !== selectedLayer || toggleStart) {
-        if (underConstructionVisibleCheckbox) {
-          $('#underConstructionVisibleCheckbox')[0].checked = true;
-          $('#underConstructionVisibleCheckbox')[0].disabled = false;
-        }
-        eventbus.trigger('underConstructionProjectRoads:toggleVisibility', true);
-      }
-      const unAddressedRoadsVisibleCheckbox = $('#unAddressedRoadsVisibleCheckbox')[0];
-      if (layer !== selectedLayer || toggleStart) {
-        if (unAddressedRoadsVisibleCheckbox) {
-          $('#unAddressedRoadsVisibleCheckbox')[0].checked = true;
-          $('#unAddressedRoadsVisibleCheckbox')[0].disabled = false;
-        }
-        eventbus.trigger("unAddressedProjectRoads:toggleVisibility", true);
-      }
     };
 
     const addSpinner = function() {
