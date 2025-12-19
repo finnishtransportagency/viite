@@ -57,7 +57,9 @@
       var zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
 
-      new CrosshairToggle($('.mapplugin.coordinates'));
+      // eslint-disable-next-line no-undef
+      const crosshair = createCrosshairToggle($('.mapplugin.coordinates'), map);
+      window.crosshair = crosshair; 
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);
