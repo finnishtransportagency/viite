@@ -354,7 +354,18 @@
           }
 
           const params = me.getSearchParams();
-          const fileNameString = `Viite_${params.target}_${params.situationDate}_${params.ely}_${params.roadNumber}_${params.minRoadPartNumber}_${params.maxRoadPartNumber}.csv`;
+
+          // Create file name
+          const parts = [
+            "Viite",
+            params.target,
+            params.situationDate,
+            params.ely || params.roadMaintainer,
+            params.roadNumber,
+            params.minRoadPartNumber,
+            params.maxRoadPartNumber
+          ];
+          const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
           const fileName = fileNameString.replaceAll("undefined", "-");
 
           let data = [];
@@ -430,9 +441,17 @@
               this.setCustomValidity("");
           });
 
-          function validateElyAndRoadNumber (elyValue, roadNumberElement) {
-              if (!elyValue && roadNumberElement.value === "")
-                  roadNumberElement.setCustomValidity("Ely tai Tie on pakollinen tieto");
+          function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
+              
+              // If neither ELY/EVK or road number is provided, show error
+              if (!elyValue && (!roadNumberElement || !roadNumberElement.value)) {
+                  if (roadNumberElement) {
+                      roadNumberElement.setCustomValidity("Elinvoimakeskus, Ely tai Tie on pakollinen tieto");
+                  }
+                  return false;
+              }
+              
+              return true;
           }
 
           // Validate A-osa and L-osa
@@ -471,9 +490,12 @@
 
           function willPassValidations() {
               validateDate(roadAddrSituationDate.value);
-              validateElyAndRoadNumber(elyEvkSelector, roadNumber);
-              validateBeginningAndEndParts();
-              return reportValidations();
+              const elyEvkValid = validateElyEvkAndRoadNumber(elyEvkSelector, roadNumber);
+              const partsValid = validateBeginningAndEndParts();
+              const formValid = reportValidations();
+              
+              // Only proceed with search if all validations pass
+              return elyEvkValid && partsValid && formValid;
           }
 
           function createParams() {
@@ -511,7 +533,7 @@
           switch (targetValue) {
               case "Tracks":
               case "RoadParts":
-                  validateElyAndRoadNumber(elyEvkSelector, roadNumber);
+                  validateElyEvkAndRoadNumber(elyEvkSelector, roadNumber);
                   if (willPassValidations())
                       fetchByTargetValue(createParams());
                   break;

@@ -251,7 +251,19 @@
 
         function exportDataAsCsvFile() {
             const params = me.getSearchParams();
-            const fileNameString = "Viite_" + params.dateTarget + "_" + params.startDate + "_" + params.endDate + "_" + params.ely + "_" + params.evk + "_" + params.roadNumber + "_" + params.minRoadPartNumber + "_" + params.maxRoadPartNumber + ".csv";
+
+            // Create file name
+            const parts = [
+              "Viite",
+              params.dateTarget,
+              params.startDate,
+              params.endDate,
+              params.ely || params.roadMaintainer,
+              params.roadNumber,
+              params.minRoadPartNumber,
+              params.maxRoadPartNumber
+            ];
+            const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
             const fileName = fileNameString.replaceAll("undefined", "-");
 
             const table = document.getElementById("roadAddressChangesBrowserTable");
