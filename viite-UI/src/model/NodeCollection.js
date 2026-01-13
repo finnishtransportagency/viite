@@ -116,15 +116,23 @@
           me.setMapTemplates(templates);
 
           // Open template form with filtered data matching reference point
+          var coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
+
+          var isSameLocation = function(coords1, coords2) {
+              if (!coords1 || !coords2) return false;
+              return Math.abs(coords1.x - coords2.x) < coordinateToleranceMeters && 
+                    Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
+          };
+
           eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-            nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
-              return _.isEqual(nodePoint.coordinates, referencePoint);
-            }),
-            junctions: _.filter(templates.junctions, function (junction) {
-              return _.some(junction.junctionPoints, function (junctionPoint) {
-                return _.isEqual(junctionPoint.coordinates, referencePoint);
-              });
-            })
+              nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
+                  return isSameLocation(nodePoint.coordinates, referencePoint);
+              }),
+              junctions: _.filter(templates.junctions, function (junction) {
+                  return _.some(junction.junctionPoints, function (junctionPoint) {
+                      return isSameLocation(junctionPoint.coordinates, referencePoint);
+                  });
+              })
           });
 
           // Update map with new node/junction template information
