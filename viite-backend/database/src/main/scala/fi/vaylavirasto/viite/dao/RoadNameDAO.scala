@@ -250,7 +250,7 @@ object RoadNameDAO extends BaseDAO {
       val roadNameDateCondition = sqls"AND ${rn.startDate} <= $situationDate::date AND (${rn.endDate} > $situationDate::date OR ${rn.endDate} IS NULL)"
 
       val elyCondition = ely.map(e => sqls"AND rw.ely = $e").getOrElse(sqls"")
-      val roadMaintainerCondition = roadMaintainer.map(e => sqls"AND rw.roadMaintainer = $e").getOrElse(sqls"")
+      val roadMaintainerCondition = roadMaintainer.map(e => sqls"AND rw.road_maintainer = $e").getOrElse(sqls"")
       val roadNumberCondition = roadNumber.map(rn => sqls"AND rw.road_number = $rn").getOrElse(sqls"")
 
       val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
