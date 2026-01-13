@@ -11,11 +11,6 @@
       extent: [-548576, 6291456, 1548576, 8388608]
     };
 
-    const regionBordersConfig = {
-      maxResolution: 5,
-      visible: false
-    };
-
     const sourceConfig = {
       cacheSize: 4096,
       projection: 'EPSG:3067',

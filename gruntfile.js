@@ -60,15 +60,11 @@ module.exports = function (grunt) {
     headers: {
       "X-API-Key": process.env.kgvApiKey, 
       host: 'api.vaylapilvi.fi'
+    },
+    pathRewrite: {
+    '^/paikkatiedot/wms': '/paikkatiedot/wms'
     }
   });
-
-  if (process.env.kgvApiKey) {
-    const prefix = process.env.kgvApiKey.substring(0, 3);
-    console.log(`API Key starts with: ${prefix}...`);
-  } else {
-    console.log("KGV API Key is undefined or empty.");
-  }
 
   const testComponentProxy = createProxyMiddleware({
     target: 'http://localhost:9003',
