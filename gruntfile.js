@@ -53,7 +53,7 @@ module.exports = function (grunt) {
   // This is used to get "maakuntarajat" from PTP
   const paikkatiedotProxy = createProxyMiddleware({
     target: 'https://api.vaylapilvi.fi:443',
-    changeOrigin: false,
+    changeOrigin: true,
     pathFilter: '/paikkatiedot/wms',
     secure: true,
     xfwd: true,
@@ -62,6 +62,13 @@ module.exports = function (grunt) {
       host: 'api.vaylapilvi.fi'
     }
   });
+
+  if (process.env.kgvApiKey) {
+    const prefix = process.env.kgvApiKey.substring(0, 3);
+    console.log(`API Key starts with: ${prefix}...`);
+  } else {
+    console.log("KGV API Key is undefined or empty.");
+  }
 
   const testComponentProxy = createProxyMiddleware({
     target: 'http://localhost:9003',
