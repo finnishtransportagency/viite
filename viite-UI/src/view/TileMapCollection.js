@@ -49,7 +49,7 @@
     });
 
     const regionBordersSource = new ol.source.TileWMS({
-      url: 'wms/paikkatiedot',
+      url: '/paikkatiedot/wms',
       params: {
         'LAYERS': 'paikkatiedot:maakuntarajat_10k',
         'FORMAT': 'image/png'

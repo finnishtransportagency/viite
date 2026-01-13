@@ -54,15 +54,12 @@ module.exports = function (grunt) {
   const paikkatiedotProxy = createProxyMiddleware({
     target: 'https://api.vaylapilvi.fi:443',
     changeOrigin: false,
-    pathFilter: '/wms/paikkatiedot', 
+    pathFilter: '/paikkatiedot/wms',
     secure: true,
     xfwd: true,
     headers: {
       "X-API-Key": process.env.kgvApiKey, 
       host: 'api.vaylapilvi.fi'
-    },
-    pathRewrite: {
-      '^/wms/paikkatiedot': '/paikkatiedot/wms' 
     }
   });
 
