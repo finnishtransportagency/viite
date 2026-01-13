@@ -189,7 +189,7 @@ module.exports = function (grunt) {
             middlewares.unshift(rasteriProxy);
             middlewares.unshift(maastokarttaProxy);
             middlewares.unshift(kiinteistoProxy);
-            middlewares.unshift(teemaProxy);
+            middlewares.unshift(paikkatiedotProxy);
             middlewares.unshift(testComponentProxy);
             middlewares.unshift(paikkatiedotProxy);
             return middlewares;
