@@ -67,9 +67,15 @@ trait DigiroadServer {
       new HttpClient(new SslContextFactory)
     }
 
+
     override def rewriteTarget(req: HttpServletRequest): String = {
-      val url = "https://api.vaylapilvi.fi" + req.getRequestURI
-      url
+      val path = req.getRequestURI
+      val query = req.getQueryString
+      val params = if (query != null && !query.isEmpty) "?" + query else ""
+      
+      val fullUrl = "https://api.vaylapilvi.fi" + path + params
+      println("WMS Proxy: Final URL: " + fullUrl)
+      fullUrl
     }
 
     override def sendProxyRequest(clientRequest: HttpServletRequest, 
@@ -77,10 +83,8 @@ trait DigiroadServer {
                                   proxyRequest: Request): Unit = {
       
       removeInfrastructureHeaders(proxyRequest)
-
       proxyRequest.header("Host", "api.vaylapilvi.fi")
       proxyRequest.header("X-API-Key", ViiteProperties.kgvApiKey)
-      
       super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
     }
   }
@@ -97,7 +101,6 @@ trait DigiroadServer {
       val url = ViiteProperties.rasterServiceURL + req.getRequestURI
       logger.debug(req.getRequestURI)
       logger.debug(url)
-      println("Rewrite target: " + url)
       url
     }
 
