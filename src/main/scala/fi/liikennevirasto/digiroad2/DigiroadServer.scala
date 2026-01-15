@@ -53,18 +53,22 @@ trait DigiroadServer {
     appContext
   }
 
+  // Removes internal infrastructure headers that should not be leaked to external APIs.
+  private def removeInfrastructureHeaders(proxyRequest: Request): Unit = {
+    proxyRequest.getHeaders.remove("X-Iam-Data")
+    proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+    proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+    proxyRequest.getHeaders.remove("X-Iam-Identity")
+  }
+
   class WMSProxyServlet extends ProxyServlet {
-    private val logger = LoggerFactory.getLogger(getClass)
 
     override def newHttpClient(): HttpClient = {
       new HttpClient(new SslContextFactory)
     }
 
     override def rewriteTarget(req: HttpServletRequest): String = {
-      val targetBase = ViiteProperties.wmsServiceURL
-      val url = targetBase + req.getRequestURI
-      println("WMS Proxy Target: " + url)
-      logger.debug(s"WMS Proxy Target: $url")
+      val url = "https://api.vaylapilvi.fi" + req.getRequestURI
       url
     }
 
@@ -72,10 +76,7 @@ trait DigiroadServer {
                                   proxyResponse: HttpServletResponse, 
                                   proxyRequest: Request): Unit = {
       
-      proxyRequest.getHeaders.remove("X-Iam-Data")
-      proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
-      proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
-      proxyRequest.getHeaders.remove("X-Iam-Identity")
+      removeInfrastructureHeaders(proxyRequest)
 
       proxyRequest.header("Host", "api.vaylapilvi.fi")
       proxyRequest.header("X-API-Key", ViiteProperties.kgvApiKey)
@@ -106,10 +107,7 @@ trait DigiroadServer {
       logger.debug(proxyRequest.getHeaders.toString)
       logger.debug("Header end")
 
-      proxyRequest.getHeaders.remove("X-Iam-Data")
-      proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
-      proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
-      proxyRequest.getHeaders.remove("X-Iam-Identity")
+      removeInfrastructureHeaders(proxyRequest)
 
       proxyRequest.header("X-API-Key", ViiteProperties.rasterServiceApiKey)
       logger.debug("Header clean start")

@@ -8,7 +8,6 @@ trait ViiteProperties {
   val userProvider: String
   val eventBus: String
   val rasterServiceURL: String
-  val wmsServiceURL: String
   val rasterServiceApiKey: String
   val kgvRoadlinkFrozen : Boolean
   val kgvEndpoint       : String
@@ -55,7 +54,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val userProvider: String = scala.util.Properties.envOrElse("userProvider", null)
   val eventBus: String = scala.util.Properties.envOrElse("eventBus", null)
   val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", null)
-  val wmsServiceURL: String = scala.util.Properties.envOrElse("wmsServiceURL", null)
   val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", null)
   val kgvRoadlinkFrozen : Boolean = scala.util.Properties.envOrElse("kgvRoadlink.frozen", "false").toBoolean
   val kgvEndpoint       : String  = scala.util.Properties.envOrElse("kgvEndpoint", null)
@@ -112,7 +110,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val userProvider: String = envProps.getProperty("userProvider")
   override val eventBus: String = envProps.getProperty("eventBus")
   override val rasterServiceURL: String = scala.util.Properties.envOrElse("rasterServiceURL", envProps.getProperty("rasterServiceURL"))
-  override val wmsServiceURL: String = scala.util.Properties.envOrElse("wmsServiceURL", envProps.getProperty("wmsServiceURL"))
   override val rasterServiceApiKey: String = scala.util.Properties.envOrElse("rasterServiceApiKey", envProps.getProperty("rasterServiceApiKey"))
   override val kgvRoadlinkFrozen : Boolean = envProps.getProperty("kgvRoadlink.frozen", "false").toBoolean
   override val kgvEndpoint       : String  = envProps.getProperty("kgvEndpoint", null)
@@ -167,7 +164,6 @@ object ViiteProperties {
   lazy val userProvider: String = properties.userProvider
   lazy val eventBus: String = properties.eventBus
   lazy val rasterServiceURL: String = properties.rasterServiceURL
-  lazy val wmsServiceURL: String = properties.wmsServiceURL
   lazy val rasterServiceApiKey: String = properties.rasterServiceApiKey
   lazy val kgvRoadlinkFrozen : Boolean = properties.kgvRoadlinkFrozen
   lazy val kgvApiKey: String  = properties.kgvApiKey
