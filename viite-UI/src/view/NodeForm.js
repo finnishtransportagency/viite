@@ -734,10 +734,14 @@
       });
 
       rootElement.on('click', '#attachToMapNode', function () {
+        $('#attachToMapNode, #attachToNewNode').removeClass('active');
+        $('#attachToMapNode').addClass('active');
         applicationModel.setSelectedTool(ViiteEnumerations.Tool.Attach.value);
       });
 
       rootElement.on('click', '#attachToNewNode', function () {
+        $('#attachToMapNode, #attachToNewNode').removeClass('active');
+        $('#attachToNewNode').addClass('active');
         applicationModel.setSelectedTool(ViiteEnumerations.Tool.Add.value);
       });
 
