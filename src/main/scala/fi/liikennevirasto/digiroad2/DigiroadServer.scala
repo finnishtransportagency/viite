@@ -45,12 +45,43 @@ trait DigiroadServer {
     appContext.addServlet(holder, "/index.html")
     appContext.addServlet(new ServletHolder(new WMTSProxyServlet), "/wmts/maasto/*")
     appContext.addServlet(new ServletHolder(new WMTSProxyServlet), "/wmts/kiinteisto/*")
-    appContext.addServlet(new ServletHolder(new WMTSProxyServlet), "/paikkatiedot/wms/*")
+    appContext.addServlet(new ServletHolder(new WMSProxyServlet), "/paikkatiedot/wms/*")
     appContext.getMimeTypes.addMimeMapping("ttf", "application/x-font-ttf")
     appContext.getMimeTypes.addMimeMapping("woff", "application/x-font-woff")
     appContext.getMimeTypes.addMimeMapping("eot", "application/vnd.ms-fontobject")
     appContext.getMimeTypes.addMimeMapping("js", "application/javascript; charset=UTF-8")
     appContext
+  }
+
+  class WMSProxyServlet extends ProxyServlet {
+    private val logger = LoggerFactory.getLogger(getClass)
+
+    override def newHttpClient(): HttpClient = {
+      new HttpClient(new SslContextFactory)
+    }
+
+    override def rewriteTarget(req: HttpServletRequest): String = {
+      val targetBase = ViiteProperties.wmsServiceURL
+      val url = targetBase + req.getRequestURI
+      println("WMS Proxy Target: " + url)
+      logger.debug(s"WMS Proxy Target: $url")
+      url
+    }
+
+    override def sendProxyRequest(clientRequest: HttpServletRequest, 
+                                  proxyResponse: HttpServletResponse, 
+                                  proxyRequest: Request): Unit = {
+      
+      proxyRequest.getHeaders.remove("X-Iam-Data")
+      proxyRequest.getHeaders.remove("X-Iam-Accesstoken")
+      proxyRequest.getHeaders.remove("X-Amzn-Trace-Id")
+      proxyRequest.getHeaders.remove("X-Iam-Identity")
+
+      proxyRequest.header("Host", "api.vaylapilvi.fi")
+      proxyRequest.header("X-API-Key", ViiteProperties.kgvApiKey)
+      
+      super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest)
+    }
   }
 
   class WMTSProxyServlet extends ProxyServlet {
@@ -65,6 +96,7 @@ trait DigiroadServer {
       val url = ViiteProperties.rasterServiceURL + req.getRequestURI
       logger.debug(req.getRequestURI)
       logger.debug(url)
+      println("Rewrite target: " + url)
       url
     }
 
