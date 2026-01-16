@@ -1,29 +1,79 @@
 package fi.vaylavirasto.viite.dao
 
-import fi.liikennevirasto.digiroad2.user.Configuration
-import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
-import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
-import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers
-import scalikejdbc.scalikejdbcSQLInterpolationImplicitDef
+import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
+import fi.vaylavirasto.viite.postgis.SessionProvider.session
+import fi.vaylavirasto.viite.util.ViiteException
+import org.json4s._
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization.{read, write}
+import scalikejdbc._
 
-class UserProviderDAOSpec extends AnyFunSuite with Matchers {
+class UserProviderDAO extends BaseDAO with UserProvider {
+  implicit val formats: Formats = Serialization.formats(NoTypeHints)
 
-  val TestUserName = "userprovidertest"
-  val north = 1000
+  object User extends SQLSyntaxSupport[User] {
+    override val tableName = "service_user"
+    def apply(rs: WrappedResultSet): User = new User(
+      rs.long("id"),
+      rs.string("username"),
+      read[Configuration](rs.string("configuration"))
+    )
+  }
 
-  val provider = new UserProviderDAO
-
-  test("Test UserProviderDAO.deleteUser(), UserProviderDAO.getUser() and UserProviderDAO.createUser() " +
-    "When trying to find a specific user name and creating a user for that user name " +
-    "Then getUser() should return 'None' before creating, and the created user after creating it.") {
-    runWithRollback {
-      provider.deleteUser(TestUserName)
-      provider.getUser(TestUserName) shouldBe None
-      provider.createUser(TestUserName, Configuration(north = Some(1000)))
-      val user = provider.getUser(TestUserName).get
-      user.username should be(TestUserName.toLowerCase)
-      user.configuration.north should be(Some(north))
+  def getUser(username: String): Option[User] = {
+    if (username == null) None
+    else {
+      val query = sql"""
+       SELECT id, username, configuration
+       FROM service_user
+       WHERE username = ${username}
+       """
+      runSelectSingleOption(query.map(User.apply))
     }
   }
+
+  def deleteUser(username: String): Unit = {
+    runUpdateToDb(
+      sql"""
+      DELETE FROM service_user
+      WHERE username = $username
+    """
+    )
+  }
+
+  def getAllUsers: Seq[User] = {
+    val query = sql"""
+    SELECT id, username, configuration
+    FROM service_user
+    ORDER BY username
+  """
+    query.map(User.apply).list.apply()
+  }
+
+  def addUser(username: String, config: Configuration): Unit = {
+    runUpdateToDb(
+      sql"""
+      INSERT INTO service_user (id, username, configuration)
+      VALUES (
+        nextval('service_user_seq'),
+        ${username},
+        ${write(config)}
+      )
+    """
+    )
+  }
+
+  def updateUsers(users: List[User]): Unit = {
+    users.foreach { user =>
+      runUpdateToDb(
+        sql"""
+        UPDATE service_user
+        SET configuration = ${write(user.configuration)}
+        WHERE username = ${user.username}
+      """
+      )
+    }
+  }
+
 }

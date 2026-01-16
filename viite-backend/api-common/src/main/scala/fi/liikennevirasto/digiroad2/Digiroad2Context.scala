@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.client.kgv.KgvRoadLink
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
-import fi.liikennevirasto.viite.{AwsService, APIServiceForNodesAndJunctions, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadNameService, RoadNetworkValidator}
+import fi.liikennevirasto.viite.{AwsService, APIServiceForNodesAndJunctions, NodesAndJunctionsService, ProjectService, RoadAddressService, RoadNameService, RoadNetworkValidator, UserService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
@@ -227,6 +227,10 @@ object Digiroad2Context {
 
   lazy val dynamicRoadNetworkService: DynamicRoadNetworkService = {
     new DynamicRoadNetworkService(linearLocationDAO, roadwayDAO, kgvRoadLinkClient, awsService, linkNetworkUpdater)
+  }
+
+  lazy val userService: UserService = {
+    new UserService(userProvider)
   }
 
   val env = ViiteProperties.env
