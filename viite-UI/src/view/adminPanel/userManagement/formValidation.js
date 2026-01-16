@@ -28,10 +28,6 @@
                     errors.username = "Tunnus saa olla enintään 10 merkkiä pitkä.";
             }
 
-            if (checkRoles && (!roles || roles.length === 0)) {
-                errors.roles = "Valitse vähintään yksi rooli.";
-            }
-
             if (checkElinvoimakeskus && (!elinvoimakeskus || elinvoimakeskus.length === 0)) {
                 errors.elinvoimakeskus = "Valitse vähintään yksi Elinvoimakeskus.";
             }
