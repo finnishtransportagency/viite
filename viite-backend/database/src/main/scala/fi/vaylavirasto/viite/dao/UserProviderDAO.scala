@@ -29,7 +29,14 @@ class UserProviderDAO extends BaseDAO with UserProvider {
        FROM service_user
        WHERE username = ${username}
        """
-      runSelectSingleOption(query.map(User.apply))
+      try {
+        runSelectSingleOption(query.map(User.apply))
+      } catch {
+        case e: TooManyRowsException =>
+          throw ViiteException(s"Multiple users found with username $username")
+        case e: Exception =>
+          throw ViiteException(s"Database error while retrieving user $username: ${e.getMessage}")
+      }
     }
   }
 
