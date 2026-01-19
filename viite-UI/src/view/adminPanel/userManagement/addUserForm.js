@@ -1,15 +1,14 @@
 // Handles user creation with validation
 (function (root) {
     root.UserManagement = root.UserManagement || {};
-    
+
     const DEFAULT_COORDINATES = {
         zoom: 3,
         east: 440220,
         north: 7175360
     };
-    
-    const { validateUserFields } = (root.UserManagement.FormValidation || {});
-    const { getSelectedRoles, getSelectedElinvoimakeskus, setSelectedRoles, setSelectedElinvoimakeskus } = (root.UserManagement.Dropdowns || {});
+    const { validateUserFields } = root.UserManagement.FormValidation;
+    const { getSelectedRoles, getSelectedElinvoimakeskus, setSelectedRoles, setSelectedElinvoimakeskus } = root.UserManagement.Dropdowns;
     const { Toast } = root;
 
     function showFormErrors(errors) {
@@ -38,7 +37,7 @@
             const elinvoimakeskus = getSelectedElinvoimakeskus('newUserElinvoimakeskus');
 
             const fields = { username, roles, elinvoimakeskus, east, north, zoom };
-            const errors = validateUserFields ? validateUserFields(fields) : {};
+            const errors = validateUserFields(fields);
 
             showFormErrors(errors);
             if (Object.keys(errors).length) return;
