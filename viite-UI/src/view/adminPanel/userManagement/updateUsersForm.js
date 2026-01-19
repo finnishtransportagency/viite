@@ -20,9 +20,9 @@
         getElinvoimakeskusDropdownHtml,
         getSelectedRoles,
         getSelectedElinvoimakeskus
-    } = root.UserManagement.Dropdowns;
+    } = (root.UserManagement.Dropdowns || {});
 
-    const { validateUserFieldsAndToastErrors } = root.UserManagement.FormUtils;
+    const { validateUserFieldsAndToastErrors } = (root.UserManagement.FormUtils || {});
 
     /**
      * Handle standard API response object and show appropriate toast.
