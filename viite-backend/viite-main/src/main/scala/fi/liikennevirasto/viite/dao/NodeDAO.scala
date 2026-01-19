@@ -74,7 +74,6 @@ class NodeDAO extends BaseDAO {
 """
 
   def fetchByNodeNumber(nodeNumber: Long): Option[Node] = {
-    println(s"FETCHING BY NODE NUMBER ::: $nodeNumber")
     val query = sql"""
       $selectAllFromNodeQuery
       where node_number = $nodeNumber and valid_to IS NULL and end_date IS NULL
@@ -83,7 +82,6 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchById(nodeId: Long): Option[Node] = {
-    println(s"FETCHING BY ID ::: $nodeId")
     val query = sql"""
       $selectAllFromNodeQuery
       WHERE id = $nodeId and valid_to IS NULL and end_date IS NULL
@@ -92,7 +90,6 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchLatestId(nodeNumber: Long): Option[Long] = {
-    println(s"GETTING NODE NUMBER :::  $nodeNumber")
     val query = sql"""
       SELECT id
       FROM node
@@ -103,7 +100,6 @@ class NodeDAO extends BaseDAO {
   }
 
   def fetchAllValidNodes(): Seq[Node] = {
-    println(s"FETCHING ALL VALID NODES")
     val query =
       sql"""
       SELECT  n.id, n.node_number, ST_X(n.coordinates), ST_Y(n.coordinates), n."name", n."type", n.start_date, n.end_date,
