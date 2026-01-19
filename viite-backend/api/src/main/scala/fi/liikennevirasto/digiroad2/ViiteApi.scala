@@ -245,7 +245,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"GET request for /roadlinks/project/prefill (linkId: $linkId, projectId: $currentProjectId)") {
       projectService.fetchPreFillData(linkId, currentProjectId) match {
         case Right(preFillInfo) =>
-          Map("success" -> true, "roadNumber" -> preFillInfo.RoadNumber, "roadPartNumber" -> preFillInfo.PartNumber, "roadName" -> preFillInfo.roadName, "roadNameSource" -> preFillInfo.roadNameSource.value, "ely" -> preFillInfo.ely)
+          Map(
+            "success" -> true,
+            "roadNumber" -> preFillInfo.RoadNumber,
+            "roadPartNumber" -> preFillInfo.PartNumber,
+            "roadName" -> preFillInfo.roadName,
+            "roadNameSource" -> preFillInfo.roadNameSource.value,
+            "ely" -> preFillInfo.ely,
+            "roadMaintainer" -> preFillInfo.roadMaintainer.number)
         case Left(failureMessage) => Map("success" -> false, "reason" -> failureMessage)
       }
     }
@@ -514,7 +521,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       queryParam[String]("situationDate").description("Situation date (yyyy-MM-dd)"),
       queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
-      queryParam[Long]("roadMaintainer").description("Evk number or older Ely number of a road address in road maintainer format").optional,
+      queryParam[Long]("roadMaintainer").description("Elinvoimakeskus number or older Ely number of a road address in road maintainer format").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
       queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
