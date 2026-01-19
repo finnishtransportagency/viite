@@ -10,23 +10,28 @@
 
       function getDirectionMarkerColor(roadLink) {
 
-        // Use map for O(1) lookup
-        const statusColors = {
-          [ViiteEnumerations.RoadAddressChangeType.Unchanged.value]:   '#4544f7', // Blue
-          [ViiteEnumerations.RoadAddressChangeType.New.value]:         '#f680df', // Pink
-          [ViiteEnumerations.RoadAddressChangeType.Transfer.value]:    '#f64443', // Red
-          [ViiteEnumerations.RoadAddressChangeType.Terminated.value]:  '#555453', // Dark Grey
-          [ViiteEnumerations.RoadAddressChangeType.Numbering.value]:   '#a67550', // Brown
-          [ViiteEnumerations.RoadAddressChangeType.NotHandled.value]:  '#f0f663'  // Yellow
+        const colorMap =
+        {
+          1: '#db0e0e',         //Valtatie
+          2: '#ff6600',         //Kantatie
+          3: '#ff9955',         //Seututie
+          4: '#1414db',         //Yhdystie (dark blue)
+          5: '#10bfc4',         //Yhdystie (light blue)
+          6: '#800080',         //Numeroitu katu
+          7: '#10bfc4',         //Ramppi tai kiertoliittymä
+          8: '#fc6da0',         //Jalka tai pyörätie
+          9: '#fc6da0',         //Talvitie
+          10: '#fc6da0',        //Polku
+          11: '#888888',         //Muu tieverkko
+          12: '#FF55DD'         //Yksityistie, talvitie tai polku
         };
 
-        // Check if link status matches any of the keys in the map and return the corresponding color
-        if (statusColors[roadLink.status]) {
-          return statusColors[roadLink.status];
-        }
-
-        // Default fallback
-        return '#888888';
+        if (roadLink.status === ViiteEnumerations.RoadAddressChangeType.New.value) {
+          return '#ff55dd';
+        } else if (roadLink.roadClass in colorMap) {
+          return colorMap[roadLink.roadClass];
+        } else
+          return '#888888';
       }
 
       function hex2Rgba(hex) {
