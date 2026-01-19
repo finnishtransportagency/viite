@@ -1,7 +1,13 @@
 (function (root) {
     root.UserManagement = root.UserManagement || {};
 
-    const { COORD_LIMITS } = root.UserManagement.Constants;
+    // Local constants
+    const COORD_LIMITS = {
+        east: [50000, 750000],
+        north: [6600000, 7800000],
+        zoom: [1, 10]
+    };
+    
     const { Toast } = root;
 
     // Performs validation checks on user fields like username, roles, Elinvoimakeskus, zoom, and map coordinates.

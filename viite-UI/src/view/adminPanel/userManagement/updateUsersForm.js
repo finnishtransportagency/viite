@@ -1,8 +1,18 @@
 (function (root) {
     root.UserManagement = root.UserManagement || {};
 
-    // Import shared constants and utilities
-    const { DEFAULT_COORDINATES, COORD_LIMITS } = root.UserManagement.Constants;
+    const DEFAULT_COORDINATES = {
+        zoom: 3,
+        east: 440220,
+        north: 7175360
+    };
+    
+    const COORD_LIMITS = {
+        east: [50000, 750000],
+        north: [6600000, 7800000],
+        zoom: [1, 10]
+    };
+
     const { Toast } = root;
 
     const {

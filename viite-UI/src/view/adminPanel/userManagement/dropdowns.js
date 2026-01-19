@@ -1,7 +1,14 @@
 // These are used for selecting user roles and allowed Elinvoimakeskus areas
 (function (root) {
     root.UserManagement = root.UserManagement || {};
-    const { ROLES } = root.UserManagement.Constants;
+    
+    // Local constants
+    const ROLES = [
+        { value: 'operator', label: 'Operator', desc: 'Pääsy hallintatyökaluihin' },
+        { value: 'viite', label: 'Viite', desc: 'Tieosoiteprojektien luonti ja muokkaus' },
+        { value: 'dev', label: 'Dev', desc: 'Pääsy kehittäjätyökaluihin' },
+        { value: 'admin', label: 'Admin', desc: 'Käyttäjähallinta ja dynaamisen verkon käyttö' }
+    ];
 
     // Get Elinvoimakeskus options from enumeration source
     function getElinvoimakeskusOptions() {

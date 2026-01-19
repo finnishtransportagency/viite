@@ -1,7 +1,14 @@
 // View contains the main HTML content for user management
 (function (root) {
     root.UserManagement = root.UserManagement || {};
-    const { DEFAULT_COORDINATES } = root.UserManagement.Constants;
+    
+    // Local constants
+    const DEFAULT_COORDINATES = {
+        zoom: 3,
+        east: 440220,
+        north: 7175360
+    };
+    
     const { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml } = root.UserManagement.Dropdowns;
 
     root.UserManagement.View = {

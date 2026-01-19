@@ -1,9 +1,13 @@
 // Handles user creation with validation
 (function (root) {
     root.UserManagement = root.UserManagement || {};
-    const {
-        DEFAULT_COORDINATES
-    } = root.UserManagement.Constants;
+    
+    const DEFAULT_COORDINATES = {
+        zoom: 3,
+        east: 440220,
+        north: 7175360
+    };
+    
     const { validateUserFields } = root.UserManagement.FormValidation;
     const { getSelectedRoles, getSelectedElinvoimakeskus, setSelectedRoles, setSelectedElinvoimakeskus } = root.UserManagement.Dropdowns;
     const { Toast } = root;
