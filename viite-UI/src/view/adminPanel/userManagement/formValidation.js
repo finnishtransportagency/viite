@@ -1,7 +1,6 @@
 (function (root) {
     root.UserManagement = root.UserManagement || {};
 
-    // Local constants
     const COORD_LIMITS = {
         east: [50000, 750000],
         north: [6600000, 7800000],
@@ -10,20 +9,19 @@
     
     const { Toast } = root;
 
-    // Performs validation checks on user fields like username, roles, Elinvoimakeskus, zoom, and map coordinates.
+    // Performs validation checks on user fields like username, Elinvoimakeskus, zoom, and map coordinates.
     // Validation can be conditionally enabled or disabled using the `options` object.
     root.UserManagement.FormValidation = {
         // eslint-disable-next-line complexity
         validateUserFields: function (fields, options) {
             const {
                 checkUsername = true,
-                checkRoles = true,
                 checkElinvoimakeskus = true,
                 checkCoordinates = true
             } = options || {};
 
             const errors = {};
-            const { username, roles, elinvoimakeskus, east, north, zoom } = fields;
+            const { username, elinvoimakeskus, east, north, zoom } = fields;
 
             if (checkUsername) {
                 if (!username || !(/^[A-Za-zÅÄÖåäö]/).test(username))

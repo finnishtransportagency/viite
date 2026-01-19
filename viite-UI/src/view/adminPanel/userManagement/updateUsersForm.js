@@ -20,9 +20,9 @@
         getElinvoimakeskusDropdownHtml,
         getSelectedRoles,
         getSelectedElinvoimakeskus
-    } = root.UserManagement.Dropdowns;
+    } = (root.UserManagement.Dropdowns || {});
 
-    const { validateUserFieldsAndToastErrors } = root.UserManagement.FormUtils;
+    const { validateUserFieldsAndToastErrors } = (root.UserManagement.FormUtils || {});
 
     /**
      * Handle standard API response object and show appropriate toast.
@@ -158,12 +158,14 @@
 
                 // Validate fields and notify if errors
                 const fields = { roles, elinvoimakeskus, east, north, zoom };
-                const { valid } = validateUserFieldsAndToastErrors(fields, {
-                    checkUsername: false,
-                    checkRoles: true,
-                    checkElinvoimakeskus: true,
-                    checkCoordinates: true
-                }, `Virhe: `);
+                const { valid } = validateUserFieldsAndToastErrors
+                    ? validateUserFieldsAndToastErrors(fields, {
+                        checkUsername: false,
+                        checkRoles: true,
+                        checkElinvoimakeskus: true,
+                        checkCoordinates: true
+                    }, `Virhe: `)
+                    : { valid: true };
 
                 if (!valid) {
                     hasErrors = true;
