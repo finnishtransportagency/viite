@@ -1911,7 +1911,6 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> nodePoint.roadPart.roadNumber,
       "roadPartNumber" -> nodePoint.roadPart.partNumber,
       "track" -> nodePoint.track,
-      "startDate" -> nodePoint.startDate.map(dt => formatToString(dt.toString)).getOrElse(""),
       "coordinates" -> Map(
         "x" ->  nodePoint.coordinates.x,
         "y" ->  nodePoint.coordinates.y)
