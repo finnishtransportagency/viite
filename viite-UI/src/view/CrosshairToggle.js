@@ -14,7 +14,7 @@
 window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
   const crosshairSelector = '.crosshair';
 
-  const performClick = (callback) => {
+  const performClick = (callback, isDoubleClick = false) => {
     const coords = getCrosshairCenter();
     if (!coords) return;
 
@@ -22,7 +22,7 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
     const clickData = getFeatureDataAtAtPixel(coords.x, coords.y);
 
     // Simulate events
-    dispatchMapEvents(coords.x, coords.y);
+    dispatchMapEvents(coords.x, coords.y, isDoubleClick);
 
     // Notifications
     console.log('Crosshair Click Data:', clickData);
@@ -41,6 +41,7 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
   // Returned interface API that other files can access
   return {
     click: () => performClick(), // Click the map at the crosshair coordinates
+    doubleClick: () => performClick(null, true), // Double click at the crosshair coordinates
     getData: () => { // Returns link data for instance
       const coords = getCrosshairCenter();
       return coords ? getFeatureDataAtAtPixel(coords.x, coords.y) : null;
@@ -72,13 +73,26 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
   }
 
   // Handles the canvas click
-  function dispatchMapEvents(x, y) {
+  function dispatchMapEvents(x, y, isDoubleClick = false) {
     const viewport = map.getViewport();
     const target = viewport.querySelector('canvas') || viewport;
-    const eventInit = { clientX: x, clientY: y, bubbles: true };
+    const eventInit = { clientX: x, clientY: y, bubbles: true, detail: 1 };
     
-    target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
-    target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
+    if (isDoubleClick) {
+      // For double click, dispatch two click events followed by a double click event
+      target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
+      target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
+      // console.log("Click");
+      setTimeout(() => {
+        target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
+        target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
+        target.dispatchEvent(new PointerEvent('dblclick', { ...eventInit, detail: 2 }));
+        // console.log("Click");
+      }, 50); // Small delay between clicks to simulate double click
+    } else {
+      target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
+      target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
+    }
   }
 
   function getCrosshairCenter() {
@@ -103,11 +117,14 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
     return $element;
   }
 
-  // Debugging / alternate way to trigger click via shift + c
+  // Debugging / alternate way to trigger click via shift + c or shift + x
   function onKeyDown(e) {
     if (e.key.toUpperCase() === 'C' && e.shiftKey) {
       e.preventDefault();
-      performClick(); //Uncomment to enable
+      performClick();
+    } else if (e.key.toUpperCase() === 'X' && e.shiftKey) {
+      e.preventDefault();
+      performClick(null, true);
     }
   }
 };
