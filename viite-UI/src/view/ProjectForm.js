@@ -649,7 +649,6 @@
         html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
             '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
         $('#actionButtons').html(html);
-        console.log("Load edit");
         eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
       };
 
