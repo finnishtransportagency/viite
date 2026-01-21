@@ -106,33 +106,33 @@ return `<div>${selector.render()}</div>`;
         ? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
         : '';
       return `
-        <button id="${config.id}-button" class="mcs-button"${widthStyle} ${disabledAttr}>
-          <span class="mcs-label">${selectedLabel || config.placeholder}</span>
-          <span class="mcs-arrow" style="font-size: 1.5em;">&#9662;</span>
+        <button id="${config.id}-button" class="modern-button"${widthStyle} ${disabledAttr}>
+          <span class="modern-label">${selectedLabel || config.placeholder}</span>
+          <span class="modern-arrow" style="font-size: 1.5em;">&#9662;</span>
         </button>
       `;
     }
 
     function createDropdown() {
       const columns = Object.keys(config.data).map(Number).sort();
-      let html = `<div id="${config.id}-dropdown" class="mcs-dropdown hidden"><div class="mcs-columns">`;
+      let html = `<div id="${config.id}-dropdown" class="modern-dropdown hidden"><div class="modern-columns">`;
 
       columns.forEach((colIndex) => {
         const colData = config.data[colIndex];
         if (!colData) return;
 
-        html += `<div class="mcs-column">`;
+        html += `<div class="modern-column">`;
         if (colData.columnTitle) {
-          html += `<div class="mcs-column-title">${colData.columnTitle}</div>`;
+          html += `<div class="modern-column-title">${colData.columnTitle}</div>`;
         }
 
         colData.items.forEach(item => {
           const itemId = `${item.value}-${item.label}`;
           const selected = itemId === config.selectedItem ? ' selected' : '';
           html += `
-            <div class="mcs-item${selected}" data-id="${itemId}">
-              <span class="mcs-circle${selected ? ' filled' : ''}"></span>
-              <span class="mcs-item-label">${item.label}</span>
+            <div class="modern-item${selected}" data-id="${itemId}">
+              <span class="modern-circle${selected ? ' filled' : ''}"></span>
+              <span class="modern-item-label">${item.label}</span>
             </div>
           `;
         });
@@ -169,7 +169,7 @@ return `<div>${selector.render()}</div>`;
         : '';
 
       return `
-        <div id="${config.id}" class="mcs-container ${config.className}"${containerWidthStyle}>
+        <div id="${config.id}" class="modern-container ${config.className}"${containerWidthStyle}>
           ${createButton(selectedLabel)}
           ${createDropdown()}
         </div>
@@ -192,9 +192,9 @@ return `<div>${selector.render()}</div>`;
         const rootEl = document.getElementById(config.id);
         if (!rootEl) return;
 
-        const button = rootEl.querySelector('.mcs-button');
-        const dropdown = rootEl.querySelector('.mcs-dropdown');
-        const label = rootEl.querySelector('.mcs-label');
+        const button = rootEl.querySelector('.modern-button');
+        const dropdown = rootEl.querySelector('.modern-dropdown');
+        const label = rootEl.querySelector('.modern-label');
 
         if (!button || !dropdown || !label) return;
 
@@ -208,7 +208,7 @@ return `<div>${selector.render()}</div>`;
         }
 
         // Handle item clicks
-        const itemEl = e.target.closest('.mcs-item');
+        const itemEl = e.target.closest('.modern-item');
         if (itemEl && dropdown.contains(itemEl)) {
           e.preventDefault();
           e.stopPropagation();
@@ -217,9 +217,9 @@ return `<div>${selector.render()}</div>`;
           const itemValue = itemId.split('-')[0];
 
           // Update selection state
-          dropdown.querySelectorAll('.mcs-item').forEach(item => {
+          dropdown.querySelectorAll('.modern-item').forEach(item => {
             item.classList.remove('selected');
-            const circle = item.querySelector('.mcs-circle');
+            const circle = item.querySelector('.modern-circle');
             if (circle) circle.classList.remove('filled');
           });
 
@@ -229,9 +229,9 @@ return `<div>${selector.render()}</div>`;
 
           if (config.selectedItem) {
             itemEl.classList.add('selected');
-            const circle = itemEl.querySelector('.mcs-circle');
+            const circle = itemEl.querySelector('.modern-circle');
             if (circle) circle.classList.add('filled');
-            label.textContent = itemEl.querySelector('.mcs-item-label').textContent;
+            label.textContent = itemEl.querySelector('.modern-item-label').textContent;
           } else {
             label.textContent = config.placeholder;
           }
@@ -270,15 +270,15 @@ return `<div>${selector.render()}</div>`;
 
       const el = document.getElementById(config.id);
       if (el) {
-        const label = el.querySelector('.mcs-label');
+        const label = el.querySelector('.modern-label');
         label.textContent = found ? found.label : config.placeholder;
 
         // Update dropdown items state
-        const dropdown = el.querySelector('.mcs-dropdown');
-        dropdown.querySelectorAll('.mcs-item').forEach(item => {
+        const dropdown = el.querySelector('.modern-dropdown');
+        dropdown.querySelectorAll('.modern-item').forEach(item => {
           const isSelected = item.getAttribute('data-id') === config.selectedItem;
           item.classList.toggle('selected', isSelected);
-          const circle = item.querySelector('.mcs-circle');
+          const circle = item.querySelector('.modern-circle');
           if (circle) circle.classList.toggle('filled', isSelected);
         });
       }
@@ -293,7 +293,7 @@ return `<div>${selector.render()}</div>`;
       config.disabled = disabled;
       const el = document.getElementById(config.id);
       if (el) {
-        const button = el.querySelector('.mcs-button');
+        const button = el.querySelector('.modern-button');
         button.disabled = disabled;
       }
     }
@@ -303,7 +303,7 @@ return `<div>${selector.render()}</div>`;
       config.data = newData;
       const el = document.getElementById(config.id);
       if (el) {
-        const dropdown = el.querySelector('.mcs-dropdown');
+        const dropdown = el.querySelector('.modern-dropdown');
         dropdown.outerHTML = createDropdown();
       }
     }

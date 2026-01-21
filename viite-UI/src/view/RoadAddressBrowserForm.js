@@ -102,14 +102,14 @@
           <div class="input-container">
             <label class="control-label-small">Alkupvm</label>
             <div>
-              <input type="text" class="road-address-browser-date-input" id="roadAddrChangesStartDate" style="width: 80px" required/>
+              <input type="text" class="modern-input road-address-browser-date-input" id="roadAddrChangesStartDate" style="width: 80px" required/>
             </div>
           </div>
           <div class="input-container"> <b style="margin-top: 25px"> - </b></div>
           <div class="input-container">
             <label class="control-label-small">Loppupvm</label>
             <div>
-              <input type="text" class="road-address-browser-date-input" id="roadAddrChangesEndDate" style="width: 80px" />
+              <input type="text" class="modern-input road-address-browser-date-input" id="roadAddrChangesEndDate" style="width: 80px" />
             </div>
           </div>
           ${createRoadNumberInputField('roadAddrChangesInputRoad')}
@@ -134,7 +134,7 @@
           <div class="input-container">
             <label class="control-label-small">Tilannepvm</label>
             <div>
-              <input type="text" id="roadAddrSituationDate" value="${dateutil.getCurrentDateString()}" style="width: 80px" required />
+              <input type="text" class="modern-input" id="roadAddrSituationDate" value="${dateutil.getCurrentDateString()}" style="width: 90px !important" required />
             </div>
           </div>
           <div class="input-container">
@@ -168,12 +168,12 @@
     }
 
     function createRoadNumberInputField(id) {
-      return `<div class="input-container"><label class="control-label-small">Tie</label><input class="road-address-browser-road-input" type="number" min="1" max="99999" id="${id}" /></div>`;
+      return `<div class="input-container"><label class="control-label-small">Tie</label><input class="modern-input road-address-browser-road-input" type="number" min="1" max="99999" id="${id}" /></div>`;
     }
 
     function createRoadPartNumberInputFields(idStart, idEnd) {
-      return `<div class="input-container"><label class="control-label-small">Aosa</label><input type="number" min="1" max="999" id="${idStart}"/></div>` +
-        `<div class="input-container"><label class="control-label-small">Losa</label><input type="number" min="1" max="999" id="${idEnd}"/></div>`;
+      return `<div class="input-container"><label class="control-label-small">Aosa</label><input class="modern-input" type="number" min="1" max="999" id="${idStart}"/></div>` +
+        `<div class="input-container"><label class="control-label-small">Losa</label><input class="modern-input" type="number" min="1" max="999" id="${idEnd}"/></div>`;
     }
 
     function createCsvDownloadButton() {
