@@ -71,23 +71,47 @@
       let html = '';
       for (const status in ViiteEnumerations.LifeCycleStatus) {
         if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.LifeCycleStatus, status)) {
-          html += '<div class="legend-entry">' +
-                    '<div class="label">' + ViiteEnumerations.LifeCycleStatus[status].description + '</div>' +
-                    '<div class="symbol linear construction-type-' + ViiteEnumerations.LifeCycleStatus[status].value + '"></div>' +
-                  '</div>';
+          const statusValue = ViiteEnumerations.LifeCycleStatus[status].value;
+          const statusDescription = ViiteEnumerations.LifeCycleStatus[status].description;
+          let additionalClass = '';
+          
+          if (statusDescription.includes('Rakenteilla (kunta/yksityinen)')) {
+            additionalClass = 'striped-gray';
+          } else if (statusDescription.includes('Rakenteilla (valtio)')) {
+            additionalClass = 'striped-orange';
+          }
+          
+          html += `<div class="legend-entry">
+                    <div class="label">${statusDescription}</div>
+                    <div class="symbol linear construction-type-${statusValue} ${additionalClass}"></div>
+                  </div>`;
         }
       }
       return html;
     }
 
     var roadClassLegendEntries = _.map(roadClasses, function (roadClass) {
-      var defaultLegendEntry =
-        '<div class="legend-entry">' +
-        '<div class="label">' + roadClass[1] + '</div>';
+      const getColorClass = function(roadClassId) {
+        const colorMap = {
+          1: 'red',
+          2: 'orange', 
+          3: 'beige',
+          4: 'dark-blue',
+          5: 'cyan',
+          6: 'purple',
+          7: 'stripe-cyan',
+          8: 'stripe-faded-pink',
+          9: 'stripe-pink'
+        };
+        return colorMap[roadClassId] || 'gray';
+      };
+      
+      let defaultLegendEntry = `<div class="legend-entry">
+        <div class="label">${roadClass[1]}</div>`;
       if (roadClass[0] === 98)
         defaultLegendEntry += buildMultiColoredSegments();
       else
-        defaultLegendEntry += '<div class="symbol linear linear-asset-' + roadClass[0] + '"></div>';
+        defaultLegendEntry += `<div class="symbol linear linear-asset-${roadClass[0]} ${getColorClass(roadClass[0])}"></div>`;
       return defaultLegendEntry + '</div>';
     }).join('');
 
@@ -104,40 +128,40 @@
     }
 
     var roadProjectOperations = function () {
-      return '<div class="legend-entry">' +
-        '<div class="label">' + RoadAddressChangeType.Unchanged.displayText + '</div>' +
-        '<div class="symbol linear operation-type-unchanged"></div>' +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label">' + RoadAddressChangeType.New.displayText + '</div>' +
-        '<div class="symbol linear operation-type-new"></div>' +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label">' + RoadAddressChangeType.Transfer.displayText + '</div>' +
-        '<div class="symbol linear operation-type-transfer"></div>' +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label">' + RoadAddressChangeType.Terminated.displayText + '</div>' +
-        '<div class="symbol linear operation-type-terminated"></div>' +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label">' + RoadAddressChangeType.Numbering.displayText + '</div>' +
-        '<div class="symbol linear operation-type-renumbered"></div>' +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label">' + RoadAddressChangeType.NotHandled.displayText + '</div>' +
-        '<div class="symbol linear operation-type-unhandeled"></div>' +
-        '</div>' +
-        createLifecycleStatusLegendEntries() +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label"> Osoitteeton (valtio)</div>' +
-        '<div class="symbol linear linear-asset-99"></div>' +
-        '</div>' +
-        '<div class="legend-entry">' +
-        '<div class="label"> Osoitteeton (kunta/yksityinen)</div>' +
-        '<div class="symbol linear linear-asset-11"></div>' +
-        '</div>';
+      return `<div class="legend-entry">
+        <div class="label">${RoadAddressChangeType.Unchanged.displayText}</div>
+        <div class="symbol linear operation-type-unchanged dark-blue"></div>
+        </div>
+        <div class="legend-entry">
+        <div class="label">${RoadAddressChangeType.New.displayText}</div>
+        <div class="symbol linear operation-type-new pink"></div>
+        </div>
+        <div class="legend-entry">
+        <div class="label">${RoadAddressChangeType.Transfer.displayText}</div>
+        <div class="symbol linear operation-type-transfer red"></div>
+        </div>
+        <div class="legend-entry">
+        <div class="label">${RoadAddressChangeType.Terminated.displayText}</div>
+        <div class="symbol linear operation-type-terminated black"></div>
+        </div>
+        <div class="legend-entry">
+        <div class="label">${RoadAddressChangeType.Numbering.displayText}</div>
+        <div class="symbol linear operation-type-renumbered brown"></div>
+        </div>
+        <div class="legend-entry">
+        <div class="label">${RoadAddressChangeType.NotHandled.displayText}</div>
+        <div class="symbol linear operation-type-unhandeled yellow"></div>
+        </div>
+        ${createLifecycleStatusLegendEntries()}
+        </div>
+        <div class="legend-entry">
+        <div class="label"> Osoitteeton (valtio)</div>
+        <div class="symbol linear linear-asset-99 dark-gray"></div>
+        </div>
+        <div class="legend-entry">
+        <div class="label"> Osoitteeton (kunta/yksityinen)</div>
+        <div class="symbol linear linear-asset-11 gray"></div>
+        </div>`;
     };
 
     roadClassLegend.append(roadClassLegendEntries);
