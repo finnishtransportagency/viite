@@ -183,14 +183,8 @@
 
             <!-- ELINVOIMAKESKUS -->
             <div class="road-address-field">
-              ${addSmallLabel('ELINVOIMAKESKUS', 'margin: 0; width: 100px;')}
+              ${addSmallLabel('ELINVOIMAKESKUS', 'margin: 0; width: 120px;')}
               ${addElinvoimakeskusDropdown(link.evkCode, !projectEditable)}
-            </div>
-
-            <!-- ELY -->
-            <div class="road-address-field">
-              ${addSmallLabel('ELY', 'width:40px; margin: 0;')}
-              ${addSmallInputNumber('ely', link.elyCode, true, 2, 'margin-right: 0; width:40px !important')}
             </div>
 
             <!-- JATKUU -->
@@ -273,7 +267,7 @@
     };
     
     const addDiscontinuityDropdown = function () {
-      return `<select class="form-select-control" id="discontinuityDropdown" size="1" style="width: 85px !important">
+      return `<select class="form-select-control" id="discontinuityDropdown" size="1" style="width: 104px !important">
         <option value="5" selected disabled hidden>5 Jatkuva</option>
         <option value="1">1 Tien loppu</option>
         <option value="2">2 Epäjatkuva</option>
@@ -298,7 +292,7 @@
         ? `<option value="0" selected>0 Tuntematon elinvoimakeskus</option>`
         : `<option value="" disabled ${!selectedValue ? 'selected' : ''} hidden>Valitse elinvoimakeskus</option>`;
 
-      return `<select class="form-select-control" id="elinvoimakeskus" size="1" style="width: 85px;">
+      return `<select class="form-select-control" id="elinvoimakeskus" size="1" style="width: 120px !important;">
         ${defaultOption}
         ${evkOptions}
       </select>`;
