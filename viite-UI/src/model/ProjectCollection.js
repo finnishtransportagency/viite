@@ -420,7 +420,8 @@
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
-          ely: (part.newEly ? part.newEly : part.currentEly)
+          ely: (part.newEly ? part.newEly : part.currentEly),
+          evk: (part.newEvk ? part.newEvk : part.currentEvk)
         };
       });
 
