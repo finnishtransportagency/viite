@@ -7,7 +7,7 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import org.joda.time.DateTime
-/*
+
 
 object Dummies {
 
@@ -72,4 +72,3 @@ object Dummies {
     ChangeInfo(Some(oldId), None, oldId.toLong, changeType, Some(oldStartMeasure), Some(oldEndMeasure), None, None, vvhTimeStamp)
   }
 }
-*/
