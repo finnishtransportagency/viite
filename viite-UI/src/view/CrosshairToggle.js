@@ -108,12 +108,12 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
   function createUI() {
     const $element = $(`
       <div class="crosshair-wrapper">
-        <div class="checkbox">
-          <label><input type="checkbox" name="crosshair" checked="true"/> Kohdistin</label>
-        </div>
+        <button class="crosshair-center-btn" title="Keskitä kohdistin">
+          <i class="fas fa-crosshairs"></i>
+        </button>
       </div>
     `);
-    $element.find('input').on('change', (e) => $(crosshairSelector).toggle(e.target.checked));
+    $element.find('.crosshair-center-btn').on('click', () => performClick());
     return $element;
   }
 
