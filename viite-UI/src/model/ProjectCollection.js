@@ -380,7 +380,7 @@
         roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
-        roadEly: Number(roadAddressProjectForm.find('#ely')[0].value),
+        roadEly: Number(roadAddressProjectForm.find('#ely').val() || 0),
         roadEvk: Number(roadAddressProjectForm.find('#elinvoimakeskus')[0].value),
         roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
         administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
