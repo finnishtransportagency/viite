@@ -4,7 +4,7 @@ import java.sql.SQLException
 import fi.liikennevirasto.viite._
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime
 import org.scalatest.funsuite.AnyFunSuite
@@ -32,9 +32,9 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
  private val rw2roadPart = RoadPart(roadNumber1, 2)
  private val rw3roadPart = RoadPart(roadNumber2, 1)
 
- private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, rw1roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
- private val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, rw2roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(100, 200), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, TerminationCode.NoTermination)
- private val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, rw3roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, TerminationCode.NoTermination)
+ private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, rw1roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+ private val testRoadway2 = Roadway(NewIdValue, roadwayNumber2, rw2roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(100, 200), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+ private val testRoadway3 = Roadway(NewIdValue, roadwayNumber3, rw3roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(  0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 2"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
  private val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000L.toString, 0.0, 100.0, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference(Some(0L)), CalibrationPointReference.None), Seq(Point(0.0, 0.0), Point(0.0, 100.0)), LinkGeomSource.NormalLinkInterface, roadwayNumber1)
 
  // fetchByRoadwayNumber
@@ -927,27 +927,27 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
      val date = "2022-01-01"
 
      val roadways = Seq(
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1701, 1815), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1815, 2022), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2333, 2990), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2990, 5061), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1701, 1815), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1815, 2022), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2333, 2990), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2990, 5061), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination)
      )
 
      dao.create(roadways)
 
-     val result = dao.fetchTracksForRoadAddressBrowser(Some(date), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
+     val result = dao.fetchTracksForRoadAddressBrowser(Some(date), None, None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
 
      result.size should be (11)
      val (combinedTrack, twoTrack) = result.partition(row => row.track == 0)
@@ -985,27 +985,27 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
      val date = "2022-01-01"
 
      val roadways = Seq(
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1701, 1815), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1815, 2022), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2333, 2990), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2990, 5061), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination),
-       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(   0,  190), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange( 190, 1260), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1260, 1545), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(1545, 1701), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1701, 1815), reversed = false, DateTime.parse("2017-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(1815, 2022), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(2022, 2333), reversed = false, DateTime.parse("2017-12-15"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2333, 2990), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous, AddrMRange(2990, 5061), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination),
+       Roadway(Sequences.nextRoadwayId,	Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous, AddrMRange(5061, 5239), reversed = false, DateTime.parse("2017-12-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination)
      )
 
      dao.create(roadways)
 
-     val result = dao.fetchRoadPartsForRoadAddressBrowser(Some(date), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
+     val result = dao.fetchRoadPartsForRoadAddressBrowser(Some(date), None, None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
      result.size should be (1)                               // one road part should always return one result row
      result.head shouldBe a [RoadPartForRoadAddressBrowser]
      result.head.addrMRange should be (AddrMRange(0, 5239)) // AddrMRange(max endAddrM - min startAddrM,  max endAddrM)
@@ -1041,34 +1041,34 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
        * */
 
      // history road part that is 2080 meters long
-     val roadway1HistoryRow = Roadway(Sequences.nextRoadwayId,	roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 2080), reversed = false, DateTime.parse(rwHistoryRowStartDate), Some(DateTime.parse(rwHistoryRowEndDate)), "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+     val roadway1HistoryRow = Roadway(Sequences.nextRoadwayId,	roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0, 2080), reversed = false, DateTime.parse(rwHistoryRowStartDate), Some(DateTime.parse(rwHistoryRowEndDate)), "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination)
 
      // current road part that is 2200 meters long
-     val roadway1 = Roadway(Sequences.nextRoadwayId,	roadwayNumber,  roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,    AddrMRange(   0, 2080), reversed = false, DateTime.parse(rwCurrentRowStartDate), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
-     val roadway2 = Roadway(Sequences.nextRoadwayId,	roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(2080, 2200), reversed = false, DateTime.parse(rwCurrentRowStartDate), None, "test", Some("TEST ROAD 1"), 8, TerminationCode.NoTermination)
+     val roadway1 = Roadway(Sequences.nextRoadwayId,	roadwayNumber,  roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,    AddrMRange(   0, 2080), reversed = false, DateTime.parse(rwCurrentRowStartDate), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination)
+     val roadway2 = Roadway(Sequences.nextRoadwayId,	roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(2080, 2200), reversed = false, DateTime.parse(rwCurrentRowStartDate), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination)
 
      dao.create(Seq(roadway1HistoryRow,roadway1,roadway2))
 
      // situation date after changes
-     val resultForRoadParts = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
+     val resultForRoadParts = dao.fetchRoadPartsForRoadAddressBrowser(Some(afterChangesSituationDate), None, None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
      resultForRoadParts.size should be (1) // a single line per (the whole) road part
      resultForRoadParts.head shouldBe a [RoadPartForRoadAddressBrowser]
      resultForRoadParts.head.addrMRange.end should be (2200)
 
      // situation date before changes
-     val historyResultForRoadPart = dao.fetchRoadPartsForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
+     val historyResultForRoadPart = dao.fetchRoadPartsForRoadAddressBrowser(Some(historyChangesSituationDate), None, None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
      historyResultForRoadPart.size should be (1)
      historyResultForRoadPart.head shouldBe a [RoadPartForRoadAddressBrowser]
      historyResultForRoadPart.head.addrMRange.end should be (2080)
 
      // situation date after changes
-     val resultForTrack = dao.fetchTracksForRoadAddressBrowser(Some(afterChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
+     val resultForTrack = dao.fetchTracksForRoadAddressBrowser(Some(afterChangesSituationDate), None, None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
      resultForTrack.size should be (1)
      resultForTrack.head shouldBe a [TrackForRoadAddressBrowser]
      resultForTrack.head.addrMRange.end should be (2200)
 
      // situation date before changes
-     val historyResultTrack = dao.fetchTracksForRoadAddressBrowser(Some(historyChangesSituationDate), None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
+     val historyResultTrack = dao.fetchTracksForRoadAddressBrowser(Some(historyChangesSituationDate), None, None, Some(roadPart.roadNumber), Some(roadPart.partNumber), Some(roadPart.partNumber))
      historyResultTrack.size should be (1)
      historyResultTrack.head shouldBe a [TrackForRoadAddressBrowser]
      historyResultTrack.head.addrMRange.end should be (2080)
