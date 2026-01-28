@@ -120,8 +120,8 @@ class JunctionDAOSpec extends AnyFunSuite with Matchers {
      val roadwayNumber2 = Sequences.nextRoadwayNumber
      roadwayDAO.create(
        Seq(
-         Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("ELY0"), TerminationCode.NoTermination),
-         Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("ELY0"), TerminationCode.NoTermination)
+         Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("EVK0"), TerminationCode.NoTermination),
+         Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("EVK0"), TerminationCode.NoTermination)
 
        )
      )
@@ -135,8 +135,8 @@ class JunctionDAOSpec extends AnyFunSuite with Matchers {
      // create node points
      nodePointDAO.create(
        Seq(
-         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("ELY0"), Point(100, 100)),
-         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("ELY0"), Point(100, 200))
+         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("EVK0"), Point(100, 100)),
+         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("EVK0"), Point(100, 200))
        )
      )
      // create junction
