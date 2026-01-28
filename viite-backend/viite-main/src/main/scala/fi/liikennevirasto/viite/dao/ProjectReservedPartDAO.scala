@@ -47,7 +47,7 @@ object ProjectReservedPart extends SQLSyntaxSupport[ProjectReservedPart] {
     newDiscontinuity = rs.longOpt("discontinuity_type").map(Discontinuity.apply), // same as discontinuity
   //  newEly           = rs.longOpt("ely"), // same as ely
     // newRoadMaintainer = Some(ArealRoadMaintainer.apply(rs.stringOpt("road_maintainer").getOrElse("EVK0"))),
-    newRoadMaintainer = rs.stringOpt("roadMaintainer") match {
+    newRoadMaintainer = rs.stringOpt("road_maintainer") match {
       case Some(value) => Some(ArealRoadMaintainer.apply(value))
       case None => None
     },
