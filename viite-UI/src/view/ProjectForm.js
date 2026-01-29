@@ -449,7 +449,12 @@
         if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
           buttonsWhenInspectingUneditableProject();
         } else {
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          const projectErrors = projectCollection.getProjectErrors();
+          if (projectErrors.length === 0) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          } else {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true);
+          }
           formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
