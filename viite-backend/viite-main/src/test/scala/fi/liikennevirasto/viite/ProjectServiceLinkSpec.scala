@@ -1,4 +1,4 @@
-/*
+
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2._
@@ -642,4 +642,4 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
     }
   }
 }
-*/
+
