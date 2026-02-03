@@ -14,7 +14,7 @@ object Dummies {
     Roadway(roadwayId, roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, reversed = false, startDate, endDate, "user", None, 0L, ArealRoadMaintainer.apply("EVK1"), NoTermination)
   }
 
-  def dummyRoadwayChangeSection(roadPart: Option[RoadPart], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], administrativeClass: Option[AdministrativeClass] = Some(AdministrativeClass.State), discontinuity: Option[Discontinuity], ely: Option[String] = Some("ELY8"), evk: Option[String] = Some("EVK12")): RoadwayChangeSection = {
+  def dummyRoadwayChangeSection(roadPart: Option[RoadPart], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], administrativeClass: Option[AdministrativeClass] = Some(AdministrativeClass.State), discontinuity: Option[Discontinuity], ely: Option[String] = Some("ELY8"), evk: Option[String] = Some("EVK8")): RoadwayChangeSection = {
     RoadwayChangeSection(Some(roadPart.get.roadNumber), track, Some(roadPart.get.partNumber), Some(roadPart.get.partNumber), Some(AddrMRange(startAddressM.get, endAddressM.get)), administrativeClass, discontinuity, ely.map(id => ArealRoadMaintainer(id).number.toLong), evk.map(id => ArealRoadMaintainer(id)))
   }
 
