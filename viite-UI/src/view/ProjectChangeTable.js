@@ -127,44 +127,75 @@
     }
 
     // Check if length values match for existing and new addresses
+    // Check if length values match and are non-negative
     function validateLengthValues(changeTableData) {
-      if (!changeTableData || !changeTableData.changeInfoSeq) return { isValid: true };
-      
+      if (!changeTableData || !changeTableData.changeInfoSeq) {
+        return { isValid: true, hasNegativeLength: false, hasLengthMismatch: false };
+      }
+
       let allValid = true;
+      let hasNegativeLengthTotal = false;
+      let hasLengthMismatchTotal = false;
+
       const validationResults = changeTableData.changeInfoSeq.map(function(change) {
-        // Skip validation for New and Terminated changes as they don't have both source and target
-        if (change.changetype === RoadAddressChangeType.New.value || 
-            change.changetype === RoadAddressChangeType.Terminated.value) {
-          return { isValid: true };
+        let sourceLength = 0;
+        let targetLength = 0;
+        let changeHasNegativeLength = false;
+        let changeHasMismatch = false;
+
+        try {
+          const isNew = change.changetype === RoadAddressChangeType.New.value;
+          const isTerminated = change.changetype === RoadAddressChangeType.Terminated.value;
+
+          // Calculate lengths only if the specific side exists
+          if (!isNew && change.source && change.source.addrMRange) {
+            sourceLength = change.source.addrMRange.end - change.source.addrMRange.start;
+          }
+
+          if (!isTerminated && change.target && change.target.addrMRange) {
+            targetLength = change.target.addrMRange.end - change.target.addrMRange.start;
+          }
+
+          // Validation Logic
+          changeHasNegativeLength = (!isNew && sourceLength < 0) || (!isTerminated && targetLength < 0);
+          changeHasMismatch = (!isNew && !isTerminated) && (sourceLength !== targetLength);
+
+          if (changeHasNegativeLength) hasNegativeLengthTotal = true;
+          if (changeHasMismatch) hasLengthMismatchTotal = true;
+
+        } catch (e) {
+          // If a property is missing or math fails, we log it and move on.
+          // The row remains 'valid' to avoid false positives from missing data.
+          console.warn("Validation skipped for a row due to missing data", e);
         }
-        
-        // Calculate length values
-        const sourceLength = change.source.addrMRange.end - change.source.addrMRange.start;
-        const targetLength = change.target.addrMRange.end - change.target.addrMRange.start;
-        const isValid = sourceLength === targetLength;
-        
-        if (!isValid) {
-          allValid = false;
-        }
-        
+
+        const isValid = !changeHasNegativeLength && !changeHasMismatch;
+        if (!isValid) allValid = false;
+
         return {
-          isValid,
+          isValid: isValid,
+          hasNegativeLength: changeHasNegativeLength,
+          hasLengthMismatch: changeHasMismatch,
           sourceLength: sourceLength,
           targetLength: targetLength,
-          change
+          change: change
         };
       });
-      
+
       return {
         isValid: allValid,
+        hasNegativeLength: hasNegativeLengthTotal,
+        hasLengthMismatch: hasLengthMismatchTotal,
         results: validationResults
       };
     }
 
     function showChangeTable(projectChangeData) {
+      console.log(projectChangeData);
       var htmlTable = "";
       var warningM = projectChangeData.warningMessage;
       var hasLengthMismatch = false;
+      var hasNegativeLength = false;
       
       if (!_.isUndefined(warningM))
         new ModalConfirm(warningM);
@@ -172,9 +203,12 @@
       if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
         // Validate length values
         const validation = validateLengthValues(projectChangeData.changeTable);
-        hasLengthMismatch = !validation.isValid;
+        hasLengthMismatch = validation.hasLengthMismatch;
+        hasNegativeLength = validation.hasNegativeLength;
         
-        if (hasLengthMismatch) {
+        if (hasNegativeLength) {
+          $('.change-table-header').html($('<div class="font-resize" style="color: yellow">Pituuksissa on negatiivisia arvoja. Tarkista muutokset tai ota yhteyttä Viite tukeen.</div>'));
+        } else if (hasLengthMismatch) {
           $('.change-table-header').html($('<div class="font-resize" style="color: yellow">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>'));
         }
         
@@ -220,8 +254,8 @@
         if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
           var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
           
-          // Only show success message if there are no length mismatches
-          if (!hasLengthMismatch) {
+          // Only show success message if there are no length mismatches or negative lengths
+          if (!hasLengthMismatch && !hasNegativeLength) {
             $('.change-table-header').html($('<div class="font-resize">Validointi ok. Alla näet muutokset projektissa.</div><div class="font-resize">Alkupäivämäärä: ' + projectDate + '</div>'));
           }
           
@@ -235,8 +269,8 @@
           if ($('.change-table-frame').css('display') === "block" && 
               currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
             
-          if (hasLengthMismatch) {
-            // Disable send button if there are length mismatches
+          if (hasLengthMismatch || hasNegativeLength) {
+            // Disable send button if there are length mismatches or negative lengths
             formCommon.setDisabledAndTitleAttributesById("send-button", true);
           } else {
               // Enable send button if no issues
