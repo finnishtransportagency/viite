@@ -33,13 +33,13 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
        start_addr_m, end_addr_m, created_by, modified_by, created_date, modified_date, status,
        administrative_class, roadway_id, linear_location_id, connected_link_id, ely, reversed, side, start_measure, end_measure,
        link_id, adjusted_timestamp, link_source, geometry, original_start_addr_m, original_end_addr_m, roadway_number,
-       start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point)
+       start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point, road_maintainer)
      VALUES (1, 1, 0, 5, 1, 1,
        0, 86, 'test user', 'test user', TIMESTAMP '2018-03-23 12:26:36.000000', TIMESTAMP '2018-03-23 12:26:36.000000', 2,
        1, NULL, NULL, NULL, 8, 0, 2, 0, 85.617,
        5170979, 1500079296000, 1, ST_GeomFromText('LINESTRING EMPTY', 3067), 0, 86, NULL,
-       3, 3, 3, 3
-     )""")
+       3, 3, 3, 3, 'EVK8')
+     """)
  }
 
  test("Test RoadwayChangesDAO().fetchRoadwayChanges() When searching for changes on a project with roadway changes Then return said changes."){
@@ -227,10 +227,21 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
      runUpdateToDb(sql"""UPDATE project SET accepted_date= TIMESTAMP '2120-01-02 12:26:36.000000' WHERE id=$projId1""")
 //    val pr2 = projectDAO.fetchById(projId1)  // for debug
      val changeType = 2
+
      runUpdateToDb(sql"""
-                  INSERT INTO roadway_changes(project_id,change_type,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id,new_road_number,new_road_part_number,new_start_addr_m,new_end_addr_m)
-                  VALUES($projId1,$changeType,1,1,1,1,8,8,1,$roadNumber1,$roadPartNumber1,0,10.5)
-                  """)
+      INSERT INTO roadway_changes(
+        project_id, change_type, old_discontinuity, new_discontinuity,
+        old_administrative_class, new_administrative_class, old_ely, new_ely,
+        roadway_change_id, new_road_number, new_road_part_number,
+        new_start_addr_m, new_end_addr_m, new_road_maintainer -- Added this
+      )
+      VALUES(
+        $projId1, $changeType, 1, 1,
+        1, 1, 8, 8,
+        1, $roadNumber1, $roadPartNumber1,
+        0, 10.5, 'EVK1' -- Added a default value
+      )
+    """)
 //    val rwcs = dao.fetchRoadwayChanges(Set(projId1))  // for debug
      val startValidFromDate = DateTime.parse("2120-01-01")
      val endValidFromDate =  DateTime.parse("2120-01-03")
@@ -240,9 +251,20 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
      roadwayChangesInfo.head.change_type should be(changeType)
 
      runUpdateToDb(sql"""
-                  INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-                  VALUES($projId1,5,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8,2)
-                  """)
+      INSERT INTO roadway_changes(
+        project_id, change_type, old_road_number, old_road_part_number,
+        old_track, old_start_addr_m, old_end_addr_m, old_discontinuity,
+        new_discontinuity, old_administrative_class, new_administrative_class,
+        old_ely, new_ely, roadway_change_id, new_road_maintainer, old_road_maintainer,
+        reversed -- Added this if your mapper expects it
+      )
+      VALUES(
+        $projId1, 5, $roadNumber1, $roadPartNumber1,
+        1, 0, 10.5, 1,
+        1, 1, 1,
+        8, 8, 2, 'EVK1', 'EVK2', 0
+      )
+    """)
      roadwayChangesInfo = dao.fetchRoadwayChangesInfo(startValidFromDate, Option(endValidFromDate))
      roadwayChangesInfo.size should be(2)
    }
