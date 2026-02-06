@@ -318,12 +318,12 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
 
      val changeType = 3 //transfer
      runUpdateToDb(sql"""
-       INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-       VALUES($projId,$changeType,$roadNumber,$initialRoadPart,0,0,100,$roadNumber,$transferredRoadPart,0,0,100,5,5,1,1,8,8,1)
+       INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id, new_road_maintainer, old_road_maintainer)
+       VALUES($projId,$changeType,$roadNumber,$initialRoadPart,0,0,100,$roadNumber,$transferredRoadPart,0,0,100,5,5,1,1,8,8,1,'EVK1','EVK2')
        """)
      runUpdateToDb(sql"""
-       INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id)
-       VALUES($projId,$changeType,$roadNumber,$initialRoadPart,0,100,200,$roadNumber,$initialRoadPart,0,0,100,5,5,1,1,8,8,2)
+       INSERT INTO roadway_changes(project_id,change_type,old_road_number,old_road_part_number,old_track,old_start_addr_m,old_end_addr_m,new_road_number,new_road_part_number,new_track,new_start_addr_m,new_end_addr_m,old_discontinuity,new_discontinuity,old_administrative_class,new_administrative_class,old_ely,new_ely, roadway_change_id, new_road_maintainer, old_road_maintainer)
+       VALUES($projId,$changeType,$roadNumber,$initialRoadPart,0,100,200,$roadNumber,$initialRoadPart,0,0,100,5,5,1,1,8,8,2,'EVK2','EVK2')
        """)
 
      val startValidFromDate = DateTime.now().minusDays(1)
