@@ -497,7 +497,7 @@ class ProjectLinkDAO extends BaseDAO {
       val nonUpdatingStatus = Set[RoadAddressChangeType](RoadAddressChangeType.NotHandled)
       val maxInEachTracks = projectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).groupBy(_.track).map(p => p._2.maxBy(_.addrMRange.end).id).toSeq
       val links = projectLinks.map { pl =>
-        println(s"PROJECT LINK ROAD MAINTAINER ID :: ", {pl.roadMaintainer.id})
+        // println(s"PROJECT LINK ROAD MAINTAINER ID :: ", {pl.roadMaintainer.id})
         if (!pl.isSplit && nonUpdatingStatus.contains(pl.status) && addresses.map(_.linearLocationId).contains(pl.linearLocationId) && !maxInEachTracks.contains(pl.id)) {
           val ra = addresses.find(_.linearLocationId == pl.linearLocationId).get
           // Discontinuity, administrative class and calibration points may change with Unchanged status

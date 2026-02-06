@@ -680,7 +680,7 @@ class ProjectValidator {
 
   def checkTrackCodePairing(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
-    projectLinks.foreach(p => println(s"LINK: ${p.linkId} :: TRACK: ${p.track} :: STATUS: ${p.status}"))
+    // projectLinks.foreach(p => println(s"LINK: ${p.linkId} :: TRACK: ${p.track} :: STATUS: ${p.status}"))
 
     val notCombinedLinks = projectLinks.filterNot(_.track == Track.Combined)
     def checkMinMaxTrack(trackInterval: Seq[ProjectLink]): Option[ProjectLink] = {

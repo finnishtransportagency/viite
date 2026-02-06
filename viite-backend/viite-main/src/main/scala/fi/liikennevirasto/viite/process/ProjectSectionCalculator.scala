@@ -26,11 +26,11 @@ object ProjectSectionCalculator {
 
 //    println(s"PROJECT LINKS ::: ")
 
-    projectLinks.foreach(p => println(s"ID: ${p.id} :: PROJECT ID: ${p.projectId} :: LINK ID: ${p.linkId} :: STATUS :: ${p.status}"))
+    // projectLinks.foreach(p => println(s"ID: ${p.id} :: PROJECT ID: ${p.projectId} :: LINK ID: ${p.linkId} :: STATUS :: ${p.status}"))
 
 //    println(s"USER GIVEN CALIBRATION POINTS :: ${userGivenCalibrationPoints.length} ")
 
-    userGivenCalibrationPoints.foreach(p => println(s"ID: ${p.id} :: PROJECT ID: ${p.projectId} :: PROJECT LINK ID: ${p.projectLinkId}"))
+    // userGivenCalibrationPoints.foreach(p => println(s"ID: ${p.id} :: PROJECT ID: ${p.projectId} :: PROJECT LINK ID: ${p.projectLinkId}"))
 
 
 
@@ -38,14 +38,14 @@ object ProjectSectionCalculator {
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == RoadAddressChangeType.New)
 
 //    println(s"OTHERS ::: ${others.length}")
-    others.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
+    // others.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
 
 //    println(s"NEW LINKS ::: ${newLinks.length}")
-    newLinks.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
+    // newLinks.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
 
 
 //    println(s"NON TERMINATED ::: ${nonTerminatedLinks.length}")
-    nonTerminatedLinks.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
+    // nonTerminatedLinks.foreach(o => println(s" LINK ID: ${o.linkId} :: ${o.status}"))
 
 
     try {
