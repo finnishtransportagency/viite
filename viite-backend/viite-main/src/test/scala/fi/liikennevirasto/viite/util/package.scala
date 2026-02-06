@@ -122,7 +122,7 @@ package object util {
                     VALUES (
                       $roadwayId, 1000000000, ${roadPart.roadNumber}, ${roadPart.partNumber}, $track, $start, $end, 0,
                       ${discontinuity.value}, current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'),
-                      0, $ely, 0, current_date, NULL
+                      0, $ely, 0, current_date, NULL, 'EVK1'
                     )
                     """)
 
