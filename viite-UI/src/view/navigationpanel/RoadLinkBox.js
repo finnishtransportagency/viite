@@ -101,9 +101,11 @@
           6: 'purple',
           7: 'stripe-cyan',
           8: 'stripe-faded-pink',
-          9: 'stripe-pink'
+          9: 'stripe-pink',
+          11: 'gray',
+          99: 'dark-gray'
         };
-        return colorMap[roadClassId] || 'gray';
+        return colorMap[roadClassId] || '';
       };
       
       let defaultLegendEntry = `<div class="legend-entry">
