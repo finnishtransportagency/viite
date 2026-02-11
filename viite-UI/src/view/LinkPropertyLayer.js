@@ -649,10 +649,10 @@
         eventbus.trigger('linkProperty:fetch');
       }
       // Exclude unAddressedRoadLayer from general visibility toggle since it has its own checkbox control
-      const layersWithoutUnAddressed = layers.filter(function(layerItem) {
-        return layerItem !== unAddressedRoadLayer;
+      const nonAdressedOrConstructionLayers = layers.filter(function(layerItem) {
+        return layerItem !== unAddressedRoadLayer && layerItem !== underConstructionRoadLayer;
       });
-      me.toggleLayersVisibility(layersWithoutUnAddressed, applicationModel.getRoadVisibility());
+      me.toggleLayersVisibility(nonAdressedOrConstructionLayers, applicationModel.getRoadVisibility());
     });
 
     var clearHighlights = function () {
