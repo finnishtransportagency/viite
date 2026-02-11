@@ -1,0 +1,122 @@
+version: '3'
+
+vars:
+  TUNNEL_SESSION: db-tunnel
+  FLYWAY_SCHEMA: '{{default "public" .FLYWAY_SCHEMA}}'
+
+tasks:
+
+  # --- Tunnel (dev) ---------------------------------------------------------
+  tunnel:start:
+    desc: "Open SSM port-forward to RDS (dev) via tmux"
+    cmds:
+      - |
+        set -euo pipefail
+        echo "Starting SSM tunnel to $DB_HOST:$DB_PORT on localhost:$LOCAL_DB_PORT (profile: $AWS_PROFILE)"
+
+        tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null && {
+          echo "Tunnel already running."
+          exit 0
+        } || true
+
+        tmux new-session -d -s {{.TUNNEL_SESSION}} \
+          "aws ssm start-session \
+            --region '$AWS_REGION' \
+            --profile '$AWS_PROFILE' \
+            --target '$SSM_TARGET' \
+            --document-name AWS-StartPortForwardingSessionToRemoteHost \
+            --parameters host='$DB_HOST',portNumber='$DB_PORT',localPortNumber='$LOCAL_DB_PORT'"
+
+        echo "SSM tunnel started (tmux session: {{.TUNNEL_SESSION}})"
+    status:
+      - tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null
+    requires:
+      vars: [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
+
+  tunnel:stop:
+    desc: "Stop SSM tunnel (tmux)"
+    cmds:
+      - |
+        set -euo pipefail
+        tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null && tmux kill-session -t {{.TUNNEL_SESSION}} || true
+
+  # --- Internal helper: build URL and run DataFixture ------------------------
+  _run:
+    internal: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        DBN="${FLYWAY_DB_NAME:?FLYWAY_DB_NAME missing}"
+        USERN="${FLYWAY_USER:?FLYWAY_USER missing}"
+        PASSW="${FLYWAY_PASSWORD:-}"
+
+        # If FLYWAY_URL is provided, use it. Otherwise build localhost URL (tunnel/dev).
+        URL="${FLYWAY_URL:-jdbc:postgresql://127.0.0.1:${LOCAL_DB_PORT}/${DBN}}"
+        SCHEMA="{{.FLYWAY_SCHEMA}}"
+
+        echo "Flyway {{.ACTION}}"
+        echo "  db     = $DBN"
+        echo "  schema = $SCHEMA"
+        echo "  user   = $USERN"
+        echo "  url    = $URL"
+
+        export SBT_OPTS="
+          -Dflyway.schemas=${SCHEMA}
+          -Dflyway.url=${URL}
+          -Dflyway.user=${USERN}
+          -Dflyway.password=${PASSW}
+        "
+
+        sbt 'project viiteJar' \
+            "test:runMain fi.liikennevirasto.viite.util.DataFixture {{.RUNNER_ARG}}"
+    requires:
+      vars: [FLYWAY_DB_NAME, FLYWAY_USER]
+
+  # --- Public tasks: migrate, history ------------------------------------
+  migrate:
+    desc: "Flyway migrate via DataFixture (uses tunnel unless FLYWAY_URL is set)"
+    deps:
+      # tunnel only if you are NOT providing FLYWAY_URL (dev-mode)
+      - task: tunnel:start
+        vars: {}
+    cmds:
+      - task: _run
+        vars:
+          ACTION: MIGRATE
+          RUNNER_ARG: flyway_migrate
+
+  history:
+    desc: "Show flyway_schema_history"
+    deps:
+      - task: tunnel:start
+        vars: {}
+    cmds:
+      - |
+        set -euo pipefail
+
+        DBN="${FLYWAY_DB_NAME:?FLYWAY_DB_NAME missing}"
+        USERN="${FLYWAY_USER:?FLYWAY_USER missing}"
+        PASSW="${FLYWAY_PASSWORD:-}"
+
+        PGPASSWORD="$PASSW" \
+        psql \
+          -h 127.0.0.1 \
+          -p "$LOCAL_DB_PORT" \
+          -U "$USERN" \
+          -d "$DBN" \
+          -v ON_ERROR_STOP=1 \
+          -c "
+            SELECT installed_rank,
+                   version,
+                   description,
+                   type,
+                   script,
+                   installed_by,
+                   installed_on,
+                   success
+            FROM public.flyway_schema_history
+            ORDER BY installed_rank;
+          "
+    requires:
+      vars: [FLYWAY_DB_NAME, FLYWAY_USER, LOCAL_DB_PORT]

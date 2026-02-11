@@ -1,0 +1,13 @@
+version: '3'
+  
+dotenv: [".env"]
+set: [e, u, pipefail]
+
+includes:
+  db:
+    taskfile: ./taskfiles/db-default.yml
+    dir: .
+
+  flyway:
+    taskfile: ./taskfiles/flyway.yml
+    dir: .
