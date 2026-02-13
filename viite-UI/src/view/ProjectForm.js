@@ -150,7 +150,7 @@
           '</div>' +
           '</div><div class = "form-result"><label >PROJEKTIIN VALITUT TIEOSAT:</label>' +
           '<div>' +
-          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('Elinvoimakeskus') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELINVOIMAKESKUS') +
           '</div>' +
           '<div id ="reservedRoads">' +
           '</div></div>' +
@@ -190,7 +190,7 @@
           '<div class = "form-result">' +
           '<label>PROJEKTIIN VARATUT TIEOSAT:</label>' +
           '<div>' +
-          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELINVOIMAKESKUS') +
           '</div>' +
           '<div id ="reservedRoads">' +
           reservedRoads +
@@ -198,7 +198,7 @@
           '<div class = "form-result">' +
           '<label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>' +
           '<div>' +
-          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS') +
+          addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELINVOIMAKESKUS') +
           '</div>' +
           '<div id ="newReservedRoads">' +
           newReservedRoads +
@@ -344,8 +344,7 @@
                 addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                 addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
                 addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
-                addSmallLabelWithIds((line.currentEly || '0'), 'reservedEly') +
-                addSmallLabelWithIds((line.currentEvk), 'reservedEvk') +
+                addSmallLabelWithIds((line.currentEvk), 'reservedEvk', "100px !important") +
                 projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
                 '</div>';
           }
@@ -363,8 +362,7 @@
                 addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
                 addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
                 addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
-                addSmallLabelWithIds((line.newEly || '0'), 'reservedEly') +
-                addSmallLabelWithIds((line.newEvk), 'reservedEvk') +
+                addSmallLabelWithIds(line.newEvk, 'reservedEvk', "100px !important") +
                 projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
                 '</div>';
           }
@@ -405,7 +403,7 @@
           _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
             text += '<div class="form-reserved-roads-list">' + button +
-                addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely || '0') + addSmallLabel(line.evk || line.ely || '0') +
+                addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.evk || '0') +
                 '</div>';
           });
           rootElement.html(openProjectTemplate(currentProject, text, ''));
