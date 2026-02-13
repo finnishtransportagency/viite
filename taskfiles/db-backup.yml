@@ -1,0 +1,78 @@
+version: '3'
+
+vars:
+  SOURCE_TUNNEL_SESSION: db-tunnel-source
+
+tasks:
+
+  # -------------------------
+  # SOURCE tunnel (DB_SOURCE_*)
+  # -------------------------
+  connect-source:
+    desc: "Open SSM port-forward to SOURCE DB (background via tmux)"
+    cmds:
+      - |
+        set -euo pipefail
+        : "${DB_SOURCE_ACCESS:?DB_SOURCE_ACCESS missing (ssm|direct)}"
+        if [ "$DB_SOURCE_ACCESS" != "ssm" ]; then
+          echo "DB_SOURCE_ACCESS=$DB_SOURCE_ACCESS -> connect-source not needed."
+          exit 0
+        fi
+        : "${DB_SOURCE_RDS_HOST:?missing}"
+        : "${DB_SOURCE_LOCAL_PORT:?missing}"
+        : "${DB_SOURCE_SSM_TARGET:?missing}"
+        : "${AWS_PROFILE:?missing}"
+        : "${AWS_REGION:?missing}"
+
+        echo "Starting SOURCE SSM tunnel to $DB_SOURCE_RDS_HOST:5432 on localhost:$DB_SOURCE_LOCAL_PORT"
+
+        tmux has-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null && {
+          echo "Source tunnel already running."
+          exit 0
+        } || true
+
+        tmux new-session -d -s {{.SOURCE_TUNNEL_SESSION}} \
+          "aws ssm start-session \
+            --region '$AWS_REGION' \
+            --profile '$AWS_PROFILE' \
+            --target '$DB_SOURCE_SSM_TARGET' \
+            --document-name AWS-StartPortForwardingSessionToRemoteHost \
+            --parameters host='$DB_SOURCE_RDS_HOST',portNumber='5432',localPortNumber='$DB_SOURCE_LOCAL_PORT'"
+
+        echo "SOURCE tunnel started."
+    status:
+      - tmux has-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null
+    requires:
+      vars:
+        - AWS_PROFILE
+        - AWS_REGION
+        - DB_SOURCE_ACCESS
+        - DB_SOURCE_RDS_HOST
+        - DB_SOURCE_LOCAL_PORT
+        - DB_SOURCE_SSM_TARGET
+
+  disconnect-source:
+    desc: "Stop SOURCE SSM tunnel"
+    cmds:
+      - tmux kill-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null || true
+
+  # -------------------------
+  # BACKUP from SOURCE
+  # -------------------------
+  backup:
+    desc: "Backup SOURCE (data-only)"
+    deps: [connect-source]
+    cmds:
+      - |
+        set -euo pipefail
+        cleanup() { task backup:disconnect-source || true; }
+        trap cleanup EXIT
+
+        echo "Running DB backup"
+        ./db/admin/db_backup.sh
+    requires:
+      vars:
+        - DB_SOURCE_NAME
+        - DB_SOURCE_USER
+        - DB_SOURCE_PASSWORD
+        - DB_SOURCE_LOCAL_PORT
