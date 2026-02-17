@@ -161,7 +161,6 @@ module.exports = function (grunt) {
       },
       stylesTask: {
         files: [{
-          cwd: './viite-UI/components/theme/default/', // set working folder / root to copy
           src: 'style.css',
           dest: 'dist/css',                            // destination folder
           expand: true                                 // required when using cwd
