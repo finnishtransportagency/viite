@@ -5,17 +5,17 @@
         const me = this;
 
         const roadAddressChangesBrowserWindow = $('<div class="form-horizontal road-address-changes-browser-window"></div>').hide();
-        const roadAddressChangesBrowserHeader = $(
-            '<div class="generic-window-header">' +
-                '<p>Tieosoitemuutosten katselu</p>' +
-                '<a href="manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu" target="_blank">' +
-                    '<button class="btn-manual" title="Avaa käyttöohje">' +
-                        '<i class="fas fa-question"></i>' +
-                    '</button>' +
-                '</a>' +
-                '<button class="close btn-close-road-address-browser">x</button>' +
-            '</div>'
-        );
+        const roadAddressChangesBrowserHeader = $(`
+            <div class="generic-window-header">
+                <p>Tieosoitemuutosten katselu</p>
+                <a href="manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu" target="_blank">
+                    <button class="btn-manual" title="Avaa käyttöohje">
+                        <i class="fas fa-question"></i>
+                    </button>
+                </a>
+                <button class="close btn-close-road-address-browser">x</button>
+            </div>
+        `);
         roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadAddressChangesBrowserForm());
 

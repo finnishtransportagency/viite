@@ -55,27 +55,32 @@
 
         const showErrorMessage = function (errorMessage) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
-            contentWrapper.append('<p>' + errorMessage + '</p>');
+            contentWrapper.append(`<p>${errorMessage}</p>`);
         };
 
         const showMissingCalibrationPoints = function (calibrationPoints) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
             contentWrapper.append('<h3>Puuttuvat kalibrointipisteet</h3>');
-            const table = $('<table class="viite-table"> ' +
-                '<thead> ' +
-                    '<th>Tie</th>' +
-                    '<th>Osa</th>' +
-                    '<th>Ajr</th>' +
-                    '<th>Et</th>' +
-                '</thead>' +
-            '<tbody></tbody></table>');
+            const table = (
+                `<table class="viite-table">
+                  <thead>
+                    <th>Tie</th>
+                    <th>Osa</th>
+                    <th>Ajr</th>
+                    <th>Et</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>`
+            );
             calibrationPoints.forEach((cp) => {
-                const string = $(`<tr>
-                                    <td>${cp.roadNumber}</td>
-                                    <td>${cp.roadPartNumber}</td>
-                                    <td>${cp.track}</td>
-                                    <td>${cp.addrM}</td>
-                                </tr>`);
+                const string = (
+                    `<tr>
+                                      <td>${cp.roadNumber}</td>
+                                      <td>${cp.roadPartNumber}</td>
+                                      <td>${cp.track}</td>
+                                      <td>${cp.addrM}</td>
+                                  </tr>`
+                );
                 table.append(string);
             });
             contentWrapper.append(table);
@@ -132,14 +137,16 @@
                 } else {
                     startEndText = link.startEnd;
                 }
-                const tableRow = $(`<tr>
-                            <td>${link.linkId}</td>
-                            <td>${link.roadNumber}</td>
-                            <td>${link.roadPartNumber}</td>
-                            <td>${startEndText}</td>
-                            <td>${link.calibrationPointCount + ' kpl'}</td>
-                            <td>${link.calibrationPoints}</td>
-                        </tr>`);
+                const tableRow = (
+                    `<tr>
+                        <td>${link.linkId}</td>
+                        <td>${link.roadNumber}</td>
+                        <td>${link.roadPartNumber}</td>
+                        <td>${startEndText}</td>
+                        <td>${link.calibrationPointCount + ' kpl'}</td>
+                        <td>${link.calibrationPoints}</td>
+                    </tr>`
+                );
                 table.append(tableRow);
             });
             contentWrapper.append(table);
@@ -148,16 +155,19 @@
         const showLinksWithExtraCalibrationPoints = function (linksWithExtraCalibrationPoints) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
             contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä</h3>');
-            const table = $('<table class="viite-table"> ' +
-                '<thead> ' +
-                '<th>Linkin Id</th>' +
-                '<th>Tie</th>' +
-                '<th>Osa</th>' +
-                '<th>Linkin Alku/Loppu</th>' +
-                '<th>Määrä</th>' +
-                '<th>Kalibrointipisteiden Id:t</th>'+
-                '</thead>' +
-                '<tbody></tbody></table>');
+            const table = (
+                `<table class="viite-table">
+                  <thead>
+                    <th>Linkin Id</th>
+                    <th>Tie</th>
+                    <th>Osa</th>
+                    <th>Linkin Alku/Loppu</th>
+                    <th>Määrä</th>
+                    <th>Kalibrointipisteiden Id:t</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>`
+            );
             linksWithExtraCalibrationPoints.forEach((link) => {
                 let startEndText;
                 if (link.startEnd === 0) {
@@ -167,14 +177,16 @@
                 } else {
                     startEndText = link.startEnd;
                 }
-                const tableRow = $(`<tr>
-                            <td>${link.linkId}</td>
-                            <td>${link.roadNumber}</td>
-                            <td>${link.roadPartNumber}</td>
-                            <td>${startEndText}</td>
-                            <td>${link.calibrationPointCount + ' kpl'}</td>
-                            <td>${link.calibrationPoints}</td>
-                        </tr>`);
+                const tableRow = (
+                    `<tr>
+                        <td>${link.linkId}</td>
+                        <td>${link.roadNumber}</td>
+                        <td>${link.roadPartNumber}</td>
+                        <td>${startEndText}</td>
+                        <td>${link.calibrationPointCount + ' kpl'}</td>
+                        <td>${link.calibrationPoints}</td>
+                    </tr>`
+                );
                 table.append(tableRow);
             });
             contentWrapper.append(table);
@@ -183,21 +195,26 @@
         const showMissingRoadwayPoints = function (roadwayPoints) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
             contentWrapper.append('<h3>Tieosalta puuttuvat roadwaypointit</h3>');
-            const table = $('<table class="viite-table"> ' +
-                '<thead> ' +
-                '<th>Tie</th>' +
-                '<th>Osa</th>' +
-                '<th>Ajr</th>' +
-                '<th>Et</th>' +
-                '</thead>' +
-                '<tbody></tbody></table>');
+            const table = (
+                `<table class="viite-table">
+                  <thead>
+                    <th>Tie</th>
+                    <th>Osa</th>
+                    <th>Ajr</th>
+                    <th>Et</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>`
+            );
             roadwayPoints.forEach((rwp) => {
-                const tableRow = $(`<tr>
-                                    <td>${rwp.roadNumber}</td>
-                                    <td>${rwp.roadPartNumber}</td>
-                                    <td>${rwp.track}</td>
-                                    <td>${rwp.addrM}</td>
-                                </tr>`);
+                const tableRow = (
+                    `<tr>
+                                        <td>${rwp.roadNumber}</td>
+                                        <td>${rwp.roadPartNumber}</td>
+                                        <td>${rwp.track}</td>
+                                        <td>${rwp.addrM}</td>
+                                    </tr>`
+                );
                 table.append(tableRow);
             });
             contentWrapper.append(table);
@@ -206,27 +223,32 @@
         const showInvalidRoadwayLengths = function (invalidRoadways) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
             contentWrapper.append('<h3>Vääränpituiset roadwayt</h3>');
-            const table = $('<table class="viite-table"> ' +
-                '<thead> ' +
-                '<th>Tie</th>' +
-                '<th>Osa</th>' +
-                '<th>Ajr</th>' +
-                '<th>Aet</th>' +
-                '<th>Let</th>' +
-                '<th>Pituus</th>' +
-                '<th>Roadway numero</th>' +
-                '</thead>' +
-                '<tbody></tbody></table>');
+            const table = (
+                `<table class="viite-table">
+                  <thead>
+                    <th>Tie</th>
+                    <th>Osa</th>
+                    <th>Ajr</th>
+                    <th>Aet</th>
+                    <th>Let</th>
+                    <th>Pituus</th>
+                    <th>Roadway numero</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>`
+            );
             invalidRoadways.forEach((rw) => {
-                const tableRow = $(`<tr>
-                                    <td>${rw.roadNumber}</td>
-                                    <td>${rw.roadPartNumber}</td>
-                                    <td>${rw.track}</td>
-                                    <td>${rw.addrMRange.start}</td>
-                                    <td>${rw.addrMRange.end}</td>
-                                    <td>${rw.length}</td>
-                                    <td>${rw.roadwayNumber}</td>
-                                </tr>`);
+                const tableRow = (
+                    `<tr>
+                                        <td>${rw.roadNumber}</td>
+                                        <td>${rw.roadPartNumber}</td>
+                                        <td>${rw.track}</td>
+                                        <td>${rw.addrMRange.start}</td>
+                                        <td>${rw.addrMRange.end}</td>
+                                        <td>${rw.length}</td>
+                                        <td>${rw.roadwayNumber}</td>
+                                    </tr>`
+                );
                 table.append(tableRow);
             });
             contentWrapper.append(table);
@@ -235,25 +257,30 @@
         const showOverlappingRoadways = function (overlappingRoadways) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
             contentWrapper.append('<h3>Päällekkäiset roadwayt</h3>');
-            const table = $('<table class="viite-table"> ' +
-                '<thead> ' +
-                '<th>Tie</th>' +
-                '<th>Osa</th>' +
-                '<th>Ajr</th>' +
-                '<th>Aet</th>' +
-                '<th>Let</th>' +
-                '<th>Roadway numero</th>' +
-                '</thead>' +
-                '<tbody></tbody></table>');
+            const table = (
+                `<table class="viite-table">
+                  <thead>
+                    <th>Tie</th>
+                    <th>Osa</th>
+                    <th>Ajr</th>
+                    <th>Aet</th>
+                    <th>Let</th>
+                    <th>Roadway numero</th>
+                  </thead>
+                  <tbody></tbody>
+                </table>`
+            );
             overlappingRoadways.forEach((rw) => {
-                const tableRow = $(`<tr>
-                                    <td>${rw.roadNumber}</td>
-                                    <td>${rw.roadPartNumber}</td>
-                                    <td>${rw.track}</td>
-                                    <td>${rw.addrMRange.start}</td>
-                                    <td>${rw.addrMRange.end}</td>
-                                    <td>${rw.roadwayNumber}</td>
-                                </tr>`);
+                const tableRow = (
+                    `<tr>
+                      <td>${rw.roadNumber}</td>
+                      <td>${rw.roadPartNumber}</td>
+                      <td>${rw.track}</td>
+                      <td>${rw.addrMRange.start}</td>
+                      <td>${rw.addrMRange.end}</td>
+                      <td>${rw.roadwayNumber}</td>
+                    </tr>`
+                );
                 table.append(tableRow);
             });
             contentWrapper.append(table);
@@ -262,29 +289,34 @@
         const showOverlappingRoadwaysOnLinearLocations = function (overlappingRoadways) {
             const contentWrapper = $('#roadNetworkErrorWindowContent');
             contentWrapper.append('<h3>Päällekkäiset roadwayt lineaarilokaatioilla</h3>');
-            const table = $('<table class="viite-table"> ' +
-                '<thead> ' +
-                '<th>Tie</th>' +
-                '<th>Osa</th>' +
-                '<th>Ajr</th>' +
-                '<th>Aet</th>' +
-                '<th>Let</th>' +
-                '<th>Roadway numero</th>' +
-                '<th>Lineaarilokaatio Id</th>' +
-                '<th>Link Id</th>' +
-                '</thead>' +
-                '<tbody></tbody></table>');
+            const table = (
+              `<table class="viite-table">
+                <thead>
+                  <th>Tie</th>
+                  <th>Osa</th>
+                  <th>Ajr</th>
+                  <th>Aet</th>
+                  <th>Let</th>
+                  <th>Roadway numero</th>
+                  <th>Lineaarilokaatio Id</th>
+                  <th>Link Id</th>
+                </thead>
+                <tbody></tbody>
+              </table>`
+            );
             overlappingRoadways.forEach((rw) => {
-                const tableRow = $(`<tr>
-                                    <td>${rw.roadNumber}</td>
-                                    <td>${rw.roadPartNumber}</td>
-                                    <td>${rw.track}</td>
-                                    <td>${rw.addrMRange.start}</td>
-                                    <td>${rw.addrMRange.end}</td>
-                                    <td>${rw.roadwayNumber}</td>
-                                    <td>${rw.linearLocationId}</td>
-                                    <td>${rw.linkId}</td>
-                                </tr>`);
+                const tableRow = (
+                    `<tr>
+                      <td>${rw.roadNumber}</td>
+                      <td>${rw.roadPartNumber}</td>
+                      <td>${rw.track}</td>
+                      <td>${rw.addrMRange.start}</td>
+                      <td>${rw.addrMRange.end}</td>
+                      <td>${rw.roadwayNumber}</td>
+                      <td>${rw.linearLocationId}</td>
+                      <td>${rw.linkId}</td>
+                    </tr>`
+                );
                 table.append(tableRow);
             });
             contentWrapper.append(table);

@@ -120,10 +120,12 @@
     };
 
     var constructField = function (labelText, data) {
-      return '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + data + '</p>' +
-          '</div>';
+      return (
+        `<div class="form-group">
+          <label class="control-label">${labelText}</label>
+          <p class="form-control-static">${data}</p>
+        </div>`
+      );
     };
 
     var decodeAttributes = function (attr, value) {
@@ -145,10 +147,12 @@
     };
 
     var staticField = function (labelText, dataField) {
-      return '<div class="form-group" style="margin-bottom: 0;">' +
-          '<label class="control-label-short">' + labelText + '</label>' +
-          '<p class="form-control-static-short">' + dataField + " " + decodeAttributes(labelText, dataField) + '</p>' +
-          '</div>';
+      return (
+        `<div class="form-group" style="margin-bottom: 0;">
+          <label class="control-label-short">${labelText}</label>
+          <p class="form-control-static-short">${dataField} ${decodeAttributes(labelText, dataField)}</p>
+        </div>`
+      );
     };
 
     var title = function () {
@@ -182,49 +186,47 @@
       var administrativeClasses = selectedLinkProperty.count() === 1 ? staticField('HALLINNOLLINEN LUOKKA', firstSelectedLinkProperty.administrativeClassId) : dynamicField('HALLINNOLLINEN LUOKKA', 'administrativeClassId');
       var discontinuities = isOnlyOneRoadAndPartNumberSelected() ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '');
       var startDate = isOnlyOneRoadAndPartNumberSelected() ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '');
-      return _.template('' +
-        '<header>' +
-        title() +
-        '</header>' +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark">' +
-        '<div>' +
-        '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: <%- modifiedBy %> <%- modifiedAt %></p>' +
-        '</div>' +
-        '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ' + selectedLinkProperty.count() + '</p>' +
-        '</div>' +
-        '<div class="form-group-metadata">' +
-        '<p class="form-control-static asset-log-info-metadata">Geometrian lähde: ' + linkProperties.roadLinkSource + mtkId + '</p>' +
-        '</div>' +
-        showMunicipality() +
-        showLinkId(selectedLinkProperty, linkProperties) +
-        showLinkLength(selectedLinkProperty, linkProperties) +
-        '</div>' +
-        roadNames +
-        roadNumbers +
-        roadPartNumbers +
-        tracks +
-        startAddress +
-        endAddress +
-        combinedAddrLength +
-        evks +
-        administrativeClasses +
-        discontinuities +
-        startDate +
-        '</div>' +
-        '</div>' +
-        '<footer></footer>');
+      return `
+        <header>${title()}</header>
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <div>
+              <div class="form-group-metadata">
+                <p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: ${modifiedBy} ${modifiedAt}</p>
+              </div>
+              <div class="form-group-metadata">
+                <p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ${selectedLinkProperty.count()}</p>
+              </div>
+              <div class="form-group-metadata">
+                <p class="form-control-static asset-log-info-metadata">Geometrian lähde: ${linkProperties.roadLinkSource}${mtkId}</p>
+              </div>
+              ${showMunicipality()}
+              ${showLinkId(selectedLinkProperty, linkProperties)}
+              ${showLinkLength(selectedLinkProperty, linkProperties)}
+            </div>
+            ${roadNames}
+            ${roadNumbers}
+            ${roadPartNumbers}
+            ${tracks}
+            ${startAddress}
+            ${endAddress}
+            ${combinedAddrLength}
+            ${evks}
+            ${administrativeClasses}
+            ${discontinuities}
+            ${startDate}
+          </div>
+        </div>
+        <footer></footer>
+      `;
     };
 
 
     var showLinkId = function (selectedLinkPropertyToShow, linkProperties) {
       if (selectedLinkPropertyToShow.count() === 1) {
-        return '' +
-          '<div class="form-group-metadata">' +
-          '<p class="form-control-static asset-log-info-metadata">Linkin ID: ' + linkProperties.linkId + '</p>' +
-          '</div>';
+        return `<div class="form-group-metadata">
+          <p class="form-control-static asset-log-info-metadata">Linkin ID: ${linkProperties.linkId}</p>
+          </div>`;
       } else {
         return '';
       }
@@ -232,19 +234,22 @@
 
     var showLinkLength = function (selectedLinkPropertyToShow, linkProperties) {
       if (selectedLinkPropertyToShow.count() === 1) {
-        return '' +
-            '<div class="form-group-metadata">' +
-            '<p class="form-control-static asset-log-info-metadata">Geometrian pituus: ' + Math.round(linkProperties.endMValue - linkProperties.startMValue) + '</p>' +
-            '</div>';
+        return (
+          `<div class="form-group-metadata">
+            <p class="form-control-static asset-log-info-metadata">Geometrian pituus: ${Math.round(linkProperties.endMValue - linkProperties.startMValue)}</p>
+          </div>`
+        );
       } else {
         var roadLinks = selectedLinkPropertyToShow.get();
         var combinedLength = 0;
         _.map(roadLinks, function(roadLink){
           combinedLength += Math.round(roadLink.endMValue - roadLink.startMValue);
         });
-        return '<div class="form-group-metadata">' +
-            '<p class="form-control-static asset-log-info-metadata">Geometrioiden yhteenlaskettu pituus: ' + combinedLength + '</p>' +
-            '</div>';
+        return (
+          `<div class="form-group-metadata">
+            <p class="form-control-static asset-log-info-metadata">Geometrioiden yhteenlaskettu pituus: ${combinedLength}</p>
+          </div>`
+        );
       }
     };
 
@@ -256,10 +261,11 @@
         };
       });
       if ((selectedLinkProperty.count() === 1 || municipalityValue.valid) && municipalityValue.municipalityName) {
-        return '' +
-          '<div class="form-group-metadata">' +
-          '<p class="form-control-static asset-log-info-metadata">Kunta: ' + municipalityValue.municipalityName + '</p>' +
-          '</div>';
+        return (
+          `<div class="form-group-metadata">
+            <p class="form-control-static asset-log-info-metadata">Kunta: ${municipalityValue.municipalityName}</p>
+          </div>`
+        );
       } else {
         return '';
       }

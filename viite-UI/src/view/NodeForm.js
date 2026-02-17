@@ -16,7 +16,6 @@
       });
       return _.isUndefined(nodeType) ? NodeType.UnknownNodeType : nodeType;
     };
-
     var staticField = function (labelText, dataField) {
       var field;
       field = '<div class="form-group-node-static-metadata">' +
@@ -39,7 +38,6 @@
         '<input type="text" class="form-control asset-input-node-data" id = "' + id + '"' + property + ' placeholder = "' + placeholder + '" value="' + value + '"' + nodeEditingDisabledAttribute + '/>' +
         '</p></div>';
     };
-
     var addNodeTypeDropdown = function (labelText, id, nodeType) {
       var addNodeTypeOptions = function (selected) {
         var nodeTypes = _.filter(ViiteEnumerations.NodeType, function (nodeTypeFiltered) {
@@ -48,130 +46,136 @@
 
         return _.map(nodeTypes, function (nodeTypeMapped) {
           var option = _.isEqual(nodeTypeMapped, selected) ? 'selected' : '';
-          return '<option value="' + nodeTypeMapped.value + '"' + option + '>' +
-            nodeTypeMapped.value + ' ' + nodeTypeMapped.description + '</option>';
+          return `<option value="${nodeTypeMapped.value}" ${option}>${nodeTypeMapped.value} ${nodeTypeMapped.description}</option>`;
         });
       };
 
       var unknownNodeType = "";
       if (nodeType === ViiteEnumerations.NodeType.UnknownNodeType) {
-        unknownNodeType = '<option value="' + nodeType.value + '" selected disabled hidden>' +
-          nodeType.value + ' ' + nodeType.description + '</option>';
+        unknownNodeType = `<option value="${nodeType.value}" selected disabled hidden>${nodeType.value} ${nodeType.description}</option>`;
       }
 
-      return '<div class="form-group-node-input-metadata"><p class="form-control-static asset-node-data">' +
-        ' <label class="dropdown required">' + labelText + '</label>' +
-        ' <select type="text" class="form-control asset-input-node-data" id="' + id + '"' + nodeEditingDisabledAttribute + '>' +
-        unknownNodeType +
-        addNodeTypeOptions(nodeType) +
-        ' </select></p></div>';
+      return (
+        `<div class="form-group-node-input-metadata"><p class="form-control-static asset-node-data">
+          <label class="dropdown required">${labelText}</label>
+          <select type="text" class="form-control asset-input-node-data" id="${id}" ${nodeEditingDisabledAttribute}>
+            ${unknownNodeType}
+            ${addNodeTypeOptions(nodeType)}
+          </select>
+        </p></div>`
+      );
     };
 
     var templatesForm = function (title) {
       var formButtons = function () {
-        return '<div class="form form-controls">' +
-          ' <button id="attachToMapNode" class="btn btn-block btn-attach-node">Valitse kartalta solmu, johon haluat liittää aihiot</button>' +
-          ' <button id="attachToNewNode" class="btn btn-block btn-attach-node">Luo uusi solmu, johon haluat liittää aihiot</button>' +
-          ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
-          ' <button class="cancel btn btn-edit-templates-cancel">Peruuta</button>' +
-          '</div>';
+        return (
+          `<div class="form form-controls">
+            <button id="attachToMapNode" class="btn btn-block btn-attach-node">Valitse kartalta solmu, johon haluat liittää aihiot</button>
+            <button id="attachToNewNode" class="btn btn-block btn-attach-node">Luo uusi solmu, johon haluat liittää aihiot</button>
+            <button class="save btn btn-edit-node-save" disabled>Tallenna</button>
+            <button class="cancel btn btn-edit-templates-cancel">Peruuta</button>
+          </div>`
+        );
       };
 
-      return _.template('' +
-        '<header>' +
-        formCommon.captionTitle(title) +
-        '</header>' +
+      return _.template(`<header>${formCommon.captionTitle(title)}</header>
 
-        '<div class="wrapper read-only">' +
-        ' <div class="form form-horizontal form-dark">' +
-        '   <div>' +
-        '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
-        '     <div id="node-points-info-content">' +
-        '     </div>' +
-        '     <p class="node-info">' + JUNCTIONS_TITLE + '</p>' +
-        '     <div id="junctions-info-content">' +
-        '     </div>' +
-        '   </div>' +
-        ' </div>' +
-        '</div>' +
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <div>
+              <p class="node-info">${NODE_POINTS_TITLE}</p>
+              <div id="node-points-info-content">
+              </div>
+              <p class="node-info">${JUNCTIONS_TITLE}</p>
+              <div id="junctions-info-content">
+              </div>
+            </div>
+          </div>
+        </div>
 
-        '<footer>' +
-        formButtons() +
-        '</footer>'
+        <footer>${formButtons()}
+        </footer>`
       );
     };
 
     var nodeForm = function (title, node) {
       var formButtons = function () {
-        return '<div class="form form-controls">' +
-          ' <button class="save btn btn-edit-node-save" disabled>Tallenna</button>' +
-          ' <button class="cancel btn btn-edit-node-cancel">Peruuta</button>' +
-          '</div>';
+        return (
+          `<div class="form form-controls">
+            <button class="save btn btn-edit-node-save" disabled>Tallenna</button>
+            <button class="cancel btn btn-edit-node-cancel">Peruuta</button>
+          </div>`
+        );
       };
       var nodeNumber = node.nodeNumber ? node.nodeNumber : '-';
       var nodeName = node.name ? node.name : '';
       var startDate = node.startDate ? node.startDate : '';
 
-      return _.template('' +
-        '<header>' +
-        formCommon.captionTitle(title) +
-        '</header>' +
+      return _.template(`<header>${formCommon.captionTitle(title)}</header>
 
-        '<div class="wrapper read-only">' +
-        ' <div class="form form-horizontal form-dark">' +
-        '   <div>' +
-        staticField('Solmunumero:', nodeNumber) +
-        staticField('Koordinaatit (<i>P</i>, <i>I</i>):', '<span id="node-coordinates">' + Math.round(node.coordinates.y) + ', ' + Math.round(node.coordinates.x) + '</span>') +
-        inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 30) +
-        addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type)) +
-        inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true) +
-        '   <div class="form-check-date-notifications"> ' +
-        '     <p id="nodeStartDate-validation-notification"> </p>' +
-        '   </div>' +
-        '   </div>' +
-        '   <div>' +
-        '     <p class="node-info">' + NODE_POINTS_TITLE + '</p>' +
-        '     <div id="node-points-info-content">' +
-        '     </div>' +
-        '     <p class="node-info">' + JUNCTIONS_TITLE + '</p>' +
-        '     <div id="junctions-info-content">' +
-        '     </div>' +
-        '   </div>' +
-        ' </div>' +
-        '</div>' +
-        '<footer>' +
-        formButtons() +
-        '</footer>'
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <div>
+              ${staticField('Solmunumero:', nodeNumber)}
+              ${staticField('Koordinaatit (<i>P</i>, <i>I</i>):', `<span id="node-coordinates">${Math.round(node.coordinates.y)}, ${Math.round(node.coordinates.x)}</span>`)}
+              ${inputFieldRequired('Solmun nimi', 'nodeName', '', nodeName, 'maxlength', 30)}
+              ${addNodeTypeDropdown('Solmutyyppi', 'nodeTypeDropdown', getNodeType(node.type))}
+              ${inputFieldRequired('Alkupvm', 'nodeStartDate', 'pp.kk.vvvv', startDate, 'disabled', true)}
+              <div class="form-check-date-notifications">
+                <p id="nodeStartDate-validation-notification"> </p>
+              </div>
+              </div>
+              <div>
+                <p class="node-info">${NODE_POINTS_TITLE}</p>
+                <div id="node-points-info-content">
+                </div>
+                <p class="node-info">${JUNCTIONS_TITLE}</p>
+                <div id="junctions-info-content">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <footer>${formButtons()}
+        </footer>`
       );
     };
 
     var Junctions = function () {
       var headers = function (options) {
-        return '<tr class="node-junctions-table-header-border-bottom">' +
-          ((options && options.checkbox) ? '<th class="node-junctions-table-header">' +
-            '   <table class="node-junctions-table-dimension">' +
-            '     <tr><th class="node-junctions-table-header">Irrota</th></tr>' +
-            '     <tr><th class="node-junctions-table-header">liittymä</th></tr>' +
-            '     <tr><th class="node-junctions-table-header">solmusta</th></tr>' +
-            '   </table>' +
-            ' </th>' : '') +
-          ((options && options.junctionInputNumber) ? '<th class="node-junctions-table-header">NRO</th>' : '') +
-          ' <th class="node-junctions-table-header">TIE</th>' +
-          ' <th class="node-junctions-table-header">AJR</th>' +
-          ' <th class="node-junctions-table-header">OSA</th>' +
-          ' <th class="node-junctions-table-header junction-address-header">ET</th>' +
-          ' <th class="node-junctions-table-header">EJ</th>' +
-          '</tr>';
+        return (
+          `<tr class="node-junctions-table-header-border-bottom">
+          ${(options && options.checkbox) ? `<th class="node-junctions-table-header">
+            <table class="node-junctions-table-dimension">
+              <tr><th class="node-junctions-table-header">Irrota</th></tr>
+              <tr><th class="node-junctions-table-header">liittymä</th></tr>
+              <tr><th class="node-junctions-table-header">solmusta</th></tr>
+            </table>
+          </th>` : ''}
+          ${(options && options.junctionInputNumber) ? `<th class="node-junctions-table-header">NRO</th>` : ''}
+          <th class="node-junctions-table-header">TIE</th>
+          <th class="node-junctions-table-header">AJR</th>
+          <th class="node-junctions-table-header">OSA</th>
+          <th class="node-junctions-table-header junction-address-header">ET</th>
+          <th class="node-junctions-table-header">EJ</th>
+        </tr>`
+        );
       };
 
       var detachJunctionBox = function (junction) {
-        return '<td><input type="checkbox" name="detach-junction-' + junction.id + '" value="' + junction.id + '" id="detach-junction-' + junction.id + '"' +
-          ' data-junction-number=" ' + junction.junctionNumber + ' " ' + nodeEditingDisabledAttribute + '></td>';
+        return (
+          `<td>
+            <input type="checkbox" name="detach-junction-${junction.id}" value="${junction.id}" id="detach-junction-${junction.id}" data-junction-number=" ${junction.junctionNumber} " ${nodeEditingDisabledAttribute}>
+          </td>`
+        );
       };
 
       var junctionInputNumber = function (junction) {
-        return '<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"' +
-          ' class="form-control junction-number-input" id="junction-number-textbox-' + junction.id + '" junctionId="' + junction.id + '" maxlength="2" value="' + (junction.junctionNumber || '') + '"' + nodeEditingDisabledAttribute + '/></td>';
+        return (
+          `<td><input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode === 8 || event.keyCode === 9)"
+          class="form-control junction-number-input" id="junction-number-textbox-${junction.id}" junctionId="${junction.id}" maxlength="2" value="${junction.junctionNumber || ''}"
+          ${nodeEditingDisabledAttribute}/></td>`
+        );
       };
 
 
@@ -237,9 +241,10 @@
         var maxAddr = range.maxAddr;
 
         // at this point the input field is disabled because backend is checking if the junction points are on reserved road parts.
-        return '<input disabled="true" type="number"' +
-          ' class="form-control junction-point-address-input" id="junction-point-address-input-' +
-          jp.id + '" junctionPointId="' + jp.id + '" maxlength="5" value="' + jp.addr + '" min="' + minAddr + '" max="' + maxAddr + '"/>';
+        return (
+          `<input disabled="true" type="number"
+            class="form-control junction-point-address-input" id="junction-point-address-input-${jp.id}" junctionPointId="${jp.id}" maxlength="5" value="${jp.addr}" min="${minAddr}" max="${maxAddr}"/>`
+        );
       };
 
       var toMessage = function (junctionsInfo) {
@@ -251,67 +256,76 @@
       };
 
       var toHtmlTable = function (data) {
-        return '<table id="junctions-table-info" class="node-junctions-table-dimension">' +
-          headers(data.options) +
-          toHtmlRows(data.junctionTemplates, data.options, 'node-junctions-table template') +
-          toHtmlRows(data.currentJunctions, data.options, 'node-junctions-table') +
-          '</table>';
+        return `
+          <table id="junctions-table-info" class="node-junctions-table-dimension">
+            ${headers(data.options)}
+            ${toHtmlRows(data.junctionTemplates, data.options, 'node-junctions-table template')}
+            ${toHtmlRows(data.currentJunctions, data.options, 'node-junctions-table')}
+          </table>
+        `;
       };
 
       var toHtmlRows = function (junctionsInfo, options, tableRowClass) {
         var junctionInfoHtml = function (junctionPointsInfo) {
           var roads = _.map(_.map(junctionPointsInfo, 'roadNumber'), function (roadNumber) {
-            return '<tr><td class="' + tableRowClass + '">' + roadNumber + '</td></tr>';
+            return `<tr><td class="${tableRowClass}">${roadNumber}</td></tr>`;
           });
 
           var tracks = _.map(_.map(junctionPointsInfo, 'track'), function (track) {
-            return '<tr><td class="' + tableRowClass + '">' + track + '</td></tr>';
+            return `<tr><td class="${tableRowClass}">${track}</td></tr>`;
           });
 
           var parts = _.map(_.map(junctionPointsInfo, 'roadPartNumber'), function (roadPartNumber) {
-            return '<tr><td class="' + tableRowClass + '">' + roadPartNumber + '</td></tr>';
+            return `<tr><td class="${tableRowClass}">${roadPartNumber}</td></tr>`;
           });
 
           var addresses = _.map(junctionPointsInfo, function (jp) {
             var addr = jp.addr;
             var beforeAfter = jp.beforeAfter;
-            return '<tr><td class="' + tableRowClass + '"><span class="junction-point-address-label">' + addr + '</span>' +
+            return `<tr><td class="${tableRowClass}"><span class="junction-point-address-label">${addr}</span>` +
               (beforeAfter === "EJ" ? junctionPointInputAddr(jp) : "") + '</td></tr>';
           });
 
           var beforeOrAfter = _.map(_.map(junctionPointsInfo, 'beforeAfter'), function (beforeAfter) {
-            return '<tr><td class="' + tableRowClass + '">' + beforeAfter + '</td></tr>';
+            return `<tr><td class="${tableRowClass}">${beforeAfter}</td></tr>`;
           });
 
-          return '<td class="' + tableRowClass + '">' +
-            ' <table class="node-junctions-table-dimension">' +
-            roads.join('') +
-            ' </table></td>' +
-            '<td class="' + tableRowClass + '">' +
-            ' <table class="node-junctions-table-dimension">' +
-            tracks.join('') +
-            ' </table></td>' +
-            '<td class="' + tableRowClass + '">' +
-            ' <table class="node-junctions-table-dimension">' +
-            parts.join('') +
-            ' </table></td>' +
-            '<td class="' + tableRowClass + '">' +
-            ' <table class="node-junctions-table-dimension">' +
-            addresses.join('') +
-            ' </table></td>' +
-            '<td class="' + tableRowClass + '">' +
-            ' <table class="node-junctions-table-dimension">' +
-            beforeOrAfter.join('') +
-            ' </table></td>';
+          return (
+            `<td class="${tableRowClass}">
+              <table class="node-junctions-table-dimension">
+                ${roads.join('')}
+              </table>
+            </td>
+            <td class="${tableRowClass}">
+              <table class="node-junctions-table-dimension">
+                ${tracks.join('')}
+              </table>
+            </td>
+            <td class="${tableRowClass}">
+              <table class="node-junctions-table-dimension">
+                ${parts.join('')}
+              </table>
+            </td>
+            <td class="${tableRowClass}">
+              <table class="node-junctions-table-dimension">
+                ${addresses.join('')}
+              </table>
+            </td>
+            <td class="${tableRowClass}">
+              <table class="node-junctions-table-dimension">
+                ${beforeOrAfter.join('')}
+              </table>
+            </td>`
+          );
         };
 
         var htmlTable = '';
         _.each(junctionsInfo, function (junction) {
-          htmlTable += '<tr class="node-junctions-table-border-bottom">' +
-            ((options && options.checkbox) ? detachJunctionBox(junction) : '') +
-            ((options && options.junctionInputNumber) ? junctionInputNumber(junction) : '') +
-            junctionInfoHtml(getJunctionPointsInfo(junction)) +
-            '</tr>';
+          htmlTable += `<tr class="node-junctions-table-border-bottom">${
+            (options && options.checkbox) ? detachJunctionBox(junction) : ''}${
+            (options && options.junctionInputNumber) ? junctionInputNumber(junction) : ''}${
+            junctionInfoHtml(getJunctionPointsInfo(junction))
+          }</tr>`;
         });
         return htmlTable;
       };
@@ -391,19 +405,19 @@
 
       var toHtmlRows = function (nodePointsInfo, options, tableRowClass) {
         var nodePointInfoHtml = function (rowInfo) {
-          return '<td class="' + tableRowClass + '">' + rowInfo.roadNumber + '</td>' +
-            '<td class="' + tableRowClass + '">' + rowInfo.roadPartNumber + '</td>' +
-            '<td class="' + tableRowClass + '">' + rowInfo.addr + '</td>' +
-            '<td class="' + tableRowClass + '">' + rowInfo.beforeAfter + '</td>';
+          return `<td class="${tableRowClass}">${rowInfo.roadNumber}</td>
+            <td class="${tableRowClass}">${rowInfo.roadPartNumber}</td>
+            <td class="${tableRowClass}">${rowInfo.addr}</td>
+            <td class="${tableRowClass}">${rowInfo.beforeAfter}</td>`;
         };
 
         var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
         var htmlTable = '';
         _.each(_.sortBy(rowsInfo, ['roadNumber', 'roadPartNumber', 'addr']), function (row) {
-          htmlTable += '<tr class="node-junctions-table-border-bottom">' +
-            ((options && options.checkbox) ? detachNodePointBox(row) : '') +
-            nodePointInfoHtml(row) +
-            '</tr>';
+          htmlTable += `<tr class="node-junctions-table-border-bottom">${
+            (options && options.checkbox) ? detachNodePointBox(row) : ''}${
+            nodePointInfoHtml(row)
+          }</tr>`;
         });
         return htmlTable;
       };
@@ -412,11 +426,11 @@
         var nodePointType = _.find(ViiteEnumerations.NodePointType, function (nodePointTypeFound) {
           return nodePointTypeFound.value === nodePoint.type;
         });
-        var isDetachable = 'title="' + nodePointType.description + '"'; // added for testing purposes, needs to be confirm if this title is a good idea for production env.
+        var isDetachable = `title="${nodePointType.description}"`;
         if (_.isEqual(nodePointType, ViiteEnumerations.NodePointType.CalculatedNodePoint)) {
           isDetachable += ' disabled hidden';
         }
-        return '<td><input ' + isDetachable + ' type="checkbox" name="detach-node-point-' + nodePoint.id + '" value="' + nodePoint.id + '" id="detach-node-point-' + nodePoint.id + '"' + nodeEditingDisabledAttribute + '></td>';
+        return `<td><input ${isDetachable} type="checkbox" name="detach-node-point-${nodePoint.id}" value="${nodePoint.id}" id="detach-node-point-${nodePoint.id}"${nodeEditingDisabledAttribute}></td>`;
       };
 
       var getNodePointsRowsInfo = function (nodePoints) {
@@ -477,18 +491,20 @@
       };
 
       var headers = function (options) {
-        return '<tr class="node-junctions-table-header-border-bottom">' +
-          ((options && options.checkbox) ? '<th class="node-points-table-header">' +
-            '   <table class="node-points-table-dimension">' +
-            '     <tr><th class="node-points-table-header">Irrota</th></tr>' +
-            '     <tr><th class="node-points-table-header">solmukohta</th></tr>' +
-            '   </table>' +
-            ' </th>' : '') +
-          ' <th class="node-points-table-header">TIE</th>' +
-          ' <th class="node-points-table-header">OSA</th>' +
-          ' <th class="node-points-table-header">ET</th>' +
-          ' <th class="node-points-table-header">EJ</th>' +
-          '</tr>';
+        return (
+        `<tr class="node-junctions-table-header-border-bottom">
+          ${(options && options.checkbox) ? `<th class="node-points-table-header">
+            <table class="node-points-table-dimension">
+              <tr><th class="node-points-table-header">Irrota</th></tr>
+              <tr><th class="node-points-table-header">solmukohta</th></tr>
+            </table>
+          </th>` : ''}
+          <th class="node-points-table-header">TIE</th>
+          <th class="node-points-table-header">OSA</th>
+          <th class="node-points-table-header">ET</th>
+          <th class="node-points-table-header">EJ</th>
+        </tr>`
+        );
       };
 
       return {
@@ -828,9 +844,11 @@
             } else if (nodeSD.getFullYear() > nowDate.getFullYear() + 1) {
               nodeNotificationText = 'Tulevaisuuden päiväys. Solmun alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen tallennusta.';
             }
-            return  '<div class="form-check-date-notifications"> ' +
-                '  <p id="nodeStartDate-validation-notification">' + nodeNotificationText + '</p>' +
-                '</div>';
+            return (
+              `<div class="form-check-date-notifications">
+                <p id="nodeStartDate-validation-notification">${nodeNotificationText}</p>
+              </div>`
+            );
           };
 
           eventbus.on('change:nodeStartDate', function (nodeStartDate) {

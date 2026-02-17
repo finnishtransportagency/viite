@@ -701,7 +701,7 @@
               new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
                 type: "alert"
               });
-              $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+              $('.form,.form-horizontal,.form-dark').append(`<label class="validation-warning">${trackGeometryLengthDeviationError.errorMessage}<br> LinkId: ${trackGeometryLengthDeviationError.info}</label>`);
               response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
             }
 

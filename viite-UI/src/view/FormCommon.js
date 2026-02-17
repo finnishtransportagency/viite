@@ -477,13 +477,13 @@
           projectCollection.pushCoordinates(button);
           buttonIndex++;
         }
-        errorLines += '<div class="form-project-errors-list' + (error.priority === 1 ? ' warning' : '') + '">' +
-          addSmallLabel('VIRHE: ') + ' ' + addSmallLabelLowercase((error.errorMessage ? error.errorMessage : 'N/A')) + '</br>' +
-          addSmallLabel('INFO: ') + ' ' + addSmallLabelLowercase((error.info ? error.info : 'N/A')) + '</br>' +
-          (button.html ? button.html : '') +
-          addLinkIdListButton(errorIndex, error.linkIds) +
-          '</br> <hr class="horizontal-line"/>' +
-        '</div>';
+        errorLines += `<div class="form-project-errors-list${error.priority === 1 ? ' warning' : ''}">${
+          addSmallLabel('VIRHE: ')} ${addSmallLabelLowercase((error.errorMessage ? error.errorMessage : 'N/A'))}</br>${
+          addSmallLabel('INFO: ')} ${addSmallLabelLowercase((error.info ? error.info : 'N/A'))}</br>${
+          button.html ? button.html : ''}${
+          addLinkIdListButton(errorIndex, error.linkIds)}${
+          '</br> <hr class="horizontal-line"/>'}${
+        '</div>'}`;
         errorIndex++;
       });
 

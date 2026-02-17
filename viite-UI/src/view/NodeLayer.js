@@ -122,9 +122,9 @@
         let nodeName = '';
         const name = featureAtPixel.getProperties().name;
         if (!_.isUndefined(name)) {
-          nodeName = 'Nimi: ' + _.escape(name) + '<br>';
+          nodeName = `Nimi: ${_.escape(name)}<br>`;
         }
-        infoContent.innerHTML = nodeName + 'Solmutyyppi: ' + displayNodeType(featureAtPixel.getProperties().type) + '<br>';
+        infoContent.innerHTML = `${nodeName}Solmutyyppi: ${displayNodeType(featureAtPixel.getProperties().type)}<br>`;
       }
       overlay.setPosition(coordinate);
     };
@@ -174,11 +174,11 @@
 
       if (infoContent !== null) {
         infoContent.innerHTML =
-          'Solmun\u00a0nimi:\u00a0' + ((node) ? node.name.replace(' ', '\u00a0') : '') + '<br>' +
-          'Tieosoite:<br>' +
-          _.map(roadAddressContent, function (junctionPoint) {
-            return '&thinsp;' + junctionPoint.road + '&nbsp;/&nbsp;' + junctionPoint.track + '&nbsp;/&nbsp;' + junctionPoint.part + '&nbsp;/&nbsp;' + junctionPoint.addr + '<br>';
-          }).join('');
+          `Solmun nimi: ${node ? node.name.replace(' ', ' ') : ''}<br>
+          Tieosoite:<br>
+          ${_.map(roadAddressContent, function (junctionPoint) {
+            return `&thinsp;${junctionPoint.road}&nbsp;/&nbsp;${junctionPoint.track}&nbsp;/&nbsp;${junctionPoint.part}&nbsp;/&nbsp;${junctionPoint.addr}<br>`;
+          }).join('')}`;
       }
       overlay.setPosition(coordinate);
     };

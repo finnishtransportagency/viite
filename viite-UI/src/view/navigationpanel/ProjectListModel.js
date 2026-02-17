@@ -123,12 +123,12 @@
       let html = "";
       Object.keys(headers).forEach(function(id) {
           const header = headers[id];
-          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id="' + id + '" class="btn-icon sort fas ' + getIcon(id) + '"></i>';
+          html += `<label class="content-new label" style="width: ${header.width}px">${header.toStr}<i id="${id}" class="btn-icon sort fas ${getIcon(id)}"></i>`;
 
         if (id === "sortUser") {
-            html += '<i id="filterUser" class="btn-icon fas fa-filter"></i></label>' +
-              '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
-              '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>';
+            html += `<i id="filterUser" class="btn-icon fas fa-filter"></i></label>
+              <span class="smallPopupContainer" id="userFilterSpan" style="display:none">
+              <input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>`;
           }
           html += '</label>';
       });
@@ -150,16 +150,18 @@
       '</div>');
 
     const staticFieldProjectName = function (dataField) {
-      return '<div>' +
-          '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
-          '</div>';
+      return `<div>
+          <label class="control-label-projects-list" style="width: 300px">${dataField}</label>
+          </div>`;
     };
 
     const staticFieldProjectList = function (dataField) {
-      return '<div>' +
-          '<label class="control-label-projects-list">' + dataField + '</label>' +
-          '</div>';
-      };
+      return (
+        `<div>
+          <label class="control-label-projects-list">${dataField}</label>
+        </div>`
+      );
+    };
 
     let pollProjects = null;
 

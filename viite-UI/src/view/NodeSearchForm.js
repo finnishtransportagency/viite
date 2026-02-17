@@ -3,78 +3,78 @@
     var formCommon = new FormCommon('node-search-');
 
     var header = function () {
-      return '<header>' +
-        '<span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>' +
-        '</header>';
+      return `<header>
+        <span id="close-node-search" class="rightSideSpan">Sulje <i class="fas fa-window-close"></i></span>
+        </header>`;
     };
 
     var label = function (labelFormatted) {
-      return '<label class="control-label-small">' + labelFormatted + '</label>';
+      return `<label class="control-label-small">${labelFormatted}</label>`;
     };
 
     var searchButton = function () {
-      return '<button id="node-search-btn" type="button" class="btn node-search-btn" disabled>Hae solmut</button>';
+      return `<button id="node-search-btn" type="button" class="btn node-search-btn" disabled>Hae solmut</button>`;
     };
 
     var searchNodesTemplate = function () {
-      return _.template(String(header()) +
-        '<div class="wrapper read-only">' +
-        '<div class="form form-horizontal form-dark" style="margin-left: auto;">' +
-        '<div class="edit-control-group">' +
-        '<div class="form-group editable">' +
-        '<form id="node-search" class="input-unit-combination form-group form-horizontal node-search">' +
-        '<div class="form-group">' +
-        label('Tie') + label('Aosa') + label('Losa') +
-        '</div>' +
-        '<div id= "road-attributes" class="form-group">' +
-        formCommon.nodeInputNumber('tie', 5) + formCommon.nodeInputNumber('aosa', 3) + formCommon.nodeInputNumber('losa', 3) +
-        searchButton() +
-        '</div>' +
-        '<button id="clear-node-search" type="button" class="btn btn-clean-node-search btn-block" disabled>Tyhjenn&auml; tulokset</button>' +
-        '</form>' +
-        '</div>' +
-        '</div>' +
-        '</div>' +
-        '<div id="nodes-and-junctions-content">' +
-        '</div>' +
-        '</div>'
+      return _.template(`${String(header())}
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark" style="margin-left: auto;">
+            <div class="edit-control-group">
+              <div class="form-group editable">
+                <form id="node-search" class="input-unit-combination form-group form-horizontal node-search">
+                  <div class="form-group">
+                    ${label('Tie')}${label('Aosa')}${label('Losa')}
+                  </div>
+                  <div id= "road-attributes" class="form-group">
+                    ${formCommon.nodeInputNumber('tie', 5)}${formCommon.nodeInputNumber('aosa', 3)}${formCommon.nodeInputNumber('losa', 3)}
+                    ${searchButton()}
+                  </div>
+                  <button id="clear-node-search" type="button" class="btn btn-clean-node-search btn-block" disabled>Tyhjenn&auml; tulokset</button>
+                </form>
+              </div>
+            </div>
+          </div>
+          <div id="nodes-and-junctions-content">
+          </div>
+        </div>`
       );
     };
 
     var addNodeAttributeLabel = function (labelFormatted) {
-      return '<label class="control-label-small" style="text-transform:none;color:#f4b183">' + labelFormatted + '</label>';
+      return `<label class="control-label-small" style="text-transform:none;color:#f4b183">${labelFormatted}</label>`;
     };
 
     var roadAddressLink = function (index, nodeWithAttributes) {
-      return '<a id="' + index + '" class="node-link" href="#node/' + nodeWithAttributes.id + '" style="font-weight:bold;cursor:pointer;">' +
-        nodeWithAttributes.roadNumber + '/' +
-        nodeWithAttributes.roadPartNumber + '/' +
-        nodeWithAttributes.addrMValue + '</a>';
+      return `<a id="${index}" class="node-link" href="#node/${nodeWithAttributes.id}" style="font-weight:bold;cursor:pointer;">${
+        nodeWithAttributes.roadNumber}/${
+        nodeWithAttributes.roadPartNumber}/${
+        nodeWithAttributes.addrMValue}</a>`;
     };
 
     var nodePointTemplateLink = function (nodePointTemplate) {
-      return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#node/nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
-        nodePointTemplate.roadNumber + ' / ' +
-        nodePointTemplate.roadPartNumber + ' / ' +
-        nodePointTemplate.addrM + '</a>';
+      return `<a id=${nodePointTemplate.id} class="node-point-template-link" href="#node/nodePointTemplate/${nodePointTemplate.id}" style="font-weight:bold;cursor:pointer;color: darkorange;">${
+        nodePointTemplate.roadNumber} / ${
+        nodePointTemplate.roadPartNumber} / ${
+        nodePointTemplate.addrM}</a>`;
     };
 
     var junctionTemplateLink = function (junctionTemplate) {
-      return '<a id=' + junctionTemplate.id + ' class="junction-template-link" href="#node/junctionTemplate/' + junctionTemplate.id + '" style="font-weight:bold;cursor:pointer;">' +
-        junctionTemplate.roadNumber + ' / ' +
-        junctionTemplate.track + ' / ' +
-        junctionTemplate.roadPartNumber + ' / ' +
-        junctionTemplate.addrM + '</a>';
+      return `<a id=${junctionTemplate.id} class="junction-template-link" href="#node/junctionTemplate/${junctionTemplate.id}" style="font-weight:bold;cursor:pointer;">${
+        junctionTemplate.roadNumber} / ${
+        junctionTemplate.track} / ${
+        junctionTemplate.roadPartNumber} / ${
+        junctionTemplate.addrM}</a>`;
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
-      var text = '<label class="control-label-small" style="text-transform:none;color:white;">TIE / OSA / ET</label></br>';
+      var text = `<label class="control-label-small" style="text-transform:none;color:white;">TIE / OSA / ET</label></br>`;
       var index = 0;
       var nodes = nodeCollection.getNodesWithAttributes();
       _.each(nodes, function (nodeWithAttributes) {
-        text += roadAddressLink(index++, nodeWithAttributes) + '&nbsp;&nbsp;' + addNodeAttributeLabel(nodeWithAttributes.name) + '</br>' +
-          addNodeAttributeLabel('Solmutyyppi:&nbsp;') + addNodeAttributeLabel(nodeWithAttributes.type) + '</br>' +
-          addNodeAttributeLabel('Solmunumero:&nbsp;') + addNodeAttributeLabel(nodeWithAttributes.nodeNumber) + '</br></br>';
+        text += `${roadAddressLink(index++, nodeWithAttributes)}&nbsp;&nbsp;${addNodeAttributeLabel(nodeWithAttributes.name)}</br>${
+          addNodeAttributeLabel('Solmutyyppi:&nbsp;')}${addNodeAttributeLabel(nodeWithAttributes.type)}</br>${
+          addNodeAttributeLabel('Solmunumero:&nbsp;')}${addNodeAttributeLabel(nodeWithAttributes.nodeNumber)}</br></br>`;
       });
       return text;
     };

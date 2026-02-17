@@ -1,9 +1,10 @@
 (function (root) {
   root.InstructionsPopup = function (container) {
-    var element =
-      '<div class="instructions-popup">' +
-      '<header></header>' +
-      '</div>';
+    var element = `
+      <div class="instructions-popup">
+        <header></header>
+      </div>
+    `;
     container.append(element);
 
     var show = function (message, timeout) {

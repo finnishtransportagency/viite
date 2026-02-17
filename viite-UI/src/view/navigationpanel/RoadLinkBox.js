@@ -24,24 +24,27 @@
       '    <div class="calibration-point-image"></div>' +
       '</div>');
 
-    var junctionPicture = $('' +
-      '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">\n' +
-      '</object>' +
-      '<div class="label">Liittymä</div>' +
-      '</div>');
+    var junctionPicture = $(
+      `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+        <object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">
+        </object>
+        <div class="label">Liittymä</div>
+      </div>`
+    );
 
-    var junctionTemplatePicture = $('' +
-      '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
-      '<div class="label">Liittymäaihio</div>' +
-      '</div>');
+    var junctionTemplatePicture = $(
+      `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+        <object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>
+        <div class="label">Liittymäaihio</div>
+      </div>`
+    );
 
-    var nodeTemplatePicture = $('' +
-      '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-      '<object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>' +
-      '<div class="label">Solmukohta-aihio</div>' +
-      '</div>');
+    var nodeTemplatePicture = $(
+      `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+        <object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>
+        <div class="label">Solmukohta-aihio</div>
+      </div>`
+    );
 
     var roadClasses = [
       [1, 'Valtatie (1-39)'],
@@ -59,12 +62,11 @@
     ];
 
     var buildMultiColoredSegments = function () {
-      var segments = '<div class = "rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
+      let segments = '<div class="rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
       for (var i = 1; i <= 6; i++) {
-        segments = segments +
-          '<div class="middle symbol linear rainbow-asset-' + i + '"></div>';
+        segments += `<div class="middle symbol linear rainbow-asset-${i}"></div>`;
       }
-      return segments + '<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>';
+      return `${segments}<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>`;
     };
 
     function createLifecycleStatusLegendEntries ()  {
@@ -114,56 +116,57 @@
         defaultLegendEntry += buildMultiColoredSegments();
       else
         defaultLegendEntry += `<div class="symbol linear linear-asset-${roadClass[0]} ${getColorClass(roadClass[0])}"></div>`;
-      return defaultLegendEntry + '</div>';
+      return `${defaultLegendEntry}</div>`;
     }).join('');
 
     function createNodeLegendEntries() {
       let html = '';
       for (const node in ViiteEnumerations.NodeType) {
         if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.NodeType, node) && ViiteEnumerations.NodeType[node] !== ViiteEnumerations.NodeType.UnknownNodeType)
-          html += '<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">' +
-              '<img src="images/node-sprite.svg#' + ViiteEnumerations.NodeType[node].value + '" style="margin-right: 5px"/>' +
-              '<div class="label">' + ViiteEnumerations.NodeType[node].value + " " + ViiteEnumerations.NodeType[node].description + '</div>' +
-              '</div>';
+          html += `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+              <img src="images/node-sprite.svg#${ViiteEnumerations.NodeType[node].value}" style="margin-right: 5px"/>
+              <div class="label">${ViiteEnumerations.NodeType[node].value} ${ViiteEnumerations.NodeType[node].description}</div>
+              </div>`;
       }
       return html;
     }
 
     var roadProjectOperations = function () {
-      return `<div class="legend-entry">
-        <div class="label">${RoadAddressChangeType.Unchanged.displayText}</div>
-        <div class="symbol linear operation-type-unchanged dark-blue"></div>
+      return (
+        `<div class="legend-entry">
+          <div class="label">${RoadAddressChangeType.Unchanged.displayText}</div>
+          <div class="symbol linear operation-type-unchanged dark-blue"></div>
         </div>
         <div class="legend-entry">
-        <div class="label">${RoadAddressChangeType.New.displayText}</div>
-        <div class="symbol linear operation-type-new pink"></div>
+          <div class="label">${RoadAddressChangeType.New.displayText}</div>
+          <div class="symbol linear operation-type-new pink"></div>
         </div>
         <div class="legend-entry">
-        <div class="label">${RoadAddressChangeType.Transfer.displayText}</div>
-        <div class="symbol linear operation-type-transfer red"></div>
+          <div class="label">${RoadAddressChangeType.Transfer.displayText}</div>
+          <div class="symbol linear operation-type-transfer red"></div>
         </div>
         <div class="legend-entry">
-        <div class="label">${RoadAddressChangeType.Terminated.displayText}</div>
-        <div class="symbol linear operation-type-terminated black"></div>
+          <div class="label">${RoadAddressChangeType.Terminated.displayText}</div>
+          <div class="symbol linear operation-type-terminated black"></div>
         </div>
         <div class="legend-entry">
-        <div class="label">${RoadAddressChangeType.Numbering.displayText}</div>
-        <div class="symbol linear operation-type-renumbered brown"></div>
+          <div class="label">${RoadAddressChangeType.Numbering.displayText}</div>
+          <div class="symbol linear operation-type-renumbered brown"></div>
         </div>
         <div class="legend-entry">
-        <div class="label">${RoadAddressChangeType.NotHandled.displayText}</div>
-        <div class="symbol linear operation-type-unhandeled yellow"></div>
+          <div class="label">${RoadAddressChangeType.NotHandled.displayText}</div>
+          <div class="symbol linear operation-type-unhandeled yellow"></div>
         </div>
         ${createLifecycleStatusLegendEntries()}
+        <div class="legend-entry">
+          <div class="label"> Osoitteeton (valtio)</div>
+          <div class="symbol linear linear-asset-99 dark-gray"></div>
         </div>
         <div class="legend-entry">
-        <div class="label"> Osoitteeton (valtio)</div>
-        <div class="symbol linear linear-asset-99 dark-gray"></div>
-        </div>
-        <div class="legend-entry">
-        <div class="label"> Osoitteeton (kunta/yksityinen)</div>
-        <div class="symbol linear linear-asset-11 gray"></div>
-        </div>`;
+          <div class="label"> Osoitteeton (kunta/yksityinen)</div>
+          <div class="symbol linear linear-asset-11 gray"></div>
+        </div>`
+      );
     };
 
     roadClassLegend.append(roadClassLegendEntries);
@@ -206,7 +209,7 @@
       var toolSelectionElement = $('<div class="panel-section panel-actions"></div>');
       _.each(tools, function (tool) {
         toolSelectionElement.append(tool.element);
-        toolSelectionElement.append('<div>' + tool.description + '</div>');
+        toolSelectionElement.append(`<div>${tool.description}</div>`);
       });
 
       var doHide = function () {

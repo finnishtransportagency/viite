@@ -29,8 +29,8 @@
 
       // Add validate button if user has dev role
       if (_.includes(startupParameters.roles, 'dev')) {
-        buttonsHtml += '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"' +
-            (isValidationButtonVisible ? '' : ' hidden="true"') + '>Validoi projekti</button>';
+        buttonsHtml += `<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"${
+            isValidationButtonVisible ? '' : ' hidden="true"'}>Validoi projekti</button>`;
       }
 
       // Add the rest of the buttons that match FormCommon.js
@@ -80,44 +80,47 @@
 
     var staticField = function (labelText, dataField) {
       var field;
-      field = '<div class="form-group">' +
-          '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
-          '</div>';
+      field = `<div class="form-group">
+          <p class="form-control-static asset-log-info">${labelText} : ${dataField}</p>
+          </div>`;
       return field;
     };
 
     var largeInputField = function (dataField) {
-      return '<div class="form-group">' +
-          '<label class="control-label">LISÄTIEDOT</label>' +
-          '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" >' + (dataField === undefined || dataField === null ? "" : dataField) + '</textarea>' +
-          '</div>';
+      return (`
+        <div class="form-group">
+          <label class="control-label">LISÄTIEDOT</label>
+          <textarea class="form-control large-input roadAddressProject" id="lisatiedot">${dataField === undefined || dataField === null ? "" : dataField}</textarea>
+        </div>
+      `);
     };
 
     const inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
       let lengthLimit = '';
       if (maxLength)
         lengthLimit = 'maxlength="' + maxLength + '"';
-      return '<div class="form-group input-required">' +
-          '<label class="control-label required">' + labelText + '</label>' +
-          '<input type="text" class="form-control" id = "' + id + '"' + lengthLimit + ' placeholder = "' + placeholder + '" value="' + value + '"/>' +
-          '</div>';
+      return (`
+        <div class="form-group input-required">
+          <label class="control-label required">${labelText}</label>
+          <input type="text" class="form-control" id ="${id}"${lengthLimit} placeholder ="${placeholder}" value="${value}"/>
+        </div>
+      `);
     };
 
     const title = function (projectName) {
       const projectNameFixed = (projectName) ? projectName : "Uusi tieosoiteprojekti";
-      return '<span class ="edit-mode-title">' + projectNameFixed + '</span>';
+      return `<span class ="edit-mode-title">${projectNameFixed}</span>`;
     };
 
     var actionButtons = function () {
-      var html = '<div class="project-form form-controls" id="actionButtons">';
-      if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-        html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-            'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-      }
-      html += '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>' +
-          '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
-          '</div>';
-      return html;
+      return (
+        `<div class="project-form form-controls" id="actionButtons">
+          ${currentProject.statusCode === ProjectStatus.Incomplete.value ? 
+            `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
+          <button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>
+          <button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>
+        </div>`
+      );
     };
 
     var newProjectTemplate = function () {
@@ -157,7 +160,6 @@
           '</div></div>' +
           '<footer>' + actionButtons() + '</footer>');
     };
-
     var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
       return _.template('' +
           '<header>' +
@@ -206,53 +208,56 @@
           '<footer>' + actionButtons() + '</footer>');
     };
 
+
     var selectedProjectLinkTemplateDisabledButtons = function (project) {
       let devToolValidationButton = '';
       if (_.includes(startupParameters.roles, 'dev')) {
         devToolValidationButton = '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>';
       }
-      return _.template('' +
-          '<header>' +
-          formCommon.titleWithEditingTool(project) +
-          '</header>' +
-          '<div class="wrapper read-only">' +
-          '<div class="form form-horizontal form-dark">' +
-          '<label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>' +
-          '<div class="form-group" id="project-errors"></div>' +
-          '</div></div></br></br>' +
-          '<footer>' +
-          '<div class="project-form form-controls">' +
-          devToolValidationButton +
-          formCommon.projectButtonsDisabled() +
-          '</div>' +
-          '</footer>');
+      return (
+        `<header>${formCommon.titleWithEditingTool(project)}</header>
+        <div class="wrapper read-only">
+          <div class="form form-horizontal form-dark">
+            <label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>
+            <div class="form-group" id="project-errors"></div>
+          </div>
+        </div>
+        <footer>
+          <div class="project-form form-controls">
+            ${devToolValidationButton}
+            ${formCommon.projectButtonsDisabled()}
+          </div>
+        </footer>`
+      );
     };
 
     var errorsList = function () {
       if (projectCollection.getProjectErrors().length > 0) {
-        return '<label>TARKASTUSILMOITUKSET:</label>' +
-            '<div id ="projectErrors">' +
-            formCommon.getProjectErrors(projectCollection.getProjectErrors(), projectCollection.getAll(), projectCollection) +
-            '</div>';
+        return (
+          `<label>TARKASTUSILMOITUKSET:</label>
+          <div id="projectErrors">
+            ${formCommon.getProjectErrors(projectCollection.getProjectErrors(), projectCollection.getAll(), projectCollection)}
+          </div>`
+        );
       }
       else
         return '';
     };
 
     var addSmallLabel = function (label, customWidth) {
-      return '<label class="control-label-small" style="width: ' + customWidth + '">' + label + '</label>';
+      return `<label class="control-label-small" style="width: ${customWidth};">${label}</label>`;
     };
 
     var addSmallLabelWithIds = function (label, id, customWidth) {
-      const style = customWidth ? ' style="width: ' + customWidth + '"' : '';
-      return '<label class="control-label-small" id="' + id + '"' + style + '>' + label + '</label>';
+      const style = customWidth ? ` style="width: ${customWidth}"` : '';
+      return `<label class="control-label-small" id="${id}"${style}>${label}</label>`;
     };
 
     var addSmallInputNumber = function (id, value, maxLength) {
       //Validate only number characters on "onkeypress" including TAB and backspace
-      var smallNumberInput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-          '" class="form-control small-input roadAddressProject" id="' + id + '" value="' + (_.isUndefined(value) ? '' : value) + '"' +
-          (_.isUndefined(maxLength) ? '' : ' maxlength="' + maxLength + '"') + ' onclick=""/>';
+      var smallNumberInput = `<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)"` +
+          ` class="form-control small-input roadAddressProject" id="${id}" value="${_.isUndefined(value) ? '' : value}"${
+          _.isUndefined(maxLength) ? '' : ` maxlength="${maxLength}"`} onclick=""/>`;
       return smallNumberInput;
     };
 
@@ -275,7 +280,7 @@
     };
 
     var addReserveButton = function () {
-      return '<button class="btn btn-reserve" disabled>Varaa</button>';
+      return `<button class="btn btn-reserve" disabled>Varaa</button>`;
     };
 
     var bindEvents = function () {
@@ -339,15 +344,15 @@
         var index = 0;
         _.each(list, function (line) {
           if (!_.isUndefined(line.currentLength)) {
-            text += '<div class="form-reserved-roads-list">' +
-                addSmallLabel(line.roadNumber, '30px !important') +
-                addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-                addSmallLabelWithIds((line.currentLength), 'reservedRoadLength') +
-                addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
-                addSmallLabelWithIds((line.currentEly || '0'), 'reservedEly') +
-                addSmallLabelWithIds((line.currentEvk), 'reservedEvk') +
-                projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList') +
-                '</div>';
+            text += `<div class="form-reserved-roads-list">
+                ${addSmallLabel(line.roadNumber, '30px !important')}
+                ${addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber')}
+                ${addSmallLabelWithIds((line.currentLength), 'reservedRoadLength')}
+                ${addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth)}
+                ${addSmallLabelWithIds((line.currentEly || '0'), 'reservedEly')}
+                ${addSmallLabelWithIds((line.currentEvk), 'reservedEvk')}
+                ${projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList')}
+                </div>`;
           }
         });
         return text;
@@ -358,24 +363,24 @@
         var index = 0;
         _.each(list, function (line) {
           if (!_.isUndefined(line.newLength)) {
-            text += '<div class="form-reserved-roads-list">' +
-                addSmallLabel(line.roadNumber, "30px !important") +
-                addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber') +
-                addSmallLabelWithIds((line.newLength), 'reservedRoadLength') +
-                addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth) +
-                addSmallLabelWithIds((line.newEly || '0'), 'reservedEly') +
-                addSmallLabelWithIds((line.newEvk), 'reservedEvk') +
-                projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList') +
-                '</div>';
+            text += `<div class="form-reserved-roads-list">
+                ${addSmallLabel(line.roadNumber, "30px !important")}
+                ${addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber')}
+                ${addSmallLabelWithIds((line.newLength), 'reservedRoadLength')}
+                ${addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth)}
+                ${addSmallLabelWithIds((line.newEly || '0'), 'reservedEly')}
+                ${addSmallLabelWithIds((line.newEvk), 'reservedEvk')}
+                ${projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList')}
+                </div>`;
           }
         });
         return text;
       };
 
       var toggleAdditionalControls = function () {
-        rootElement.find('header').replaceWith('<header>' +
-            formCommon.titleWithEditingTool(currentProject) +
-            '</header>');
+        rootElement.find('header').replaceWith(`<header>${
+            formCommon.titleWithEditingTool(currentProject)
+            }</header>`);
       };
 
       var createOrSaveProject = function () {
@@ -404,9 +409,9 @@
           projectCollection.setReservedParts(result.reservedInfo);
           _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
-            text += '<div class="form-reserved-roads-list">' + button +
-                addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely || '0') + addSmallLabel(line.evk || line.ely || '0') +
-                '</div>';
+            text += `<div class="form-reserved-roads-list">${button +
+                addSmallLabel(line.roadNumber) + addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely || '0') + addSmallLabel(line.evk || line.ely || '0')
+                }</div>`;
           });
           rootElement.html(openProjectTemplate(currentProject, text, ''));
 
@@ -646,13 +651,12 @@
 
       var loadEditbuttons = function () {
         $('#activeButtons').empty();
-        var html = "";
-        if (currentProject.statusCode === ProjectStatus.Incomplete.value) {
-          html += '<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_' + currentProject.id + '" ' +
-              'class="fas fa-trash-alt" value="' + currentProject.id + '"></i></span>';
-        }
-        html += '<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
-            '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>';
+        const html = (
+          `${currentProject.statusCode === ProjectStatus.Incomplete.value ? 
+            `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
+          <button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>
+          <button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>`
+        );
         $('#actionButtons').html(html);
         eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
       };
