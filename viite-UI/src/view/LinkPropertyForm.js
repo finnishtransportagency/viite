@@ -192,13 +192,19 @@
           <div class="form form-horizontal form-dark">
             <div>
               <div class="form-group-metadata">
-                <p class="form-control-static asset-log-info-metadata">Muokattu viimeksi: ${modifiedBy} ${modifiedAt}</p>
+                <p class="form-control-static asset-log-info-metadata">
+                  Muokattu viimeksi: ${firstSelectedLinkProperty.modifiedBy} ${firstSelectedLinkProperty.modifiedAt}
+                </p>
               </div>
               <div class="form-group-metadata">
-                <p class="form-control-static asset-log-info-metadata">Linkkien lukumäärä: ${selectedLinkProperty.count()}</p>
+                <p class="form-control-static asset-log-info-metadata">
+                  Linkkien lukumäärä: ${selectedLinkProperty.count()}
+                </p>
               </div>
               <div class="form-group-metadata">
-                <p class="form-control-static asset-log-info-metadata">Geometrian lähde: ${linkProperties.roadLinkSource}${mtkId}</p>
+                <p class="form-control-static asset-log-info-metadata">
+                  Geometrian lähde: ${linkProperties.roadLinkSource}${mtkId}
+                </p>
               </div>
               ${showMunicipality()}
               ${showLinkId(selectedLinkProperty, linkProperties)}
@@ -373,7 +379,7 @@
           rootElement.find('.form-controls').toggle(!readOnly);
           var firstSelectedLinkProperty = _.head(selectedLinkProperty.get());
           if (!_.isEmpty(selectedLinkProperty.get())) {
-            rootElement.html(template(firstSelectedLinkProperty, linkProperties)(firstSelectedLinkProperty));
+            rootElement.html(template(firstSelectedLinkProperty, linkProperties));
           }
           rootElement.find('.form-controls').toggle(!readOnly);
         }

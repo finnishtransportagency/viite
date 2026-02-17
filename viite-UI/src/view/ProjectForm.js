@@ -115,8 +115,7 @@
     var actionButtons = function () {
       return (
         `<div class="project-form form-controls" id="actionButtons">
-          ${currentProject.statusCode === ProjectStatus.Incomplete.value ? 
-            `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
+          ${currentProject.statusCode === ProjectStatus.Incomplete.value ? `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
           <button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>
           <button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>
         </div>`
@@ -652,8 +651,7 @@
       var loadEditbuttons = function () {
         $('#activeButtons').empty();
         const html = (
-          `${currentProject.statusCode === ProjectStatus.Incomplete.value ? 
-            `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
+          `${currentProject.statusCode === ProjectStatus.Incomplete.value ? `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
           <button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>
           <button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>`
         );
