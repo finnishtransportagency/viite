@@ -19,6 +19,7 @@
             <div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>
             <button class="close wbtn-close">Sulje <i class="fas fa-window-close"></i></button>
             <button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" class="size-symbol">□</span></button>
+            <div class="resize-handle-vertical"></div>
 
 
         <div class="change-table-dimension-headers">
@@ -69,7 +70,6 @@
       interact('.change-table-frame').unset();
       bindEvents();
       getChanges();
-      setTableHeight();
       enableTableInteractions();
     }
 
@@ -114,12 +114,6 @@
           projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
         }
       });
-    }
-
-    function setTableHeight() {
-      var changeTableHeight = parseInt(changeTable.height());
-      var headerHeight = parseInt($('.change-table-fixed-header').height()); 
-      $('.change-table-dimension-headers').height(changeTableHeight - headerHeight - 30);
     }
 
     // Most validation logic is in the backend, but some cases have slipped past it, so
@@ -183,7 +177,6 @@
     }
 
     function showChangeTable(projectChangeData) {
-      console.log(projectChangeData);
       var htmlTable = "";
       var warningM = projectChangeData.warningMessage;
       var hasLengthMismatch = false;
@@ -239,7 +232,6 @@
           
           htmlTable += `</tr>`;
         });
-        setTableHeight();
       }
 
       $('.row-changes').remove();
@@ -282,6 +274,51 @@
         showChangeTable(projectChangeData);
       });
 
+      // Vertical resize functionality
+      var isResizing = false;
+      var startY = 0;
+      var startHeight = 0;
+      var startTop = 0;
+
+      changeTable.on('mousedown', '.resize-handle-vertical', function (e) {
+        isResizing = true;
+        startY = e.clientY;
+        startHeight = $('.change-table-frame').height();
+        startTop = $('.change-table-frame').position().top;
+        $('body').css('cursor', 'ns-resize');
+        e.preventDefault();
+      });
+
+      $(document).on('mousemove', function (e) {
+        if (!isResizing) return;
+        
+        var deltaY = e.clientY - startY;
+        var newHeight = startHeight - deltaY;
+        var newTop = startTop + deltaY;
+        
+        // Set minimum and maximum height constraints
+        var minHeight = 200;
+        var maxHeight = $(window).height() - 100;
+        
+        if (newHeight < minHeight) {
+          newHeight = minHeight;
+          newTop = startTop + (startHeight - minHeight);
+        } else if (newHeight > maxHeight) {
+          newHeight = maxHeight;
+          newTop = startTop + (startHeight - maxHeight);
+        }
+        
+        $('.change-table-frame').height(newHeight);
+        $('.change-table-frame').css('top', newTop);
+      });
+
+      $(document).on('mouseup', function () {
+        if (isResizing) {
+          isResizing = false;
+          $('body').css('cursor', 'default');
+        }
+      });
+
       changeTable.on('click', 'button.max', function () {
         resetInteractions();
         if (windowMaximized) {
@@ -301,7 +338,6 @@
           $('[id=sizeSymbol]').text("_");
           windowMaximized = true;
         }
-        setTableHeight();
       });
 
       changeTable.on('click', 'button.close', function () {
@@ -450,7 +486,7 @@
         target.style.webkitTransform = target.style.transform;
         target.setAttribute('data-x', x);
         target.setAttribute('data-y', y);
-        setTableHeight();
+
       });
     }
 

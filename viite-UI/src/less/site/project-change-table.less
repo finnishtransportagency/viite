@@ -8,6 +8,20 @@
   top: 620px;
   background-color: #e3e3e1;
   z-index: 1020;
+  resize: horizontal;
+  /* Allow horizontal resizing */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.resize-handle-vertical {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  cursor: ns-resize;
 }
 
 .change-table-header {
@@ -21,13 +35,18 @@
   font-weight: bold;
   display: flex;
   justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.change-table-dimension-headers {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .change-header {
   margin-left: 10%;
 }
-
-
 
 .project-change-table-dimension-header {
   width: 5.15%;
@@ -45,9 +64,6 @@
   padding-right: 12px;
 }
 
-
-
-
 .project-change-table-dimension-h {
   min-width: 30px;
   max-width: 30px;
@@ -60,7 +76,6 @@
   text-overflow: ellipsis;
   text-align: center;
 }
-
 
 .project-change-table-dimension-first {
   min-width: 65px;
@@ -122,17 +137,18 @@
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: fixed;
 }
 
 .change-table-dimensions th {
-  position: sticky;
-  top: 30;
   background: white;
-  z-index: 10;
   border-bottom: 1px solid #ccc;
   padding: 0;
   margin: 0;
   text-align: center;
+  position: sticky;
+  top: 30;
+  z-index: 10;
 }
 
 .change-table-dimensions td {
@@ -185,10 +201,6 @@
 .size-symbol {
   font-size: 175%;
   font-weight: 900;
-}
-
-.change-table-dimension-headers {
-  overflow-y: auto;
 }
 
 .warning-message {
