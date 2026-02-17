@@ -1,17 +1,17 @@
 window.Confirm = function () {
 
-  var confirmDiv =
-    '<div class="modal-overlay confirm-modal">' +
-    '<div class="modal-dialog">' +
-    '<div class="content">' +
-    'Olet muokannut tietoja.' +
-    'Tallenna tai peru muutoksesi.' +
-    '</div>' +
-    '<div class="actions">' +
-    '<button class="btn btn-secondary close">Sulje</button>' +
-    '</div>' +
-    '</div>' +
-    '</div>';
+  var confirmDiv = `
+    <div class="modal-overlay confirm-modal">
+      <div class="modal-dialog">
+        <div class="content">
+          Olet muokannut tietoja.
+          Tallenna tai peru muutoksesi.
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary close">Sulje</button>
+        </div>
+      </div>
+    </div>`;
 
   var renderConfirmDialog = function () {
     jQuery('.container').append(confirmDiv);

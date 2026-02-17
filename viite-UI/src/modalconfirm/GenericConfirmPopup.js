@@ -15,30 +15,30 @@ window.GenericConfirmPopup = function (message, options) {
 
   const optionsMerged = _.merge(defaultOptions, options);
 
-  var confirmDiv =
-    '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
-    '<div class="modal-dialog">' +
-    '<div class="content">' +
-    message +
-    '</div>' +
-    '<div class="actions">' +
-    '<button class = "btn btn-primary yes">' + optionsMerged.yesButtonLbl + '</button>' +
-    '<button class = "btn btn-secondary no">' + optionsMerged.noButtonLbl + '</button>' +
-    '</div>' +
-    '</div>' +
-    '</div>';
+  var confirmDiv = `
+    <div class="modal-overlay confirm-modal" id="genericConfirmationDialog">
+      <div class="modal-dialog">
+        <div class="content">
+          ${message}
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary yes">${optionsMerged.yesButtonLbl}</button>
+          <button class="btn btn-secondary no">${optionsMerged.noButtonLbl}</button>
+        </div>
+      </div>
+    </div>`;
 
-  var alertDiv =
-    '<div class="modal-overlay confirm-modal" id="genericConfirmationDialog">' +
-    '<div class="modal-dialog">' +
-    '<div class="content" style="max-height: 500px; overflow-y: scroll">' +
-    message +
-    '</div>' +
-    '<div class="actions">' +
-    '<button class = "btn btn-secondary ok">' + optionsMerged.okButtonLbl + '</button>' +
-    '</div>' +
-    '</div>' +
-    '</div>';
+  var alertDiv = `
+    <div class="modal-overlay confirm-modal" id="genericConfirmationDialog">
+      <div class="modal-dialog">
+        <div class="content" style="max-height: 500px; overflow-y: scroll">
+          ${message}
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary ok">${optionsMerged.okButtonLbl}</button>
+        </div>
+      </div>
+    </div>`;
 
   var renderConfirmDialog = function () {
     var template = confirmDiv;
