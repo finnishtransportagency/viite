@@ -119,10 +119,10 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
 
   // Debugging / alternate way to trigger click via shift + c or shift + x
   function onKeyDown(e) {
-    if (e.key.toUpperCase() === 'C' && e.shiftKey) {
+    if (e.shiftKey && e.key === 'ArrowRight') {
       e.preventDefault();
       performClick();
-    } else if (e.key.toUpperCase() === 'X' && e.shiftKey) {
+    } else if (e.shiftKey && e.key === 'ArrowLeft') {
       e.preventDefault();
       performClick(null, true);
     }
