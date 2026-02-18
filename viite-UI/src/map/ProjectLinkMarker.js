@@ -36,21 +36,21 @@
         if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.New.value) {
           return '#ff00ff';
         }
-	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.NotHandled.value) {
-          return '#cfcf06'; // Yellow
-	}
-	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Transfer.value) {
-          return '#ff0000'; // Red
-	}
-	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Unchanged.value) {
-          return '#0000ff'; // Blue
-	}
-	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Numbering.value) {
-          return '#a52a2a'; // Brown
-	}
-	else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Terminated.value) {
-          return '#000000'; // Black 
-	}
+        else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.NotHandled.value) {
+                return '#cfcf06'; // Yellow
+        }
+        else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Transfer.value) {
+                return '#ff0000'; // Red
+        }
+        else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Unchanged.value) {
+                return '#0000ff'; // Blue
+        }
+        else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Numbering.value) {
+                return '#a52a2a'; // Brown
+        }
+        else if (roadLinka.status === ViiteEnumerations.RoadAddressChangeType.Terminated.value) {
+                return '#000000'; // Black 
+        }
         else if (roadLinka.roadClass in colorMap) {
           return colorMap[roadLinka.roadClass];
         } else
