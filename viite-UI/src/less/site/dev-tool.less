@@ -1,0 +1,77 @@
+//== Dev Tool Styles
+// Styles for the development address tool in DevTool.js
+
+// Import core variables and mixins
+@import "../core/variables.less";
+@import "../core/mixins.less";
+
+//========================================
+// Dev Address Tool Styles
+//========================================
+
+.dev-address-tool {
+  background: @gray-darker;
+  border: 1px solid @gray-darker-2;
+  border-radius: @border-radius-base;
+  padding: 15px;
+  margin-top: 15px;
+}
+
+.dev-address-tool-wrapper {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dev-wrapper-row {
+  margin: 10px;
+  display: flex;
+  flex-direction: row;
+}
+
+.dev-wrapper-column {
+  margin: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.dev-address-field-wrapper {
+  display: inline-flex;
+  margin: 20px 10px;
+}
+
+.dev-addressfield {
+  display: flex;
+  flex-direction: column;
+  margin-right: 15px;
+}
+
+//========================================
+// Dev Tool Specific Form Controls
+//========================================
+
+// Side code dropdown
+#sideCodeDropdown {
+  width: 130px !important;
+  display: inline;
+}
+
+// CP dropdowns
+#startCPDropdown,
+#endCPDropdown {
+  width: 100px !important;
+  display: inline;
+}
+
+// Roadway number checkbox
+#newRoadwayNumber {
+  margin-right: 10px;
+  vertical-align: middle;
+}
+
+// Roadway number label alignment
+.dev-wrapper-row label {
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1.2;
+}
