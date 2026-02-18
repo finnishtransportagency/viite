@@ -29,6 +29,25 @@
 
     root.UserManagement.AddUserForm = {
         handleAddUser: function () {
+            // Debug: Check if dependencies are loaded
+            if (!userManagementApi || typeof userManagementApi.addUser !== 'function') {
+                console.error('userManagementApi.addUser is not available');
+                Toast.show('API-virhe: userManagementApi.addUser ei ole saatavilla', { type: 'error' });
+                return;
+            }
+            
+            if (!getSelectedRoles || typeof getSelectedRoles !== 'function') {
+                console.error('getSelectedRoles is not available');
+                Toast.show('Virhe: Roolien haku ei ole saatavilla', { type: 'error' });
+                return;
+            }
+            
+            if (!getSelectedElinvoimakeskus || typeof getSelectedElinvoimakeskus !== 'function') {
+                console.error('getSelectedElinvoimakeskus is not available');
+                Toast.show('Virhe: Elinvoimakeskus-valinta ei ole saatavilla', { type: 'error' });
+                return;
+            }
+
             const username = document.getElementById('newUserUsername').value.trim();
             const roles = getSelectedRoles('newUserRoles');
             const zoom = parseInt(document.getElementById('newUserZoom').value || DEFAULT_COORDINATES.zoom);
@@ -37,7 +56,7 @@
             const elinvoimakeskus = getSelectedElinvoimakeskus('newUserElinvoimakeskus');
 
             const fields = { username, roles, elinvoimakeskus, east, north, zoom };
-            const errors = validateUserFields ? validateUserFields(fields) : {};
+            const errors = validateUserFields && typeof validateUserFields === 'function' ? validateUserFields(fields) : {};
 
             showFormErrors(errors);
             if (Object.keys(errors).length) return;
