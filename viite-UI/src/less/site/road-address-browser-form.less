@@ -1,0 +1,239 @@
+//== Road Address Browser Form
+// Consolidated styles for RoadAddressBrowserForm.js
+
+// Import core variables and mixins
+@import "../core/variables.less";
+@import "../core/mixins.less";
+
+//========================================
+// Form Container
+//========================================
+
+.road-address-browser-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 15px;
+  
+  .input-container {
+    margin-bottom: 10px;
+  }
+}
+
+//========================================
+// Labels
+//========================================
+
+.control-label-small {
+  margin: 2.5px 15px;
+  text-align: center;
+  white-space: nowrap;
+  font-size: @font-size-small;
+  font-weight: normal;
+  color: @gray-lighter;
+  text-transform: none;
+}
+
+//========================================
+// Input Fields
+//========================================
+
+.modern-input {
+  border: 1px solid @input-border;
+  border-radius: @border-radius-base;
+  padding: 6px 8px;
+  font-size: @font-size-base;
+  background-color: @input-bg;
+  color: @input-color;
+  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+  .shadow-box();
+
+  &:focus {
+    border-color: @input-border-focus;
+    outline: none;
+    .form-control-focus();
+  }
+
+  &[disabled] {
+    background-color: @input-bg-disabled;
+    border-color: @input-border-disabled;
+    color: @input-color-placeholder;
+    cursor: not-allowed;
+  }
+}
+
+.road-address-browser-date-input {
+  width: 80px;
+  
+  &.road-address-browser-road-input {
+    width: 70px;
+  }
+}
+
+.road-address-browser-road-input {
+  width: 100px;
+}
+
+//========================================
+// Form Buttons
+//========================================
+
+.road-address-browser-form-button-wrapper {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  align-items: center;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: @border-radius-base;
+  font-size: @font-size-base;
+  font-weight: normal;
+  cursor: pointer;
+  .transition(~"background-color 0.2s ease, border-color 0.2s ease");
+  text-decoration: none;
+
+  &:hover {
+    background-color: @gray-lighter;
+  color: @text-color;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &[disabled] {
+    background-color: @gray-light;
+    color: @gray-lighter;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
+.btn-primary {
+  background-color: @blue;
+  color: #fff;
+  border: 1px solid @blue;
+
+  &:hover {
+    background-color: @blue-dark;
+    border-color: @blue-dark;
+  }
+}
+
+.download-csv {
+  background-color: @green;
+  color: #fff;
+  border: 1px solid @green;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  i {
+    font-size: 14px;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: @green-dark;
+    border-color: @green-dark;
+  }
+
+  &[disabled] {
+    background-color: @gray-light;
+    color: @gray-lighter;
+    cursor: not-allowed;
+  }
+}
+
+//========================================
+// Responsive Design
+//========================================
+
+@media (max-width: 768px) {
+  .road-address-browser-form {
+    gap: 10px;
+  }
+
+  .modern-input {
+    padding: 4px 6px;
+    font-size: @font-size-small;
+  }
+
+  .btn {
+    padding: 6px 12px;
+    font-size: @font-size-small;
+  }
+
+  .control-label-small {
+    font-size: @font-size-xs;
+    margin: 2px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .road-address-browser-form {
+    gap: 8px;
+  }
+
+  .modern-input {
+    width: 100% !important;
+    padding: 3px 4px;
+  }
+
+  .road-address-browser-form-button-wrapper {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: @font-size-xs;
+  }
+}
+
+
+.road-address-browser-form {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+
+  .control-label-small {
+    margin: 2.5px 15px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .road-address-browser-date-input {
+    width: 100px;
+  }
+
+  .road-address-browser-road-input {
+    width: 70px;
+  }
+
+  input {
+    width: 50px;
+    height: 25px;
+  }
+
+  select {
+    height: 25px;
+    min-width: fit-content;
+  }
+
+  .road-address-browser-form-button-wrapper {
+    padding: 5px;
+    display: flex;
+    align-items: flex-end;
+  }
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 5px;
+}
