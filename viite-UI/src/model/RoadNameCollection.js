@@ -1,3 +1,13 @@
+/**
+ * RoadNameCollection - Road name management and history
+ * 
+ * Handles road name operations including:
+ * - Road name data management by road number
+ * - Historical road name tracking with dates
+ * - Road name creation and modification
+ * - Date range management for road names
+ * - Backend integration for road name operations
+ */
 (function (root) {
   root.RoadNameCollection = function (backend) {
 

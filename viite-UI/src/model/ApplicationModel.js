@@ -1,3 +1,13 @@
+/**
+ * ApplicationModel - Central application state management
+ * 
+ * Manages global application state including:
+ * - Zoom levels and map center
+ * - Selected tools and layers
+ * - Read-only mode and UI state
+ * - Project state and user session
+ * - Selection types and special configurations
+ */
 (function (root) {
   root.ApplicationModel = function (models) {
     const zoom = {

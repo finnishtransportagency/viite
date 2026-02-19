@@ -1,3 +1,13 @@
+/**
+ * NodeCollection - Manages road nodes and junctions data
+ * 
+ * Handles node-related operations including:
+ * - Node data management and retrieval
+ * - Template management for nodes and junctions
+ * - Road attribute-based node searching
+ * - Backend integration for node operations
+ * - Node point and junction template handling
+ */
 (function (root) {
   root.NodeCollection = function (backend, locationSearch) {
     var me = this;

@@ -1,3 +1,12 @@
+/**
+ * LocationSearch - Geocoding and road address search functionality
+ * 
+ * Provides search capabilities for:
+ * - Street address geocoding using coordinate data
+ * - Road address search with road number and part matching
+ * - Coordinate extraction and title formatting
+ * - Error handling for unknown addresses
+ */
 /* eslint-disable new-cap */
 (function (root) {
   root.LocationSearch = function (backend, applicationModel) {

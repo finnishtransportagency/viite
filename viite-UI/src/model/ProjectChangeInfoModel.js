@@ -1,3 +1,13 @@
+/**
+ * ProjectChangeInfoModel - Handles project change tracking and history
+ * 
+ * Manages project change information including:
+ * - Change table data and metadata
+ * - Road address change tracking
+ * - Change type classification and sorting
+ * - Backend integration for change history
+ * - Warning message handling for changes
+ */
 (function (root) {
   root.ProjectChangeInfoModel = function (backend) {
     var addrMRange = [{

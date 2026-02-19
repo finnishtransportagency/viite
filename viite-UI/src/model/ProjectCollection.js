@@ -1,3 +1,13 @@
+/**
+ * ProjectCollection - Manages road address projects and project links
+ * 
+ * Handles project-related operations including:
+ * - Project link management and retrieval
+ * - Road part reservation and formation
+ * - Project validation and publishing
+ * - Backend integration for project operations
+ * - Dirty state tracking and change management
+ */
 (function (root) {
   root.ProjectCollection = function (backend, startupParameters) {
     var me = this;

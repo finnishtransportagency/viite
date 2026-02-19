@@ -1,3 +1,13 @@
+/**
+ * SelectedLinkProperty - Manages selected road link properties
+ * 
+ * Handles selected link functionality including:
+ * - Multi-selection support for road links
+ * - Property extraction and display
+ * - Dirty state tracking for modifications
+ * - Link property validation and editing
+ * - Backend integration for link operations
+ */
 (function (root) {
   root.SelectedLinkProperty = function (backend, roadCollection) {
     var current = [];

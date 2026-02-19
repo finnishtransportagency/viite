@@ -1,3 +1,13 @@
+/**
+ * SelectedProjectLink - Manages selected project links state
+ * 
+ * Handles project link selection including:
+ * - Single and multi-selection support
+ * - Project link retrieval and management
+ * - Dirty state tracking for modifications
+ * - Error handling for problematic links
+ * - Event triggering for selection changes
+ */
 (function (root) {
   root.SelectedProjectLink = function (projectLinkCollection) {
 

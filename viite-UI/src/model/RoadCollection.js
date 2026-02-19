@@ -1,3 +1,12 @@
+/**
+ * RoadCollection - Road link data model and management
+ * 
+ * Provides road link functionality including:
+ * - Road link data model with selection state
+ * - Link property management and validation
+ * - Traffic direction and functional class handling
+ * - Point geometry management
+ */
 (function (root) {
   var RoadLinkModel = function (data) {
     var selected = false;

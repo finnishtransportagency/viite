@@ -1,3 +1,13 @@
+/**
+ * SelectedNodesAndJunctions - Manages selected nodes and junctions state
+ * 
+ * Handles node and junction selection including:
+ * - Node selection and template management
+ * - Junction point handling
+ * - Coordinate-based template retrieval
+ * - Current state management for nodes/templates
+ * - Event triggering for selection changes
+ */
 (function (root) {
   root.SelectedNodesAndJunctions = function (nodeCollection) {
     var current = {};
