@@ -8,7 +8,6 @@
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
 
-
     // flag to keep track if the project links have been recalculated after the changes made to the project links
     var recalculatedAfterChangesFlag = false;
 
@@ -28,18 +27,12 @@
       // Rebuild the buttons with proper states
       let buttonsHtml = '';
 
-      // Add validate button if user has dev role
-      if (_.includes(startupParameters.roles, 'dev')) {
-        buttonsHtml += `<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"${
-            isValidationButtonVisible ? '' : ' hidden="true"'}>Validoi projekti</button>`;
-      }
-
-      // Add the rest of the buttons that match FormCommon.js
-      buttonsHtml += `
-        <button id="recalculate-button" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
-        <button id="changes-button" class="show-changes btn btn-block btn-show-changes" disabled>Avaa projektin yhteenvetotaulukko</button>
-        <button id="send-button" class="send btn btn-block btn-send" disabled>Hyväksy tieosoitemuutokset</button>
-      `;
+      const projectButtons = new ProjectButtons({
+        showValidate: _.includes(startupParameters.roles, 'dev'),
+        validateVisible: isValidationButtonVisible,
+        disabled: false
+      });
+      buttonsHtml += projectButtons.render();
 
       // Update the buttons container
       $buttons.html(buttonsHtml);
@@ -51,27 +44,32 @@
       const isChangeTableOpen = $('.change-table-frame').is(':visible');
       const hasRecalculated = getRecalculatedAfterChangesFlag();
 
-      if (projectErrors.length === 0) {
-        if (isChangeTableOpen) {
+      // Check for errors first
+      if (projectErrors.length > 0) {
+          formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
+          return;
+      }
+
+      if (isChangeTableOpen) {
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
           formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
           formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
-        } else if (hasRecalculated) {
+          return;
+      }
+
+      if (hasRecalculated) {
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
           formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
           formCommon.setDisabledAndTitleAttributesById("send-button", true, "Avaa yhteenvetotaulukko ensin");
-        } else {
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
-          formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
-          formCommon.setDisabledAndTitleAttributesById("send-button", true, "Päivitä etäisyyslukemat ja avaa yhteenvetotaulukko ensin");
-        }
-      } else {
-        formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
+          return;
       }
 
+      formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+      formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Päivitä etäisyyslukemat ensin");
+      formCommon.setDisabledAndTitleAttributesById("send-button", true, "Päivitä etäisyyslukemat ja avaa yhteenvetotaulukko ensin");
       // Rebind event handlers
       if (typeof bindEvents === 'function') {
-//        bindEvents();
+        bindEvents();
       }
     });
 

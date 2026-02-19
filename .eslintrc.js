@@ -36,6 +36,7 @@ module.exports = {
         "Environment": "writable",
         "RoadCollection": "writable",
         "ProjectCollection": "writable",
+        "ProjectButtons": "writable",
         "ProjectFormTemplates": "writable",
         "ProjectFormValidator": "writable",
         "RoadNameCollection": "writable",

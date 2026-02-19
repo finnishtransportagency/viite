@@ -29,17 +29,19 @@
     };
 
     const projectButtons = function () {
-      return `
-      <button class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
-      <button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>
-      <button id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>`;
+      const buttons = new ProjectButtons({
+        showValidate: false,
+        disabled: false
+      });
+      return buttons.render();
     };
 
     const projectButtonsDisabled = function () {
-      return `
-      <button disabled id="recalculate-button" title="Kaikki linkit tulee olla käsiteltyjä" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
-      <button disabled id="changes-button" title="Projektin tulee läpäistä validoinnit" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>
-      <button disabled id="send-button" title="Hyväksy yhteenvedon jälkeen" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>`;
+      const buttons = new ProjectButtons({
+        showValidate: false,
+        disabled: true
+      });
+      return buttons.render();
     };
 
     const setDisabledAndTitleAttributesById = function (id, disabled, titleText) {
@@ -342,11 +344,11 @@
     };
     
     const sendRoadAddressChangeButton = function (localPrefix) {
-      return `<div class="${localPrefix}form form-controls">
-        <button id="recalculate-button" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
-        <button id="changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>
-        <button id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>
-      </div>`;
+      const buttons = new ProjectButtons({
+        showValidate: false,
+        disabled: false
+      });
+      return `<div class="${localPrefix}form form-controls">${buttons.render()}</div>`;
     };
     
     const distanceValue = function () {
