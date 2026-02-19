@@ -65,9 +65,34 @@
     `);
 
     function show() {
-      $('.container').append(changeTable);
+      const $container = $('.container');
+      $container.append(changeTable);
+      
+      const $changeTableFrame = $('.change-table-frame');
+      
+      const tableWidthPercent = 60;
+      const tableHeight = 280;
+      
+      // Calculate pixel values for positioning
+      const windowWidth = $(window).width();
+      const tableWidthPx = (windowWidth * tableWidthPercent) / 100;
+      
+      // Center horizontally: (Window - TableWidth) / 2
+      const leftPos = (windowWidth - tableWidthPx) / 2;
+      
+      // Center vertically
+      const topPos = ($(window).height() - tableHeight) / 2.2;
+
+      $changeTableFrame.css({
+        'top': topPos + 'px',
+        'left': leftPos + 'px',
+        'width': tableWidthPercent + '%',
+        'height': tableHeight + 'px',
+        'position': 'fixed' 
+      });
+
       resetInteractions();
-      interact('.change-table-frame').unset();
+      interact($changeTableFrame).unset();
       bindEvents();
       getChanges();
       enableTableInteractions();
@@ -76,15 +101,19 @@
     function hide() {
       changeTableOpen = false;
       formCommon.enableFormInteractions();
+      const $changeTableFrame = $('.change-table-frame');
+      const $sendButton = $('#send-button');
+      const $changesButton = $('#changes-button');
+      
       $('#information-content').empty();
-      $('#send-button').attr('disabled', true);
-      $('#send-button').attr('title', 'Hyväksy yhteenvedon jälkeen');
+      $sendButton.attr('disabled', true);
+      $sendButton.attr('title', 'Hyväksy yhteenvedon jälkeen');
       $('#recalculate-button').attr('title', 'Etäisyyslukemat on päivitetty');
-      $('#changes-button').attr('disabled', false);
-      $('#changes-button').removeAttr('title');
+      $changesButton.attr('disabled', false);
+      $changesButton.removeAttr('title');
       resetInteractions();
-      interact('.change-table-frame').unset();
-      $('.change-table-frame').remove();
+      interact($changeTableFrame).unset();
+      $changeTableFrame.remove();
     }
 
     function resetInteractions() {
@@ -181,20 +210,22 @@
       var warningM = projectChangeData.warningMessage;
       var hasLengthMismatch = false;
       var hasNegativeLength = false;
+      const $changeTableHeader = $('.change-table-header');
+      const $changeTableFrame = $('.change-table-frame');
 
       if (!_.isUndefined(warningM))
         new ModalConfirm(warningM);
 
-      if (!_.isUndefined(projectChangeData) && projectChangeData !== null && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
+      if (!_.isUndefined(projectChangeData) && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
         
         const validation = validateLengthValues(projectChangeData.changeTable);
         hasLengthMismatch = validation.hasLengthMismatch;
         hasNegativeLength = validation.hasNegativeLength;
 
         if (hasNegativeLength) {
-          $('.change-table-header').html($(`<div class="warning-message">Pituuksissa on negatiivisia arvoja. Tarkista muutokset tai ota yhteyttä Viite tukeen.</div>`));
+          $changeTableHeader.html($(`<div class="warning-message">Pituuksissa on negatiivisia arvoja. Tarkista muutokset tai ota yhteyttä Viite tukeen.</div>`));
         } else if (hasLengthMismatch) {
-          $('.change-table-header').html($(`<div class="warning-message">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>`));
+          $changeTableHeader.html($(`<div class="warning-message">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>`));
         }
 
         window.currentValidations = {};
@@ -234,7 +265,8 @@
         });
       }
 
-      $('.row-changes').remove();
+      const $rowChanges = $('.row-changes');
+      $rowChanges.remove();
       $('.change-table-dimensions tbody').append($(htmlTable));
       
       changeTableOpen = true;
@@ -243,7 +275,7 @@
         var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
 
         if (!hasLengthMismatch && !hasNegativeLength) {
-          $('.change-table-header').html($(`
+          $changeTableHeader.html($(`
             <div>Validointi ok. Alla näet muutokset projektissa.</div>
             <div>Alkupäivämäärä: ${projectDate}</div>
           `));
@@ -253,7 +285,7 @@
         formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
         formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
 
-        if ($('.change-table-frame').css('display') === "block" &&
+        if ($changeTableFrame.css('display') === "block" &&
             currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
 
           if (hasLengthMismatch || hasNegativeLength) {
@@ -264,76 +296,35 @@
           }
         }
       } else {
-        $('.change-table-header').html($(`<div class="warning-message">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>`));
+        $changeTableHeader.html($(`<div class="warning-message">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>`));
       }
     }
 
     function bindEvents() {
-      $('.row-changes').remove();
+      const $rowChanges = $('.row-changes');
+      $rowChanges.remove();
       eventbus.on('projectChanges:fetched', function (projectChangeData) {
         showChangeTable(projectChangeData);
       });
 
-      // Vertical resize functionality
-      var isResizing = false;
-      var startY = 0;
-      var startHeight = 0;
-      var startTop = 0;
 
-      changeTable.on('mousedown', '.resize-handle-vertical', function (e) {
-        isResizing = true;
-        startY = e.clientY;
-        startHeight = $('.change-table-frame').height();
-        startTop = $('.change-table-frame').position().top;
-        $('body').css('cursor', 'ns-resize');
-        e.preventDefault();
-      });
 
-      $(document).on('mousemove', function (e) {
-        if (!isResizing) return;
-        
-        var deltaY = e.clientY - startY;
-        var newHeight = startHeight - deltaY;
-        var newTop = startTop + deltaY;
-        
-        // Set minimum and maximum height constraints
-        var minHeight = 200;
-        var maxHeight = $(window).height() - 100;
-        
-        if (newHeight < minHeight) {
-          newHeight = minHeight;
-          newTop = startTop + (startHeight - minHeight);
-        } else if (newHeight > maxHeight) {
-          newHeight = maxHeight;
-          newTop = startTop + (startHeight - maxHeight);
-        }
-        
-        $('.change-table-frame').height(newHeight);
-        $('.change-table-frame').css('top', newTop);
-      });
-
-      $(document).on('mouseup', function () {
-        if (isResizing) {
-          isResizing = false;
-          $('body').css('cursor', 'default');
-        }
-      });
 
       changeTable.on('click', 'button.max', function () {
         resetInteractions();
+        const $changeTableFrame = $('.change-table-frame');
+        
         if (windowMaximized) {
-          $('.change-table-frame').height('260px');
-          $('.change-table-frame').width('1135px');
-          $('.change-table-frame').css('top', '620px');
-
- 
+          $changeTableFrame.height('260px');
+          $changeTableFrame.width('1135px');
+          $changeTableFrame.css('top', '620px');
           $('[id=buttonText]').text("Suurenna ");
           $('[id=sizeSymbol]').text("□");
           windowMaximized = false;
         } else {
-          $('.change-table-frame').height('800px');
-          $('.change-table-frame').width('1135px');
-          $('.change-table-frame').css('top', '50px');
+          $changeTableFrame.height('800px');
+          $changeTableFrame.width('1135px');
+          $changeTableFrame.css('top', '50px');
           $('[id=buttonText]').text("Pienennä ");
           $('[id=sizeSymbol]').text("_");
           windowMaximized = true;
@@ -350,13 +341,14 @@
     }
 
     function sortChanges(btn) {
-      if ($(btn).hasClass('fa-sort-up') || $(btn).hasClass('fa-sort')) {
-        $(btn).removeClass('fa-sort');
-        $(btn).removeClass('fa-sort-up');
-        $(btn).addClass('fa-sort-down');
+      const $btn = $(btn);
+      if ($btn.hasClass('fa-sort-up') || $btn.hasClass('fa-sort')) {
+        $btn.removeClass('fa-sort');
+        $btn.removeClass('fa-sort-up');
+        $btn.addClass('fa-sort-down');
       } else {
-        $(btn).removeClass('fa-sort-down');
-        $(btn).addClass('fa-sort-up');
+        $btn.removeClass('fa-sort-down');
+        $btn.addClass('fa-sort-up');
       }
 
       var side = btn.id.match('-(.*)-')[1];

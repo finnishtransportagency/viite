@@ -219,7 +219,7 @@
         var maxAddr = jp.addr + 9;
         var minAddr = jp.addr - 9;
 
-        // the new address must be within neighbouring linear locations / road links
+        // the new address must be within neighboring linear locations / road links
         var range = getAddressLimitsFromNeighbouringLinks(addr, jp);
         var minAddrByRoadLink = range.minAddrByRoadLink;
         var maxAddrByRoadLink = range.maxAddrByRoadLink;
