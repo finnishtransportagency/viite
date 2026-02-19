@@ -24,6 +24,7 @@ module.exports = {
         "Application": "writable",
         "ViiteEnumerations": "writable",
         "Selector": "writable",
+        "NumberInput": "writable",
         "EnumerationUtils": "writable",
         "ViiteConstants": "writable",
         "FormCommon": "writable",

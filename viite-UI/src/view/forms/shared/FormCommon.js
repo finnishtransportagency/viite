@@ -181,10 +181,15 @@
       return `<label class="control-label-small" style="text-transform: none">${label}</label>`;
     };
 
-    const addSmallInputNumber = function (id, value, isDisabled, maxLength, customWidth) {
-      //Validate only number characters on "onkeypress" including TAB and backspace
-      const disabled = isDisabled ? ' readonly="readonly" ' : '';
-      return `<input type="text" style="${_.isUndefined(customWidth) ? '' : customWidth}" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)" class="${prefix}form-control small-input roadAddressProject" id="${id}" value="${_.isUndefined(value) ? '' : value}" ${disabled} ${_.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`} onclick=""/>`;
+    const addSmallInputNumber = function (id, value, isDisabled, maxCharacters, customStyle) {
+      const inputComponent = new root.NumberInput({
+        id: id,
+        value: value,
+        maxCharacters: maxCharacters,
+        customStyle: customStyle,
+        isDisabled: isDisabled
+      });
+      return inputComponent.render();
     };
     
     const nodeInputNumber = function (id, maxLength) {

@@ -252,12 +252,14 @@
       return `<label class="control-label-small" id="${id}"${style}>${label}</label>`;
     };
 
-    var addSmallInputNumber = function (id, value, maxLength) {
-      //Validate only number characters on "onkeypress" including TAB and backspace
-      var smallNumberInput = `<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)"` +
-          ` class="form-control small-input roadAddressProject" id="${id}" value="${_.isUndefined(value) ? '' : value}"${
-          _.isUndefined(maxLength) ? '' : ` maxlength="${maxLength}"`} onclick=""/>`;
-      return smallNumberInput;
+    var addSmallInputNumber = function (id, value, maxCharacters, customStyle) {
+      const inputComponent = new NumberInput({
+        id: id,
+        value: value,
+        maxCharacters: maxCharacters,
+        customStyle: customStyle
+      });
+      return inputComponent.render();
     };
 
     var addDatePicker = function () {

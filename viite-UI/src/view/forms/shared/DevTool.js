@@ -1,11 +1,16 @@
-/* eslint-disable new-cap */
+// Users with dev rights can make direct edits to address data using dev tool
+// as alternative option to direct DB changes
 (function (root) {
   root.DevAddressTool = function (prefix, editableStatus) {
-    const addSmallInputNumber = function (id, value, isDisabled, maxLength, customWidth) {
-      //Validate only number characters on "onkeypress" including TAB and backspace
-      const disabled = isDisabled ? ' readonly="readonly" ' : '';
-      const customStyle = customWidth ? `style="${customWidth}"` : '';
-      return `<input type="text" ${customStyle} onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)" class="${prefix}form-control small-input roadAddressProject" id="${id}" value="${_.isUndefined(value) ? '' : value}" ${disabled} ${_.isUndefined(maxLength) ? '' : `maxlength="${maxLength}"`} onclick=""/>`;
+    const addSmallInputNumber = function (id, value, isDisabled, maxCharacters, customStyle) {
+      const inputComponent = new root.NumberInput({
+        id: id,
+        value: value,
+        maxCharacters: maxCharacters,
+        customStyle: customStyle,
+        isDisabled: isDisabled
+      });
+      return inputComponent.render();
     };
 
     const render = function (links, project) {
