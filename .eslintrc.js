@@ -36,6 +36,8 @@ module.exports = {
         "Environment": "writable",
         "RoadCollection": "writable",
         "ProjectCollection": "writable",
+        "ProjectFormTemplates": "writable",
+        "ProjectFormValidator": "writable",
         "RoadNameCollection": "writable",
         "SelectedLinkProperty": "writable",
         "SelectedProjectLink": "writable",

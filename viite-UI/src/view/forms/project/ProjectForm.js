@@ -1,7 +1,8 @@
 (function (root) {
   root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer, startupParameters) {
     //TODO create uniq project model in ProjectCollection instead using N vars e.g.: project = {id, roads, parts, ely, startingLinkId, publishable, projectErrors}
-    const discontinuityColumnWidth = '80px !important';
+    const templates = new ProjectFormTemplates();
+    const validator = new ProjectFormValidator();
     var currentProject = false;
     var formCommon = new FormCommon('');
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
@@ -78,216 +79,12 @@
       return recalculatedAfterChangesFlag;
     };
 
-    var staticField = function (labelText, dataField) {
-      var field;
-      field = `<div class="form-group">
-          <p class="form-control-static asset-log-info">${labelText} : ${dataField}</p>
-          </div>`;
-      return field;
-    };
-
-    var largeInputField = function (dataField) {
-      return (`
-        <div class="form-group">
-          <label class="control-label">LISÄTIEDOT</label>
-          <textarea class="form-control large-input roadAddressProject" id="lisatiedot">${dataField === undefined || dataField === null ? "" : dataField}</textarea>
-        </div>
-      `);
-    };
-
-    const inputFieldRequired = function (labelText, id, placeholder, value, maxLength) {
-      let lengthLimit = '';
-      if (maxLength)
-        lengthLimit = `maxlength="${maxLength}"`;
-      return (`
-        <div class="form-group input-required">
-          <label class="control-label required">${labelText}</label>
-          <input type="text" class="form-control" id ="${id}"${lengthLimit} placeholder ="${placeholder}" value="${value}"/>
-        </div>
-      `);
-    };
-
-    const title = function (projectName) {
-      const projectNameFixed = (projectName) ? projectName : "Uusi tieosoiteprojekti";
-      return `<span class ="edit-mode-title">${projectNameFixed}</span>`;
-    };
-
-    var actionButtons = function () {
-      return (
-        `<div class="project-form form-controls" id="actionButtons">
-          ${currentProject.statusCode === ProjectStatus.Incomplete.value ? `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
-          <button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka toimenpiteisiin</button>
-          <button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>
-        </div>`
-      );
-    };
-
-    var newProjectTemplate = function () {
-      return _.template(`
-        <header>${title()}</header>
-        <div class="wrapper read-only">
-          <div class="form form-horizontal form-dark">
-            <div class="edit-control-group project-choice-group">
-              ${staticField('Lisätty järjestelmäan', '-')}
-              ${staticField('Muokattu viimeksi', '-')}
-              <div class="form-group editable form-editable-roadAddressProject">
-                <form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">
-                  ${inputFieldRequired('*Nimi', 'nimi', '', '', 32)}
-                  ${inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', '', 10)}
-                  <div class="form-check-date-notifications">
-                    <p id="projectStartDate-validation-notification"> </p>
-                  </div>
-                  ${largeInputField()}
-                  <div class="form-group">
-                    <label class="control-label"></label>
-                    ${addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA')}
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label">Tieosat</label>
-                    ${addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + addReserveButton()}
-                  </div>
-                </form>
-              </div>
-            </div>
-            <div class="form-result">
-              <label>PROJEKTIIN VALITUT TIEOSAT:</label>
-              <div>
-                ${addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('Elinvoimakeskus')}
-              </div>
-              <div id="reservedRoads">
-              </div>
-            </div>
-          </div>
-        </div>
-        <footer>${actionButtons()}</footer>`);
-    };
-    var openProjectTemplate = function (project, reservedRoads, newReservedRoads) {
-      return _.template(`
-        <header>${title(project.name)}</header>
-        <div class="wrapper read-only">
-          <div class="form form-horizontal form-dark">
-            <div class="edit-control-group project-choice-group">
-              ${staticField('Lisätty järjestelmään', `${project.createdBy} ${project.startDate}`)}
-              ${staticField('Muokattu viimeksi', `${project.modifiedBy} ${project.dateModified}`)}
-              <div class="form-group editable form-editable-roadAddressProject"> 
-                <form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">
-                  ${inputFieldRequired('*Nimi', 'nimi', '', project.name, 32)}
-                  ${inputFieldRequired('*Alkupvm', 'projectStartDate', 'pp.kk.vvvv', project.startDate, 10)}
-                  <div class="form-check-date-notifications"> 
-                    <p id="projectStartDate-validation-notification"> </p>
-                  </div>
-                  ${largeInputField(project.additionalInfo)}
-                  <div class="form-group">
-                    <label class="control-label"></label>
-                    ${addSmallLabel('TIE') + addSmallLabel('AOSA') + addSmallLabel('LOSA')}
-                  </div>
-                  <div class="form-group">
-                    <label class="control-label">Tieosat</label>
-                    ${addSmallInputNumber('tie', '', 5) + addSmallInputNumber('aosa', '', 3) + addSmallInputNumber('losa', '', 3) + addReserveButton()}
-                  </div>
-                </form>
-              </div>
-            </div>
-            <div class="form-result">
-              <label>PROJEKTIIN VARATUT TIEOSAT:</label>
-              <div>
-                ${addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS')}
-              </div>
-              <div id="reservedRoads">
-                ${reservedRoads}
-              </div>
-            </div>
-            </br>
-            </br>
-            <div class="form-result">
-              <label>PROJEKTISSA MUODOSTETUT TIEOSAT:</label>
-              <div>
-                ${addSmallLabel('TIE', '30px !important') + addSmallLabel('OSA') + addSmallLabel('PITUUS') + addSmallLabel('JATKUU', discontinuityColumnWidth) + addSmallLabel('ELY') + addSmallLabel('ELINVOIMAKESKUS')}
-              </div>
-              <div id="newReservedRoads">
-                ${newReservedRoads}
-              </div>
-            </div>
-          </div>
-        </div>
-        <footer>${actionButtons()}</footer>`);
-    };
-
-
-    var selectedProjectLinkTemplateDisabledButtons = function (project) {
-      let devToolValidationButton = '';
-      if (_.includes(startupParameters.roles, 'dev')) {
-        devToolValidationButton = '<button id="validate-button" title="" class="validate btn btn-block btn-recalculate" hidden="true">Validoi projekti</button>';
-      }
-      return (
-        `<header>${formCommon.titleWithEditingTool(project)}</header>
-        <div class="wrapper read-only">
-          <div class="form form-horizontal form-dark">
-            <label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>
-            <div class="form-group" id="project-errors"></div>
-          </div>
-        </div>
-        <footer>
-          <div class="project-form form-controls">
-            ${devToolValidationButton}
-            ${formCommon.projectButtonsDisabled()}
-          </div>
-        </footer>`
-      );
-    };
-
-    var errorsList = function () {
-      if (projectCollection.getProjectErrors().length > 0) {
-        return (
-          `<label>TARKASTUSILMOITUKSET:</label>
-          <div id="projectErrors">
-            ${formCommon.getProjectErrors(projectCollection.getProjectErrors(), projectCollection.getAll(), projectCollection)}
-          </div>`
-        );
-      }
-      else
-        return '';
-    };
-
-    var addSmallLabel = function (label, customWidth) {
-      return `<label class="control-label-small" style="width: ${customWidth};">${label}</label>`;
-    };
-
-    var addSmallLabelWithIds = function (label, id, customWidth) {
-      const style = customWidth ? ` style="width: ${customWidth}"` : '';
-      return `<label class="control-label-small" id="${id}"${style}>${label}</label>`;
-    };
-
-    var addSmallInputNumber = function (id, value, maxCharacters, customStyle) {
-      const inputComponent = new NumberInput({
-        id: id,
-        value: value,
-        maxCharacters: maxCharacters,
-        customStyle: customStyle
-      });
-      return inputComponent.render();
-    };
-
     var addDatePicker = function () {
       var $validFrom = $('#projectStartDate');
       dateutil.addSingleDatePicker($validFrom);
       $validFrom.on('change', function () {
         eventbus.trigger('projectStartDate:notificationCheck', $(this).val());
       });
-    };
-
-    var formIsInvalid = function (rootElement) {
-      const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
-      const startDateValue = rootElement.find('#projectStartDate').val();
-      return !((rootElement.find('#nimi').val() && startDateValue !== '') && dateRegex.test(startDateValue));
-    };
-
-    var projDateEmpty = function (rootElement) {
-      return !rootElement.find('#projectStartDate').val();
-    };
-
-    var addReserveButton = function () {
-      return `<button class="btn btn-reserve" disabled>Varaa</button>`;
     };
 
     var bindEvents = function () {
@@ -346,42 +143,14 @@
         formedParts.append(formedParts.html(newParts));
       };
 
-      var reservedHtmlList = function (list) {
-        var text = '';
-        var index = 0;
-        _.each(list, function (line) {
-          if (!_.isUndefined(line.currentLength)) {
-            text += `<div class="form-reserved-roads-list">
-                ${addSmallLabel(line.roadNumber, '30px !important')}
-                ${addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber')}
-                ${addSmallLabelWithIds((line.currentLength), 'reservedRoadLength')}
-                ${addSmallLabelWithIds(line.currentDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth)}
-                ${addSmallLabelWithIds((line.currentEly || '0'), 'reservedEly')}
-                ${addSmallLabelWithIds((line.currentEvk), 'reservedEvk')}
-                ${projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList')}
-                </div>`;
-          }
-        });
-        return text;
-      };
-
-      var formedHtmlList = function (list) {
-        var text = '';
-        var index = 0;
-        _.each(list, function (line) {
-          if (!_.isUndefined(line.newLength)) {
-            text += `<div class="form-reserved-roads-list">
-                ${addSmallLabel(line.roadNumber, "30px !important")}
-                ${addSmallLabelWithIds(line.roadPartNumber, 'reservedRoadPartNumber')}
-                ${addSmallLabelWithIds((line.newLength), 'reservedRoadLength')}
-                ${addSmallLabelWithIds(line.newDiscontinuity, 'reservedDiscontinuity', discontinuityColumnWidth)}
-                ${addSmallLabelWithIds((line.newEly || '0'), 'reservedEly')}
-                ${addSmallLabelWithIds((line.newEvk), 'reservedEvk')}
-                ${projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'formedList')}
-                </div>`;
-          }
-        });
-        return text;
+      var fillForm = function (currParts, newParts) {
+        updateReservedParts(templates.reservedHtmlList(currParts, projectCollection), templates.formedHtmlList(newParts, projectCollection));
+        applicationModel.setProjectButton(true);
+        applicationModel.setProjectFeature(currentProject.id);
+        applicationModel.setOpenProject(true);
+        rootElement.find('.btn-reserve').prop("disabled", false);
+        rootElement.find('.btn-save').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", false);
       };
 
       var toggleAdditionalControls = function () {
@@ -416,10 +185,15 @@
           projectCollection.setReservedParts(result.reservedInfo);
           _.each(result.reservedInfo, function (line) {
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber, 'reservedList');
-            const labels = `${addSmallLabel(line.roadNumber)}${addSmallLabel(line.roadPartNumber)}${addSmallLabel(line.roadLength)}${addSmallLabel(line.discontinuity)}${addSmallLabel(line.ely || '0')}${addSmallLabel(line.evk || line.ely || '0')}`;
+            const labels = `${templates.addSmallLabel(line.roadNumber)}${templates.addSmallLabel(line.roadPartNumber)}${templates.addSmallLabel(line.roadLength)}${templates.addSmallLabel(line.discontinuity)}${templates.addSmallLabel(line.ely || '0')}${templates.addSmallLabel(line.evk || line.ely || '0')}`;
             text += `<div class="form-reserved-roads-list">${button}${labels}</div>`;
           });
-          rootElement.html(openProjectTemplate(currentProject, text, ''));
+          rootElement.html(templates.openProjectTemplate()({ 
+            project: currentProject, 
+            reservedRoads: text, 
+            newReservedRoads: '',
+            actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus)
+          }));
 
           jQuery('.modal-overlay').remove();
           addDatePicker();
@@ -437,7 +211,7 @@
         currentProject.isDirty = false;
         jQuery('.modal-overlay').remove();
         eventbus.trigger('roadAddressProject:openProject', currentProject);
-        rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        rootElement.html(templates.selectedProjectLinkTemplateDisabledButtons(currentProject, formCommon, startupParameters));
         _.defer(function () {
           applicationModel.selectLayer('roadAddressProject');
           toggleAdditionalControls();
@@ -506,7 +280,7 @@
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
-          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+          rootElement.html(templates.selectedProjectLinkTemplateDisabledButtons(currentProject, formCommon, startupParameters));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
             toggleAdditionalControls();
@@ -517,14 +291,9 @@
         createOrSaveProject();
       };
 
-      var fillForm = function (currParts, newParts) {
-        updateReservedParts(reservedHtmlList(currParts), formedHtmlList(newParts));
-        applicationModel.setProjectButton(true);
-        applicationModel.setProjectFeature(currentProject.id);
-        applicationModel.setOpenProject(true);
-        rootElement.find('.btn-reserve').prop("disabled", false);
-        rootElement.find('.btn-save').prop("disabled", false);
-        rootElement.find('.btn-next').prop("disabled", false);
+      var isProjectEditable = function () {
+        return _.isUndefined(projectCollection.getCurrentProject()) ||
+            _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
       };
 
       var disableFormInputs = function () {
@@ -547,7 +316,7 @@
           isDirty: false
         };
         $("#roadAddressProject").html("");
-        rootElement.html(newProjectTemplate());
+        rootElement.html(templates.newProjectTemplate()({ actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus) }));
         jQuery('.modal-overlay').remove();
         addDatePicker();
         applicationModel.setOpenProject(true);
@@ -565,9 +334,14 @@
         projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.reservedInfo);
         projectCollection.setFormedParts(result.formedInfo);
-        var currentReserved = reservedHtmlList(projectCollection.getReservedParts());
-        var newReserved = formedHtmlList(projectCollection.getFormedParts());
-        rootElement.html(openProjectTemplate(currentProject, currentReserved, newReserved));
+        var currentReserved = templates.reservedHtmlList(projectCollection.getReservedParts(), projectCollection);
+        var newReserved = templates.formedHtmlList(projectCollection.getFormedParts(), projectCollection);
+        rootElement.html(templates.openProjectTemplate()({ 
+          project: currentProject, 
+          reservedRoads: currentReserved, 
+          newReservedRoads: newReserved,
+          actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus)
+        }));
         jQuery('#projectList').remove();
         if (!_.isUndefined(currentProject)) {
           eventbus.trigger('linkProperties:selectedProject', result.linkId, result.project);
@@ -586,42 +360,14 @@
       });
 
       eventbus.on('roadAddress:projectValidationSucceed', function () {
-        rootElement.find('#generalNext').prop("disabled", formIsInvalid(rootElement));
-        $('#saveEdit:disabled').prop('disabled', formIsInvalid(rootElement));
+        rootElement.find('#generalNext').prop("disabled", validator.formIsInvalid(rootElement));
+        $('#saveEdit:disabled').prop('disabled', validator.formIsInvalid(rootElement));
         currentProject.isDirty = true;
         emptyFields(['tie', 'aosa', 'losa']);
       });
 
-      var checkDateNotification = function (projectStartDate) {
-        var projectNotificationText = "";
-
-        var parts_DMY = projectStartDate.split('.');
-        //Allowed characters for date input field
-        const allowedChars = /^[0-9.]+$/;
-
-        //Check the project start date input field for incorrect characters
-        if (allowedChars.test(projectStartDate) || projectStartDate.length === 0) {
-          projectNotificationText = "";
-        }
-        else {
-          projectNotificationText = 'Päivämäärä saa sisältää vain numeroita tai pisteitä';
-        }
-
-        //Check the dat input field for dates older than 20 years or dates over 1 year in the future
-        var projectSD = new Date(parts_DMY[2], parts_DMY[1] - 1, parts_DMY[0]);
-        var nowDate = new Date();
-        if (projectSD.getFullYear() < nowDate.getFullYear() - 20) {
-          projectNotificationText = 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
-        }
-        else if (projectSD.getFullYear() > nowDate.getFullYear() + 1) {
-          projectNotificationText = 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
-        }
-
-        return projectNotificationText;
-      };
-
       eventbus.on('projectStartDate:notificationCheck', function (projectStartDate) {
-        $('#projectStartDate-validation-notification').html(checkDateNotification(projectStartDate));
+        $('#projectStartDate-validation-notification').html(validator.checkDateNotification(projectStartDate));
       });
 
       eventbus.on('roadAddress:projectFailed', function () {
@@ -633,67 +379,8 @@
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
-        $('#project-errors').html(errorsList());
+        $('#project-errors').html(templates.errorsList(projectCollection, formCommon));
         applicationModel.removeSpinner();
-      });
-
-      rootElement.on('click', '#editProjectSpan', currentProject, function () {
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Default.value);
-        applicationModel.addSpinner();
-        eventbus.trigger('projectChangeTable:hide');
-        projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
-          rootElement.empty();
-          setTimeout(function () {
-          }, 0);
-          eventbus.trigger('roadAddress:openProject', result);
-          if (applicationModel.isReadOnly()) {
-            $('.edit-mode-btn:visible').click();
-          }
-          _.defer(function () {
-            loadEditbuttons();
-          });
-        });
-      });
-
-      var loadEditbuttons = function () {
-        $('#activeButtons').empty();
-        const html = (
-          `${currentProject.statusCode === ProjectStatus.Incomplete.value ? `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${currentProject.id}" class="fas fa-trash-alt" value="${currentProject.id}"></i></span>` : ''}
-          <button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>
-          <button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>`
-        );
-        $('#actionButtons').html(html);
-        eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
-      };
-
-      var saveAndNext = function () {
-        saveChanges();
-        eventbus.once('roadAddress:projectSaved', function () {
-          selectedProjectLinkProperty.setDirty(false);
-          nextStage();
-          buttonsWhenOpenProject();
-        });
-      };
-
-      var isProjectEditable = function () {
-        return _.isUndefined(projectCollection.getCurrentProject()) ||
-            _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
-      };
-
-      rootElement.on('click', '#generalNext', function () {
-        if (currentProject.isDirty) {
-          if (currentProject.id === 0) {
-            createNewProject();
-          } else {
-            saveAndNext();
-          }
-        } else {
-          nextStage();
-          buttonsWhenOpenProject();
-        }
-        if (!isProjectEditable()) {
-          $('.btn-pencil-edit').prop('disabled', true);
-        }
       });
 
       var textFieldChangeHandler = function (eventData) {
@@ -714,7 +401,7 @@
       var reserveFieldChangeHandler = function (_eventData) {
         var textIsNonEmpty = $('#tie').val() !== "" && $('#aosa').val() !== "" && $('#losa').val() !== "";
         var textIsAllNumbers = $.isNumeric($('#tie').val()) && $.isNumeric($('#aosa').val()) && $.isNumeric($('#losa').val());
-        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement) && textIsNonEmpty && textIsAllNumbers);
+        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', validator.projDateEmpty(rootElement) && textIsNonEmpty && textIsAllNumbers);
       };
 
       var emptyFields = function (fieldIds) {
@@ -898,17 +585,12 @@
         }
         eventbus.trigger('roadAddressProject:startAllInteractions');
       });
-
       rootElement.on('click', '#saveAndCancelDialogue', function (_eventData) {
         if (currentProject.isDirty) {
           new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
             successCallback: function () {
-              eventbus.once('roadAddress:projectSaved', function () {
-                _.defer(function () {
-                  closeProjectMode(true);
-                });
-              });
-              createOrSaveProject();
+              saveAndNext();
+              closeProjectMode(true);
             },
             closeCallback: function () {
               closeProjectMode(true);
@@ -927,10 +609,35 @@
         displayDeleteConfirmMessage("Haluatko varmasti poistaa tämän projektin?");
       });
 
+      rootElement.on('click', '#generalNext', function () {
+        if (currentProject.isDirty) {
+          if (currentProject.id === 0) {
+            createNewProject();
+          } else {
+            saveAndNext();
+          }
+        } else {
+          nextStage();
+          buttonsWhenOpenProject();
+        }
+        if (!isProjectEditable()) {
+          $('.btn-pencil-edit').prop('disabled', true);
+        }
+      });
+
+      var saveAndNext = function () {
+        saveChanges();
+        eventbus.once('roadAddress:projectSaved', function () {
+          selectedProjectLinkProperty.setDirty(false);
+          nextStage();
+          buttonsWhenOpenProject();
+        });
+      };
+
       rootElement.on('change', '.input-required', function () {
-        rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
-        rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
-        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
+        rootElement.find('.project-form button.next').attr('disabled', validator.formIsInvalid(rootElement));
+        rootElement.find('.project-form button.save').attr('disabled', validator.formIsInvalid(rootElement));
+        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', validator.projDateEmpty(rootElement));
       });
     };
     bindEvents();
