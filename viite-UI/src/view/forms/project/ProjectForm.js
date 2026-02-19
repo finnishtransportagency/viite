@@ -188,11 +188,12 @@
             const labels = `${templates.addSmallLabel(line.roadNumber)}${templates.addSmallLabel(line.roadPartNumber)}${templates.addSmallLabel(line.roadLength)}${templates.addSmallLabel(line.discontinuity)}${templates.addSmallLabel(line.ely || '0')}${templates.addSmallLabel(line.evk || line.ely || '0')}`;
             text += `<div class="form-reserved-roads-list">${button}${labels}</div>`;
           });
-          rootElement.html(templates.openProjectTemplate()({ 
+          rootElement.html(templates.projectTemplate()({ 
             project: currentProject, 
             reservedRoads: text, 
             newReservedRoads: '',
-            actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus)
+            actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus),
+            isNewProject: false
           }));
 
           jQuery('.modal-overlay').remove();
@@ -316,7 +317,13 @@
           isDirty: false
         };
         $("#roadAddressProject").html("");
-        rootElement.html(templates.newProjectTemplate()({ actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus) }));
+        rootElement.html(templates.projectTemplate()({
+          project: currentProject, 
+          reservedRoads: [], 
+          newReservedRoads: [], 
+          actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus),
+          isNewProject: true
+        }));
         jQuery('.modal-overlay').remove();
         addDatePicker();
         applicationModel.setOpenProject(true);
@@ -336,11 +343,12 @@
         projectCollection.setFormedParts(result.formedInfo);
         var currentReserved = templates.reservedHtmlList(projectCollection.getReservedParts(), projectCollection);
         var newReserved = templates.formedHtmlList(projectCollection.getFormedParts(), projectCollection);
-        rootElement.html(templates.openProjectTemplate()({ 
+        rootElement.html(templates.projectTemplate()({
           project: currentProject, 
           reservedRoads: currentReserved, 
           newReservedRoads: newReserved,
-          actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus)
+          actionButtonsHtml: templates.actionButtons(currentProject, ProjectStatus),
+          isNewProject: false
         }));
         jQuery('#projectList').remove();
         if (!_.isUndefined(currentProject)) {
