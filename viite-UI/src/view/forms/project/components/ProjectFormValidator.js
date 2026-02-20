@@ -56,11 +56,22 @@
       return projectNotificationText;
     };
 
+    const isRoadPartInvalid = function (rootElement) {
+      const values = [
+        rootElement.find('#tie').val(),
+        rootElement.find('#aosa').val(),
+        rootElement.find('#losa').val()
+      ];
+      const allNumbers = values.every(val => val !== "" && $.isNumeric(val));
+      return !allNumbers;
+    };
+
     // Public API
     return {
       formIsInvalid,
       projDateEmpty,
-      checkDateNotification
+      checkDateNotification,
+      isRoadPartInvalid
     };
   };
 }(this));

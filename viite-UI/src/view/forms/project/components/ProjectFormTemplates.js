@@ -32,7 +32,7 @@
       return `
         <div class="form-group input-required">
           <label class="control-label required">${labelText}</label>
-          <input type="text" class="form-control" id ="${id}"${lengthLimit} placeholder ="${placeholder}" value="${value}"/>
+          <input autocomplete="off" type="text" class="form-control" id ="${id}"${lengthLimit} placeholder ="${placeholder}" value="${value}"/>
         </div>
       `;
     };

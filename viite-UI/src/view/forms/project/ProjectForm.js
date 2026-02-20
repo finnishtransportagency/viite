@@ -303,11 +303,6 @@
         }
       };
 
-      var disableAutoComplete = function () {
-        $('[id=nimi]').attr('autocomplete', 'off');
-        $('[id=projectStartDate]').attr('autocomplete', 'off');
-        $('[id=lisatiedot]').attr('autocomplete', 'off');
-      };
 
       eventbus.on('roadAddress:newProject', function () {
         currentProject = {
@@ -327,7 +322,6 @@
         applicationModel.setOpenProject(true);
         projectCollection.clearRoadAddressProjects();
         $('#generalNext').prop('disabled', true);
-        disableAutoComplete();
       });
 
       eventbus.on('roadAddress:openProject', function (result) {
@@ -335,7 +329,6 @@
         projectCollection.setAndWriteProjectErrorsToUser(result.projectErrors);
         currentProject.isDirty = false;
         projectCollection.clearRoadAddressProjects();
-        disableAutoComplete();
         projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.reservedInfo);
         projectCollection.setFormedParts(result.formedInfo);
@@ -406,8 +399,8 @@
 
       var reserveFieldChangeHandler = function (_eventData) {
         var textIsNonEmpty = $('#tie').val() !== "" && $('#aosa').val() !== "" && $('#losa').val() !== "";
-        var textIsAllNumbers = $.isNumeric($('#tie').val()) && $.isNumeric($('#aosa').val()) && $.isNumeric($('#losa').val());
-        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', validator.projDateEmpty(rootElement) && textIsNonEmpty && textIsAllNumbers);
+        var roadPartValid = !validator.isRoadPartInvalid(rootElement);
+        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', validator.projDateEmpty(rootElement) && textIsNonEmpty && roadPartValid);
       };
 
       var emptyFields = function (fieldIds) {
