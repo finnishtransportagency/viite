@@ -98,26 +98,23 @@
         fillForm(projectCollection.getReservedParts(), projectCollection.getFormedParts());
       };
 
-      var removeRenumberedPart = function (roadNumber, roadPartNumber) {
-        /* All rows do not have roadAddresses record, so return value for this filter should handle that
-         situation, so always return boolean, otherwise projectCollection.getFormedParts() will be cleared
+      const removeRenumberedPart = (roadNumber, roadPartNumber) => {
+        const roadNumStr = roadNumber.toString();
+        const roadPartNumStr = roadPartNumber.toString();
 
-         There is no way to stop or break a forEach() loop other than by throwing an exception. If you need such
-         behavior, the forEach() method is the wrong tool
-         developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/forEach
-         */
-        projectCollection.setFormedParts(_.filter(projectCollection.getFormedParts(), function (part) {
-          var reNumberedPart = false;
-          for (var i = 0; i < part.roadAddresses.length; ++i) {
-            var ra = part.roadAddresses[i];
-            reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() &&
-                ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
-            if (reNumberedPart) {
-              break;
-            }
-          }
-          return !reNumberedPart;
-        }));
+        const remainingParts = projectCollection.getFormedParts().filter(part => {
+          // Check if any address in this part matches the target road/part and is a numbering change
+          const isTargetRenumberedPart = (part.roadAddresses || []).some(ra => 
+            ra.roadAddressNumber.toString() === roadNumStr &&
+            ra.roadAddressPartNumber.toString() === roadPartNumStr &&
+            ra.isNumbering
+          );
+          
+          // We keep the parts that are NOT the target renumbered part
+          return !isTargetRenumberedPart;
+        });
+
+        projectCollection.setFormedParts(remainingParts);
       };
 
       var removeFormedPart = function (roadNumber, roadPartNumber) {
