@@ -600,6 +600,24 @@
         }
       });
 
+      rootElement.on('click', '#editProjectSpan', currentProject, function () {
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Default.value);
+        applicationModel.addSpinner();
+        eventbus.trigger('projectChangeTable:hide');
+        projectCollection.getProjectsWithLinksById(currentProject.id).then(function (result) {
+          rootElement.empty();
+          setTimeout(function () {
+          }, 0);
+          eventbus.trigger('roadAddress:openProject', result);
+          if (applicationModel.isReadOnly()) {
+            $('.edit-mode-btn:visible').click();
+          }
+          _.defer(function () {
+            buttonsWhenOpenProject();
+          });
+        });
+      });
+
       rootElement.on('click', '#closeProjectSpan', function () {
         closeProjectMode(true);
       });
