@@ -1,0 +1,106 @@
+version: '3'
+
+vars:
+  TUNNEL_SESSION: db-tunnel
+
+tasks:
+  connect:
+    desc: "Open SSM port-forward to DEFAULT DB (background via tmux)"
+    cmds:
+      - |
+        set -euo pipefail
+        echo "Starting DEFAULT SSM tunnel to $DB_HOST:$DB_PORT on localhost:$LOCAL_DB_PORT (profile: $AWS_PROFILE)"
+        tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null && {
+          echo "Default tunnel already running."
+          exit 0
+        } || true
+        tmux new-session -d -s {{.TUNNEL_SESSION}} \
+          "aws ssm start-session \
+            --region '$AWS_REGION' \
+            --profile '$AWS_PROFILE' \
+            --target '$SSM_TARGET' \
+            --document-name AWS-StartPortForwardingSessionToRemoteHost \
+            --parameters host='$DB_HOST',portNumber='$DB_PORT',localPortNumber='$LOCAL_DB_PORT'"
+        echo "DEFAULT SSM tunnel started (tmux session: {{.TUNNEL_SESSION}})"
+    status:
+      - tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null
+    requires:
+      vars: [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
+
+  disconnect:
+    desc: "Stop DEFAULT SSM port-forward"
+    cmds:
+      - |
+        set -euo pipefail
+        echo "Stopping DEFAULT SSM tunnel..."
+        tmux kill-session -t {{.TUNNEL_SESSION}} 2>/dev/null || true
+        echo "Default tunnel stopped."
+
+  ping:
+    desc: "Ping DEFAULT database and show connection info"
+    deps: [connect]
+    cmds:
+      - |
+        set -euo pipefail
+        echo "Pinging DEFAULT DB via localhost:$LOCAL_DB_PORT ($DB_NAME) as $DB_USER"
+        PGPASSWORD="$DB_PASSWORD" \
+          psql \
+            -h 127.0.0.1 \
+            -p "$LOCAL_DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME" \
+            -v ON_ERROR_STOP=1 \
+            -c "
+              SELECT
+                current_database() AS database,
+                current_user AS user,
+                inet_server_addr() AS server_ip,
+                inet_server_port() AS server_port,
+                current_setting('search_path') AS search_path,
+                now() AS connected_at;
+            "
+    requires:
+      vars: [DB_USER, DB_PASSWORD, DB_NAME, LOCAL_DB_PORT]
+
+  postgis:
+    desc: "Ensure PostGIS extension exists (idempotent) on DEFAULT DB"
+    deps: [connect]
+    cmds:
+      - |
+        set -euo pipefail
+        echo "Ensuring PostGIS extension exists in DB=$DB_NAME"
+        PGPASSWORD="$DB_PASSWORD" \
+          psql \
+            -h 127.0.0.1 \
+            -p "$LOCAL_DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME" \
+            -v ON_ERROR_STOP=1 \
+            -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
+            -c "SELECT PostGIS_Version();"
+    requires:
+      vars: [DB_USER, DB_PASSWORD, DB_NAME, LOCAL_DB_PORT]
+
+  schemas:
+    desc: "Create dev users + per-user schemas (idempotent) on DEFAULT DB"
+    deps: [connect]
+    cmds:
+      - |
+        set -euo pipefail
+        : "${DEV_USERS:?DEV_USERS missing. Example: DEV_USERS=\"arska,pena\" task db:schemas}"
+        echo "Running schemas for users: $DEV_USERS"
+        echo "App schema: public"
+        echo "Primary DB user: ${PRIMARY_DB_USER:-viite_dev}"
+        PGPASSWORD="$DB_PASSWORD" \
+          psql \
+            -h 127.0.0.1 \
+            -p "$LOCAL_DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME" \
+            -v ON_ERROR_STOP=1 \
+            -c "SET app.dev_users TO '$DEV_USERS';" \
+            -c "SET app.base_password_prefix TO '${BASE_PASSWORD_PREFIX:-CHANGE_ME_}';" \
+            -c "SET app.primary_db_user TO '${PRIMARY_DB_USER:-viite_dev}';" \
+            -f db/admin/create_dev_users_and_schemas.sql
+    requires:
+      vars: [DEV_USERS, DB_USER, DB_PASSWORD, DB_NAME, LOCAL_DB_PORT]
