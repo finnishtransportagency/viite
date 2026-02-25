@@ -133,9 +133,9 @@
       }
     });
 
-    var getSelectedF = (ctrlPressed, event) => {
+    var getSelectedF = (modPressed, event) => {
       // if ctrl is pressed, we return the raw selection so that we get the linkData we can add to the selection
-      if (ctrlPressed) {
+      if (modPressed) {
         return map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
           return feature;
         });
@@ -156,21 +156,22 @@
     selectDoubleClick.on('select', function (event) {
       var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
       selectSingleClick.getFeatures().clear();
-      var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var modPressed = event.mapBrowserEvent &&
+		       ol.events.condition.platformModifierKeyOnly(event.mapBrowserEvent);
 
       if (applicationModel.isReadOnly()) {
         selectDoubleClick.getFeatures().clear();
       }
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
-        var selectedF = getSelectedF(ctrlPressed, event);
+        var selectedF = getSelectedF(modPressed, event);
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
         if (!_.isUndefined(selectedF)) {
           var selection = selectedF.linkData;
-          if (ctrlPressed) { // if ctrl button was pressed while double clicking the link then we want to add the selected link to the selection
-            modifyPreviousSelection(ctrlPressed, selection);
+          if (modPressed) { // if ctrl button was pressed while double clicking the link then we want to add the selected link to the selection
+            modifyPreviousSelection(modPressed, selection);
           } else { // otherwise we want to select just the double clicked link
             selectedLinkProperty.open(selection, false, visibleFeatures);
           }
@@ -233,19 +234,20 @@
      * or adding them to the selection if user pressed ctrl button while clicking.
      */
     selectSingleClick.on('select', function (event) {
-      var ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
+      var modPressed = event.mapBrowserEvent &&
+		       ol.events.condition.platformModifierKeyOnly(event.mapBrowserEvent);
       var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
       selectDoubleClick.getFeatures().clear();
 
-      var selectedF = getSelectedF(ctrlPressed, event);
+      var selectedF = getSelectedF(modPressed, event);
 
       if (selectedF) {
         var selection = selectedF.linkData;
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-        if (ctrlPressed) {  // if ctrl button was pressed while single clicking then we want to add the clicked link to the previous selection
-          modifyPreviousSelection(ctrlPressed, selection);
+        if (modPressed) {  // if ctrl button was pressed while single clicking then we want to add the clicked link to the previous selection
+          modifyPreviousSelection(modPressed, selection);
         } else { // otherwise we want to select the whole road part
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
@@ -325,11 +327,11 @@
      * - Unaddressed links are kept track of with a list of linkIds.
      *
      * These two modified lists are then passed on to a function called openCtrl
-     * @param ctrlPressed - boolean
+     * @param modPressed - boolean
      * @param selection - link data of the clicked link
      *
      * */
-    var modifyPreviousSelection = function (ctrlPressed, selection) {
+    var modifyPreviousSelection = function (modPressed, selection) {
       var modifiedList = function (listOfIds, id) {
         if (_.includes(listOfIds, id)) {
           return _.without(listOfIds, id);
@@ -337,7 +339,7 @@
           return listOfIds.concat(id);
         }
       };
-      if (ctrlPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
+      if (modPressed && !_.isUndefined(selectedLinkProperty.get()) && !_.isUndefined(selection)) {
 
         var [selectedWithAddress, selectedUnaddressed] = _.partition(selectedLinkProperty.get(), function (selected) {
           return selected.linearLocationId !== 0;
