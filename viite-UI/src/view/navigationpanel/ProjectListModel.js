@@ -6,7 +6,6 @@
  * @property {string} createdBy
  * @property {string} createdDate
  * @property {string} [statusInfo]
- * @property {number[]} elys
  * @property {number} id
  */
 
@@ -21,26 +20,13 @@
     let projectArray = [];
     const headers = {
       "sortName": {
-        toStr: "PROJEKTIN NIMI", width: "200",
+        toStr: "PROJEKTIN NIMI", width: "140",
         sortFunc: function (a, b) {
           return a.name.localeCompare(b.name, 'fi');
         }
       },
-      "sortELY": {
-        toStr: "ELY", width: "50",
-        sortFunc: function (a, b) {
-          let i = 0;
-          while (i < a.elys.length && i < b.elys.length) {
-            if (a.elys[i] !== b.elys[i]) {
-              return a.elys[i] - b.elys[i];
-            }
-            i++;
-          }
-          return a.elys.length - b.elys.length;
-        }
-      },
       "sortEVK": {
-        toStr: "ELINVOIMAKESKUS", width: "180",
+        toStr: "ELINVOIMAKESKUS", width: "200",
         sortFunc: function (a, b) {
           const aEvks = a.evks || [];
           const bEvks = b.evks || [];
@@ -55,13 +41,13 @@
         }
       },
       "sortUser": {
-        toStr: "KÄYTTÄJÄ", width: "115",
+        toStr: "KÄYTTÄJÄ", width: "150",
         sortFunc: function (a, b) {
           return a.createdBy.localeCompare(b.createdBy, 'fi');
         }
       },
       "sortDate": {
-        toStr: "LUONTIPVM", width: "158",
+        toStr: "LUONTIPVM", width: "150",
         sortFunc: function (a, b) {
           const aDate = a.createdDate.split('.').reverse().join('-');
           const bDate = b.createdDate.split('.').reverse().join('-');
@@ -69,7 +55,7 @@
         }
       },
       "sortStatus": {
-        toStr: "TILA", width: "60",
+        toStr: "TILA", width: "150",
         sortFunc: function (a, b) {
           // By default sort projects based on this status order
           const statusOrder = {
@@ -81,16 +67,12 @@
             [projectStatus.Deleted.value]: 6,
             [projectStatus.Unknown.value]: 99
           };
-
           // Get the numeric order value, defaulting to 99 if status not found
           const aOrder = statusOrder[a.statusCode] || 99;
           const bOrder = statusOrder[b.statusCode] || 99;
-
-          // Compare the numeric order first
           if (aOrder !== bOrder) {
             return aOrder - bOrder;
           }
-
           // Secondary sort: By creation date (newest first) if status priority is the same
           const aDate = a.createdDate ? new Date(a.createdDate.split('.').reverse().join('-')) : new Date(0);
           const bDate = b.createdDate ? new Date(b.createdDate.split('.').reverse().join('-')) : new Date(0);
@@ -99,13 +81,8 @@
       }
     };
 
-    const orderBy = {
-      id: "sortStatus", reversed: false
-    };
-
-    const filterBox = {
-      input: "", visible: false
-    };
+    const orderBy = { id: "sortStatus", reversed: false };
+    const filterBox = { input: "", visible: false };
 
     const getIcon = function (id) {
       if (orderBy.id === id) {
@@ -120,46 +97,40 @@
     };
 
     const headersToHtml = function () {
-      let html = "";
+      let html = '<table style="table-layout: fixed; width: 100%; border-collapse: collapse;"><tr>';
       Object.keys(headers).forEach(function(id) {
           const header = headers[id];
-          html += '<label class="content-new label" style="width: ' + header.width + 'px">' + header.toStr + '<i id="' + id + '" class="btn-icon sort fas ' + getIcon(id) + '"></i>';
-
-        if (id === "sortUser") {
-            html += '<i id="filterUser" class="btn-icon fas fa-filter"></i></label>' +
-              '<span class="smallPopupContainer" id="userFilterSpan" style="display:none">' +
-              '<input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>';
+          html += `<th style="width: ${header.width}px; text-align: center; vertical-align: middle;">
+                    <label class="content-new" style="width: 100%; margin: 0;">
+                      ${header.toStr} <i id="${id}" class="btn-icon sort fas ${getIcon(id)}"></i>`;
+          if (id === "sortUser") {
+            html += `<i id="filterUser" class="btn-icon fas fa-filter"></i>
+                     <span class="smallPopupContainer" id="userFilterSpan" style="display:none; display: block; margin-top: 5px;">
+                       <input type="text" id="userNameBox" placeholder="Käyttäjätunnus" style="width: 80%;">
+                     </span>`;
           }
-          html += '</label>';
+          html += `</label></th>`;
       });
+          html += '<th style="width: 160px; text-align: center; vertical-align: middle;"><button class="new btn btn-primary" style="margin-left: 20px;">Uusi tieosoiteprojekti</button></th></tr></table>';
       return html;
     };
 
-    const projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
-    projectList.append('<button class="close btn-close">x</button>');
-    projectList.append('<div class="content">Tieosoiteprojektit</div>');
-    projectList.append('<div class="content-new">' +
-      headersToHtml() +
-      '<div class="actions">' +
-      '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
-      '</div>');
-    projectList.append('<div id="project-list" style="width:1000px; height:390px; overflow:auto;"></div>');
-    projectList.append('<div class="content-footer">' +
-      '<label class="tr-visible-checkbox checkbox"><input type="checkbox" name="OldAcceptedProjectsVisible" value="OldAcceptedProjectsVisible" id="OldAcceptedProjectsVisibleCheckbox">Näytä kaikki tieverkolle päivitetyt projektit</label>' +
-      '<i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>' +
-      '</div>');
-
-    const staticFieldProjectName = function (dataField) {
-      return '<div>' +
-          '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
-          '</div>';
-    };
+    const projectList = $(`<div id="project-window" class="form-horizontal project-list"></div>`).hide();
+    projectList.append(`<button class="close btn-close">x</button>`);
+    projectList.append(`<div class="content">Tieosoiteprojektit</div>`);
+    projectList.append(`<div class="content-new">${headersToHtml()}</div>`);
+    projectList.append(`<div id="project-list" style="width:1000px; height:390px; overflow-y:auto; overflow-x:hidden;"></div>`);
+    projectList.append(`<div class="content-footer">
+      <label class="tr-visible-checkbox checkbox">
+        <input type="checkbox" name="OldAcceptedProjectsVisible" value="OldAcceptedProjectsVisible" id="OldAcceptedProjectsVisibleCheckbox">
+        Näytä kaikki tieverkolle päivitetyt projektit
+      </label>
+      <i id="sync" class="btn-icon btn-refresh fa fa-sync-alt" title="Päivitä lista"></i>
+      </div>`);
 
     const staticFieldProjectList = function (dataField) {
-      return '<div>' +
-          '<label class="control-label-projects-list">' + dataField + '</label>' +
-          '</div>';
-      };
+      return `<div"><label class="control-label-projects-list">${dataField}</label></div>`;
+    };
 
     let pollProjects = null;
 
@@ -169,33 +140,22 @@
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
-      // start polling projects evey 60 seconds
       pollProjects = setInterval(fetchProjectStates, 60 * 1000);
     }
 
     function hide() {
-      // Reset filter state
       filterBox.visible = false;
       $('#userNameBox').val('');
       $('#userFilterSpan').hide();
-      
       projectList.hide();
       eventbus.trigger("roadAddressProject:startAllInteractions");
       $('.modal-overlay').remove();
       clearInterval(pollProjects);
     }
 
-    function fetchProjects() {
-      projectCollection.getProjects(onlyActive());
-    }
-
-    function fetchProjectStates() {
-      projectCollection.getProjectStates(projectArray.map((project) => project.id));
-    }
-
-    function onlyActive() {
-      return !$('#OldAcceptedProjectsVisibleCheckbox')[0].checked;
-    }
+    function fetchProjects() { projectCollection.getProjects(onlyActive()); }
+    function fetchProjectStates() { projectCollection.getProjectStates(projectArray.map((project) => project.id)); }
+    function onlyActive() { return !$('#OldAcceptedProjectsVisibleCheckbox')[0].checked; }
 
     const filterByUser = function () {
       const input = $('#userNameBox').val();
@@ -212,15 +172,12 @@
       });
     };
 
-
     const userFilterVisibility = function () {
       const searchBox = $('#userFilterSpan');
       const textField = $('#userNameBox');
       if (filterBox.visible) {
         searchBox.show();
-        if (textField.val() === "") {
-          textField.val(applicationModel.getSessionUsername());
-        }
+        if (textField.val() === "") textField.val(applicationModel.getSessionUsername());
       } else {
         textField.val("");
         searchBox.hide();
@@ -229,163 +186,109 @@
     };
 
     function bindEvents() {
-
       eventbus.on('roadAddressProjects:fetched', function (projects) {
-        projectArray = projects.filter(function(proj) {
-          return proj.statusCode !== projectStatus.Deleted.value; //filter deleted projects out
-        });
+        projectArray = projects.filter(proj => proj.statusCode !== projectStatus.Deleted.value);
         createProjectList(projectArray);
         userFilterVisibility();
-        $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
+        $('#sync').removeClass("btn-spin");
       });
 
       eventbus.on('roadAddressProjectStates:fetched', function (idsAndStates) {
         projectArray = projectArray.map((project) => {
-          const statusCode = idsAndStates.find((idState) => idState[0] === project.id)[1];
-          project.statusCode = statusCode;
-          project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === statusCode).description;
+          const stateEntry = idsAndStates.find((idState) => idState[0] === project.id);
+          if (stateEntry) {
+            project.statusCode = stateEntry[1];
+            project.statusDescription = Object.values(ViiteEnumerations.ProjectStatus).find((enumState) => enumState.value === project.statusCode).description;
+          }
           return project;
         });
         createProjectList(projectArray);
         userFilterVisibility();
-        $('#sync').removeClass("btn-spin"); // stop the sync button from spinning
+        $('#sync').removeClass("btn-spin");
       });
 
-      // Helper: Compare projects by createdDate (newest first)
-      function compareByCreatedDateDesc(a, b) {
-        const dateA = new Date(a.createdDate);
-        const dateB = new Date(b.createdDate);
-        return dateB - dateA;
-      }
-
-      // Main sort function for the project list
       function sortProjects(projects) {
-        const sortedProjects = projects.slice().sort((a, b) => {
+        return projects.slice().sort((a, b) => {
           const primaryCmp = headers[orderBy.id].sortFunc(a, b);
-
-          // Adjust primary comparison based on reversed flag
           const primaryCmpAdjusted = orderBy.reversed ? -primaryCmp : primaryCmp;
-
           if (primaryCmpAdjusted !== 0) return primaryCmpAdjusted;
-
           // Secondary sort by createdDate DESC (latest first)
-          return compareByCreatedDateDesc(a, b);
+          return new Date(b.createdDate) - new Date(a.createdDate);
         });
-
-        return sortedProjects;
       }
-
 
       const createProjectList = function (projects) {
-        const sortedProjects = sortProjects(projects, orderBy, headers);
-
-        const triggerOpening = function (event, button) {
-          $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
-          if (button.length > 0 && button[0].className === "project-open btn btn-new-error") {
-            projectCollection.reOpenProjectById(parseInt(event.currentTarget.value));
-            eventbus.once("roadAddressProject:reOpenedProject", function (_successData) {
-              openProjectSteps(event);
-            });
-          } else {
-            openProjectSteps(event);
-          }
-        };
-
-        let html = '<table style="table-layout: fixed; width: 100%;">';
+        const sortedProjects = sortProjects(projects);
+        let html = '<table style="table-layout: fixed; width: 100%; border-collapse: collapse;">';
 
         if (sortedProjects.length) {
-          let uniqueId = 0;
-
-          sortedProjects.forEach(function(proj) {
+          sortedProjects.forEach(function(proj, index) {
             const info = proj.statusInfo || 'Ei lisätietoja';
-            html += `<tr id="${uniqueId}" class="project-item">
-              <td class="innerName" style="width: 200px; vertical-align: middle;">${staticFieldProjectName(proj.name)}</td>
-              <td style="width: 50px; text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.elys)}</td>
-              <td style="width: 180px; text-align: center; vertical-align: middle; padding-right: 48px;" title="${info}">${staticFieldProjectList(proj.evks)}</td>
-              <td class="innerCreatedBy" style="width: 100px; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.createdBy)}</td>
-              <td style="width: 100px; text-align: center; vertical-align: middle; padding-right: 48px" title="${info}">${staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate)))}</td>
-              <td style="width: 80px; text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.statusDescription)}</td>`;
-
             const openButton = proj.statusCode === projectStatus.ErrorInViite.value
-                ? `<button class="project-open btn btn-new-error" style="margin-bottom: 6px; margin-left: 25px" id="reopen-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa uudelleen</button>`
-                : `<button class="project-open btn btn-new" style="margin-bottom: 6px; margin-left: 50px" id="open-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa</button>`;
+                ? `<button style="margin-bottom: 6px !important;" class="project-open btn btn-new-error" id="reopen-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa uudelleen</button>`
+                : `<button style="margin-bottom: 6px !important;" class="project-open btn btn-new" id="open-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa</button>`;
 
-            html += `<td id="innerOpenProjectButton">${openButton}</td></tr>`;
-
-            uniqueId += 1;
+            html += `<tr id="${index}" class="project-item">
+              <td style="text-align: left; vertical-align: middle;">${staticFieldProjectList(proj.name)}</td>
+              <td style="text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.evks)}</td>
+              <td class="innerCreatedBy" style="text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.createdBy)}</td>
+              <td style="text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate)))}</td>
+              <td style="text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.statusDescription)}</td>
+              <td style="text-align: center; vertical-align: middle;">
+                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">${openButton}</div>
+              </td>
+            </tr>`;
           });
-
-          html += '</table>';
-          $('#project-list').html(html);
-
-          $('[id*="open-project"]').click(function (event) {
-            const button = $(this);
-            const status = parseInt(button.attr("data-projectStatus"));
-            if (status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
-              new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
-                successCallback: function () {
-                  clearInterval(pollProjects);
-                  triggerOpening(event, button);
-                },
-                closeCallback: function () {}
-              });
-            } else {
-              clearInterval(pollProjects);
-              triggerOpening(event, button);
-            }
-          });
-
-        } else {
-          html += '</table>';
-          $('#project-list').html(html);
         }
-      };
+        html += '</table>';
+        $('#project-list').html(html);
 
-      $('#filterUser').click(function () {
-        filterBox.visible = !filterBox.visible;
-        userFilterVisibility();
-      });
+        $('[id*="open-project"]').click(function (event) {
+          const button = $(this);
+          const status = parseInt(button.attr("data-projectStatus"));
+          const triggerOpening = function (e, b) {
+            $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
+            if (b.hasClass("btn-new-error")) {
+              projectCollection.reOpenProjectById(parseInt(e.currentTarget.value));
+              eventbus.once("roadAddressProject:reOpenedProject", () => openProjectSteps(e));
+            } else {
+              openProjectSteps(e);
+            }
+          };
+
+          if (status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
+            new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
+              successCallback: () => { clearInterval(pollProjects); triggerOpening(event, button); }
+            });
+          } else {
+            clearInterval(pollProjects);
+            triggerOpening(event, button);
+          }
+        });
+      };
 
       const openProjectSteps = function (event) {
         applicationModel.addSpinner();
         projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function (result) {
-          setTimeout(function () {
-          }, 0);
           eventbus.trigger('roadAddress:openProject', result);
-          if (applicationModel.isReadOnly()) {
-            $('.edit-mode-btn:visible').click();
-          }
+          if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
         });
       };
 
-      /*
-      User can sort project list by clicking the sort arrows next to column headers. By clicking same arrows again, user can reverse the order.
-       */
       projectList.on('click', '[id^=sort]', function (event) {
         const eventId = event.target.id;
-        Object.keys(headers).forEach(function(id) {
-          let icon = 'fa-sort';
-          if (id === eventId) {
-            orderBy.reversed = orderBy.id === id && !orderBy.reversed;
-            orderBy.id = id;
-            icon = getIcon(id);
-          }
-          $('#' + id).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(icon);
-          // Update classes
-        });
-        // Create project list
-        createProjectList(projectArray);
-        filterByUser();
+        if (headers[eventId]) {
+          orderBy.reversed = orderBy.id === eventId && !orderBy.reversed;
+          orderBy.id = eventId;
+          $('.content-new i.sort').removeClass('fa-sort-up fa-sort-down').addClass('fa-sort');
+          $('#' + eventId).removeClass('fa-sort').addClass(getIcon(eventId));
+          createProjectList(projectArray);
+          filterByUser();
+        }
       });
 
-      $('#OldAcceptedProjectsVisibleCheckbox').change(function () {
-        fetchProjects();
-      });
-
-      projectList.on('click', 'button.cancel', function () {
-        hide();
-      });
-
+      $('#filterUser').click(() => { filterBox.visible = !filterBox.visible; userFilterVisibility(); });
+      $('#OldAcceptedProjectsVisibleCheckbox').change(() => fetchProjects());
       projectList.on('click', 'button.new', function () {
         $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
@@ -395,29 +298,16 @@
           $('.edit-mode-btn:visible').click();
         }
       });
-
-      projectList.on('click', 'button.close', function () {
-        $('#project-list').find('table').hide();
-        $('.project-item').remove();
-        $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
-        hide();
-      });
-
+      projectList.on('click', 'button.close', () => hide());
       $('#userNameBox').keyup(function () {
         filterByUser();
       });
-
       projectList.on('click', '#sync', function () {
         $('#sync').addClass("btn-spin"); // make the sync button spin
         fetchProjects();
       });
     }
 
-    return {
-      show: show,
-      hide: hide,
-      element: projectList,
-      bindEvents: bindEvents
-    };
+    return { show, hide, element: projectList, bindEvents };
   };
 }(this));
