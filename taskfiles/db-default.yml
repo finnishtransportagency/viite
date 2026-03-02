@@ -1,10 +1,11 @@
-version: '3'
+version: "3"
 
 vars:
   TUNNEL_SESSION: db-tunnel
 
 tasks:
   connect:
+    silent: true
     desc: "Open SSM port-forward to DEFAULT DB (background via tmux)"
     cmds:
       - |
@@ -25,10 +26,12 @@ tasks:
     status:
       - tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null
     requires:
-      vars: [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
+      vars:
+        [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
 
   disconnect:
     desc: "Stop DEFAULT SSM port-forward"
+    silent: true
     cmds:
       - |
         set -euo pipefail
@@ -37,34 +40,53 @@ tasks:
         echo "Default tunnel stopped."
 
   ping:
-    desc: "Ping DEFAULT database and show connection info"
+    desc: "Ping DEFAULT database and show environment"
     deps: [connect]
+    silent: true
     cmds:
       - |
         set -euo pipefail
-        echo "Pinging DEFAULT DB via localhost:$LOCAL_DB_PORT ($DB_NAME) as $DB_USER"
+
+        echo "Pinging DEFAULT DB via localhost:${LOCAL_DB_PORT} (${DB_NAME}) as ${DB_USER}"
+
+        ENV_TYPE=$(PGPASSWORD="$DB_PASSWORD" \
+          psql -X -q -t -A \
+            -h 127.0.0.1 \
+            -p "$LOCAL_DB_PORT" \
+            -U "$DB_USER" \
+            -d "$DB_NAME" \
+            -c "SELECT CASE WHEN EXISTS (
+                    SELECT 1 FROM pg_roles WHERE rolname = 'rdsadmin'
+                )
+                THEN 'RDS'
+                ELSE 'LOCAL'
+                END;")
+
+        if [ "$ENV_TYPE" = "LOCAL" ]; then
+          printf "\033[0;32mLocal database: TRUE\033[0m\n"
+        else
+          printf "\033[0;31mRDS database: TRUE\033[0m\n"
+        fi
+
         PGPASSWORD="$DB_PASSWORD" \
           psql \
             -h 127.0.0.1 \
             -p "$LOCAL_DB_PORT" \
             -U "$DB_USER" \
             -d "$DB_NAME" \
-            -v ON_ERROR_STOP=1 \
             -c "
               SELECT
                 current_database() AS database,
                 current_user AS user,
                 inet_server_addr() AS server_ip,
                 inet_server_port() AS server_port,
-                current_setting('search_path') AS search_path,
                 now() AS connected_at;
             "
-    requires:
-      vars: [DB_USER, DB_PASSWORD, DB_NAME, LOCAL_DB_PORT]
 
   postgis:
     desc: "Ensure PostGIS extension exists (idempotent) on DEFAULT DB"
     deps: [connect]
+    silent: true
     cmds:
       - |
         set -euo pipefail
@@ -84,23 +106,24 @@ tasks:
   schemas:
     desc: "Create dev users + per-user schemas (idempotent) on DEFAULT DB"
     deps: [connect]
+    silent: true
     cmds:
       - |
         set -euo pipefail
-        : "${DEV_USERS:?DEV_USERS missing. Example: DEV_USERS=\"arska,pena\" task db:schemas}"
-        echo "Running schemas for users: $DEV_USERS"
-        echo "App schema: public"
-        echo "Primary DB user: ${PRIMARY_DB_USER:-viite_dev}"
+        : "${DEV_USERS:?DEV_USERS missing}"
+        echo "Running schemas for users: $DEV_USERS "
+        echo ""
+
         PGPASSWORD="$DB_PASSWORD" \
           psql \
+            -v ON_ERROR_STOP=1 \
             -h 127.0.0.1 \
             -p "$LOCAL_DB_PORT" \
             -U "$DB_USER" \
             -d "$DB_NAME" \
-            -v ON_ERROR_STOP=1 \
             -c "SET app.dev_users TO '$DEV_USERS';" \
             -c "SET app.base_password_prefix TO '${BASE_PASSWORD_PREFIX:-CHANGE_ME_}';" \
-            -c "SET app.primary_db_user TO '${PRIMARY_DB_USER:-viite_dev}';" \
-            -f db/admin/create_dev_users_and_schemas.sql
-    requires:
-      vars: [DEV_USERS, DB_USER, DB_PASSWORD, DB_NAME, LOCAL_DB_PORT]
+            -f db/admin/create_dev_users_and_schemas.sql \
+            2>&1 \
+          | grep -vE '^(SET|DO)$' \
+          | sed -E 's/^psql:[^:]+:[0-9]+:\s+//'

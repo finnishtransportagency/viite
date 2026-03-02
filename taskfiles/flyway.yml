@@ -1,13 +1,13 @@
-version: '3'
+version: "3"
 
 vars:
   TUNNEL_SESSION: db-tunnel
   FLYWAY_SCHEMA: '{{default "public" .FLYWAY_SCHEMA}}'
 
 tasks:
-
   # --- Tunnel (dev) ---------------------------------------------------------
   tunnel:start:
+    silent: true
     desc: "Open SSM port-forward to RDS (dev) via tmux"
     cmds:
       - |
@@ -31,10 +31,12 @@ tasks:
     status:
       - tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null
     requires:
-      vars: [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
+      vars:
+        [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
 
   tunnel:stop:
     desc: "Stop SSM tunnel (tmux)"
+    silent: true
     cmds:
       - |
         set -euo pipefail
@@ -43,6 +45,7 @@ tasks:
   # --- Internal helper: build URL and run DataFixture ------------------------
   _run:
     internal: true
+    silent: true
     cmds:
       - |
         set -euo pipefail
@@ -75,6 +78,7 @@ tasks:
 
   # --- Public tasks: migrate, history ------------------------------------
   migrate:
+    silent: true
     desc: "Flyway migrate via DataFixture (uses tunnel unless FLYWAY_URL is set)"
     deps:
       # tunnel only if you are NOT providing FLYWAY_URL (dev-mode)
@@ -91,6 +95,7 @@ tasks:
     deps:
       - task: tunnel:start
         vars: {}
+    silent: true
     cmds:
       - |
         set -euo pipefail
