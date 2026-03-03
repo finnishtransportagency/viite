@@ -954,13 +954,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       val projectId = params("projectId").toLong
       time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/", params=Some(params.toMap)) {
         projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate, projectId) match {
-          case Left(err) => Map("success" -> err)
-          case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
+          case Left(err) => Map("success" -> false, "error" -> err)
+          case Right((reservedparts, formedparts)) => Map("success" -> true, "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
             "formedInfo" -> formedparts.map(projectFormedPartToApi()))
         }
       }
     } catch {
-      case e: IllegalArgumentException => Map("success" -> e.getMessage)
+      case e: IllegalArgumentException => Map("success" -> false, "error" -> e.getMessage)
     }
   }
 
