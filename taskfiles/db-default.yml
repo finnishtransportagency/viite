@@ -6,10 +6,29 @@ vars:
 tasks:
   connect:
     silent: true
-    desc: "Open SSM port-forward to DEFAULT DB (background via tmux)"
+    desc: "Open SSM port-forward to DEFAULT DB (background via tmux) if configured; otherwise no-op"
     cmds:
       - |
         set -euo pipefail
+
+        # Local DB? No tunnel needed.
+        if [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
+          echo "DB_HOST is local ($DB_HOST). No tunnel needed."
+          exit 0
+        fi
+
+        # No SSM configured? Assume direct access (VPN etc.) and do nothing.
+        if [[ -z "${SSM_TARGET:-}" ]]; then
+          echo "No SSM_TARGET set. Assuming direct access. No tunnel started."
+          exit 0
+        fi
+
+        : "${AWS_REGION:?AWS_REGION missing (needed for SSM)}"
+        : "${AWS_PROFILE:?AWS_PROFILE missing (needed for SSM)}"
+        : "${DB_HOST:?DB_HOST missing}"
+        : "${DB_PORT:?DB_PORT missing}"
+        : "${LOCAL_DB_PORT:?LOCAL_DB_PORT missing}"
+
         echo "Starting DEFAULT SSM tunnel to $DB_HOST:$DB_PORT on localhost:$LOCAL_DB_PORT (profile: $AWS_PROFILE)"
         tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null && {
           echo "Default tunnel already running."
@@ -26,8 +45,8 @@ tasks:
     status:
       - tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null
     requires:
-      vars:
-        [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
+      vars: [DB_HOST, DB_PORT, LOCAL_DB_PORT]
+
 
   disconnect:
     desc: "Stop DEFAULT SSM port-forward"
