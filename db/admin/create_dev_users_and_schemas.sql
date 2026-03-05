@@ -53,14 +53,20 @@ BEGIN
         EXECUTE format('REVOKE CREATE ON SCHEMA public FROM %I;', dev_user);
 
         -- Oletusoikeudet omassa skeemassa: täysi kontrolli omiin objekteihin
-        EXECUTE format(
-            'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT ALL ON TABLES TO %I;',
-            dev_user, dev_user, dev_user
-        );
-        EXECUTE format(
-            'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT ALL ON SEQUENCES TO %I;',
-            dev_user, dev_user, dev_user
-        );
+        -- RDS:ssä tämä voi epäonnistua ilman superuser/riittäviä roolioikeuksia
+        BEGIN
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT ALL ON TABLES TO %I;',
+                dev_user, dev_user, dev_user
+            );
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES FOR ROLE %I IN SCHEMA %I GRANT ALL ON SEQUENCES TO %I;',
+                dev_user, dev_user, dev_user
+            );
+        EXCEPTION
+            WHEN insufficient_privilege THEN
+                RAISE NOTICE '  Ei oikeutta muuttaa oletusoikeuksia roolille %, ohitetaan (RDS-rajoitus)', dev_user;
+        END;
 
         -- Read-only publiciin (app-taulut + PostGIS)
         EXECUTE format('GRANT USAGE ON SCHEMA public TO %I;', dev_user);
@@ -68,14 +74,20 @@ BEGIN
         EXECUTE format('GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO %I;', dev_user);
 
         -- Tulevat public-objektit: read-only dev-userille
-        EXECUTE format(
-            'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO %I;',
-            dev_user
-        );
-        EXECUTE format(
-            'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO %I;',
-            dev_user
-        );
+        -- Voi vaatia object owner -oikeudet, joten ohitetaan hallitusti jos puuttuu
+        BEGIN
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO %I;',
+                dev_user
+            );
+            EXECUTE format(
+                'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO %I;',
+                dev_user
+            );
+        EXCEPTION
+            WHEN insufficient_privilege THEN
+                RAISE NOTICE '  Ei oikeutta muuttaa public-skeeman oletusoikeuksia, ohitetaan';
+        END;
 
         -- search_path: oma skeema ensin, sitten public
         EXECUTE format(
