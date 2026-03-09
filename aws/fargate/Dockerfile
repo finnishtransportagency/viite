@@ -1,5 +1,5 @@
 FROM amazoncorretto:11-alpine-jdk
-RUN apk --no-cache add curl
+RUN apk update && apk upgrade && apk --no-cache add curl
 RUN mkdir /src
 RUN mkdir /src/main
 RUN mkdir /src/main/webapp
