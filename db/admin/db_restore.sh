@@ -54,6 +54,25 @@ if [[ "$DUMPFILE" == "__LATEST__" ]]; then
 fi
 [[ -n "$DUMPFILE" ]] || die "No dump file specified/found."
 [[ -f "$DUMPFILE" ]] || die "Dump file not found: $DUMPFILE"
+SEQFILE="${DUMPFILE%.dump}.sequences.sql"
+SEQFILE_EXISTS=0
+[[ -s "$SEQFILE" ]] && SEQFILE_EXISTS=1
+[[ "$SEQFILE_EXISTS" -eq 1 ]] || die "Missing sequence sidecar file: $SEQFILE (run backup with current db_backup.sh)"
+
+# Parse sidecar file once to a VALUES list for readable apply output.
+SEQ_VALUES_SQL="$({
+  awk -F"'" '
+    /^SELECT[[:space:]]+setval\(/ {
+      seq_name = $2
+      if (seq_name == "public.db_restore_log_id_seq") next
+      if (match($0, /,[[:space:]]*([0-9]+)[[:space:]]*,[[:space:]]*true\)[[:space:]]*;/, m)) {
+        printf "(\047%s\047, %s),\n", seq_name, m[1]
+      }
+    }
+  ' "$SEQFILE"
+} )"
+SEQ_VALUES_SQL="${SEQ_VALUES_SQL%,}"
+[[ -n "$SEQ_VALUES_SQL" ]] || die "No applicable sequence values found in sidecar: $SEQFILE"
 
 # -------------------------
 # Env + safety gates
@@ -145,6 +164,7 @@ echo "  tables  = $TABLES_FILE (${#TABLES[@]} tables)"
 echo "  target  = $DB_TARGET_NAME @ $TARGET_HOST:$TARGET_PORT (user=$DB_TARGET_USER)"
 echo "  access  = $DB_TARGET_ACCESS"
 echo "  dump    = $DUMPFILE"
+echo "  seqfile = $SEQFILE"
 echo "  source  = $SOURCE_LABEL"
 echo "  tools   = $($PSQL_BIN --version) | $($PG_RESTORE_BIN --version)"
 echo
@@ -287,6 +307,22 @@ export PGAPPNAME="db_restore_stream"
   # pg_restore may set search_path; restore it for subsequent DDL
   echo "SET search_path = ${SCHEMA}, \"\$user\";"
 
+  echo "\echo 'Apply source sequence values from sidecar...'"
+  cat <<SQL
+WITH seqs(seq_name, seq_value) AS (
+  VALUES
+  $SEQ_VALUES_SQL
+),
+applied AS (
+  SELECT seq_name, setval(seq_name::regclass, seq_value, true) AS applied_value
+  FROM seqs
+)
+SELECT
+  row_number() OVER (ORDER BY seq_name) || '. ' || seq_name || ': ' || applied_value AS sequence_value
+FROM applied
+ORDER BY seq_name;
+SQL
+
   if [[ "$FK_COUNT" -gt 0 ]]; then
     echo "\echo 'Recreate FKs NOT VALID...'"
     printf "%s\n" "$FK_CREATE_SQL"
@@ -309,6 +345,11 @@ psql_tgt -c "
     restored_at timestamptz NOT NULL DEFAULT now(),
     backup_file text NOT NULL,
     source_label text NULL
+  );
+  SELECT setval(
+    pg_get_serial_sequence('${SCHEMA}.db_restore_log', 'id'),
+    COALESCE((SELECT MAX(id) FROM ${SCHEMA}.db_restore_log), 0) + 1,
+    false
   );
   INSERT INTO ${SCHEMA}.db_restore_log(backup_file, source_label)
   VALUES ('${DUMPFILE//\'/\'\'}', '${SOURCE_LABEL//\'/\'\'}');
