@@ -3,7 +3,7 @@ import fi.liikennevirasto.viite.dao.ProjectLink
 import fi.vaylavirasto.viite.model.{AddrMRange, Discontinuity, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.util.ViiteException
 
-object TerminatedTwoTrackSectionSynchronizer {
+object TwoTrackSectionSynchronizer {
 
   // The maximum difference that two different tracks (Left and Right) can have at the start or end of addrMRange to be considered parallel.
   private val maxDiffForTracks = 10L // This number is arbitrary and may require adjustments in the future.
