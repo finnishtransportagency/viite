@@ -525,7 +525,6 @@
           addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') +
           addSmallLabelWithIds((row.newLength ? row.newLength : row.currentLength), 'reservedRoadLength') +
           addSmallLabelWithIds((row.newDiscontinuity ? row.newDiscontinuity : row.currentDiscontinuity), 'reservedDiscontinuity') +
-          addSmallLabelWithIds((row.newEly ? row.newEly : row.currentEly), 'reservedEly') +
           addSmallLabelWithIds((row.newEvk ? row.newEvk : row.currentEvk), 'reservedEvk') + '</div>';
       }
       );
