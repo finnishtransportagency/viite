@@ -5,6 +5,7 @@ import fi.liikennevirasto.viite.{NewIdValue, UnsuccessfulRecalculationMessage}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process.{ProjectSectionMValueCalculator, TrackAddressingFactors}
+import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.vaylavirasto.viite.geometry.GeometryUtils
 import fi.vaylavirasto.viite.model.{AddrMRange, CalibrationPointType, Discontinuity, RoadAddressChangeType}
 import org.slf4j.LoggerFactory
@@ -92,14 +93,6 @@ trait TrackCalculatorStrategy {
     * @param reversed True if the road was reverted
     * @return Returns the average between two measures
     */
-  protected def averageOfAddressMValues(rAddrM: Double, lAddrM: Double, reversed: Boolean): Long = {
-    val average = 0.5 * (rAddrM + lAddrM)
-    if (reversed) {
-      if (rAddrM > lAddrM) Math.floor(average).round else Math.ceil(average).round
-    } else {
-      if (rAddrM > lAddrM) Math.ceil(average).round else Math.floor(average).round
-    }
-  }
 
   /**
     * Recalculate all project links and assign new measures, depending on the start and end measures given as parameters
@@ -139,10 +132,10 @@ trait TrackCalculatorStrategy {
     (leftLink.calibrationPointTypes._2, rightLink.calibrationPointTypes._2) match {
       case (CalibrationPointType.UserDefinedCP, _ ) | (_, CalibrationPointType.UserDefinedCP) =>
         userCalibrationPoint.map(c => (c.addressMValue, c.addressMValue)).getOrElse(
-          (averageOfAddressMValues(rightLink.addrMRange.start, leftLink.addrMRange.start, reversed), averageOfAddressMValues(rightLink.addrMRange.end, leftLink.addrMRange.end, reversed))
+          (TwoTrackRoadUtils.calculateAverageAddrM(rightLink.addrMRange.start, leftLink.addrMRange.start), TwoTrackRoadUtils.calculateAverageAddrM(rightLink.addrMRange.end, leftLink.addrMRange.end))
         )
       case _ =>
-          (averageOfAddressMValues(rightLink.addrMRange.start, leftLink.addrMRange.start, reversed), averageOfAddressMValues(rightLink.addrMRange.end, leftLink.addrMRange.end, reversed))
+          (TwoTrackRoadUtils.calculateAverageAddrM(rightLink.addrMRange.start, leftLink.addrMRange.start), TwoTrackRoadUtils.calculateAverageAddrM(rightLink.addrMRange.end, leftLink.addrMRange.end))
     }
   }
 
@@ -187,7 +180,7 @@ trait TrackCalculatorStrategy {
       case (false,false)  =>
         val leftLength  = sectionStartAddress + (leftProjectLinks.last.addrMRange.end  - leftProjectLinks.head.addrMRange.start)
         val rightLength = sectionStartAddress + (rightProjectLinks.last.addrMRange.end - rightProjectLinks.head.addrMRange.start)
-        averageOfAddressMValues(leftLength, rightLength, rightProjectLinks.head.reversed)
+        TwoTrackRoadUtils.calculateAverageAddrM(leftLength, rightLength)
     }
 
     val (adjustedLeft, adjustedRight) = adjustTwoTracks(rightProjectLinks, leftProjectLinks, sectionStartAddress, minimumEndAddress, calibrationPoints)
