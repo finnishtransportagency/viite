@@ -195,7 +195,15 @@ fi
 # Safety: dump must contain only whitelisted TABLE DATA entries
 # -------------------------
 echo "== Safety: dump TABLE DATA whitelist =="
-DUMP_TABLES="$("$PG_RESTORE_BIN" -l "$DUMPFILE" \
+DUMP_LIST_RAW=""
+if ! DUMP_LIST_RAW="$("$PG_RESTORE_BIN" -l "$DUMPFILE" 2>&1)"; then
+  if printf "%s" "$DUMP_LIST_RAW" | grep -qi "unsupported version"; then
+    die "pg_restore cannot read dump format. Use a newer PG_RESTORE_BIN (dump likely created with newer pg_dump). Details: $DUMP_LIST_RAW"
+  fi
+  die "pg_restore -l failed: $DUMP_LIST_RAW"
+fi
+
+DUMP_TABLES="$(printf "%s" "$DUMP_LIST_RAW" \
   | awk -F';' '
       /TABLE DATA/ {
         line=$2
@@ -302,7 +310,9 @@ export PGAPPNAME="db_restore_stream"
   echo "$TRUNC_SQL"
 
   echo "\echo 'pg_restore data-only...'"
-  "$PG_RESTORE_BIN" --verbose --data-only --no-owner --no-privileges -f - "$DUMPFILE"
+  # pg_restore 17 emits SET transaction_timeout, which PostgreSQL 15 does not recognize.
+  "$PG_RESTORE_BIN" --verbose --data-only --no-owner --no-privileges -f - "$DUMPFILE" \
+    | sed -E '/^SET[[:space:]]+transaction_timeout[[:space:]]*=/d'
 
   # pg_restore may set search_path; restore it for subsequent DDL
   echo "SET search_path = ${SCHEMA}, \"\$user\";"
@@ -313,14 +323,30 @@ WITH seqs(seq_name, seq_value) AS (
   VALUES
   $SEQ_VALUES_SQL
 ),
-applied AS (
-  SELECT seq_name, setval(seq_name::regclass, seq_value, true) AS applied_value
+resolved AS (
+  SELECT seq_name, seq_value::bigint AS seq_value, to_regclass(seq_name) AS seq_regclass
   FROM seqs
+),
+applied AS (
+  SELECT seq_name, setval(seq_regclass, seq_value, true) AS applied_value
+  FROM resolved
+  WHERE seq_regclass IS NOT NULL
+),
+missing AS (
+  SELECT seq_name
+  FROM resolved
+  WHERE seq_regclass IS NULL
 )
 SELECT
-  row_number() OVER (ORDER BY seq_name) || '. ' || seq_name || ': ' || applied_value AS sequence_value
-FROM applied
-ORDER BY seq_name;
+  row_number() OVER (ORDER BY sort_key, seq_name) || '. ' || message AS sequence_info
+FROM (
+  SELECT 1 AS sort_key, seq_name, seq_name || ': ' || applied_value::text AS message
+  FROM applied
+  UNION ALL
+  SELECT 2 AS sort_key, seq_name, 'skipped missing sequence: ' || seq_name AS message
+  FROM missing
+) s
+ORDER BY sort_key, seq_name;
 SQL
 
   if [[ "$FK_COUNT" -gt 0 ]]; then
