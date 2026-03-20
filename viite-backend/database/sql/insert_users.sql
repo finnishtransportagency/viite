@@ -1,6 +1,6 @@
 insert into service_user (id, username, configuration)
-values (1, 'test', '{"zoom": 8, "east": 373560, "north": 6677676, "authorizedElys": [1,2,3,4,8,9,10,12,14]}}');
+values (1, 'test', '{"zoom": 8, "east": 373560, "north": 6677676, "authorizedElys": [1,2,3,4,8,9,10,12,14], "authorizedElinvoimakeskus": [1,2,3,4,5,6,7,8,9,10]}}');
 insert into service_user (id, username, configuration)
-values (2, 'test2', '{"zoom": 8, "east": 373560, "north": 6677676, "authorizedElys": [1,2,3,4,8,9,10,12,14], "roles": ["operator","viite"]}');
+values (2, 'test2', '{"zoom": 8, "east": 373560, "north": 6677676, "authorizedElys": [1,2,3,4,8,9,10,12,14], "authorizedElinvoimakeskus": [1,2,3,4,5,6,7,8,9,10], "roles": ["operator","viite"]}');
 insert into service_user (id, username, configuration)
-values (7, 'silari', '{"zoom": 8, "east": 532932, "north": 6994804, "authorizedElys": [1,2,3,4,8,9,10,12,14], "roles": ["operator","viite"]}');
+values (7, 'silari', '{"zoom": 8, "east": 532932, "north": 6994804, "authorizedElys": [1,2,3,4,8,9,10,12,14], "authorizedElinvoimakeskus": [1,2,3,4,5,6,7,8,9,10], "roles": ["operator","viite"]}');

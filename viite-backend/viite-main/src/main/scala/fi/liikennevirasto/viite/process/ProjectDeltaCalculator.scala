@@ -6,7 +6,7 @@ import org.joda.time.DateTime
 
 import scala.annotation.tailrec
 
-case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, addrMRange: AddrMRange, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, ely: Long, roadMaintainer: ArealRoadMaintainer, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
+case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, addrMRange: AddrMRange, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, /*ely: Long,*/ roadMaintainer: ArealRoadMaintainer, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
 }
 
 /**
@@ -210,7 +210,7 @@ object ProjectDeltaCalculator {
           Seq()
       })
 
-
+//TODO: TÄÄLLÄ HÄRVÄTÄÄN JOTAIN TERMINATED LINKKIEN KANSSA
     val averagedStarts = if (projectLinks.forall(_.status == RoadAddressChangeType.Termination)) createAverageValuesForTransferedStarts(terminatedForAveraging) else createAverageValuesForTransferedStarts(startLinks)
     val averagedTerminated = createAverageValuesForTransferedStarts(terminatedForAveraging)
 
@@ -232,14 +232,14 @@ object ProjectDeltaCalculator {
         pl.roadPart == pls.head.roadPart
       }))
     }).values.flatten.map(pl => {
-      RoadwaySection(pl.originalRoadPart.roadNumber, pl.originalRoadPart.partNumber, pl.originalRoadPart.partNumber, pl.originalTrack, pl.originalAddrMRange, pl.originalDiscontinuity, pl.originalAdministrativeClass, pl.originalEly, pl.originalRoadMaintainer, pl.reversed, pl.roadwayNumber, Seq()) -> RoadwaySection(pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.roadPart.partNumber, pl.track, pl.addrMRange, pl.discontinuity, pl.administrativeClass, pl.ely, pl.roadMaintainer, pl.reversed, pl.roadwayNumber, Seq())
+      RoadwaySection(pl.originalRoadPart.roadNumber, pl.originalRoadPart.partNumber, pl.originalRoadPart.partNumber, pl.originalTrack, pl.originalAddrMRange, pl.originalDiscontinuity, pl.originalAdministrativeClass, pl.originalRoadMaintainer, pl.reversed, pl.roadwayNumber, Seq()) -> RoadwaySection(pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.roadPart.partNumber, pl.track, pl.addrMRange, pl.discontinuity, pl.administrativeClass, /*pl.ely,*/ pl.roadMaintainer, pl.reversed, pl.roadwayNumber, Seq())
     }).toSeq
 
     val sections = sectioned.map(sect => {
       val (src, targetToMap) = sect
       val target = targetToMap.copy(projectLinks = projectLinks.filter(link => {
           link.roadPart == RoadPart(targetToMap.roadNumber, targetToMap.roadPartNumberEnd) &&
-          link.track == targetToMap.track && link.ely == targetToMap.ely && link.roadMaintainer.id == targetToMap.roadMaintainer.id &&
+          link.track == targetToMap.track && link.roadMaintainer.id == targetToMap.roadMaintainer.id &&
           targetToMap.addrMRange.contains(link.addrMRange)
         }))
 

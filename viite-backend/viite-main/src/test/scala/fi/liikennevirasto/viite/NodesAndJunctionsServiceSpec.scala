@@ -90,7 +90,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
      override def runWithTransaction[T](f: => T): T = f
    }
 
- private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+ private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
  private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node"), NodeType.NormalIntersection,
    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
 
@@ -98,7 +98,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
  private val testRoadwayPoint2 = RoadwayPoint(NewIdValue, roadwayNumber2, 0, "Test", None, None, None)
 
  private val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), testNode1.endDate,
-   DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, RoadPart(0, 0), Track.Combined, 0, ArealRoadMaintainer.getEVK(0))
+   DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, RoadPart(0, 0), Track.Combined, ArealRoadMaintainer.getEVK(0))
 
  private val testJunction1 = Junction(NewIdValue, None, None, DateTime.parse("2019-01-01"), None,
    DateTime.parse("2019-01-01"), None, "Test", None)
@@ -109,7 +109,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
  private val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000L.toString, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
 
  def dummyProjectLink(roadPart: RoadPart, trackCode: Track, discontinuityType: Discontinuity, addrMRange: AddrMRange, originalAddrMRange: AddrMRange = AddrMRange(0,0), startDate: Option[DateTime], endDate: Option[DateTime] = None, linkId: String = "0", startMValue: Double = 0, endMValue: Double = 0, sideCode: SideCode = SideCode.Unknown, status: RoadAddressChangeType, projectId: Long = 0, administrativeClass: AdministrativeClass = AdministrativeClass.State, geometry: Seq[Point] = Seq(), roadwayNumber: Long): ProjectLink = {
-   ProjectLink(0L, roadPart, trackCode, discontinuityType, addrMRange, originalAddrMRange, startDate, endDate, Some("user"), linkId, startMValue, endMValue, sideCode, (NoCP, NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, geometryLength = 0.0, roadwayId = 0, linearLocationId = 0, ely = 8, roadMaintainer = ArealRoadMaintainer.apply("EVK8"), reversed = false, None, linkGeometryTimeStamp = 0, roadwayNumber)
+   ProjectLink(0L, roadPart, trackCode, discontinuityType, addrMRange, originalAddrMRange, startDate, endDate, Some("user"), linkId, startMValue, endMValue, sideCode, (NoCP, NoCP), (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, geometryLength = 0.0, roadwayId = 0, linearLocationId = 0, roadMaintainer = ArealRoadMaintainer.apply("EVK8"), reversed = false, None, linkGeometryTimeStamp = 0, roadwayNumber)
  }
 
  def buildTestDataForProject(project: Option[Project], rws: Option[Seq[Roadway]], lil: Option[Seq[LinearLocation]],
@@ -139,7 +139,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
        CalibrationPointsUtils.toCalibrationPointReference(p.endCalibrationPoint)),
      p.geometry, p.linkGeomSource, p.roadwayNumber, Some(startDate), p.endDate),
      Roadway(p.roadwayId, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
-       p.createdBy.getOrElse("-"), p.roadName, p.ely, p.roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None))
+       p.createdBy.getOrElse("-"), p.roadName, p.roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None))
  }
  before {
    // Forward all calls to mock.fetchAllBySectionAndTracks to actual implementation
@@ -247,8 +247,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val part = 1L
      val roadwayNumber = Sequences.nextRoadwayNumber
      val rwId = Sequences.nextRoadwayId
-     val roadway  = Roadway(rwId,     roadwayNumber,     RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
-     val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,    AddrMRange(0L, 20L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway  = Roadway(rwId,     roadwayNumber,     RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway2 = Roadway(rwId + 1, roadwayNumber + 1, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,    AddrMRange(0L, 20L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
      val linearLocationId = Sequences.nextLinearLocationId
      val linearLocation = LinearLocation(linearLocationId, 1, 12345.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber, None, None)
      val projectId = Sequences.nextViiteProjectId
@@ -265,11 +265,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      roadwayDAO.create(Seq(roadway, roadway2))
      buildTestDataForProject(Some(project), None, Some(linearLocations), Some(pls))
      val projectChanges = List(
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(AddrMRange(link1.addrMRange.start,link2.addrMRange.end)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(AddrMRange(link1.addrMRange.start,link2.addrMRange.end)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8")), DateTime.now)
      )
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadway))
@@ -314,8 +314,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val roadwayNumber2 = Sequences.nextRoadwayNumber
      val rwId1 = Sequences.nextRoadwayId
      val rwId2 = Sequences.nextRoadwayId
-     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
-     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
      val linearLocationId1 = Sequences.nextLinearLocationId
      val linearLocationId2 = Sequences.nextLinearLocationId
      val linearLocation = LinearLocation(linearLocationId1, 1, 12345.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1, None, None)
@@ -337,11 +337,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), None, Some(linearLocations), Some(reversedPls))
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8")), DateTime.now)
      )
 
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
@@ -375,7 +375,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      linkJunctionPoints.head.beforeAfter should be(BeforeAfter.After)
      linkJunctionPoints.head.roadwayNumber should be(link1.roadwayNumber)
 
-     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
      )
 
      roadwayDAO.expireById(Seq(roadway1, roadway2).map(_.id).toSet)
@@ -407,14 +407,14 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val rwId2 = Sequences.nextRoadwayId
      val linearLocationId1 = Sequences.nextLinearLocationId
      val linearLocationId2 = Sequences.nextLinearLocationId
-     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
-     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
      val linearLocation = LinearLocation(linearLocationId1, 1, 12345.toString, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1, None, None)
      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference.None, CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber2, None, None)
 
      val projectId = Sequences.nextViiteProjectId
      val link1 = dummyProjectLink(RoadPart(road1000, part), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12346.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Transfer, projectId, AdministrativeClass.State, geom2, roadwayNumber2).copy(id = Sequences.nextProjectLinkId, roadwayId = rwId2, linearLocationId = linearLocationId2)
-     
+
      val project = Project(projectId, ProjectState.Incomplete, "f", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
        "", Seq(), Seq(), None, None)
      val pls = Seq(link1)
@@ -422,11 +422,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation, linearLocation2)), Some(pls))
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -455,7 +455,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      linkJunctionPoints.isDefined should be(true)
      linkJunctionPoints.head.beforeAfter should be(BeforeAfter.After)
      linkJunctionPoints.head.roadwayNumber should be(link1.roadwayNumber)
-     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
      )
      roadwayDAO.create(reversedRoadways)
      val mappedReversedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -485,8 +485,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val rwId2 = Sequences.nextRoadwayId
      val linearLocationId1 = Sequences.nextLinearLocationId
      val linearLocationId2 = Sequences.nextLinearLocationId
-     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
-     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
      val linearLocation = LinearLocation(linearLocationId1, 1, 12345.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1, None, None)
      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346.toString, 0L, 10L, SideCode.TowardsDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0L)), CalibrationPointReference(Some(10L))), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber2, None, None)
      val projectId = Sequences.nextViiteProjectId
@@ -501,11 +501,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous),  Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -538,7 +538,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      linkJunctionPoints.isDefined should be(true)
      linkJunctionPoints.head.beforeAfter should be(BeforeAfter.Before)
      linkJunctionPoints.head.roadwayNumber should be(link1.roadwayNumber)
-     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
      )
      roadwayDAO.create(reversedRoadways)
      val mappedReversedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -568,8 +568,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val rwId2 = Sequences.nextRoadwayId
      val linearLocationId1 = Sequences.nextLinearLocationId
      val linearLocationId2 = Sequences.nextLinearLocationId
-     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
-     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway1 = Roadway(rwId1, roadwayNumber1, RoadPart(road999,  part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway2 = Roadway(rwId2, roadwayNumber2, RoadPart(road1000, part), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None)
      val linearLocation = LinearLocation(linearLocationId1, 1, 12345.toString, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom1, LinkGeomSource.NormalLinkInterface, roadwayNumber1, None, None)
 
      val linearLocation2 = LinearLocation(linearLocationId2, 1, 12346.toString, 0L, 10L, SideCode.AgainstDigitizing, 0L, calibrationPoints = (CalibrationPointReference(Some(0)), CalibrationPointReference(Some(10))), geom2, LinkGeomSource.NormalLinkInterface, roadwayNumber2, None, None)
@@ -581,11 +581,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), Some(Seq(roadway1, roadway2)), Some(Seq(linearLocation, linearLocation2)), Some(pls))
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8), DateTime.now)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(link1.roadPart.partNumber), endRoadPartNumber = Some(link1.roadPart.partNumber), addrMRange = Some(link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8")), DateTime.now)
      )
      val reversedPls = pls.map(_.copy(sideCode = SideCode.switch(link1.sideCode), reversed = true))
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(any[BoundingRectangle], any[Seq[(Int, Int)]])).thenReturn(Seq(linearLocation))
@@ -609,7 +609,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      linkJunctionPoints.head.beforeAfter should be(BeforeAfter.Before)
      linkJunctionPoints.head.roadwayNumber should be(link1.roadwayNumber)
 
-     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+     val reversedRoadways = Seq(Roadway(NewIdValue, link1.roadwayNumber, link1.roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, link1.addrMRange, reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      )
      roadwayDAO.create(reversedRoadways)
      val mappedReversedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -683,10 +683,10 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll2,    rw5  ): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
      val (rll3, _/*rw6*/): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
      val (rll4,    rw7  ): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw2.copy(addrMRange = AddrMRange( 0, 10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw5.copy(addrMRange = AddrMRange( 0, 10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(10, 20), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw4WithId = rw7.copy(addrMRange = AddrMRange(10, 20), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw2.copy(addrMRange = AddrMRange( 0, 10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw5.copy(addrMRange = AddrMRange( 0, 10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(10, 20), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw4WithId = rw7.copy(addrMRange = AddrMRange(10, 20), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
      val orderedlll1 = lll1.copy(orderNumber = 1)
      val orderedlll2 = lll2.copy(orderNumber = 2)
      val orderedlll3 = lll3.copy(orderNumber = 3)
@@ -702,37 +702,37 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val projectChanges = List(
 
        // left - continuous
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        // right - discontinuous
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //  left - end of road
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L, 20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L, 20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //  right - end of road
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L, 20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L, 20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -845,12 +845,12 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll2,    rw5  ): (LinearLocation, Roadway) = Seq(rightLink2).map(toRoadwayAndLinearLocation).head
      val (rll3, _/*rw6*/): (LinearLocation, Roadway) = Seq(rightLink3).map(toRoadwayAndLinearLocation).head
      val (rll4,    rw7  ): (LinearLocation, Roadway) = Seq(rightLink4).map(toRoadwayAndLinearLocation).head
-     
+
      // Defining roadways and their M values
-     val rw1WithId = rw2.copy(ely = 8L, addrMRange = AddrMRange( 0, 10))
-     val rw2WithId = rw5.copy(ely = 8L, addrMRange = AddrMRange( 0, 10))
-     val rw3WithId = rw3.copy(ely = 8L, addrMRange = AddrMRange(10, 20))
-     val rw4WithId = rw7.copy(ely = 8L, addrMRange = AddrMRange(10, 20))
+     val rw1WithId = rw2.copy(addrMRange = AddrMRange( 0, 10))
+     val rw2WithId = rw5.copy(addrMRange = AddrMRange( 0, 10))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(10, 20))
+     val rw4WithId = rw7.copy(addrMRange = AddrMRange(10, 20))
 
      // Defining linear location order numbering
      val orderedlll1 = lll1.copy(orderNumber = 1)
@@ -870,39 +870,39 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      // Changes that happened in project
      val projectChanges = List(
        // right -> left & end of road -> continuous (i.e. parallel)
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),  Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 1, 8)
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),  Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        // left -> right & end of road -> minor discontinuity
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),          Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = true, 2, 8)
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),          Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = true, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //  right -> left & continuous -> end of road
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),  Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = true, 3, 8)
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),  Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = true, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //  left -> right & minor discontinuity -> end of road
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
 
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),          Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = true, 4, 8)
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong),  startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange( 0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),          Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = true, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1021,9 +1021,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2, _): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,20), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,20), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
 
      val orderedcll1 = cll1.copy(orderNumber = 1)
      val orderedcll2 = cll2.copy(orderNumber = 2)
@@ -1031,34 +1031,34 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lll1, rll1, orderedcll1, orderedcll2)), Some(leftPLinks ++ rightPLinks ++ combPLinks))
      val projectChanges = List(
        //  left
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //  right
 
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //  combined
 
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1102,34 +1102,34 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val terminatingProjectChanges = List(
        //  left
 
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        // right
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        // combined
 
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1238,37 +1238,37 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lll1, rw1): (LinearLocation, Roadway) = Seq(leftLink1).map(toRoadwayAndLinearLocation).head
      val (rll1, rw2): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
      val (cll1, rw3): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,  5), ely = 8L)
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,  5), ely = 8L)
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5, 10), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,  5))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,  5))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5, 10))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lll1, rll1, cll1)), Some(leftPLinks ++ rightPLinks ++ combPLinks))
 
      val projectChanges = List(
        //left
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //right
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //combined
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(5L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(5L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1346,9 +1346,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll1,   rw2  ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
      val (cll1,   rw3  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.getEVK(8))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.getEVK(8))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,15), ely = 8L, roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,15), roadMaintainer = ArealRoadMaintainer.getEVK(8))
      val orderedcll1 = cll1.copy(orderNumber = 1)
      val orderedcll2 = cll2.copy(orderNumber = 2)
 
@@ -1356,31 +1356,31 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //left
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //right
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(5L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(5L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1444,7 +1444,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        val loopProjectLink   = dummyProjectLink(RoadPart(roadNumber, roadPartNumber), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(30, 120), AddrMRange(30, 120), Some(DateTime.now()), None, linkId2, 0, 120, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, geom2, roadwayNumber).copy(id = plId2, projectId = projectId, roadwayId = roadwayId, linearLocationId = llId2)
        val projectLinks = Seq(normalProjectLink, loopProjectLink)
 
-       roadwayDAO.create(Seq(Roadway(roadwayId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 120L), false, DateTime.now, None, "test", Some("test"), 14L, ArealRoadMaintainer.getEVK(8))))
+       roadwayDAO.create(Seq(Roadway(roadwayId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 120L), false, DateTime.now, None, "test", Some("test"), ArealRoadMaintainer.getEVK(8))))
        val roadway = roadwayDAO.fetchByRoadwayNumber(roadwayNumber).get
 
        linearLocationDAO.create(
@@ -1459,11 +1459,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        roadwayPointDAO.create(roadwayNumber, 120, "test")
 
        val roadwayChanges = Seq(
-         ProjectRoadwayChange(projectId, Some("test prject"), 14L, ArealRoadMaintainer.getEVK(8), "test", DateTime.now,
+         ProjectRoadwayChange(projectId, Some("test prject"), ArealRoadMaintainer.getEVK(8), "test", DateTime.now,
            RoadwayChangeInfo(RoadAddressChangeType.New,
-             RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-             RoadwayChangeSection(Some(46001), Some(0), Some(1), Some(1), Some(AddrMRange(0, 106)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 1010664L, 14L),
+             RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+             RoadwayChangeSection(Some(46001), Some(0), Some(1), Some(1), Some(AddrMRange(0, 106)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+             Discontinuity.EndOfRoad, AdministrativeClass.State, false, 1010664L, ArealRoadMaintainer.apply("EVK8")),
            DateTime.now)).toList
 
        val mappedRoadwayNumbers = Seq(
@@ -1547,9 +1547,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll1,   rw2  ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
      val (cll1,   rw3  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.getEVK(8))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.getEVK(8))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,15), ely = 8L, roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,15), roadMaintainer = ArealRoadMaintainer.getEVK(8))
      val orderedcll1 = cll1.copy(orderNumber = 1)
      val orderedcll2 = cll2.copy(orderNumber = 2)
 
@@ -1557,31 +1557,31 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //left
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //right
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
        //combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1652,9 +1652,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll1,   rw2  ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
      val (cll1,   rw3  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,25), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0, 5), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(5,25), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
      val orderedcll1 = cll1.copy(orderNumber = 1)
      val orderedcll2 = cll2.copy(orderNumber = 2)
 
@@ -1662,34 +1662,34 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //left
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //right
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(5L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,25L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,25L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1761,43 +1761,43 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        // road part 1
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw1_1.roadPart.roadNumber), Some(rw1_1.track.value), startRoadPartNumber = Some(rw1_1.roadPart.partNumber), endRoadPartNumber = Some(rw1_1.roadPart.partNumber), addrMRange = Some(rw1_1.addrMRange), Some(rw1_1.administrativeClass), Some(rw1_1.discontinuity), Some(rw1_1.ely), Some(rw1_1.roadMaintainer)),
-           rw1_1.discontinuity, rw1_1.administrativeClass, reversed = false, 1, rw1_1.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw1_1.roadPart.roadNumber), Some(rw1_1.track.value), startRoadPartNumber = Some(rw1_1.roadPart.partNumber), endRoadPartNumber = Some(rw1_1.roadPart.partNumber), addrMRange = Some(rw1_1.addrMRange), Some(rw1_1.administrativeClass), Some(rw1_1.discontinuity), Some(rw1_1.roadMaintainer)),
+           rw1_1.discontinuity, rw1_1.administrativeClass, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw1_2.roadPart.roadNumber), Some(rw1_2.track.value), startRoadPartNumber = Some(rw1_2.roadPart.partNumber), endRoadPartNumber = Some(rw1_2.roadPart.partNumber), addrMRange = Some(rw1_2.addrMRange), Some(rw1_2.administrativeClass), Some(rw1_2.discontinuity), Some(rw1_2.ely), Some(rw1_1.roadMaintainer)),
-           rw1_2.discontinuity, rw1_2.administrativeClass, reversed = false, 2, rw1_2.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw1_2.roadPart.roadNumber), Some(rw1_2.track.value), startRoadPartNumber = Some(rw1_2.roadPart.partNumber), endRoadPartNumber = Some(rw1_2.roadPart.partNumber), addrMRange = Some(rw1_2.addrMRange), Some(rw1_2.administrativeClass), Some(rw1_2.discontinuity),  Some(rw1_1.roadMaintainer)),
+           rw1_2.discontinuity, rw1_2.administrativeClass, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        // road part 2
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw2.roadPart.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPart.partNumber), endRoadPartNumber = Some(rw2.roadPart.partNumber), addrMRange = Some(rw2.addrMRange), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely), Some(rw1_1.roadMaintainer)),
-           rw2.discontinuity, rw2.administrativeClass, reversed = false, 3, rw2.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw2.roadPart.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPart.partNumber), endRoadPartNumber = Some(rw2.roadPart.partNumber), addrMRange = Some(rw2.addrMRange), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw1_1.roadMaintainer)),
+           rw2.discontinuity, rw2.administrativeClass, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        // road part 3
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw3_1.roadPart.roadNumber), Some(rw1_1.track.value), startRoadPartNumber = Some(rw3_1.roadPart.partNumber), endRoadPartNumber = Some(rw3_1.roadPart.partNumber), addrMRange = Some(rw3_1.addrMRange), Some(rw3_1.administrativeClass), Some(rw3_1.discontinuity), Some(rw3_1.ely), Some(rw1_1.roadMaintainer)),
-           rw3_1.discontinuity, rw3_1.administrativeClass, reversed = false, 4, rw1_1.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw3_1.roadPart.roadNumber), Some(rw1_1.track.value), startRoadPartNumber = Some(rw3_1.roadPart.partNumber), endRoadPartNumber = Some(rw3_1.roadPart.partNumber), addrMRange = Some(rw3_1.addrMRange), Some(rw3_1.administrativeClass), Some(rw3_1.discontinuity), Some(rw1_1.roadMaintainer)),
+           rw3_1.discontinuity, rw3_1.administrativeClass, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw3_2.roadPart.roadNumber), Some(rw3_2.track.value), startRoadPartNumber = Some(rw3_2.roadPart.partNumber), endRoadPartNumber = Some(rw3_2.roadPart.partNumber), addrMRange = Some(rw3_2.addrMRange), Some(rw3_2.administrativeClass), Some(rw3_2.discontinuity), Some(rw3_2.ely), Some(rw1_1.roadMaintainer)),
-           rw3_2.discontinuity, rw3_2.administrativeClass, reversed = false, 5, rw3_2.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw3_2.roadPart.roadNumber), Some(rw3_2.track.value), startRoadPartNumber = Some(rw3_2.roadPart.partNumber), endRoadPartNumber = Some(rw3_2.roadPart.partNumber), addrMRange = Some(rw3_2.addrMRange), Some(rw3_2.administrativeClass), Some(rw3_2.discontinuity), Some(rw1_1.roadMaintainer)),
+           rw3_2.discontinuity, rw3_2.administrativeClass, reversed = false, 5, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -1899,39 +1899,39 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      buildTestDataForProject(Some(project), Some(roadways), Some(linearLocations), Some(projectLinks))
      val projectChanges = List(
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw1.roadPart.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPart.partNumber), endRoadPartNumber = Some(rw1.roadPart.partNumber), addrMRange = Some(rw1.addrMRange), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely), Some(rw1.roadMaintainer)),
-           rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw1.roadPart.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPart.partNumber), endRoadPartNumber = Some(rw1.roadPart.partNumber), addrMRange = Some(rw1.addrMRange), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.roadMaintainer)),
+           rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(rw2_1.roadPart.roadNumber), Some(rw2_1.track.value), startRoadPartNumber = Some(rw2_1.roadPart.partNumber), endRoadPartNumber = Some(rw2_1.roadPart.partNumber), addrMRange = Some(rw2_1.addrMRange), Some(rw2_1.administrativeClass), Some(rw2_1.discontinuity), Some(rw2_1.ely), Some(rw1.roadMaintainer)),
-           rw2_1.discontinuity, rw2_1.administrativeClass, reversed = false, 1, rw2_1.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(rw2_1.roadPart.roadNumber), Some(rw2_1.track.value), startRoadPartNumber = Some(rw2_1.roadPart.partNumber), endRoadPartNumber = Some(rw2_1.roadPart.partNumber), addrMRange = Some(rw2_1.addrMRange), Some(rw2_1.administrativeClass), Some(rw2_1.discontinuity), Some(rw1.roadMaintainer)),
+           rw2_1.discontinuity, rw2_1.administrativeClass, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw2_2.roadPart.roadNumber), Some(rw2_2.track.value), startRoadPartNumber = Some(rw2_2.roadPart.partNumber), endRoadPartNumber = Some(rw2_2.roadPart.partNumber), addrMRange = Some(rw2_2.addrMRange), Some(rw2_2.administrativeClass), Some(rw2_2.discontinuity), Some(rw2_2.ely), Some(rw1.roadMaintainer)),
-           rw2_2.discontinuity, rw2_2.administrativeClass, reversed = false, 1, rw2_2.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw2_2.roadPart.roadNumber), Some(rw2_2.track.value), startRoadPartNumber = Some(rw2_2.roadPart.partNumber), endRoadPartNumber = Some(rw2_2.roadPart.partNumber), addrMRange = Some(rw2_2.addrMRange), Some(rw2_2.administrativeClass), Some(rw2_2.discontinuity), Some(rw1.roadMaintainer)),
+           rw2_2.discontinuity, rw2_2.administrativeClass, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw3.roadPart.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPart.partNumber), endRoadPartNumber = Some(rw3.roadPart.partNumber), addrMRange = Some(rw3.addrMRange), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely), Some(rw1.roadMaintainer)),
-           rw3.discontinuity, rw3.administrativeClass, reversed = false, 1, rw3.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw3.roadPart.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPart.partNumber), endRoadPartNumber = Some(rw3.roadPart.partNumber), addrMRange = Some(rw3.addrMRange), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw1.roadMaintainer)),
+           rw3.discontinuity, rw3.administrativeClass, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw4.roadPart.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPart.partNumber), endRoadPartNumber = Some(rw4.roadPart.partNumber), addrMRange = Some(rw4.addrMRange), Some(rw4.administrativeClass), Some(rw4.discontinuity), Some(rw4.ely), Some(rw1.roadMaintainer)),
-           rw4.discontinuity, rw4.administrativeClass, reversed = false, 1, rw4.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw4.roadPart.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPart.partNumber), endRoadPartNumber = Some(rw4.roadPart.partNumber), addrMRange = Some(rw4.addrMRange), Some(rw4.administrativeClass), Some(rw4.discontinuity), Some(rw1.roadMaintainer)),
+           rw4.discontinuity, rw4.administrativeClass, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2021,9 +2021,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (rll1,   rw2   ): (LinearLocation, Roadway) = Seq(rightLink1).map(toRoadwayAndLinearLocation).head
      val (cll1,   rw3   ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2,_/*rw4*/ ): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange( 0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange( 0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(10,20), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange( 0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange( 0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(10,20), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
      val orderedlll1 = lll1.copy(orderNumber = 1)
      val orderedlll2 = lll2.copy(orderNumber = 2)
      val orderedcll1 = cll1.copy(orderNumber = 1)
@@ -2034,35 +2034,35 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val projectChanges = List(
 
        //left
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //right
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2132,9 +2132,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (cll1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (cll3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(cll1, cll2, cll3)), Some(combPLinks))
 
@@ -2142,25 +2142,25 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
        //Combined
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2226,31 +2226,31 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val (cll2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (cll3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(cll1, cll2, cll3)), Some(combPLinks))
      val projectChanges = List(
        //  Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2322,30 +2322,30 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (cll1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (cll2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (cll3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(cll1, cll2, cll3)), Some(combPLinks))
      val projectChanges = List(
        //Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2413,32 +2413,32 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lc1, lc2, lc3)), Some(Seq(combLink1, combLink2)))
      val projectChanges = List(
        //  combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2506,29 +2506,29 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //  combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part4), endRoadPartNumber = Some(part4), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part4), endRoadPartNumber = Some(part4), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2591,31 +2591,31 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), ely = 8L)
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), ely = 8L)
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lc1, lc2, lc3)), Some(combPLinks))
 
      val projectChanges = List(
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom1.head, combGeom1.head), roadNumberLimits)).thenReturn(Seq(lc1, lc3))
@@ -2657,17 +2657,17 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val project2 = Project(projectId + 1, ProjectState.Incomplete, "ProjectNewEndOfRoadLinks", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
        "", Seq(), Seq(), None, None)
      val newProjectChanges = List(
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4L), endRoadPartNumber = Some(4L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4L), endRoadPartNumber = Some(4L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2680,7 +2680,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val (lc4, rw4): (LinearLocation, Roadway) = Seq(newLink).map(toRoadwayAndLinearLocation).head
      val rw3WithDiscontinuity = rw3WithId.copy(id = transferLink.roadwayId, roadwayNumber = transferLink.roadwayNumber, discontinuity = Discontinuity.Discontinuous)
-     val rw4WithId = rw4.copy(id = newLink.roadwayId, roadwayNumber = newLink.roadwayNumber, addrMRange = AddrMRange(0,10), ely = 8L)
+     val rw4WithId = rw4.copy(id = newLink.roadwayId, roadwayNumber = newLink.roadwayNumber, addrMRange = AddrMRange(0,10))
 
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc4))
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom4.last, combGeom4.last), roadNumberLimits)).thenReturn(Seq(lc4))
@@ -2753,30 +2753,30 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1, rw1): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2, rw2): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3, rw3): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10), ely = 8L)
-     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10), ely = 8L)
-     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,10))
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(0,10))
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(0,10))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId, rw3WithId)), Some(Seq(lc1, lc2, lc3)), Some(Seq(combLink1, combLink2)))
      val projectChanges = List(
        //  Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part3), endRoadPartNumber = Some(part3), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2818,18 +2818,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val project2 = Project(projectId + 1, ProjectState.Incomplete, "ProjectNewEndOfRoadLinks", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
        "", Seq(), Seq(), None, None)
      val projectChanges2 = List(
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3L), endRoadPartNumber = Some(3L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3L), endRoadPartNumber = Some(3L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3L), endRoadPartNumber = Some(3L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(3L), endRoadPartNumber = Some(3L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4L), endRoadPartNumber = Some(4L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(4L), endRoadPartNumber = Some(4L), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2843,7 +2843,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val (lc4, rw4): (LinearLocation, Roadway) = Seq(newLink).map(toRoadwayAndLinearLocation).head
      val rw3WithDiscontinuity = rw3WithId.copy(id = transferLink.roadwayId, roadwayNumber = transferLink.roadwayNumber, discontinuity = Discontinuity.Discontinuous)
-     val rw4WithId = rw4.copy(id = newLink.roadwayId, roadwayNumber = newLink.roadwayNumber, addrMRange = AddrMRange(0,10), ely = 8L)
+     val rw4WithId = rw4.copy(id = newLink.roadwayId, roadwayNumber = newLink.roadwayNumber, addrMRange = AddrMRange(0,10))
 
 
      when(mockLinearLocationDAO.fetchLinearLocationByBoundingBox(BoundingRectangle(combGeom2.last, combGeom2.last), roadNumberLimits)).thenReturn(Seq(lc2, lc3, lc4))
@@ -2927,7 +2927,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
      val (lc5,_/*rw5*/): (LinearLocation, Roadway) = Seq(combLink5).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 25), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 25))
      val orderedcll1 = lc1.copy(orderNumber = 1)
      val orderedcll2 = lc2.copy(orderNumber = 2)
      val orderedcll3 = lc3.copy(orderNumber = 3)
@@ -2938,11 +2938,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId)), Some(Seq(orderedcll1, orderedcll2, orderedcll3, orderedcll4, orderedcll5)), Some(combPLinks))
 
      val projectChanges = List(
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,25L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,25L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -2982,34 +2982,34 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        "", Seq(), Seq(), None, None)
 
      val TerminatingProjectChanges = List(
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(10L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(20L,25L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(20L,25L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 4, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3105,8 +3105,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L)
-     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0,10), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20))
+     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0,10))
      val orderedlc1 = lc1.copy(orderNumber = 1)
      val orderedlc2 = lc2.copy(orderNumber = 2)
      val orderedlc3 = lc3.copy(orderNumber = 1)
@@ -3115,18 +3115,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3164,11 +3164,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val project2 = Project(projectId + 1, ProjectState.Incomplete, "ProjectDeleteRoadOfRoadLinks", "s", DateTime.now(), "", DateTime.now(), DateTime.now(),
        "", Seq(), Seq(), None, None)
      val terminatingProjectChanges = List(
-       ProjectRoadwayChange(projectId + 1, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId + 1, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L),  Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3180,7 +3180,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val terminatedLink = dummyProjectLink(RoadPart(road1000, part1), Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), AddrMRange(0, 10), Some(DateTime.now()), None, 12347.toString, 0, 10, SideCode.TowardsDigitizing, RoadAddressChangeType.Termination, projectId + 1, AdministrativeClass.State, combGeom4, rwNumber + 1).copy(id = plId + 3, roadwayId = rwId + 2, linearLocationId = llId + 3)
 
      val (lc4, rw4): (LinearLocation, Roadway) = Seq(terminatedLink).map(toRoadwayAndLinearLocation).head
-     val rw4WithId = rw4.copy(id = terminatedLink.roadwayId, ely = 8L)
+     val rw4WithId = rw4.copy(id = terminatedLink.roadwayId)
 
      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink1.roadwayNumber, combLink2.roadwayNumber, terminatedLink.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId, rw2WithId, rw4WithId))
      when(mockRoadwayDAO.fetchAllByRoadwayNumbers(Set(combLink1.roadwayNumber), withHistory=false)).thenReturn(Seq(rw1WithId))
@@ -3265,32 +3265,32 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
-     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0,15), ely = 8L, roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
+     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0,15), roadMaintainer = ArealRoadMaintainer.apply("EVK8"))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(lc1, lc2, lc3)), Some(combPLinks))
 
      val projectChanges = List(
        //  Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3328,11 +3328,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        "", Seq(), Seq(), None, None)
 
      val terminatingProjectChanges = List(
-       ProjectRoadwayChange(project2.id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2.id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3426,32 +3426,32 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L)
-     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0,15), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20))
+     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0,15))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId, rw2WithId)), Some(Seq(lc1, lc2, lc3)), Some(combPLinks))
 
        //Combined
      val projectChanges = List(
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Some(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Some(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8")),
          DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8")),
          DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), None),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), None),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), None),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), None),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8")),
          DateTime.now)
      )
 
@@ -3494,11 +3494,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        "", Seq(), Seq(), None, None)
 
      val terminatingProjectChanges = List(
-       ProjectRoadwayChange(project2.id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2.id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part2), endRoadPartNumber = Some(part2), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3603,26 +3603,26 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20))
 
      buildTestDataForProject(Some(project), Some(Seq(rw1WithId)), Some(Seq(lc1, lc2, lc3, lc4)), Some(combPLinks))
 
      val projectChanges = List(
        //  Combined
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3693,7 +3693,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20))
      val orderedlc1 = lc1.copy(orderNumber = 1)
      val orderedlc2 = lc2.copy(orderNumber = 2)
      val orderedlc3 = lc3.copy(orderNumber = 3)
@@ -3703,19 +3703,19 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
 
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -3787,7 +3787,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,_/*rw3*/): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
      val (lc4,_/*rw4*/): (LinearLocation, Roadway) = Seq(combLink4).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20))
      val orderedlc1 = lc1.copy(orderNumber = 1)
      val orderedlc2 = lc2.copy(orderNumber = 2)
      val orderedlc3 = lc3.copy(orderNumber = 3)
@@ -3797,18 +3797,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now, // Removed the extra maintainer here
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now, // Removed the extra maintainer here
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))), // Added missing )
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))), // Added missing )
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now, // Fixed: removed extra maintainer
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now, // Fixed: removed extra maintainer
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, 8),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.MinorDiscontinuity, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8")),
          DateTime.now)
      )
 
@@ -3890,8 +3890,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc5, rw5): (LinearLocation, Roadway) = Seq(connectedPLink).map(toRoadwayAndLinearLocation).head
 
      // roadways
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 20), ely = 8L)
-     val rw2WithId = rw5.copy(addrMRange = AddrMRange(0,  5), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 20))
+     val rw2WithId = rw5.copy(addrMRange = AddrMRange(0,  5))
 
      // linear locations with order number
      val roundaboutLinearLocation1 = lc1.copy(orderNumber = 1)
@@ -3905,27 +3905,27 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val projectChanges = List(
 
        // Roundabout
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //Connected road
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -4020,8 +4020,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc5, rw5): (LinearLocation, Roadway) = Seq(connectedPLink).map(toRoadwayAndLinearLocation).head
 
      // roadways
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 20), ely = 8L)
-     val rw2WithId = rw5.copy(addrMRange = AddrMRange(0,  5), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0, 20))
+     val rw2WithId = rw5.copy(addrMRange = AddrMRange(0,  5))
 
      // linear locations with order number
      val roundaboutLinearLocation1 = lc1.copy(orderNumber = 1)
@@ -4034,27 +4034,27 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        // Roundabout
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,15L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadForRoundabout), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(15L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now),
 
        //Connected road
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L,5L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK8"))
          , DateTime.now)
      )
 
@@ -4095,11 +4095,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      // project changes
      val terminatingProjectChanges = List(
-       ProjectRoadwayChange(projectId2, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId2, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, 8),
+           RoadwayChangeSection(Some(connectedRoad), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part), endRoadPartNumber = Some(part), addrMRange = Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK8")),
          DateTime.now)
      )
 
@@ -4243,8 +4243,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        id = plId1,
        projectId = projectId,
        roadwayId = rwId1,
-       linearLocationId = llId1,
-       ely = 1
+       linearLocationId = llId1
      )
 
      // Create the second part (14-15)
@@ -4269,8 +4268,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        id = plId2,
        projectId = projectId,
        roadwayId = rwId2and3,
-       linearLocationId = llId2,
-       ely = 1
+       linearLocationId = llId2
      )
 
      // Create ProjectLink 3 (15-33)
@@ -4295,8 +4293,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        id = plId3,
        projectId = projectId,
        roadwayId = rwId2and3,
-       linearLocationId = llId3,
-       ely = 1
+       linearLocationId = llId3
      )
 
      val projectLinks = Seq(projectLink1, projectLink2, projectLink3)
@@ -4315,14 +4312,14 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val roadway1 = rw1.copy(
        roadwayNumber = rwNumber1,
        addrMRange = addrMRange1,
-       ely = 1L
+       roadMaintainer = ArealRoadMaintainer.apply("EVK1")
      )
 
      val roadway2 = rw2.copy(
        id = rwId2and3,
        roadwayNumber = rwNumber2and3,
        addrMRange = AddrMRange(14, 33), // both lls combined
-       ely = 1L
+       roadMaintainer = ArealRoadMaintainer.apply("EVK1")
      )
 
      // Linear locations
@@ -4356,7 +4353,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val existingRoadway = Roadway(
        rwIdC, rwNumberC, RoadPart(connectingRoad, connectingPart), AdministrativeClass.Municipality,
        Track.Combined, Discontinuity.MinorDiscontinuity, addrMRangeC, reversed = false,
-       DateTime.now().minusDays(10), None, "test", Some("Road 51"), 1L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination
+       DateTime.now().minusDays(10), None, "test", Some("Road 51"), ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination
      )
 
      // Create linear location for connecting road
@@ -4389,25 +4386,25 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      )
 
      val projectChanges = List(
-       ProjectRoadwayChange(projectId, Some("SplitLinkTest"), 1L, ArealRoadMaintainer.apply("EVK1"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("SplitLinkTest"), ArealRoadMaintainer.apply("EVK1"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(0L, 14L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(1L), Some(ArealRoadMaintainer.apply("EVK1"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(0L, 14L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(1L), Some(ArealRoadMaintainer.apply("EVK1"))),
-           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 1, 1),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(0L, 14L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK1"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(0L, 14L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK1"))),
+           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 1, ArealRoadMaintainer.apply("EVK1")),
          DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("SplitLinkTest"), 1L, ArealRoadMaintainer.apply("EVK1"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("SplitLinkTest"), ArealRoadMaintainer.apply("EVK1"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(14L, 15L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(1L), Some(ArealRoadMaintainer.apply("EVK1"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(14L, 15L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(1L), Some(ArealRoadMaintainer.apply("EVK1"))),
-           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 1, 1),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(14L, 15L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK1"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(14L, 15L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK1"))),
+           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 1, ArealRoadMaintainer.apply("EVK1")),
          DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("SplitLinkTest"), 1L, ArealRoadMaintainer.apply("EVK1"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("SplitLinkTest"), ArealRoadMaintainer.apply("EVK1"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(15L, 33L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(1L), Some(ArealRoadMaintainer.apply("EVK1"))),
-           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(15L, 33L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(1L), Some(ArealRoadMaintainer.apply("EVK1"))),
-           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 1, 1),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(15L, 33L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK1"))),
+           RoadwayChangeSection(Some(road), Some(Track.Combined.value.toLong), Some(part), Some(part), Some(AddrMRange(15L, 33L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.apply("EVK1"))),
+           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 1, ArealRoadMaintainer.apply("EVK1")),
          DateTime.now)
      )
 
@@ -4478,10 +4475,10 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
 
      val roadways = Seq(
-       Roadway(roadwayId,     roadwayNumber,     RoadPart(999, 999), AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous,AddrMRange(  0,  50), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
-       Roadway(roadwayId + 1, roadwayNumber + 1, RoadPart(999, 999), AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous,AddrMRange(  0,  50), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
-       Roadway(roadwayId + 2, roadwayNumber + 2, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous,AddrMRange( 50, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
-       Roadway(roadwayId + 3, roadwayNumber + 3, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.EndOfRoad, AddrMRange(100, 150), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+       Roadway(roadwayId,     roadwayNumber,     RoadPart(999, 999), AdministrativeClass.State, Track.LeftSide,  Discontinuity.Continuous,AddrMRange(  0,  50), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
+       Roadway(roadwayId + 1, roadwayNumber + 1, RoadPart(999, 999), AdministrativeClass.State, Track.RightSide, Discontinuity.Continuous,AddrMRange(  0,  50), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
+       Roadway(roadwayId + 2, roadwayNumber + 2, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous,AddrMRange( 50, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
+       Roadway(roadwayId + 3, roadwayNumber + 3, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.EndOfRoad, AddrMRange(100, 150), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
      )
 
      val linearLocations = Seq(
@@ -4502,33 +4499,33 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //left
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(0L,50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(0L,50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
        //right
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(0L,50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(0L,50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(50L,100L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(50L,100L)), Some(AdministrativeClass.Municipality), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.Municipality, reversed = false, 3, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100L,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100L,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      );
 
@@ -4563,41 +4560,41 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val reversedProjectChanges = List(
        //left
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange( 0L, 50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 1, 8)
+           RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange( 0L, 50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.LeftSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),  Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
        //right
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange( 0L, 50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 2, 8)
+           RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange( 0L, 50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.RightSide.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(50L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(50L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 2, 8)
+           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(50L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(50L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"),ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange( 0L, 50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 3, 8)
+           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange(100,150L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad),Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(999L), endRoadPartNumber = Some(999L), addrMRange = Some(AddrMRange( 0L, 50L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = true, 3, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
      val reversedPls = Seq(reversedCombined1, reversedCombined2, reversedRight, reversedLeft)
 
-     val leftReversedRoadway      = Roadway(roadwayId + 4, left.roadwayNumber,      RoadPart(999, 999), AdministrativeClass.State, Track.LeftSide,  Discontinuity.EndOfRoad, AddrMRange(100, 150), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
-    val rightReversedRoadway     = Roadway(roadwayId + 5, right.roadwayNumber,     RoadPart(999, 999), AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, AddrMRange(100, 150), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
-    val combined1ReversedRoadway = Roadway(roadwayId + 6, combined1.roadwayNumber, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous,AddrMRange( 50, 100), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
-    val combined2ReversedRoadway = Roadway(roadwayId + 7, combined2.roadwayNumber, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous,AddrMRange(  0,  50), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+     val leftReversedRoadway      = Roadway(roadwayId + 4, left.roadwayNumber,      RoadPart(999, 999), AdministrativeClass.State, Track.LeftSide,  Discontinuity.EndOfRoad, AddrMRange(100, 150), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+    val rightReversedRoadway     = Roadway(roadwayId + 5, right.roadwayNumber,     RoadPart(999, 999), AdministrativeClass.State, Track.RightSide, Discontinuity.EndOfRoad, AddrMRange(100, 150), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+    val combined1ReversedRoadway = Roadway(roadwayId + 6, combined1.roadwayNumber, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous,AddrMRange( 50, 100), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+    val combined2ReversedRoadway = Roadway(roadwayId + 7, combined2.roadwayNumber, RoadPart(999, 999), AdministrativeClass.State, Track.Combined,  Discontinuity.Continuous,AddrMRange(  0,  50), reversed = true, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
 
 
      val reversedRoadways = Seq(leftReversedRoadway, rightReversedRoadway, combined1ReversedRoadway, combined2ReversedRoadway)
@@ -4655,8 +4652,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
 
      val roadways = Seq(
-       Roadway(NewIdValue, roadLink1.roadwayNumber, roadLink1.roadPart, roadLink1.administrativeClass, roadLink1.track, roadLink1.discontinuity, roadLink1.addrMRange, reversed = false, roadLink1.startDate.get, roadLink1.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
-       Roadway(NewIdValue, roadLink2.roadwayNumber, roadLink2.roadPart, roadLink2.administrativeClass, roadLink2.track, roadLink2.discontinuity, roadLink2.addrMRange, reversed = false, roadLink2.startDate.get, roadLink2.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue, roadLink1.roadwayNumber, roadLink1.roadPart, roadLink1.administrativeClass, roadLink1.track, roadLink1.discontinuity, roadLink1.addrMRange, reversed = false, roadLink1.startDate.get, roadLink1.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
+       Roadway(NewIdValue, roadLink2.roadwayNumber, roadLink2.roadPart, roadLink2.administrativeClass, roadLink2.track, roadLink2.discontinuity, roadLink2.addrMRange, reversed = false, roadLink2.startDate.get, roadLink2.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
      val linearLocations = Seq(
 
        LinearLocation(NewIdValue, 1, roadLink1.linkId, roadLink1.addrMRange.start, roadLink1.addrMRange.end, roadLink1.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink1.addrMRange.start)), CalibrationPointReference(Some(roadLink1.addrMRange.end))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink1.roadwayNumber, Some(DateTime.now), None),
@@ -4672,17 +4669,17 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadLink1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink1.roadPart.partNumber), endRoadPartNumber = Some(roadLink1.roadPart.partNumber), addrMRange = Some(AddrMRange(0L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadLink1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink1.roadPart.partNumber), endRoadPartNumber = Some(roadLink1.roadPart.partNumber), addrMRange = Some(AddrMRange(0L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"),ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadLink2.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink2.roadPart.partNumber), endRoadPartNumber = Some(roadLink2.roadPart.partNumber), addrMRange = Some(AddrMRange(0L,150L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadLink2.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink2.roadPart.partNumber), endRoadPartNumber = Some(roadLink2.roadPart.partNumber), addrMRange = Some(AddrMRange(0L,150L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
      val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -4757,7 +4754,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val roadLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), AddrMRange(0, 100), Some(DateTime.now()), None, 12345.toString, 0, 100.0, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roadGeom1, roadwayNumber)
 
      val roadways = Seq(
-       Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadPart, roadLink.administrativeClass, roadLink.track, roadLink.discontinuity, roadLink.addrMRange, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadPart, roadLink.administrativeClass, roadLink.track, roadLink.discontinuity, roadLink.addrMRange, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
 
      val linearLocations = Seq(
        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.addrMRange.start, roadLink.addrMRange.end, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.addrMRange.start)), CalibrationPointReference(Some(roadLink.addrMRange.end))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None))
@@ -4776,11 +4773,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      // Creation of nodes and node points
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPart.partNumber), endRoadPartNumber = Some(roadLink.roadPart.partNumber), addrMRange = Some(AddrMRange(0L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPart.partNumber), endRoadPartNumber = Some(roadLink.roadPart.partNumber), addrMRange = Some(AddrMRange(0L,100L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
@@ -4814,8 +4811,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val newRoadLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(100, 250), AddrMRange(100, 250), Some(DateTime.now()), None, 12346.toString, 0, 150.0, SideCode.TowardsDigitizing, RoadAddressChangeType.New, 0, AdministrativeClass.State, roadGeom2, roadwayNumber + 1)
 
      val newRoadways = Seq(
-       Roadway(NewIdValue,    roadLink.roadwayNumber,    roadLink.roadPart,    roadLink.administrativeClass,    roadLink.track,    roadLink.discontinuity,    roadLink.addrMRange, reversed = false,    roadLink.startDate.get,    roadLink.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
-       Roadway(NewIdValue, newRoadLink.roadwayNumber, newRoadLink.roadPart, newRoadLink.administrativeClass, newRoadLink.track, newRoadLink.discontinuity, newRoadLink.addrMRange, reversed = false, newRoadLink.startDate.get, newRoadLink.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue,    roadLink.roadwayNumber,    roadLink.roadPart,    roadLink.administrativeClass,    roadLink.track,    roadLink.discontinuity,    roadLink.addrMRange, reversed = false,    roadLink.startDate.get,    roadLink.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
+       Roadway(NewIdValue, newRoadLink.roadwayNumber, newRoadLink.roadPart, newRoadLink.administrativeClass, newRoadLink.track, newRoadLink.discontinuity, newRoadLink.addrMRange, reversed = false, newRoadLink.startDate.get, newRoadLink.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
      val newLinearLocations = Seq(
        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.addrMRange.start, roadLink.addrMRange.end, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.addrMRange.start)), CalibrationPointReference(Some(roadLink.addrMRange.end))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None),
        LinearLocation(NewIdValue, 2, newRoadLink.linkId, newRoadLink.addrMRange.start, newRoadLink.addrMRange.end, newRoadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(newRoadLink.addrMRange.start)), CalibrationPointReference(Some(newRoadLink.addrMRange.end))), roadGeom2, LinkGeomSource.NormalLinkInterface, newRoadLink.roadwayNumber, Some(DateTime.now), None))
@@ -4857,7 +4854,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
 
      val roadways = Seq(
-       Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadPart, roadLink.administrativeClass, roadLink.track, roadLink.discontinuity, roadLink.addrMRange, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue, roadLink.roadwayNumber, roadLink.roadPart, roadLink.administrativeClass, roadLink.track, roadLink.discontinuity, roadLink.addrMRange, reversed = false, roadLink.startDate.get, roadLink.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
      val linearLocations = Seq(
        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.addrMRange.start, roadLink.addrMRange.end, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.addrMRange.start)), CalibrationPointReference(Some(roadLink.addrMRange.end))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None))
 
@@ -4871,11 +4868,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPart.partNumber), endRoadPartNumber = Some(roadLink.roadPart.partNumber), addrMRange = Some(roadLink.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))), // Added missing comma here
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPart.partNumber), endRoadPartNumber = Some(roadLink.roadPart.partNumber), addrMRange = Some(roadLink.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))), // Added missing comma here
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
      val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -4908,8 +4905,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val newRoadLink = dummyProjectLink(RoadPart(1, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), AddrMRange(0, 100), Some(DateTime.now()), None, 12346.toString, 0, 100.0, SideCode.TowardsDigitizing, RoadAddressChangeType.New, 0, AdministrativeClass.State, roadGeom2, roadwayNumber + 1)
 
      val newRoadways = Seq(
-       Roadway(NewIdValue,    roadLink.roadwayNumber,    roadLink.roadPart,    roadLink.administrativeClass,    roadLink.track,    roadLink.discontinuity,    roadLink.addrMRange, reversed = false,    roadLink.startDate.get,    roadLink.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
-       Roadway(NewIdValue, newRoadLink.roadwayNumber, newRoadLink.roadPart, newRoadLink.administrativeClass, newRoadLink.track, newRoadLink.discontinuity, newRoadLink.addrMRange, reversed = false, newRoadLink.startDate.get, newRoadLink.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue,    roadLink.roadwayNumber,    roadLink.roadPart,    roadLink.administrativeClass,    roadLink.track,    roadLink.discontinuity,    roadLink.addrMRange, reversed = false,    roadLink.startDate.get,    roadLink.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
+       Roadway(NewIdValue, newRoadLink.roadwayNumber, newRoadLink.roadPart, newRoadLink.administrativeClass, newRoadLink.track, newRoadLink.discontinuity, newRoadLink.addrMRange, reversed = false, newRoadLink.startDate.get, newRoadLink.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
 
      val newLinearLocations = Seq(
        LinearLocation(NewIdValue, 1, roadLink.linkId, roadLink.addrMRange.start, roadLink.addrMRange.end, roadLink.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(roadLink.addrMRange.start)), CalibrationPointReference(Some(roadLink.addrMRange.end))), roadGeom1, LinkGeomSource.NormalLinkInterface, roadLink.roadwayNumber, Some(DateTime.now), None),
@@ -4920,18 +4917,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChangesAfterChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(newRoadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(newRoadLink.roadPart.partNumber), endRoadPartNumber = Some(newRoadLink.roadPart.partNumber), addrMRange = Some(newRoadLink.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(newRoadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(newRoadLink.roadPart.partNumber), endRoadPartNumber = Some(newRoadLink.roadPart.partNumber), addrMRange = Some(newRoadLink.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.getEVK(8), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(roadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPart.partNumber), endRoadPartNumber = Some(roadLink.roadPart.partNumber), addrMRange = Some(roadLink.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           RoadwayChangeSection(Some(roadLink.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(roadLink.roadPart.partNumber), endRoadPartNumber = Some(roadLink.roadPart.partNumber), addrMRange = Some(roadLink.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
@@ -4978,8 +4975,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val projectLinks = Seq(road1Link, road2Link)
 
      val roadways = Seq(
-       Roadway(NewIdValue, road1Link.roadwayNumber, road1Link.roadPart, road1Link.administrativeClass, road1Link.track, road1Link.discontinuity, road1Link.addrMRange, reversed = false, road1Link.startDate.get, road1Link.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
-       Roadway(NewIdValue, road2Link.roadwayNumber, road2Link.roadPart, road2Link.administrativeClass, road2Link.track, road2Link.discontinuity, road2Link.addrMRange, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue, road1Link.roadwayNumber, road1Link.roadPart, road1Link.administrativeClass, road1Link.track, road1Link.discontinuity, road1Link.addrMRange, reversed = false, road1Link.startDate.get, road1Link.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
+       Roadway(NewIdValue, road2Link.roadwayNumber, road2Link.roadPart, road2Link.administrativeClass, road2Link.track, road2Link.discontinuity, road2Link.addrMRange, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
 
      val linearLocations = Seq(
        LinearLocation(NewIdValue, 1, road1Link.linkId, road1Link.addrMRange.start, road1Link.addrMRange.end, road1Link.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road1Link.addrMRange.start)), CalibrationPointReference(Some(road1Link.addrMRange.end))), roadGeom1, LinkGeomSource.NormalLinkInterface, road1Link.roadwayNumber, Some(DateTime.now), None),
@@ -4992,18 +4989,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), None, Some(linearLocations), Some(projectLinks))
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road1Link.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road1Link.roadPart.partNumber), endRoadPartNumber = Some(road1Link.roadPart.partNumber), addrMRange = Some(road1Link.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road1Link.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road1Link.roadPart.partNumber), endRoadPartNumber = Some(road1Link.roadPart.partNumber), addrMRange = Some(road1Link.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road2Link.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road2Link.roadPart.partNumber), endRoadPartNumber = Some(road2Link.roadPart.partNumber), addrMRange = Some(road2Link.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road2Link.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road2Link.roadPart.partNumber), endRoadPartNumber = Some(road2Link.roadPart.partNumber), addrMRange = Some(road2Link.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
@@ -5081,8 +5078,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val road2Link  = dummyProjectLink(RoadPart(2, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0,  5), AddrMRange(0,  5), Some(DateTime.now()), None, 12347.toString,   0,  5.0, SideCode.TowardsDigitizing, RoadAddressChangeType.New, projectId, AdministrativeClass.State, roadGeom2,      roadwayNumber + 1).copy(id = plId3)
 
      val roadways = Seq(
-       Roadway(NewIdValue, road1Link1.roadwayNumber, road1Link1.roadPart, road1Link1.administrativeClass, road1Link1.track, road1Link1.discontinuity, AddrMRange(road1Link1.addrMRange.start, road1Link2.addrMRange.end), reversed = false, road1Link1.startDate.get, road1Link1.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
-       Roadway(NewIdValue,  road2Link.roadwayNumber,  road2Link.roadPart, road2Link.administrativeClass,  road2Link.track,  road2Link.discontinuity,  road2Link.addrMRange, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, 8L, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
+       Roadway(NewIdValue, road1Link1.roadwayNumber, road1Link1.roadPart, road1Link1.administrativeClass, road1Link1.track, road1Link1.discontinuity, AddrMRange(road1Link1.addrMRange.start, road1Link2.addrMRange.end), reversed = false, road1Link1.startDate.get, road1Link1.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None),
+       Roadway(NewIdValue,  road2Link.roadwayNumber,  road2Link.roadPart, road2Link.administrativeClass,  road2Link.track,  road2Link.discontinuity,  road2Link.addrMRange, reversed = false, road2Link.startDate.get, road2Link.endDate, "user", None, ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination, DateTime.now, None))
 
      val linearLocations = Seq(
        LinearLocation(NewIdValue, 1, road1Link1.linkId, road1Link1.addrMRange.start, road1Link1.addrMRange.end, road1Link1.sideCode, 0L, calibrationPoints = (CalibrationPointReference(Some(road1Link1.addrMRange.start)), CalibrationPointReference(Some(road1Link1.addrMRange.end))), roadGeom1Link1, LinkGeomSource.NormalLinkInterface, road1Link1.roadwayNumber, Some(DateTime.now), None),
@@ -5098,18 +5095,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), None, Some(linearLocations), Some(projectLinks))
      val projectChanges = List(
        //combined
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road1Link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road1Link1.roadPart.partNumber), endRoadPartNumber = Some(road1Link1.roadPart.partNumber), addrMRange = Some(road1Link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road1Link1.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road1Link1.roadPart.partNumber), endRoadPartNumber = Some(road1Link1.roadPart.partNumber), addrMRange = Some(road1Link1.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(0, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(0, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road2Link.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road2Link.roadPart.partNumber), endRoadPartNumber = Some(road2Link.roadPart.partNumber), addrMRange = Some(road2Link.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road2Link.roadPart.roadNumber), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(road2Link.roadPart.partNumber), endRoadPartNumber = Some(road2Link.roadPart.partNumber), addrMRange = Some(road2Link.addrMRange), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
      val mappedRoadwayNumbers = projectLinkDAO.fetchProjectLinksChange(projectId)
@@ -5189,8 +5186,8 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc1,   rw1  ): (LinearLocation, Roadway) = Seq(combLink1).map(toRoadwayAndLinearLocation).head
      val (lc2,_/*rw2*/): (LinearLocation, Roadway) = Seq(combLink2).map(toRoadwayAndLinearLocation).head
      val (lc3,   rw3  ): (LinearLocation, Roadway) = Seq(combLink3).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20), ely = 8L)
-     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0, 9), ely = 8L)
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(0,20))
+     val rw2WithId = rw3.copy(addrMRange = AddrMRange(0, 9))
      val orderedlll1 = lc1.copy(orderNumber = 1)
      val orderedlll2 = lc2.copy(orderNumber = 2)
      val orderedlll3 = lc3.copy(orderNumber = 1)
@@ -5199,18 +5196,18 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val projectChanges = List(
        //  Combined
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,9L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,9L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
@@ -5246,25 +5243,25 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
 
      val terminateAndTransferProjectChanges = List(
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Termination,
-           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, 8)
+           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,20L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 8)
+           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road999), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,9L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(road999),  Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,19L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 3, 8)
+           RoadwayChangeSection(Some(road1000), Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(0L,9L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(road999),  Some(Track.Combined.value.toLong), startRoadPartNumber = Some(part1), endRoadPartNumber = Some(part1), addrMRange = Some(AddrMRange(10L,19L)), Some(AdministrativeClass.State), Some(Discontinuity.Discontinuous), Option(ArealRoadMaintainer.apply("EVK8"))),
+           Discontinuity.Discontinuous, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
@@ -5279,9 +5276,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (lc4, rw4): (LinearLocation, Roadway) = Seq(terminatedLinkRoad999).map(toRoadwayAndLinearLocation).head
      val (lc5, rw5): (LinearLocation, Roadway) = Seq(transferLinkRoad999).map(toRoadwayAndLinearLocation).head
      val (lc6, rw6): (LinearLocation, Roadway) = Seq(transferLinkRoadExRoad1000).map(toRoadwayAndLinearLocation).head
-     val rw4WithId = rw4.copy(id = terminatedLinkRoad999.roadwayId, endDate = Some(DateTime.now()), ely = 8L)
-     val rw5WithId = rw5.copy(id = transferLinkRoad999.roadwayId, ely = 8L)
-     val rw6WithId = rw6.copy(id = transferLinkRoadExRoad1000.roadwayId, ely = 8L)
+     val rw4WithId = rw4.copy(id = terminatedLinkRoad999.roadwayId, endDate = Some(DateTime.now()))
+     val rw5WithId = rw5.copy(id = transferLinkRoad999.roadwayId)
+     val rw6WithId = rw6.copy(id = transferLinkRoadExRoad1000.roadwayId)
      val orderedlll4 = lc4.copy(orderNumber = 2, validTo = Some(DateTime.now()))
      val orderedlll5 = lc5.copy(orderNumber = 1)
      val orderedlll6 = lc6.copy(orderNumber = 1)
@@ -5397,25 +5394,25 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project), Some(roadways), Some(linearLocations), Some(projectLinks))
 
      val projectChanges = List(
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw1.roadPart.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPart.partNumber), endRoadPartNumber = Some(rw1.roadPart.partNumber), addrMRange = Some(rw1.addrMRange), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely), Some(rw1.roadMaintainer)),
-           rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw1.roadPart.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPart.partNumber), endRoadPartNumber = Some(rw1.roadPart.partNumber), addrMRange = Some(rw1.addrMRange), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.roadMaintainer)),
+           rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw2.roadPart.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPart.partNumber), endRoadPartNumber = Some(rw2.roadPart.partNumber), addrMRange = Some(rw2.addrMRange), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely), Some(rw2.roadMaintainer)),
-           rw2.discontinuity, rw2.administrativeClass, reversed = false, 2, rw2.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw2.roadPart.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPart.partNumber), endRoadPartNumber = Some(rw2.roadPart.partNumber), addrMRange = Some(rw2.addrMRange), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.roadMaintainer)),
+           rw2.discontinuity, rw2.administrativeClass, reversed = false, 2, ArealRoadMaintainer.getEVK(8))
          , DateTime.now),
 
-       ProjectRoadwayChange(projectId, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(projectId, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw3.roadPart.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPart.partNumber), endRoadPartNumber = Some(rw3.roadPart.partNumber), addrMRange = Some(rw3.addrMRange), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely), Some(rw3.roadMaintainer)),
-           rw3.discontinuity, rw3.administrativeClass, reversed = false, 3, rw3.ely)
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw3.roadPart.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPart.partNumber), endRoadPartNumber = Some(rw3.roadPart.partNumber), addrMRange = Some(rw3.addrMRange), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.roadMaintainer)),
+           rw3.discontinuity, rw3.administrativeClass, reversed = false, 3, ArealRoadMaintainer.getEVK(8))
          , DateTime.now)
      )
 
@@ -5474,46 +5471,46 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project1), Some(roadways), Some(linearLocations), Some(projectLinks))
 
      val projectChanges = List(
-       ProjectRoadwayChange(project1Id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project1Id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw1.roadPart.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPart.partNumber), endRoadPartNumber = Some(rw1.roadPart.partNumber), addrMRange = Some(rw1.addrMRange), Some(rw1.administrativeClass), Some(rw1.discontinuity), Some(rw1.ely), Option(rw1.roadMaintainer)),
-           rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.ely),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw1.roadPart.roadNumber), Some(rw1.track.value), startRoadPartNumber = Some(rw1.roadPart.partNumber), endRoadPartNumber = Some(rw1.roadPart.partNumber), addrMRange = Some(rw1.addrMRange), Some(rw1.administrativeClass), Some(rw1.discontinuity), Option(rw1.roadMaintainer)),
+           rw1.discontinuity, rw1.administrativeClass, reversed = false, 1, rw1.roadMaintainer),
          DateTime.now),
 
-       ProjectRoadwayChange(project1Id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project1Id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw2.roadPart.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPart.partNumber), endRoadPartNumber = Some(rw2.roadPart.partNumber), addrMRange = Some(rw2.addrMRange), Some(rw2.administrativeClass), Some(rw2.discontinuity), Some(rw2.ely), Option(rw2.roadMaintainer)),
-           rw2.discontinuity, rw2.administrativeClass, reversed = false, 2, rw2.ely),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw2.roadPart.roadNumber), Some(rw2.track.value), startRoadPartNumber = Some(rw2.roadPart.partNumber), endRoadPartNumber = Some(rw2.roadPart.partNumber), addrMRange = Some(rw2.addrMRange), Some(rw2.administrativeClass), Some(rw2.discontinuity), Option(rw2.roadMaintainer)),
+           rw2.discontinuity, rw2.administrativeClass, reversed = false, 2, rw2.roadMaintainer),
          DateTime.now),
 
-       ProjectRoadwayChange(project1Id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project1Id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw3.roadPart.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPart.partNumber), endRoadPartNumber = Some(rw3.roadPart.partNumber), addrMRange = Some(rw3.addrMRange), Some(rw3.administrativeClass), Some(rw3.discontinuity), Some(rw3.ely), Option(rw3.roadMaintainer)),
-           rw3.discontinuity, rw3.administrativeClass, reversed = false, 3, rw3.ely),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw3.roadPart.roadNumber), Some(rw3.track.value), startRoadPartNumber = Some(rw3.roadPart.partNumber), endRoadPartNumber = Some(rw3.roadPart.partNumber), addrMRange = Some(rw3.addrMRange), Some(rw3.administrativeClass), Some(rw3.discontinuity), Option(rw3.roadMaintainer)),
+           rw3.discontinuity, rw3.administrativeClass, reversed = false, 3, rw3.roadMaintainer),
          DateTime.now),
 
-       ProjectRoadwayChange(project1Id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project1Id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))), // Added missing 9th arg
-           RoadwayChangeSection(Some(rw4.roadPart.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPart.partNumber), endRoadPartNumber = Some(rw4.roadPart.partNumber), addrMRange = Some(rw4.addrMRange), Some(rw4.administrativeClass), Some(rw4.discontinuity), Some(rw4.ely), Option(rw4.roadMaintainer)),
-           rw4.discontinuity, rw4.administrativeClass, reversed = false, 4, rw4.ely),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))), // Added missing 9th arg
+           RoadwayChangeSection(Some(rw4.roadPart.roadNumber), Some(rw4.track.value), startRoadPartNumber = Some(rw4.roadPart.partNumber), endRoadPartNumber = Some(rw4.roadPart.partNumber), addrMRange = Some(rw4.addrMRange), Some(rw4.administrativeClass), Some(rw4.discontinuity), Option(rw4.roadMaintainer)),
+           rw4.discontinuity, rw4.administrativeClass, reversed = false, 4, rw4.roadMaintainer),
          DateTime.now),
 
-       ProjectRoadwayChange(project1Id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now, // Fixed: removed Option wrapper and fixed paren
+       ProjectRoadwayChange(project1Id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now, // Fixed: removed Option wrapper and fixed paren
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw5.roadPart.roadNumber), Some(rw5.track.value), startRoadPartNumber = Some(rw5.roadPart.partNumber), endRoadPartNumber = Some(rw5.roadPart.partNumber), addrMRange = Some(rw5.addrMRange), Some(rw5.administrativeClass), Some(rw5.discontinuity), Some(rw5.ely), Option(rw5.roadMaintainer)),
-           rw5.discontinuity, rw5.administrativeClass, reversed = false, 5, rw5.ely),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw5.roadPart.roadNumber), Some(rw5.track.value), startRoadPartNumber = Some(rw5.roadPart.partNumber), endRoadPartNumber = Some(rw5.roadPart.partNumber), addrMRange = Some(rw5.addrMRange), Some(rw5.administrativeClass), Some(rw5.discontinuity), Option(rw5.roadMaintainer)),
+           rw5.discontinuity, rw5.administrativeClass, reversed = false, 5, rw5.roadMaintainer),
          DateTime.now),
 
-       ProjectRoadwayChange(project1Id, Some("project name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project1Id, Some("project name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Some(8L), Option(ArealRoadMaintainer.apply("EVK8"))),
-           RoadwayChangeSection(Some(rw6.roadPart.roadNumber), Some(rw6.track.value), startRoadPartNumber = Some(rw6.roadPart.partNumber), endRoadPartNumber = Some(rw6.roadPart.partNumber), addrMRange = Some(rw6.addrMRange), Some(rw6.administrativeClass), Some(rw6.discontinuity), Some(rw6.ely), Option(rw6.roadMaintainer)),
-           rw6.discontinuity, rw6.administrativeClass, reversed = false, 6, rw6.ely),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.MinorDiscontinuity), Option(ArealRoadMaintainer.apply("EVK8"))),
+           RoadwayChangeSection(Some(rw6.roadPart.roadNumber), Some(rw6.track.value), startRoadPartNumber = Some(rw6.roadPart.partNumber), endRoadPartNumber = Some(rw6.roadPart.partNumber), addrMRange = Some(rw6.addrMRange), Some(rw6.administrativeClass), Some(rw6.discontinuity), Option(rw6.roadMaintainer)),
+           rw6.discontinuity, rw6.administrativeClass, reversed = false, 6, rw6.roadMaintainer),
          DateTime.now)
      )
 
@@ -5584,46 +5581,46 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      buildTestDataForProject(Some(project2), Some(rwt1 ++ rwt2), Some(llt1 ++ llt2), Some(projectLinksAfterTrackChange))
 
      val projectTrackChanges = List(
-       ProjectRoadwayChange(project2Id, Some("project another name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2Id, Some("project another name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(  rw4.roadPart.roadNumber), Some(  rw4.track.value), startRoadPartNumber = Some(  rw4.roadPart.partNumber), endRoadPartNumber = Some(  rw4.roadPart.partNumber), addrMRange = Some(  rw4.addrMRange), Some(  rw4.administrativeClass), Some(  rw4.discontinuity), Some(  rw4.ely), Some(rw4.roadMaintainer)),
-           RoadwayChangeSection(Some(rw1t1.roadPart.roadNumber), Some(rw1t1.track.value), startRoadPartNumber = Some(rw1t1.roadPart.partNumber), endRoadPartNumber = Some(rw1t1.roadPart.partNumber), addrMRange = Some(rw1t1.addrMRange), Some(rw1t1.administrativeClass), Some(rw1t1.discontinuity), Some(rw1t1.ely), Some(rw4.roadMaintainer)),
-           rw1t1.discontinuity, rw1t1.administrativeClass, reversed = false, 1, rw1t1.ely)
+           RoadwayChangeSection(Some(  rw4.roadPart.roadNumber), Some(  rw4.track.value), startRoadPartNumber = Some(  rw4.roadPart.partNumber), endRoadPartNumber = Some(  rw4.roadPart.partNumber), addrMRange = Some(  rw4.addrMRange), Some(  rw4.administrativeClass), Some(  rw4.discontinuity), Some(rw4.roadMaintainer)),
+           RoadwayChangeSection(Some(rw1t1.roadPart.roadNumber), Some(rw1t1.track.value), startRoadPartNumber = Some(rw1t1.roadPart.partNumber), endRoadPartNumber = Some(rw1t1.roadPart.partNumber), addrMRange = Some(rw1t1.addrMRange), Some(rw1t1.administrativeClass), Some(rw1t1.discontinuity), Some(rw4.roadMaintainer)),
+           rw1t1.discontinuity, rw1t1.administrativeClass, reversed = false, 1, rw1t1.roadMaintainer)
          , DateTime.now),
 
-       ProjectRoadwayChange(project2Id, Some("project another name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2Id, Some("project another name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(  rw1.roadPart.roadNumber), Some(  rw1.track.value), startRoadPartNumber = Some(  rw1.roadPart.partNumber), endRoadPartNumber = Some(  rw1.roadPart.partNumber), addrMRange = Some(  rw1.addrMRange), Some(  rw1.administrativeClass), Some(  rw1.discontinuity), Some(  rw1.ely), Some(rw1.roadMaintainer)),
-           RoadwayChangeSection(Some(rw1t2.roadPart.roadNumber), Some(rw1t2.track.value), startRoadPartNumber = Some(rw1t2.roadPart.partNumber), endRoadPartNumber = Some(rw1t2.roadPart.partNumber), addrMRange = Some(rw1t2.addrMRange), Some(rw1t2.administrativeClass), Some(rw1t2.discontinuity), Some(rw1t2.ely), Some(rw1.roadMaintainer)),
-           rw1t2.discontinuity, rw1t2.administrativeClass, reversed = false, 2, rw1t2.ely)
+           RoadwayChangeSection(Some(  rw1.roadPart.roadNumber), Some(  rw1.track.value), startRoadPartNumber = Some(  rw1.roadPart.partNumber), endRoadPartNumber = Some(  rw1.roadPart.partNumber), addrMRange = Some(  rw1.addrMRange), Some(  rw1.administrativeClass), Some(  rw1.discontinuity), Some(rw1.roadMaintainer)),
+           RoadwayChangeSection(Some(rw1t2.roadPart.roadNumber), Some(rw1t2.track.value), startRoadPartNumber = Some(rw1t2.roadPart.partNumber), endRoadPartNumber = Some(rw1t2.roadPart.partNumber), addrMRange = Some(rw1t2.addrMRange), Some(rw1t2.administrativeClass), Some(rw1t2.discontinuity), Some(rw1.roadMaintainer)),
+           rw1t2.discontinuity, rw1t2.administrativeClass, reversed = false, 2, rw1t2.roadMaintainer)
          , DateTime.now),
 
-       ProjectRoadwayChange(project2Id, Some("project another name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2Id, Some("project another name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(  rw5.roadPart.roadNumber), Some(  rw5.track.value), startRoadPartNumber = Some(  rw5.roadPart.partNumber), endRoadPartNumber = Some(  rw5.roadPart.partNumber), addrMRange = Some(  rw5.addrMRange), Some(  rw5.administrativeClass), Some(  rw5.discontinuity), Some(  rw5.ely), Some(rw5.roadMaintainer)),
-           RoadwayChangeSection(Some(rw2t1.roadPart.roadNumber), Some(rw2t1.track.value), startRoadPartNumber = Some(rw2t1.roadPart.partNumber), endRoadPartNumber = Some(rw2t1.roadPart.partNumber), addrMRange = Some(rw2t1.addrMRange), Some(rw2t1.administrativeClass), Some(rw2t1.discontinuity), Some(rw2t1.ely), Some(rw5.roadMaintainer)),
-           rw2t1.discontinuity, rw2t1.administrativeClass, reversed = false, 3, rw2t1.ely)
+           RoadwayChangeSection(Some(  rw5.roadPart.roadNumber), Some(  rw5.track.value), startRoadPartNumber = Some(  rw5.roadPart.partNumber), endRoadPartNumber = Some(  rw5.roadPart.partNumber), addrMRange = Some(  rw5.addrMRange), Some(  rw5.administrativeClass), Some(  rw5.discontinuity), Some(rw5.roadMaintainer)),
+           RoadwayChangeSection(Some(rw2t1.roadPart.roadNumber), Some(rw2t1.track.value), startRoadPartNumber = Some(rw2t1.roadPart.partNumber), endRoadPartNumber = Some(rw2t1.roadPart.partNumber), addrMRange = Some(rw2t1.addrMRange), Some(rw2t1.administrativeClass), Some(rw2t1.discontinuity), Some(rw5.roadMaintainer)),
+           rw2t1.discontinuity, rw2t1.administrativeClass, reversed = false, 3, rw2t1.roadMaintainer)
          , DateTime.now),
 
-       ProjectRoadwayChange(project2Id, Some("project another name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2Id, Some("project another name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(  rw2.roadPart.roadNumber), Some(  rw2.track.value), startRoadPartNumber = Some(  rw2.roadPart.partNumber), endRoadPartNumber = Some(  rw2.roadPart.partNumber), addrMRange = Some(  rw2.addrMRange), Some(  rw2.administrativeClass), Some(  rw2.discontinuity), Some(  rw2.ely), Some(rw5.roadMaintainer)),
-           RoadwayChangeSection(Some(rw2t2.roadPart.roadNumber), Some(rw2t2.track.value), startRoadPartNumber = Some(rw2t2.roadPart.partNumber), endRoadPartNumber = Some(rw2t2.roadPart.partNumber), addrMRange = Some(rw2t2.addrMRange), Some(rw2t2.administrativeClass), Some(rw2t2.discontinuity), Some(rw2t2.ely), Some(rw5.roadMaintainer)),
-           rw2t2.discontinuity, rw2t2.administrativeClass, reversed = false, 4, rw2t2.ely)
+           RoadwayChangeSection(Some(  rw2.roadPart.roadNumber), Some(  rw2.track.value), startRoadPartNumber = Some(  rw2.roadPart.partNumber), endRoadPartNumber = Some(  rw2.roadPart.partNumber), addrMRange = Some(  rw2.addrMRange), Some(  rw2.administrativeClass), Some(  rw2.discontinuity), Some(rw5.roadMaintainer)),
+           RoadwayChangeSection(Some(rw2t2.roadPart.roadNumber), Some(rw2t2.track.value), startRoadPartNumber = Some(rw2t2.roadPart.partNumber), endRoadPartNumber = Some(rw2t2.roadPart.partNumber), addrMRange = Some(rw2t2.addrMRange), Some(rw2t2.administrativeClass), Some(rw2t2.discontinuity), Some(rw5.roadMaintainer)),
+           rw2t2.discontinuity, rw2t2.administrativeClass, reversed = false, 4, rw2t2.roadMaintainer)
          , DateTime.now),
 
-       ProjectRoadwayChange(project2Id, Some("project another name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2Id, Some("project another name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(  rw6.roadPart.roadNumber), Some(  rw6.track.value), startRoadPartNumber = Some(  rw6.roadPart.partNumber), endRoadPartNumber = Some(  rw6.roadPart.partNumber), addrMRange = Some(  rw6.addrMRange), Some(  rw6.administrativeClass), Some(  rw6.discontinuity), Some(  rw6.ely), Some(rw6.roadMaintainer)),
-           RoadwayChangeSection(Some(rw3t1.roadPart.roadNumber), Some(rw3t1.track.value), startRoadPartNumber = Some(rw3t1.roadPart.partNumber), endRoadPartNumber = Some(rw3t1.roadPart.partNumber), addrMRange = Some(rw3t1.addrMRange), Some(rw3t1.administrativeClass), Some(rw3t1.discontinuity), Some(rw3t1.ely), Some(rw6.roadMaintainer)),
-           rw3t1.discontinuity, rw3t1.administrativeClass, reversed = false, 5, rw3t1.ely)
+           RoadwayChangeSection(Some(  rw6.roadPart.roadNumber), Some(  rw6.track.value), startRoadPartNumber = Some(  rw6.roadPart.partNumber), endRoadPartNumber = Some(  rw6.roadPart.partNumber), addrMRange = Some(  rw6.addrMRange), Some(  rw6.administrativeClass), Some(  rw6.discontinuity), Some(rw6.roadMaintainer)),
+           RoadwayChangeSection(Some(rw3t1.roadPart.roadNumber), Some(rw3t1.track.value), startRoadPartNumber = Some(rw3t1.roadPart.partNumber), endRoadPartNumber = Some(rw3t1.roadPart.partNumber), addrMRange = Some(rw3t1.addrMRange), Some(rw3t1.administrativeClass), Some(rw3t1.discontinuity), Some(rw6.roadMaintainer)),
+           rw3t1.discontinuity, rw3t1.administrativeClass, reversed = false, 5, rw3t1.roadMaintainer)
          , DateTime.now),
 
-       ProjectRoadwayChange(project2Id, Some("project another name"), 8L, ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
+       ProjectRoadwayChange(project2Id, Some("project another name"), ArealRoadMaintainer.apply("EVK8"), "test user", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(  rw3.roadPart.roadNumber), Some(  rw3.track.value), startRoadPartNumber = Some(  rw3.roadPart.partNumber), endRoadPartNumber = Some(  rw3.roadPart.partNumber), addrMRange = Some(  rw3.addrMRange), Some(  rw3.administrativeClass), Some(  rw3.discontinuity), Some(  rw3.ely), Some(rw3.roadMaintainer)),
-           RoadwayChangeSection(Some(rw3t2.roadPart.roadNumber), Some(rw3t2.track.value), startRoadPartNumber = Some(rw3t2.roadPart.partNumber), endRoadPartNumber = Some(rw3t2.roadPart.partNumber), addrMRange = Some(rw3t2.addrMRange), Some(rw3t2.administrativeClass), Some(rw3t2.discontinuity), Some(rw3t2.ely), Some(rw3t2.roadMaintainer)),
-           rw3t2.discontinuity, rw3t2.administrativeClass, reversed = false, 6, rw3t2.ely)
+           RoadwayChangeSection(Some(  rw3.roadPart.roadNumber), Some(  rw3.track.value), startRoadPartNumber = Some(  rw3.roadPart.partNumber), endRoadPartNumber = Some(  rw3.roadPart.partNumber), addrMRange = Some(  rw3.addrMRange), Some(  rw3.administrativeClass), Some(  rw3.discontinuity), Some(rw3.roadMaintainer)),
+           RoadwayChangeSection(Some(rw3t2.roadPart.roadNumber), Some(rw3t2.track.value), startRoadPartNumber = Some(rw3t2.roadPart.partNumber), endRoadPartNumber = Some(rw3t2.roadPart.partNumber), addrMRange = Some(rw3t2.addrMRange), Some(rw3t2.administrativeClass), Some(rw3t2.discontinuity), Some(rw3t2.roadMaintainer)),
+           rw3t2.discontinuity, rw3t2.administrativeClass, reversed = false, 6, rw3t2.roadMaintainer)
          , DateTime.now)
      )
 
@@ -6304,13 +6301,13 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      nodeDAO.create(Seq(node1, node2, node3))
 
      // Create NodePoints
-     val np1 = NodePoint(npId1, BeforeAfter.Before, rwpId1, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber1, 100, RoadPart(1, 1), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
-     val np2 = NodePoint(npId2, BeforeAfter.After,  rwpId2, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2,   0, RoadPart(1, 2), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
-     val np3 = NodePoint(npId3, BeforeAfter.Before, rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
-     val np4 = NodePoint(npId4, BeforeAfter.After,  rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
-     val np5 = NodePoint(npId5, BeforeAfter.After,  rwpId4, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber3,   0, RoadPart(3, 1), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
-     val np6 = NodePoint(npId6, BeforeAfter.After,  rwpId5, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber4,   0, RoadPart(4, 1), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
-     val np7 = NodePoint(npId7, BeforeAfter.Before, rwpId7, Some(nodeNumber3), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 200, RoadPart(1, 2), Track.Combined, 1, ArealRoadMaintainer.apply("EVK8"))
+     val np1 = NodePoint(npId1, BeforeAfter.Before, rwpId1, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber1, 100, RoadPart(1, 1), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
+     val np2 = NodePoint(npId2, BeforeAfter.After,  rwpId2, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2,   0, RoadPart(1, 2), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
+     val np3 = NodePoint(npId3, BeforeAfter.Before, rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
+     val np4 = NodePoint(npId4, BeforeAfter.After,  rwpId3, Some(nodeNumber2), NodePointType.CalculatedNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 100, RoadPart(1, 2), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
+     val np5 = NodePoint(npId5, BeforeAfter.After,  rwpId4, Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber3,   0, RoadPart(3, 1), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
+     val np6 = NodePoint(npId6, BeforeAfter.After,  rwpId5, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber4,   0, RoadPart(4, 1), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
+     val np7 = NodePoint(npId7, BeforeAfter.Before, rwpId7, Some(nodeNumber3), NodePointType.RoadNodePoint, Some(DateTime.parse("2019-01-01")), None, DateTime.parse("2019-01-01"), None, "TestUser", Some(DateTime.parse("2019-01-01")), rwNumber2, 200, RoadPart(1, 2), Track.Combined, ArealRoadMaintainer.apply("EVK1"))
      nodePointDAO.create(List(np1, np2, np3, np4, np5, np6, np7))
 
      // Create junction
@@ -6350,11 +6347,11 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val mainroadRws = Seq(rw1, rw2, rw3)
 
      // Defining roadways and their M values
-     val rw1WithId = rw1.copy(ely = 1L, addrMRange = AddrMRange(  0,100)) //1,1
-     val rw2WithId = rw2.copy(ely = 1L, addrMRange = AddrMRange(  0,200)) //1,2
-     val rw3WithId = rw3.copy(ely = 1L, addrMRange = AddrMRange(100,200)) //1,2
-     val rw4WithId = rw4.copy(ely = 1L, addrMRange = AddrMRange(  0,100)) //2,1
-     val rw5WithId = rw5.copy(ely = 1L, addrMRange = AddrMRange(  0,100)) //3,1
+     val rw1WithId = rw1.copy(addrMRange = AddrMRange(  0,100)) //1,1
+     val rw2WithId = rw2.copy(addrMRange = AddrMRange(  0,200)) //1,2
+     val rw3WithId = rw3.copy(addrMRange = AddrMRange(100,200)) //1,2
+     val rw4WithId = rw4.copy(addrMRange = AddrMRange(  0,100)) //2,1
+     val rw5WithId = rw5.copy(addrMRange = AddrMRange(  0,100)) //3,1
 
      // Defining linear location order numbering
      val orderedll1 = ll1.copy(orderNumber = 1)
@@ -6390,9 +6387,9 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
      val (newll3, newRw3): (LinearLocation, Roadway) = Seq(newPl3).map(toRoadwayAndLinearLocation).head
 
      // Defining roadways and their M values
-     val newRoadway1WithId = newRw1.copy(ely = 1L, addrMRange = AddrMRange(  0, 100)) //1,1
-     val newRoadway2WithId = newRw2.copy(ely = 1L, addrMRange = AddrMRange(100, 200)) //1,1
-     val newRoadway3WithId = newRw3.copy(ely = 1L, addrMRange = AddrMRange(  0, 100)) //1,2
+     val newRoadway1WithId = newRw1.copy(roadMaintainer = ArealRoadMaintainer.apply("EVK1"), addrMRange = AddrMRange(  0, 100)) //1,1
+     val newRoadway2WithId = newRw2.copy(roadMaintainer = ArealRoadMaintainer.apply("EVK1"), addrMRange = AddrMRange(100, 200)) //1,1
+     val newRoadway3WithId = newRw3.copy(roadMaintainer = ArealRoadMaintainer.apply("EVK1"), addrMRange = AddrMRange(  0, 100)) //1,2
      val newRwNumbers = Seq(newRoadway1WithId.roadwayNumber, newRoadway2WithId.roadwayNumber, newRoadway3WithId.roadwayNumber)
      // Defining linear location order numbering
      val newOrderedll1 = newll1.copy(orderNumber = 1)
@@ -6409,7 +6406,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        newRoadway1WithId.id, newOrderedll1.id, newRoadway1WithId.roadPart, newRoadway1WithId.administrativeClass, newRoadway1WithId.track,
        newRoadway1WithId.discontinuity, AddrMRange(newRoadway1WithId.addrMRange.start, newRoadway1WithId.addrMRange.end), Some(newRoadway1WithId.startDate), Some(newRoadway1WithId.startDate), Some(newRoadway1WithId.createdBy),
        newPl1.linkId, newPl1.startMValue, newPl1.endMValue, newPl1.sideCode, newll1.adjustedTimestamp,
-       (None, None), newPl1.geometry, LinkGeomSource.NormalLinkInterface, newRoadway1WithId.ely, ArealRoadMaintainer.apply("EVK8"),
+       (None, None), newPl1.geometry, LinkGeomSource.NormalLinkInterface, newRoadway1WithId.roadMaintainer,
        newRoadway1WithId.terminated, newRoadway1WithId.roadwayNumber, Some(newRoadway1WithId.validFrom), newRoadway1WithId.validTo, newRoadway1WithId.roadName
      )
 
@@ -6417,7 +6414,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        newRoadway2WithId.id, newOrderedll2.id, newRoadway2WithId.roadPart, newRoadway2WithId.administrativeClass, newRoadway2WithId.track,
        newRoadway2WithId.discontinuity, AddrMRange(newRoadway2WithId.addrMRange.start, newRoadway2WithId.addrMRange.end), Some(newRoadway2WithId.startDate), Some(newRoadway2WithId.startDate), Some(newRoadway2WithId.createdBy),
        newPl2.linkId, newPl2.startMValue, newPl2.endMValue, newPl2.sideCode, newll2.adjustedTimestamp,
-       (None, None), newPl2.geometry, LinkGeomSource.NormalLinkInterface, newRoadway2WithId.ely, ArealRoadMaintainer.apply("EVK8"),
+       (None, None), newPl2.geometry, LinkGeomSource.NormalLinkInterface, newRoadway2WithId.roadMaintainer,
        newRoadway2WithId.terminated, newRoadway2WithId.roadwayNumber, Some(newRoadway2WithId.validFrom), newRoadway2WithId.validTo, newRoadway2WithId.roadName
      )
 
@@ -6425,7 +6422,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        newRoadway3WithId.id, newOrderedll3.id, newRoadway3WithId.roadPart, newRoadway3WithId.administrativeClass, newRoadway3WithId.track,
        newRoadway3WithId.discontinuity, AddrMRange(newRoadway3WithId.addrMRange.start, newRoadway3WithId.addrMRange.end), Some(newRoadway3WithId.startDate), Some(newRoadway3WithId.startDate), Some(newRoadway3WithId.createdBy),
        newPl3.linkId, newPl3.startMValue, newPl3.endMValue, newPl3.sideCode, newll3.adjustedTimestamp,
-       (None, None), newPl3.geometry, LinkGeomSource.NormalLinkInterface, newRoadway3WithId.ely, ArealRoadMaintainer.apply("EVK8"),
+       (None, None), newPl3.geometry, LinkGeomSource.NormalLinkInterface, newRoadway3WithId.roadMaintainer,
        newRoadway3WithId.terminated, newRoadway3WithId.roadwayNumber, Some(newRoadway3WithId.validFrom), newRoadway3WithId.validTo, newRoadway3WithId.roadName
      )
 
@@ -6433,7 +6430,7 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        rw4WithId.id, orderedll4.id, rw4WithId.roadPart, rw4WithId.administrativeClass, rw4WithId.track,
        rw4WithId.discontinuity, AddrMRange(rw4WithId.addrMRange.start, rw4WithId.addrMRange.end), Some(rw4WithId.startDate), Some(rw4WithId.startDate), Some(rw4WithId.createdBy),
        pl4.linkId, pl4.startMValue, pl4.endMValue, pl4.sideCode, orderedll4.adjustedTimestamp,
-       (None, None), pl4.geometry, LinkGeomSource.NormalLinkInterface, rw4WithId.ely, ArealRoadMaintainer.apply("EVK8"),
+       (None, None), pl4.geometry, LinkGeomSource.NormalLinkInterface, rw4WithId.roadMaintainer,
        rw4WithId.terminated, rw4WithId.roadwayNumber, Some(rw4WithId.validFrom), rw4WithId.validTo, rw4WithId.roadName
      )
 
@@ -6441,31 +6438,31 @@ test("Test nodesAndJunctionsService.handleJunctionTemplates roadsToHead case Whe
        rw5WithId.id, orderedll5.id, rw5WithId.roadPart, rw5WithId.administrativeClass, rw5WithId.track,
        rw5WithId.discontinuity, AddrMRange(rw5WithId.addrMRange.start, rw5WithId.addrMRange.end), Some(rw5WithId.startDate), Some(rw5WithId.startDate), Some(rw5WithId.createdBy),
        pl5.linkId, pl5.startMValue, pl5.endMValue, pl5.sideCode, orderedll5.adjustedTimestamp,
-       (None, None), pl5.geometry, LinkGeomSource.NormalLinkInterface, rw5WithId.ely, ArealRoadMaintainer.apply("EVK8"),
+       (None, None), pl5.geometry, LinkGeomSource.NormalLinkInterface, rw5WithId.roadMaintainer,
        rw5WithId.terminated, rw5WithId.roadwayNumber, Some(rw5WithId.validFrom), rw5WithId.validTo, rw5WithId.roadName
      )
 
      val projectChanges = List(
-       ProjectRoadwayChange(projectId2, Some("test project"), 1L, ArealRoadMaintainer.apply("EVK8"), "TestUser", DateTime.now,
+       ProjectRoadwayChange(projectId2, Some("test project"), ArealRoadMaintainer.apply("EVK1"), "TestUser", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(1), Some(0), Some(1), Some(1), Some(AddrMRange(0,100)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(1), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(1), Some(0), Some(1), Some(1), Some(AddrMRange(0,100)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(1), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, 1),
+           RoadwayChangeSection(Some(1), Some(0), Some(1), Some(1), Some(AddrMRange(0,100)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(1))),
+           RoadwayChangeSection(Some(1), Some(0), Some(1), Some(1), Some(AddrMRange(0,100)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(1))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 1, ArealRoadMaintainer.apply("EVK1")),
          DateTime.now),
 
-       ProjectRoadwayChange(projectId2, Some("test project"), 1L, ArealRoadMaintainer.apply("EVK8"), "TestUser", DateTime.now,
+       ProjectRoadwayChange(projectId2, Some("test project"), ArealRoadMaintainer.apply("EVK1"), "TestUser", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(1), Some(0), Some(2), Some(2), Some(AddrMRange(0,100)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(1), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(1), Some(0), Some(1), Some(1), Some(AddrMRange(100,200)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(1), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, 1),
+           RoadwayChangeSection(Some(1), Some(0), Some(2), Some(2), Some(AddrMRange(0,100)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(1))),
+           RoadwayChangeSection(Some(1), Some(0), Some(1), Some(1), Some(AddrMRange(100,200)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous),  Option(ArealRoadMaintainer.getEVK(1))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed = false, 2, ArealRoadMaintainer.apply("EVK1")),
          DateTime.now),
 
-       ProjectRoadwayChange(projectId2, Some("test project"), 1L, ArealRoadMaintainer.apply("EVK1"), "TestUser", DateTime.now,
+       ProjectRoadwayChange(projectId2, Some("test project"), ArealRoadMaintainer.apply("EVK1"), "TestUser", DateTime.now,
          RoadwayChangeInfo(RoadAddressChangeType.Transfer,
            // Added missing Option(ArealRoadMaintainer...) as the 9th argument
-           RoadwayChangeSection(Some(1), Some(0), Some(2), Some(2), Some(AddrMRange(100, 200)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(1), Option(ArealRoadMaintainer.getEVK(1))),
-           RoadwayChangeSection(Some(1), Some(0), Some(2), Some(2), Some(AddrMRange(0, 100)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(1), Option(ArealRoadMaintainer.getEVK(1))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, 1),
+           RoadwayChangeSection(Some(1), Some(0), Some(2), Some(2), Some(AddrMRange(100, 200)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(1))),
+           RoadwayChangeSection(Some(1), Some(0), Some(2), Some(2), Some(AddrMRange(0, 100)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(1))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed = false, 3, ArealRoadMaintainer.apply("EVK1")),
          DateTime.now)
      )
 

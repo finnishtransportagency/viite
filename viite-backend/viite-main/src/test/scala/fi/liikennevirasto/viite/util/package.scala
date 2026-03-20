@@ -108,7 +108,7 @@ package object util {
     * @return
     */
   def setUpProjectWithLinks(roadAddressChangeType: RoadAddressChangeType, addrM: Seq[Long], changeTrack: Boolean = false, roads: Seq[(RoadPart, String)] = Seq((RoadPart(1999, 1), "Test road")),
-                            discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.apply("EVK6"), withRoadAddress: Boolean = true): (Project, Seq[ProjectLink]) = {
+                            discontinuity: Discontinuity = Discontinuity.Continuous, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.apply("EVK6"), withRoadAddress: Boolean = true): (Project, Seq[ProjectLink]) = {
 
     val projectId = Sequences.nextViiteProjectId
 
@@ -122,7 +122,7 @@ package object util {
                     VALUES (
                       $roadwayId, 1000000000, ${roadPart.roadNumber}, ${roadPart.partNumber}, $track, $start, $end, 0,
                       ${discontinuity.value}, current_date, NULL, 'test user', to_timestamp('16-10-18 12.03.19.999393000','DD-MM-YY HH24.MI.SSXFF'),
-                      0, $ely, 0, current_date, NULL, 'EVK1'
+                      0, 0, current_date, NULL, ${roadMaintainer.id}
                     )
                     """)
 
@@ -145,7 +145,7 @@ package object util {
       addrM.init.zip(addrM.tail).map {
         case (st, en) =>
           val (roadwayId, linkId) = if (withRoadAddress) createRoadAddresses(roadPart, t.value, st, en) else (0L, 0L.toString)
-          projectLink(AddrMRange(st, en), t, projectId, roadAddressChangeType, roadPart, discontinuity, ely, roadMaintainer, linkId, roadwayId)
+          projectLink(AddrMRange(st, en), t, projectId, roadAddressChangeType, roadPart, discontinuity, roadMaintainer, linkId, roadwayId)
       }
     }
 
@@ -184,8 +184,8 @@ package object util {
     project
   }
 
-  def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, ely: Long = 8L, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.getEVK("EVK6"), linkId: String = "0", roadwayId: Long = 0L, linearLocationId: Long = 0L): ProjectLink = {
-    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, None, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, ely, roadMaintainer, reversed = false, None, 0L)
+  def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled, roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.getEVK("EVK8"), linkId: String = "0", roadwayId: Long = 0L, linearLocationId: Long = 0L): ProjectLink = {
+    ProjectLink(NewIdValue, roadPart, track, discontinuity, addrMRange, addrMRange, None, None, Some("User"), linkId, 0.0, addrMRange.length.toDouble, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), Seq(Point(0.0, addrMRange.start), Point(0.0, addrMRange.end)), projectId, status, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, addrMRange.length.toDouble, roadwayId, linearLocationId, roadMaintainer, reversed = false, None, 0L)
   }
 
   def toTransition(project: Project, status: RoadAddressChangeType)(roadAddress: RoadAddress): (RoadAddress, ProjectLink) = {
@@ -194,18 +194,18 @@ package object util {
 
   def toProjectLink(project: Project, status: RoadAddressChangeType)(roadAddress: RoadAddress): ProjectLink = {
     if (status == RoadAddressChangeType.New) {
-      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (NoCP, NoCP), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.ely, roadAddress.roadMaintainer, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = roadAddress.addrMRange.lengthOption)
+      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (NoCP, NoCP), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, 0, roadAddress.roadMaintainer, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = roadAddress.addrMRange.lengthOption)
     } else {
-      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, roadAddress.roadMaintainer, reversed = false, None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = roadAddress.addrMRange.lengthOption)
+      ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, status, roadAddress.administrativeClass, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.roadMaintainer, reversed = false, None, roadAddress.adjustedTimestamp, roadwayNumber = roadAddress.roadwayNumber, roadAddressLength = roadAddress.addrMRange.lengthOption)
     }
   }
 
   def toProjectLink(project: Project)(roadAddress: RoadAddress): ProjectLink = {
-    ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.ely, roadAddress.roadMaintainer, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = roadAddress.addrMRange.lengthOption)
+    ProjectLink(roadAddress.id, roadAddress.roadPart, roadAddress.track, roadAddress.discontinuity, roadAddress.addrMRange, roadAddress.addrMRange, roadAddress.startDate, roadAddress.endDate, createdBy=Option(project.createdBy), roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.calibrationPointTypes, (roadAddress.startCalibrationPointType, roadAddress.endCalibrationPointType), roadAddress.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id, roadAddress.linearLocationId, roadAddress.roadMaintainer, reversed = false, None, roadAddress.adjustedTimestamp, roadAddressLength = roadAddress.addrMRange.lengthOption)
   }
 
   def backToProjectLink(project: Project)(rl: ProjectAddressLink): ProjectLink = {
-    ProjectLink(rl.id, rl.roadPart, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.addrMRange, rl.addrMRange, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == RoadAddressChangeType.New) 0 else rl.id, if (rl.status == RoadAddressChangeType.New) 0 else rl.linearLocationId, rl.elyCode, rl.roadMaintainer, reversed = false, None, rl.roadLinkTimeStamp)
+    ProjectLink(rl.id, rl.roadPart, Track.apply(rl.trackCode.toInt), Discontinuity.apply(rl.discontinuity), rl.addrMRange, rl.addrMRange, None, None, rl.modifiedBy, rl.linkId, rl.startMValue, rl.endMValue, rl.sideCode, (rl.startCalibrationPointType, rl.endCalibrationPointType), (rl.startCalibrationPointType, rl.endCalibrationPointType), rl.geometry, project.id, RoadAddressChangeType.NotHandled, AdministrativeClass.State, rl.roadLinkSource, GeometryUtils.geometryLength(rl.geometry), if (rl.status == RoadAddressChangeType.New) 0 else rl.id, if (rl.status == RoadAddressChangeType.New) 0 else rl.linearLocationId, rl.roadMaintainer, reversed = false, None, rl.roadLinkTimeStamp)
   }
 
 }

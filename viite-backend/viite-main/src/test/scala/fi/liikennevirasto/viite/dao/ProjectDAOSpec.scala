@@ -40,8 +40,8 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
 
  private def dummyRoadways: Seq[Roadway] = {
    Seq(
-     Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination),
-     Roadway(NewIdValue, roadwayNumber2, RoadPart(roadNumber1, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+     Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination),
+     Roadway(NewIdValue, roadwayNumber2, RoadPart(roadNumber1, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
    )
  }
 
@@ -53,7 +53,7 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
    ProjectLink(id, roadPart, Track.Combined, Discontinuity.Continuous, addrMRange, addrMRange,
      Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing,
      calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry),
-     roadwayId, linearLocationId, 0, ArealRoadMaintainer.getEVK(0), reversed, connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = Some(addrMRange.length))
+     roadwayId, linearLocationId, ArealRoadMaintainer.getEVK(0), reversed, connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = Some(addrMRange.length))
 
  test("Test fetchAllIdsByLinkId When adding some project links for two existing projects Then outcome size of projects for that given linkId should be equal in number") {
    runWithRollback {
@@ -142,7 +142,7 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
 
 
  test("Test update When Update project info Then should update the project infos such as project name, additional info, startDate") {
-   val reservedPart = ProjectReservedPart(5: Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None)
+   val reservedPart = ProjectReservedPart(id = 5L, roadPart = RoadPart(203, 203), addressLength = None, discontinuity = Some(Discontinuity.apply("jatkuva")), roadMaintainer = Some(ArealRoadMaintainer.apply("EVK6")), newLength = None, newDiscontinuity = None, newRoadMaintainer = Some(ArealRoadMaintainer.apply("EVK8")), startingLinkId = None)
    runWithRollback {
      val id = Sequences.nextViiteProjectId
      val rap = dummyProject(id, ProjectState.Incomplete, List(), None)
@@ -178,14 +178,26 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
      val rap = dummyProject(id, ProjectState.Incomplete, List.empty[ProjectReservedPart], None)
      projectDAO.create(rap)
      projectDAO.fetchById(id).nonEmpty should be(true)
-     projectDAO.fetchProjectElyById(id).isEmpty should be (true)
+     projectDAO.fetchProjectEvkById(id).isEmpty should be (true)
    }
  }
 
+
+  /* id: Long,
+                               roadPart: RoadPart,
+                               addressLength: Option[Long] = None,
+                               discontinuity: Option[Discontinuity] = None,
+                     //          ely: Option[Long] = None,
+                               roadMaintainer: Option[ArealRoadMaintainer] = None,
+                               newLength: Option[Long] = None,
+                               newDiscontinuity: Option[Discontinuity] = None,
+                           //    newEly: Option[Long] = None,
+                               newRoadMaintainer: Option[ArealRoadMaintainer] = None,
+                               startingLinkId: Option[String] = None*/
  test("Test fetchProjectIdsWithToBePreservedStatus " +
    "When project is accepted, but yet waiting to be preserved, or at preserving to Viite DB, " +
    "Then fetchProjectIdsWithToBePreservedStatus should be increased") {
-   val reservedPart = ProjectReservedPart(5: Long, RoadPart(203, 203), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None)
+   val reservedPart = ProjectReservedPart(id = 5L, roadPart = RoadPart(203, 203), addressLength = Some(6L), discontinuity = Some(Discontinuity.apply("jatkuva")), roadMaintainer = Some(ArealRoadMaintainer.apply("EVK8")), newLength = None, newDiscontinuity = None)
    runWithRollback {
      val startWaitingCount = projectDAO.fetchProjectIdsWithToBePreservedStatus.length
 
@@ -222,22 +234,22 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
      projectDAO.create(project)
 
      // Update with two ELYs
-     projectDAO.updateProjectElys(id, Seq(2L, 1L))
+     projectDAO.updateProjectRoadMaintainers(id, Seq("EVK2", "EVK1"))
 
      // Directly query the database to verify the elys array
      val query =
        sql"""
-       SELECT elys
+       SELECT road_maintainers
        FROM project
        WHERE id = $id
      """
-     val elysArray = runSelectFirst(query.map(rs => rs.arrayOpt("elys"))).flatten
+     val roadMaintainersArray = runSelectFirst(query.map(rs => rs.arrayOpt("road_maintainers"))).flatten
 
      // Extract the values from the array
-     val elysValues = elysArray.map(_.getArray.asInstanceOf[Array[Integer]].map(_.intValue))
+     val roadMaintainersValues = roadMaintainersArray.map(_.getArray.asInstanceOf[Array[String]])
 
      // Verify the contents in correct order
-     elysValues.get should contain theSameElementsInOrderAs Array(1, 2)
+     roadMaintainersValues.get should contain theSameElementsInOrderAs Array("EVK1", "EVK2")
    }
  }
 }

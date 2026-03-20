@@ -221,15 +221,29 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
+  def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
+
+
+    val roadMaintainerOpt = (ely, roadMaintainer) match {
+      case (ely, None) => ely
+      case (None, roadMaintainer) => roadMaintainer
+      case _ => None
+    }
     runWithReadOnlySession {
-      nodeDAO.fetchNodesForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      nodeDAO.fetchNodesForRoadAddressBrowser(situationDate,/* ely,*/ roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
-  def getJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
+  def getJunctionsForRoadAddressBrowser(situationDate: Option[String], ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
+
+
+    val roadMaintainerOpt = (ely, roadMaintainer) match {
+      case (ely, None) => ely
+      case (None, roadMaintainer) => roadMaintainer
+      case _ => None
+    }
     runWithReadOnlySession {
-      junctionDAO.fetchJunctionsForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      junctionDAO.fetchJunctionsForRoadAddressBrowser(situationDate, /*ely,*/ roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
@@ -348,10 +362,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getNodePointTemplates(authorizedElys: Seq[Int], authorizedEVKs: Seq[Int]): Seq[NodePoint] = {
+  def getNodePointTemplates(authorizedEVKs: Seq[Int]): Seq[NodePoint] = {
     runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
-        nodePointDAO.fetchTemplates().filter(template => authorizedElys.contains(template.elyCode) || authorizedEVKs.contains(template.roadMaintainer.number))//.filter(template => evkRoadMaintainers.contains(template.roadMaintainer.id) || elyRoadMaintainers.contains(template.roadMaintainer.id) || authorizedElys.contains(template.elyCode))    //.filter(template => authorizedElys.contains(template.elyCode))
+        nodePointDAO.fetchTemplates().filter(template => authorizedEVKs.contains(template.roadMaintainer.number))
       }
     }
   }
@@ -372,10 +386,10 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     }
   }
 
-  def getJunctionTemplates(authorizedElys: Seq[Int]): Seq[JunctionTemplate] = {
+  def getJunctionTemplates(authorizedEvks: Seq[Int]): Seq[JunctionTemplate] = {
     runWithReadOnlySession {
       time(logger, "Fetch Junction templates") {
-        junctionDAO.fetchTemplates().filter(jt => authorizedElys.contains(jt.elyCode))
+        junctionDAO.fetchTemplates().filter(jt => authorizedEvks.contains(jt.roadMaintainer.number))
       }
     }
   }
@@ -1179,7 +1193,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
    * 1)  The nodes are created only for tracks 0 and 1
    * 2)  A node template is always created if :
    * 2.1)  road number is < 20000 or between 40000-70000
-   * 2.2)  and at the beginning/end of each road part, ely borders, or when administrative class changes
+   * 2.2)  and at the beginning/end of each road part, elinvoimakeskus borders, or when administrative class changes
    * 2.3)  on each junction with a road number (except number over 70 000)
    *
    * @param roadwayChanges         List of roadway changes in the project.
@@ -1211,7 +1225,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
       if (existingCorrect.isEmpty) {
         nodePointDAO.create {
-          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadPart, projectLink.track, projectLink.ely, projectLink.roadMaintainer))
+          Seq(NodePoint(NewIdValue, pos, roadwayPointId, None, NodePointType.RoadNodePoint, None, None, DateTime.now(), None, username, Some(DateTime.now()), projectLink.roadwayNumber, addrM, projectLink.roadPart, projectLink.track,/* projectLink.ely,*/ projectLink.roadMaintainer))
         }
       }
     }

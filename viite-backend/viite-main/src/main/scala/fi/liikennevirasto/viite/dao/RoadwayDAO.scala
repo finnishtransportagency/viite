@@ -161,8 +161,6 @@ trait BaseRoadAddress {
 
   def geometry: Seq[Point]
 
-  def ely: Long
-
   def roadMaintainer: ArealRoadMaintainer
 
   def linkGeomSource: LinkGeomSource
@@ -272,26 +270,80 @@ trait BaseRoadAddress {
 
 //TODO the start date and the created by should not be optional on the road address case class
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
-case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
-                       addrMRange: AddrMRange, startDate: Option[DateTime] = None, endDate: Option[DateTime] = None,
-                       createdBy: Option[String] = None, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
+case class RoadAddress(
+                        id: Long,
+                        linearLocationId: Long,
+                        roadPart: RoadPart,
+                        administrativeClass: AdministrativeClass,
+                        track: Track,
+                        discontinuity: Discontinuity,
+                       addrMRange: AddrMRange,
+                        startDate: Option[DateTime] = None,
+                        endDate: Option[DateTime] = None,
+                       createdBy: Option[String] = None,
+                        linkId: String,
+                        startMValue: Double,
+                        endMValue: Double,
+                        sideCode: SideCode,
+                        adjustedTimestamp: Long,
                        calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]) = (None, None),
-                       geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-                       ely: Long, roadMaintainer: ArealRoadMaintainer, terminated: TerminationCode = TerminationCode.NoTermination, roadwayNumber: Long,
-                       validFrom: Option[DateTime] = None, validTo: Option[DateTime] = None, roadName: Option[String] = None) extends BaseRoadAddress {
-  def this(id: Long, linearLocationId: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity,
-           addrMRange: AddrMRange, startDate: Option[DateTime], endDate: Option[DateTime],
-           createdBy: Option[String], linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
-           calibrationPoints: (Option[ProjectCalibrationPoint], Option[ProjectCalibrationPoint]),
-           geometry: Seq[Point], linkGeomSource: LinkGeomSource,
-           ely: Long, roadMaintainer: ArealRoadMaintainer, terminated: TerminationCode, roadwayNumber: Long,
-           validFrom: Option[DateTime], validTo: Option[DateTime], roadName: Option[String]) =
-   this(id, linearLocationId, roadPart, administrativeClass, track, discontinuity,
-     addrMRange, startDate, endDate,
-     createdBy, linkId.toString, startMValue, endMValue, sideCode, adjustedTimestamp,
-     calibrationPoints, geometry, linkGeomSource,
-     ely, roadMaintainer, terminated, roadwayNumber,
-     validFrom, validTo, roadName)
+                       geometry: Seq[Point],
+                        linkGeomSource: LinkGeomSource,
+                        roadMaintainer: ArealRoadMaintainer,
+                        terminated: TerminationCode = TerminationCode.NoTermination,
+                        roadwayNumber: Long,
+                       validFrom: Option[DateTime] = None,
+                        validTo: Option[DateTime] = None,
+                        roadName: Option[String] = None) extends BaseRoadAddress {
+  def this(id: Long,
+           linearLocationId: Long,
+           roadPart: RoadPart,
+           administrativeClass: AdministrativeClass,
+           track: Track,
+           discontinuity: Discontinuity,
+           addrMRange: AddrMRange,
+           startDate: Option[DateTime],
+           endDate: Option[DateTime],
+           createdBy: Option[String],
+           linkId: Long,
+           startMValue: Double,
+           endMValue: Double,
+           sideCode: SideCode,
+           adjustedTimestamp: Long,
+           calibrationPoints: (Option[ProjectCalibrationPoint],
+             Option[ProjectCalibrationPoint]),
+           geometry: Seq[Point],
+           linkGeomSource: LinkGeomSource,
+           roadMaintainer: ArealRoadMaintainer,
+           terminated: TerminationCode,
+           roadwayNumber: Long,
+           validFrom: Option[DateTime],
+           validTo: Option[DateTime],
+           roadName: Option[String]) =
+   this(id,
+     linearLocationId,
+     roadPart,
+     administrativeClass,
+     track,
+     discontinuity,
+     addrMRange,
+     startDate,
+     endDate,
+     createdBy,
+     linkId.toString,
+     startMValue,
+     endMValue,
+     sideCode,
+     adjustedTimestamp,
+     calibrationPoints,
+     geometry,
+     linkGeomSource,
+     roadMaintainer,
+     terminated,
+     roadwayNumber,
+     validFrom,
+     validTo,
+     roadName)
 
   override lazy val startCalibrationPoint: Option[ProjectCalibrationPoint] = calibrationPoints._1
   override lazy val endCalibrationPoint:   Option[ProjectCalibrationPoint] = calibrationPoints._2
@@ -385,7 +437,23 @@ case class RoadAddress(id: Long, linearLocationId: Long, roadPart: RoadPart, adm
   }
 }
 
-case class Roadway(id: Long, roadwayNumber: Long, roadPart: RoadPart, administrativeClass: AdministrativeClass, track: Track, discontinuity: Discontinuity, addrMRange: AddrMRange, reversed: Boolean = false, startDate: DateTime, endDate: Option[DateTime] = None, createdBy: String, roadName: Option[String], ely: Long, roadMaintainer: ArealRoadMaintainer, terminated: TerminationCode = TerminationCode.NoTermination, validFrom: DateTime = DateTime.now(), validTo: Option[DateTime] = None)
+case class Roadway(
+                    id: Long,
+                    roadwayNumber: Long,
+                    roadPart: RoadPart,
+                    administrativeClass: AdministrativeClass,
+                    track: Track,
+                    discontinuity: Discontinuity,
+                    addrMRange: AddrMRange,
+                    reversed: Boolean = false,
+                    startDate: DateTime,
+                    endDate: Option[DateTime] = None,
+                    createdBy: String,
+                    roadName: Option[String],
+                    roadMaintainer: ArealRoadMaintainer,
+                    terminated: TerminationCode = TerminationCode.NoTermination,
+                    validFrom: DateTime = DateTime.now(),
+                    validTo: Option[DateTime] = None)
 
 object Roadway extends SQLSyntaxSupport[Roadway] {
   override val tableName = "ROADWAY"
@@ -409,7 +477,6 @@ object Roadway extends SQLSyntaxSupport[Roadway] {
     endDate             = rs.jodaDateTimeOpt("end_date"),
     createdBy           = rs.string("created_by"),
     roadName            = rs.stringOpt("road_name"),
-    ely                 = rs.long("ely"),
     roadMaintainer      = ArealRoadMaintainer.apply(rs.string("road_maintainer")),
     terminated          = TerminationCode(rs.int("terminated")),
     validFrom           = rs.jodaDateTime("valid_from"),
@@ -422,8 +489,14 @@ case class TrackForRoadAddressBrowser(ely: Long, evk: Long, roadPart: RoadPart, 
 object TrackForRoadAddressBrowser extends SQLSyntaxSupport[TrackForRoadAddressBrowser] {
 
   def apply(rs: WrappedResultSet): TrackForRoadAddressBrowser = new TrackForRoadAddressBrowser(
-    ely                 = rs.long("ely"),
-    evk                 = ArealRoadMaintainer.getEVK(rs.string("road_maintainer")).number,
+    ely                 = ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(ArealRoadMaintainer.apply(rs.string("road_maintainer")), elyContext = true) match {
+      case Some(value) => value.toLong
+      case None => 0L
+    }, // if(ArealRoadMaintainer.isELY(ArealRoadMaintainer.apply(rs.string("road_maintainer")))) ArealRoadMaintainer.apply(rs.string("road_maintainer")).number.toLong else 0L ,   // rs.long("ely"),
+    evk                 = ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(ArealRoadMaintainer.apply(rs.string("road_maintainer")), elyContext = false) match {
+      case Some(value) => value.toLong
+      case None => 0L
+    }, // if(ArealRoadMaintainer.isEVK(ArealRoadMaintainer.apply(rs.string("road_maintainer")))) ArealRoadMaintainer.apply(rs.string("road_maintainer")).number.toLong else 0L , // ArealRoadMaintainer.getEVK(rs.string("road_maintainer")).number,
     roadPart            = RoadPart(
       roadNumber        = rs.long("road_number"),
       partNumber        = rs.long("road_part_number")
@@ -445,8 +518,14 @@ case class RoadPartForRoadAddressBrowser(ely: Long, evk: Long, roadPart: RoadPar
 object RoadPartForRoadAddressBrowser extends SQLSyntaxSupport[RoadPartForRoadAddressBrowser] {
 
   def apply(rs: WrappedResultSet): RoadPartForRoadAddressBrowser = new RoadPartForRoadAddressBrowser(
-    ely                = rs.long("ely"),
-    evk                = ArealRoadMaintainer.getEVK(rs.string("road_maintainer")).number,
+    ely                 = ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(ArealRoadMaintainer.apply(rs.string("road_maintainer")), elyContext = true) match {
+      case Some(value) => value.toLong
+      case None => 0L
+    },
+    evk                 = ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(ArealRoadMaintainer.apply(rs.string("road_maintainer")), elyContext = false) match {
+      case Some(value) => value.toLong
+      case None => 0L
+    },
     roadPart           = RoadPart(
       roadNumber       = rs.long("road_number"),
       partNumber       = rs.long("road_part_number")
@@ -647,7 +726,7 @@ class RoadwayDAO extends BaseDAO {
       sqls"""
         SELECT
           a.id, a.ROADWAY_NUMBER, a.road_number, a.road_part_number, a.track, a.start_addr_m, a.end_addr_m,
-          a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.administrative_class, a.ely, a.road_maintainer, a.terminated,
+          a.reversed, a.discontinuity, a.start_date, a.end_date, a.created_by, a.administrative_class, a.road_maintainer, a.terminated,
           a.valid_from, a.valid_to,
           (SELECT rn.road_name FROM road_name rn WHERE rn.road_number = a.road_number and rn.end_date IS NULL and rn.valid_to IS NULL) AS road_name
         FROM ROADWAY a
@@ -1041,7 +1120,6 @@ class RoadwayDAO extends BaseDAO {
         roadway.endDate.map(date => new java.sql.Date(date.getMillis)).orNull,
         roadway.createdBy,
         roadway.administrativeClass.value,
-        roadway.ely,
         roadway.roadMaintainer.id,
         roadway.terminated.value
       )
@@ -1063,26 +1141,39 @@ class RoadwayDAO extends BaseDAO {
         ${column.endDate},
         ${column.createdBy},
         ${column.administrativeClass},
-        ${column.ely},
         ${column.roadMaintainer},
         ${column.terminated}
       ) VALUES (
-        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
       )
     """
 
     // Execute the batch update
-    runBatchUpdateToDb(insertQuery, batchParams)
+    try {
+     // println(s"TRYING TO INSERT")
+      runBatchUpdateToDb(insertQuery, batchParams)
+      // Return the list of IDs
+      val resultListOfIds = roadwaysWithNumbers.map(_.id).toSeq
+      resultListOfIds
+    } catch {
+      case e: Throwable => {
+        logger.info(s"EXCEPTION OCCURRED WHILE INSERTING ROADWAYS: ${e.getMessage}")
+        List(-1L)
+      }
+    }
+
 
     // Return the list of IDs
-    roadwaysWithNumbers.map(_.id).toSeq
+//    val resultListOfIds = roadwaysWithNumbers.map(_.id).toSeq
+  //  println(s"ROADWAYS CREATED WITH IDS :: ${resultListOfIds.mkString(", ")}")
+  //  resultListOfIds
   }
 
-  case class RoadPartDetail(id: Long, linkId: String, endAddrM: Long, discontinuity: Long, ely: Long, roadMaintainer: ArealRoadMaintainer, startDate: Option[DateTime], endDate: Option[DateTime])
+  case class RoadPartDetail(id: Long, linkId: String, endAddrM: Long, discontinuity: Long,/* ely: Long, */roadMaintainer: ArealRoadMaintainer, startDate: Option[DateTime], endDate: Option[DateTime])
 
   def getRoadPartInfo(roadPart: RoadPart): Option[RoadPartDetail] = {
     val query =
-      sql"""SELECT r.id, l.link_id, r.end_addr_m, r.discontinuity, r.ely, r.road_maintainer,
+      sql"""SELECT r.id, l.link_id, r.end_addr_m, r.discontinuity, r.road_maintainer,
             (SELECT MAX(ra.start_date) FROM roadway ra WHERE r.road_part_number = ra.road_part_number AND r.road_number = ra.road_number) AS start_date,
             (SELECT MAX(ra.end_date)   FROM roadway ra WHERE r.road_part_number = ra.road_part_number AND r.road_number = ra.road_number) AS end_date
             FROM roadway r
@@ -1109,21 +1200,19 @@ class RoadwayDAO extends BaseDAO {
       linkId        = rs.string("link_id"),
       endAddrM      = rs.long("end_addr_m"),
       discontinuity = rs.long("discontinuity"),
-      ely           = rs.long("ely"),
       roadMaintainer = ArealRoadMaintainer.apply(rs.string("road_maintainer")),
       startDate     = rs.jodaDateTimeOpt("start_date"),
       endDate       = rs.jodaDateTimeOpt("end_date")
     )))
   }
 
-  def fetchTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long],
+  def fetchTracksForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long],
                                        minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
 
     val dateCondition = situationDate.map(date =>
       sqls"AND start_date <= $date::date AND (end_date >= $date::date OR end_date IS NULL)"
     ).getOrElse(sqls"")
 
-    val elyCondition = ely.map(ely => sqls" AND ely = $ely").getOrElse(sqls"")
     val roadMaintainerCondition = roadMaintainer.map(roadMaintainer => sqls" AND road_maintainer = $roadMaintainer").getOrElse(sqls"")
     val roadNumberCondition = roadNumber.map(roadNumber => sqls" AND road_number = $roadNumber").getOrElse(sqls"")
 
@@ -1137,7 +1226,7 @@ class RoadwayDAO extends BaseDAO {
       }
     }
 
-    /** Form homogenous sections by road number, road part number, track, start date and ely
+    /** Form homogenous sections by road number, road part number, track, start date and road maintainer
      *
      * Use three CTE's (Common Table Expression)
      * 1. roadways: SELECT roadways FROM roadway table with the optional parameters
@@ -1153,12 +1242,11 @@ class RoadwayDAO extends BaseDAO {
                     FROM   roadway r
                     WHERE  r.valid_to IS NULL
                     $dateCondition
-                    $elyCondition
                     $roadMaintainerCondition
                     $roadNumberCondition
                     $roadPartCondition
                     ),
-           roadwayswithstartaddr AS (SELECT ely,
+           roadwayswithstartaddr AS (SELECT
                            road_maintainer,
                            road_number,
                            road_part_number,
@@ -1179,13 +1267,12 @@ class RoadwayDAO extends BaseDAO {
                                               AND r2.road_number = r.road_number
                                               AND r2.road_part_number = r.road_part_number
                                               AND r2.track = r.track
-                                              AND r2.ely = r.ely
                                               AND r2.road_maintainer = r.road_maintainer
                                               AND r2.administrative_class = r.administrative_class
                                               )
                                               ),
                 roadwayswithendaddr AS
-                 (SELECT   ely,
+                 (SELECT
                            road_maintainer,
                            road_number,
                            road_part_number,
@@ -1207,12 +1294,11 @@ class RoadwayDAO extends BaseDAO {
                                               AND r2.road_number = r.road_number
                                               AND r2.road_part_number = r.road_part_number
                                               AND r2.track = r.track
-                                              AND r2.ely = r.ely
                                               AND r2.road_maintainer = r.road_maintainer
                                               AND r2.administrative_class = r.administrative_class
                                        )
                        )
-           SELECT s.ely,
+           SELECT
                   s.road_maintainer,
                   s.road_number,
                   s.track,
@@ -1238,14 +1324,13 @@ class RoadwayDAO extends BaseDAO {
 
   }
 
-  def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+  def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
 
     val dateCondition = situationDate.map(date =>
       // using ::date to cast the date string to date type
       sqls"AND start_date <= $date::date AND (end_date >= $date::date OR end_date IS NULL)"
     ).getOrElse(sqls"")
 
-    val elyCondition = ely.map(ely => sqls" AND ely = $ely").getOrElse(sqls"")
     val roadMaintainerCondition = roadMaintainer.map(roadMaintainer => sqls" AND road_maintainer = $roadMaintainer").getOrElse(sqls"")
 
     val roadNumberCondition = roadNumber.map(roadNumber => sqls" AND road_number = $roadNumber").getOrElse(sqls"")
@@ -1262,7 +1347,6 @@ class RoadwayDAO extends BaseDAO {
 
     val selectPart = sqls"""
     SELECT
-      r.ely,
       r.road_maintainer,
       r.road_number,
       r.road_part_number,
@@ -1276,14 +1360,13 @@ class RoadwayDAO extends BaseDAO {
     FROM roadway r
     WHERE r.valid_to IS NULL
     $dateCondition
-    $elyCondition
     $roadMaintainerCondition
     $roadNumberCondition
     $roadPartCondition
   """
 
     val groupByPart = sqls"""
-    GROUP BY r.ely, r.road_maintainer, r.road_number, r.road_part_number
+    GROUP BY r.road_maintainer, r.road_number, r.road_part_number
     ORDER BY r.road_number, r.road_part_number
   """
 
