@@ -454,6 +454,10 @@
             startDate: result.project.startDate,
             publishable: false
           };
+          currentProject = result;
+          me.setAndWriteProjectErrorsToUser(result.projectErrors || []);
+          me.setReservedParts(result.reservedInfo);
+          me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
         } else {
           eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);

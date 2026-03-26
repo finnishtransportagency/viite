@@ -8,16 +8,19 @@
       applicationModel,
       backend,
       projectChangeTable,
-      container = '#feature-attributes'
+      container = '#feature-attributes',
+      closeProjectMenu,
+      initialState = {},
+      onStateChange
     } = options;
 
-    const state = {
+    const state = Object.assign({
       hasErrors: false,
       changeTableOpen: false,
       recalculated: false,
       publishable: false,
       isProjectPublished: false
-    };
+    }, initialState);
 
     const config = {
       coordinates: [],
@@ -68,21 +71,22 @@
         config.buttonStates.changes = { disabled: true, title: 'Projektissa on virheitä' };
         config.buttonStates.send = { disabled: true, title: config.disabledTitles.send };
       } 
-      // Change table is open: Disable recalculate, enable send (if publishable)
+      // Change table is open: Disable recalculate and changes, conditionally enable send
       else if (state.changeTableOpen) {
         config.buttonStates.recalculate = { disabled: true, title: 'Yhteenveto auki' };
-        config.buttonStates.changes = { disabled: false, title: '' };
+        config.buttonStates.changes = { disabled: true, title: 'Yhteenveto on auki' };
         config.buttonStates.send = { disabled: !state.publishable, title: state.publishable ? '' : config.disabledTitles.send };
       } 
       // Normal state / Recalculated
       else {
-        config.buttonStates.recalculate = { disabled: false, title: '' };
         config.buttonStates.send = { disabled: true, title: config.disabledTitles.send };
         
-        // Open button remains disabled UNTIL recalculation succeeds
+        // After recalculation succeeds: disable recalculate, enable changes
         if (state.recalculated) {
+          config.buttonStates.recalculate = { disabled: true, title: 'Avaa yhteenveto ensin' };
           config.buttonStates.changes = { disabled: false, title: '' };
         } else {
+          config.buttonStates.recalculate = { disabled: false, title: '' };
           config.buttonStates.changes = { disabled: true, title: 'Päivitä etäisyyslukemat ensin' };
         }
       }
@@ -115,6 +119,9 @@
       Object.assign(state, newState); // Merge new state flags into current state
       evaluateButtonStates();
       refresh();
+      if (typeof onStateChange === 'function') {
+        onStateChange(Object.assign({}, state));
+      }
     };
 
     // ==========================================
@@ -205,15 +212,15 @@ const getProjectErrors = function (projectErrors, links) {
       
       let validateBtn = '';
       if (window.startupParameters && _.includes(window.startupParameters.roles, 'dev')) {
-        validateBtn = `<button id="validate-button" class="btn-primary btn-lg" ${btns.validate.disabled ? 'disabled' : ''} title="${btns.validate.title}">Validoi projekti</button>`;
+        validateBtn = `<button id="validate-button" class="${config.cssClasses.validate}" ${btns.validate.disabled ? 'disabled' : ''} title="${btns.validate.title}">Validoi projekti</button>`;
       }
 
       return `
         <div class="footer-project-action-menu">
           ${validateBtn}
-          <button id="recalculate-button" class="btn-primary btn-lg" ${btns.recalculate.disabled ? 'disabled' : ''} title="${btns.recalculate.title}">Päivitä etäisyyslukemat</button>
-          <button id="changes-button" class="btn-primary btn-lg" ${btns.changes.disabled ? 'disabled' : ''} title="${btns.changes.title}">Avaa projektin yhteenvetotaulukko</button>
-          <button id="send-button" class="btn-send btn-primary btn-lg" ${btns.send.disabled ? 'disabled' : ''} title="${btns.send.title}">Hyväksy tieosoitemuutokset</button>
+          <button id="recalculate-button" class="${config.cssClasses.recalculate}" ${btns.recalculate.disabled ? 'disabled' : ''} title="${btns.recalculate.title}">Päivitä etäisyyslukemat</button>
+          <button id="changes-button" class="${config.cssClasses.changes}" ${btns.changes.disabled ? 'disabled' : ''} title="${btns.changes.title}">Avaa projektin yhteenvetotaulukko</button>
+          <button id="send-button" class="${config.cssClasses.send}" ${btns.send.disabled ? 'disabled' : ''} title="${btns.send.title}">Hyväksy tieosoitemuutokset</button>
         </div>`;
     };
 
@@ -225,15 +232,14 @@ const getProjectErrors = function (projectErrors, links) {
       eventbus.trigger('roadAddressProject:startAllInteractions');
       eventbus.trigger('projectChangeTable:hide');
       applicationModel.setOpenProject(false);
-      
-      const rootElement = $(container);
-      ['header', '.wrapper', 'footer'].forEach(selector => {
-        rootElement.find(selector).toggle();
-      });
-      
+
       projectCollection.clearRoadAddressProjects();
       eventbus.trigger('layer:enableButtons', false);
-      window.mainMenu.setState('main');
+      if (typeof closeProjectMenu === 'function') {
+        closeProjectMenu();
+      } else {
+        window.mainMenu.setState('main');
+      }
       
       if (changeLayerMode) {
         eventbus.trigger('roadAddressProject:clearOnClose');
@@ -261,8 +267,6 @@ const getProjectErrors = function (projectErrors, links) {
           const extent = map.getView().calculateExtent(map.getSize()).join(',');
           const zoom = zoomlevels.getViewZoom(map) + 1;
           projectCollection.fetch(extent, zoom, currentProject.project.id, projectCollection.getPublishableStatus());
-          
-          eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
         } else {
           new ConfirmPopup(response.errorMessage, {
             type: 'alert',
@@ -338,10 +342,24 @@ const getProjectErrors = function (projectErrors, links) {
 
     const bindEvents = function () {
       const rootElement = $(container);
-      rootElement.off('click', 'button.recalculate').on('click', 'button.recalculate', handleRecalculateClick);
-      rootElement.off('click', 'button.show-changes').on('click', 'button.show-changes', handleChangesClick);
-      rootElement.off('click', 'button.send').on('click', 'button.send', handleSendClick);
-      rootElement.off('click', 'button.validate').on('click', 'button.validate', handleValidateClick);
+      rootElement.off('click', 'button.btn-recalculate').on('click', 'button.btn-recalculate', handleRecalculateClick);
+      rootElement.off('click', 'button.btn-show-changes').on('click', 'button.btn-show-changes', handleChangesClick);
+      rootElement.off('click', 'button.btn-send').on('click', 'button.btn-send', handleSendClick);
+      rootElement.off('click', 'button.btn-validate').on('click', 'button.btn-validate', handleValidateClick);
+
+      if (projectChangeTable && typeof projectChangeTable.setCallbacks === 'function') {
+        projectChangeTable.setCallbacks({
+          onClosed: function () {
+            updateState({ changeTableOpen: false });
+          },
+          onValidationResult: function (result) {
+            updateState({
+              hasErrors: Boolean(result.hasErrors),
+              publishable: Boolean(result.publishable)
+            });
+          }
+        });
+      }
       
       rootElement.off('click', 'button.projectErrorButton').on('click', 'button.projectErrorButton', function() {
         const buttonId = parseInt($(this).attr('id'));

@@ -23,6 +23,17 @@
       selectedLinks: []
     };
 
+    let roadAddressingState = {
+      hasErrors: false,
+      changeTableOpen: false,
+      recalculated: false,
+      publishable: false
+    };
+
+    const syncRoadAddressingState = function (newState) {
+      roadAddressingState = Object.assign({}, roadAddressingState, newState || {});
+    };
+
     const render = function () {
       let contentHtml = '';
       let footerHtml = '';
@@ -60,7 +71,10 @@
           const actionMenu = new root.ProjectActionMenu({
             ...options,
             eventbus: eventbus,
-            project: project.data
+            project: project.data,
+            closeProjectMenu: closeProjectMenu,
+            initialState: roadAddressingState,
+            onStateChange: syncRoadAddressingState
           });
 
           contentHtml = actionMenu.renderContent();
@@ -105,6 +119,12 @@
       }
 
       if (currentState === States.CONFIGURATION) {
+        const hasPersistedProject = !_.isUndefined(project.data.id) && project.data.id !== null && project.data.id !== 0;
+        if (hasPersistedProject) {
+          return `
+            <span class="edit-mode-title">${project.data.name}</span>
+            <span id="closeProjectSpan">Sulje <i class="fas fa-window-close"></i></span>`;
+        }
         return `<span class="edit-mode-title">${project.data.name}</span>`;
       }
 
@@ -130,18 +150,20 @@
 
         saveButton.on('click', () => {
           if (options.projectCollection && activeChild) {
-            // Use the new validation and save function from LinkEditForm
-            const success = activeChild.validateAndSave(options.projectCollection, additionalData.selectedLinks);
-            if (success) {
-              // Reset state to ROAD_ADDRESSING after successful save
-              updateUI(States.ROAD_ADDRESSING, project.data, false);
-            }
+            activeChild.validateAndSave(options.projectCollection, additionalData.selectedLinks);
           }
         });
         
         cancelButton.on('click', () => {
-          // Reset state to ROAD_ADDRESSING when cancel is clicked
-          updateUI(States.ROAD_ADDRESSING, project.data, false);
+          if (activeChild && typeof activeChild.cancelChanges === 'function') {
+            activeChild.cancelChanges({
+              onCancel: function () {
+                updateUI(States.ROAD_ADDRESSING, project.data, false);
+              }
+            });
+          } else {
+            updateUI(States.ROAD_ADDRESSING, project.data, false);
+          }
         });
       }
 
@@ -209,6 +231,71 @@
           errorMessage: errorMessage 
         });
       }
+    });
+
+    eventbus.on('roadAddress:projectLinksUpdated', function () {
+      if (options.projectCollection) {
+        options.projectCollection.setTmpDirty([]);
+        options.projectCollection.setDirty([]);
+      }
+
+      syncRoadAddressingState({
+        recalculated: false,
+        changeTableOpen: false
+      });
+
+      applicationModel.removeSpinner();
+      updateUI(States.ROAD_ADDRESSING, project.data, false);
+    });
+
+    eventbus.on('roadAddress:projectLinksUpdateFailed', function (errorCode) {
+      const errorMessages = {
+        400: 'Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.',
+        401: 'Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.',
+        412: 'Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.',
+        500: 'Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.'
+      };
+
+      applicationModel.removeSpinner();
+      new ConfirmPopup(errorMessages[errorCode] ||
+        'Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.', {
+        type: 'alert',
+        okButtonLbl: 'OK'
+      });
+    });
+
+    eventbus.on('roadAddressProject:reOpenCurrent', function () {
+      updateUI(States.ROAD_ADDRESSING, project.data, false);
+    });
+
+    eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+      if (options.projectCollection) {
+        options.projectCollection.setTmpDirty([]);
+      }
+      eventbus.trigger('projectChangeTable:refresh');
+      updateUI(States.ROAD_ADDRESSING, project.data, false);
+    });
+
+    eventbus.on('roadAddress:projectSentSuccess', function () {
+      Toast.show('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
+      closeProjectMenu();
+      eventbus.trigger('layer:enableButtons', false);
+      eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
+      eventbus.trigger('roadLinks:refreshView');
+    });
+
+    eventbus.on('roadAddress:projectSentFailed', function (error) {
+      new ConfirmPopup(error, {
+        type: 'alert',
+        okButtonLbl: 'OK'
+      });
+    });
+
+    eventbus.on('roadAddress:changeDirectionFailed', function (error) {
+      new ConfirmPopup(error, {
+        type: 'alert',
+        okButtonLbl: 'OK'
+      });
     });
 
     eventbus.on('roadAddress:openProject', function (result) {

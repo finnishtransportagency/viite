@@ -6,10 +6,9 @@
   gap: 8px;
   margin-top: 15px;
   border-top: 1px solid @gray-darker-2;
-  padding: 8px;
+  padding: 16px;
 }
 
-.btn-send,
 .btn-recalculate,
 .btn-show-changes,
 .btn-validate {
@@ -19,9 +18,13 @@
 .btn-send {
   margin-top: 6px !important;
   background-color: @green;
+
+  &:hover,
+  &:focus {
+    background-color: @green-dark;
+    .transition(background-color 0.2s @easing-swift-out);
+  }
 }
-
-
 
 .error-divider {
   display: block;

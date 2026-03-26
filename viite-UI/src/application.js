@@ -138,7 +138,6 @@
     // Initialize forms and tools
     new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
     new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend, startupParameters);
-    new LinkEditForm(startupParameters);
     
     return { mainMenu };
   };

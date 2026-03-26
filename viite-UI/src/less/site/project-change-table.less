@@ -6,8 +6,9 @@
   left: 250px;
   right: 500px;
   top: 620px;
+  min-width: 1000px;
   background-color: #e3e3e1;
-  z-index: 1020;
+  z-index: 20000;
   resize: horizontal;
   /* Allow horizontal resizing */
   overflow: hidden;
@@ -134,6 +135,12 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.change-table-dimensions tbody td:first-child {
+  font-weight: bold;
+  text-transform: capitalize !important;
+  font-size: 12px;
 }
 
 /* Column dividers */

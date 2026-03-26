@@ -6,6 +6,10 @@
     var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     var ProjectStatus = ViiteEnumerations.ProjectStatus;
     var windowMaximized = false;
+    var callbacks = {
+      onClosed: null,
+      onValidationResult: null
+    };
 
     var isChangeTableOpen = function () {
       return changeTableOpen;
@@ -102,6 +106,9 @@
       $('#information-content').empty();
       eventbus.trigger('projectChangeTable:closed');
       changeTableOpen = false;
+      if (typeof callbacks.onClosed === 'function') {
+        callbacks.onClosed();
+      }
       resetInteractions();
       interact($changeTableFrame).unset();
       $changeTableFrame.remove();
@@ -272,40 +279,28 @@
         }
 
         var currentProject = projectCollection.getCurrentProject();
-        
-        // Create ProjectButtons instance for state management
-        const projectButtons = new ProjectButtons({
-          disabled: false
-        });
 
-        // Update button states using ProjectButtons
-        const projectState = {
-          hasErrors: hasLengthMismatch || hasNegativeLength,
-          changeTableOpen: true,
-          recalculated: false,
-          highPriorityErrors: false
-        };
-        
-        projectButtons.updateState(projectState);
-        
-        $('.project-form.form-controls').html(projectButtons.render());
-
-        // Additional logic for send button based on project status
+        // Keep compatibility for global validation consumers.
         if ($changeTableFrame.css('display') === "block" &&
-            currentProject.project.statusCode === ProjectStatus.Incomplete.value) {
+            currentProject.project.statusCode === ProjectStatus.Incomplete.value &&
+            !hasLengthMismatch &&
+            !hasNegativeLength) {
+          window.currentValidations = {};
+        }
 
-          if (hasLengthMismatch || hasNegativeLength) {
-            // Send button is already disabled by ProjectButtons due to hasErrors
-          } else {
-            // Enable send button if no issues - override the error state
-            projectButtons.setButtonState('send', false, '');
-            $('.project-form.form-controls').html(projectButtons.render());
-            window.currentValidations = {}; // Clear validation results if no mismatches
-          }
+        if (typeof callbacks.onValidationResult === 'function') {
+          callbacks.onValidationResult({
+            hasErrors: hasLengthMismatch || hasNegativeLength,
+            publishable: !hasLengthMismatch && !hasNegativeLength
+          });
         }
       } else {
         $changeTableHeader.html($(`<div class="warning-message">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>`));
       }
+    }
+
+    function setCallbacks(newCallbacks) {
+      callbacks = Object.assign({}, callbacks, newCallbacks || {});
     }
 
     function bindEvents() {
@@ -503,7 +498,8 @@
       show: show,
       hide: hide,
       bindEvents: bindEvents,
-      isChangeTableOpen: isChangeTableOpen
+      isChangeTableOpen: isChangeTableOpen,
+      setCallbacks: setCallbacks
     };
   };
 }(this));

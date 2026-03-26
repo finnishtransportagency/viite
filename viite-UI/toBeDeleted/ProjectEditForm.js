@@ -9,7 +9,6 @@
     const LinkSources = ViiteEnumerations.LinkGeomSource;
     const ProjectStatus = ViiteEnumerations.ProjectStatus;
     const formCommon = new FormCommon('');
-    const projectFormTemplates = new ProjectFormTemplates();
 
     let endDistanceOriginalValue = '--';
 
@@ -65,7 +64,7 @@
             </div>
           </div>
         </div>
-        <footer>${projectFormTemplates.actionButtonsForSelectedLinks('project-', projectCollection.isDirty())}</footer>`;
+        <footer>${formCommon.actionButtons('project-', projectCollection.isDirty())}</footer>`;
     };
 
     const showLinkId = (selected) => {
@@ -90,7 +89,9 @@
     };
 
     const selectionForm = (project, selection, selected, road) => {
-
+      const devTool = _.includes(startupParameters.roles, 'dev') 
+        ? formCommon.devAddressEditTool(selected, project) 
+        : '';
       
       const defaultOption = selected[0].status === RoadAddressChangeType.NotHandled.value 
         ? RoadAddressChangeType.NotHandled.description 
@@ -123,7 +124,7 @@
             </select>
           </div>
           ${formCommon.newRoadAddressInfo(project, selected, selectedProjectLink, road)}
-
+          ${devTool}
         </form>`;
     };
 
@@ -142,9 +143,10 @@
           <div class="form-group" id="project-errors"></div>
         </div>
       </div>
-      <footer>${projectFormTemplates.actionButtonsForSelectedLinks('project-', false)}</footer>
+      <footer>${formCommon.actionButtons('project-', false)}</footer>
     `)();
 
+    const isProjectPublishable = () => projectCollection.getPublishableStatus();
     const isProjectEditable = () => _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
 
     const checkInputs = () => {
@@ -614,6 +616,119 @@
 
       rootElement.on('click', '.project-form button.cancelLink', cancelChanges);
 
+      rootElement.on('click', '.project-form button.send', () => {
+        new GenericConfirmPopup("Haluatko hyväksyä projektin muutokset osaksi tieosoiteverkkoa?", {
+          successCallback: () => {
+            projectCollection.publishProject();
+            closeProjectMode(true, true);
+          },
+          closeCallback: () => {}
+        });
+      });
+
+      const closeProjectMode = (changeLayerMode, noSave) => {
+        eventbus.trigger('roadAddressProject:startAllInteractions');
+        eventbus.trigger('projectChangeTable:hide');
+        applicationModel.setOpenProject(false);
+        
+        // Toggle UI elements
+        ['header', '.wrapper', 'footer'].forEach(selector => {
+          rootElement.find(selector).toggle();
+        });
+        
+        projectCollection.clearRoadAddressProjects();
+        eventbus.trigger('layer:enableButtons', false);
+        eventbus.trigger('form:showPropertyForm');
+        
+        if (changeLayerMode) {
+          eventbus.trigger('roadAddressProject:clearOnClose');
+          applicationModel.selectLayer('linkProperty', true, noSave);
+        }
+      };
+
+      rootElement.on('click', '.project-form button.show-changes', function () {
+        projectChangeTable.show();
+        if (isProjectPublishable() && isProjectEditable()) {
+          formCommon.setInformationContent();
+          formCommon.setInformationContentText("Validointi ok. Voit tehdä tieosoitteen muutosilmoituksen tai jatkaa muokkauksia.");
+          formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+        }
+      });
+
+      rootElement.on('click', '.project-form button.validate', function () {
+        var currentProject = projectCollection.getCurrentProject();
+        // add spinner
+        applicationModel.addSpinner();
+        backend.validateProject(currentProject.project.id, function (response) {
+          // validation did not throw exceptions in the backend
+          if (response.success) {
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+            if (Object.keys(response.validationErrors).length === 0) {
+              // if no validation errors are present, show changes button and remove title
+              formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+            }
+          } // if something went wrong during validation, show error to the user
+          else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+          } else {
+            new ModalConfirm(response.errorMessage);
+            applicationModel.removeSpinner();
+          }
+        });
+      });
+
+      // when recalculate button is clicked
+      rootElement.on('click', '.project-form button.recalculate', function () {
+        // clear the information text
+        $('#information-content').empty();
+        // get current project
+        var currentProject = projectCollection.getCurrentProject();
+        // add spinner
+        applicationModel.addSpinner();
+
+        $('.validation-warning').remove();
+        // fire backend call to recalculate and validate the current project with the project id
+        backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
+          // if recalculation and validation did not throw exceptions in the backend
+          if (response.success) {
+
+            const trackGeometryLengthDeviationErrorCode = 38;
+            if (response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode).length > 0) {
+              const trackGeometryLengthDeviationError = response.validationErrors.filter((error) => error.errorCode === trackGeometryLengthDeviationErrorCode)[0];
+              // "Ajoratojen geometriapituuksissa yli 20% poikkeama."
+              new GenericConfirmPopup(trackGeometryLengthDeviationError.errorMessage, {
+                type: "alert"
+              });
+              $('.form,.form-horizontal,.form-dark').append('<label class="validation-warning">' +trackGeometryLengthDeviationError.errorMessage + "<br> LinkId: " + trackGeometryLengthDeviationError.info + '</label>');
+              response.validationErrors = response.validationErrors.filter((error) => error.errorCode !== trackGeometryLengthDeviationErrorCode);
+            }
+
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+
+            if (Object.keys(response.validationErrors).length === 0) {
+              // if no validation errors are present, show changes button and remove title
+              formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
+            }
+            // fetch the recalculated project links and redraw map
+            projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, currentProject.project.id, projectCollection.getPublishableStatus());
+            // disable recalculate button after recalculation is done
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemat on päivitetty");
+            // project was recalculated, set recalculated flag to true
+            eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', true);
+          }
+          // if something went wrong during recalculation or validation, show error to user
+          else if ('validationErrors' in response && !_.isEmpty(response.validationErrors)) {
+            // set project errors that were returned by the backend validations and write them to user (removes the spinner also)
+            projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
+          } else {
+            new ModalConfirm(response.errorMessage);
+            applicationModel.removeSpinner();
+          }
+        });
+      });
 
       rootElement.on('input', '.form-control.small-input', function (event) {
         var dropdown_0 = $('#dropDown_0');
@@ -653,7 +768,7 @@
         const error = projectCollection.getProjectErrors()[event.currentTarget.id];
 
           const linkIdsText = error.linkIds.join(', ');
-          new ConfirmPopup(linkIdsText, {type: "alert"});
+          new GenericConfirmPopup(linkIdsText, {type: "alert"});
 
       });
 

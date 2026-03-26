@@ -658,6 +658,16 @@
     const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable) {
       const rootElement = $('#feature-attributes');
 
+      const disableFormInputs = () => {
+        if (!project || _.includes(editableStatus, project.statusCode)) {
+          return;
+        }
+
+        rootElement.find('#roadAddressProjectForm select, #roadAddressProjectForm input').prop('disabled', true);
+        rootElement.find('.footer-project-link-edit .update').prop('disabled', true);
+        rootElement.find('.changeDirection').prop('disabled', true);
+      };
+
       _.defer(() => {
         $('#beginDistance').on('change', (changedData) => {
           if (typeof eventbus !== 'undefined') {
@@ -784,27 +794,29 @@
       }
 
       updateForm(selected, projectCollection);
+      disableFormInputs();
       
       if (projectChangeTable) {
         checkInputs(projectChangeTable);
       }
     };
 
-      const cancelChanges = () => {
+      const cancelChanges = (callbacks = {}) => {
         window.projectCollection.revertRoadAddressChangeType();
         window.projectCollection.setDirty([]);
         window.projectCollection.setTmpDirty([]);
         window.projectLinkLayer.clearHighlights();
         window.selectedProjectLinkProperty.cleanIds();
         window.selectedProjectLinkProperty.clean();
-        $('.wrapper').remove();
-        
-        // Trigger cleanup events
-        [
-          'roadAddress:projectLinksEdited',
-          'roadAddressProject:toggleEditingRoad',
-          'roadAddressProject:reOpenCurrent'
-        ].forEach(event => eventbus.trigger(event, event.includes('toggleEditingRoad') ? true : undefined));
+
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+
+        if (typeof callbacks.onCancel === 'function') {
+          callbacks.onCancel();
+        } else {
+          eventbus.trigger('roadAddressProject:reOpenCurrent');
+        }
       };
 
       eventbus.on('roadAddressProject:discardChanges', cancelChanges);
@@ -820,6 +832,7 @@
       updateForm,
       updateFormControls,
       validateEVK,
+      cancelChanges,
       validateAndSave: function(projectCollection, selectedLinks) {
         const statusDropdownValue = $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);

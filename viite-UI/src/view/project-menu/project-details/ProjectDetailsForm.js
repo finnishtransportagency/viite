@@ -25,7 +25,7 @@
         { length: 'currentLength', disc: 'currentDiscontinuity', evk: 'currentEvk' } : 
         { length: 'newLength',    disc: 'newDiscontinuity',      evk: 'newEvk'     };
 
-      return _.map(list, (line, index) => {
+      return _.map(list, (line, _index) => {
         const lengthVal = line[props.length];
         if (_.isUndefined(lengthVal)) return '';
 
@@ -157,7 +157,15 @@
 
     const renderFooter = function (project, isEditMode = false) {
       const ProjectStatus = ViiteEnumerations.ProjectStatus;
-      const isProjectPublished = project && (project.statusCode !== ProjectStatus.Incomplete.value || project.statusCode !== ProjectStatus.ErrorInViite.value);
+      const isProjectPublished = Boolean(
+        project &&
+        !_.isUndefined(project.statusCode) &&
+        ![
+          ProjectStatus.Incomplete.value,
+          ProjectStatus.ErrorInViite.value,
+          ProjectStatus.Unknown.value
+        ].includes(project.statusCode)
+      );
       const isFormIncomplete = !(project && project.name && project.startDate);
       const isNewProject = project.name === '';
       const showDelete = !isNewProject && ![ProjectStatus.Accepted.value, ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode);
@@ -266,7 +274,15 @@
       
       $('#generalNext, #saveProject').off('click').on('click', function() {
         const ProjectStatus = ViiteEnumerations.ProjectStatus;
-        const isProjectPublished = projectData && (projectData.statusCode !== ProjectStatus.Incomplete.value && projectData.statusCode !== ProjectStatus.ErrorInViite.value);
+        const isProjectPublished = Boolean(
+          projectData &&
+          !_.isUndefined(projectData.statusCode) &&
+          ![
+            ProjectStatus.Incomplete.value,
+            ProjectStatus.ErrorInViite.value,
+            ProjectStatus.Unknown.value
+          ].includes(projectData.statusCode)
+        );
 
         // Prevent saving if project is published, but let them continue to action menu so they can inspect change table
         if (isProjectPublished) {
@@ -299,15 +315,7 @@
           { value: projectData.startDate }, 
           { value: projectData.additionalInfo }
         ];
-        
-        if (!projectData.id || projectData.id === 0) {
-          // Create new project
-          projectCollection.createProject(formData, map ? map.getView().getResolution() : null);
-        } else {
-          // Save existing project
-          projectCollection.saveProject(formData, map ? map.getView().getResolution() : null);
-        }
-        
+
         eventbus.once('roadAddress:projectSaved', function(result) {
           applicationModel.removeSpinner();
 
@@ -318,15 +326,39 @@
 
           if (result && result.success) {
             markAsSaved();
+
+            const currentProjectState = projectCollection.getCurrentProject ? projectCollection.getCurrentProject() : null;
+            const savedProject = result.project || (currentProjectState && currentProjectState.project) || projectData;
+
+            projectData.id = savedProject.id || projectData.id;
+            projectData.name = savedProject.name || projectData.name;
+            projectData.startDate = savedProject.startDate || projectData.startDate;
+            projectData.additionalInfo = savedProject.additionalInfo || projectData.additionalInfo;
+
+            if (savedProject) {
+              eventbus.trigger('roadAddressProject:openProject', savedProject);
+            }
+
+            if (result.projectAddresses && savedProject) {
+              eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, savedProject);
+            }
             
             applicationModel.selectLayer('roadAddressProject', true, false);
             
             // For 'Jatka toimenpiteisiin' button, always continue to action menu
             if (callbacks.continueToActions) {
-              callbacks.continueToActions({ project: result.project || projectData });
+              callbacks.continueToActions({ project: savedProject });
             }
           }
         });
+
+        if (!projectData.id || projectData.id === 0) {
+          // Create new project
+          projectCollection.createProject(formData, map ? map.getView().getResolution() : null);
+        } else {
+          // Save existing project
+          projectCollection.saveProject(formData, map ? map.getView().getResolution() : null);
+        }
       });
 
       $('#saveAndCancelDialogue, #cancelEdit').off('click').on('click', function() {
@@ -347,17 +379,21 @@
               ];
 
               //applicationModel.addSpinner();
-              
-              if (!currentProject.id || currentProject.id === 0) {
-                projectCollection.createProject(formData, map ? map.getView().getResolution() : null);
-              } else {
-                projectCollection.saveProject(formData, map ? map.getView().getResolution() : null);
-              }
-              
+
               eventbus.once('roadAddress:projectSaved', function(result) {
                 applicationModel.removeSpinner();
                 if (result && result.success) {
                   markAsSaved();
+
+                  const latestProject = result.project || (projectCollection.getCurrentProject() && projectCollection.getCurrentProject().project) || projectData;
+
+                  if (latestProject) {
+                    eventbus.trigger('roadAddressProject:openProject', latestProject);
+                  }
+
+                  if (result.projectAddresses && latestProject) {
+                    eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, latestProject);
+                  }
                   
                   // Set the selected layer to roadAddressProject when project is saved
                   applicationModel.selectLayer('roadAddressProject', true, false);
@@ -365,6 +401,12 @@
                   window.mainMenu.setState('main');
                 }
               });
+
+              if (!currentProject.id || currentProject.id === 0) {
+                projectCollection.createProject(formData, map ? map.getView().getResolution() : null);
+              } else {
+                projectCollection.saveProject(formData, map ? map.getView().getResolution() : null);
+              }
 
             },
             closeCallback: function () {

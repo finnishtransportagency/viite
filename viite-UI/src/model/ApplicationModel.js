@@ -195,7 +195,7 @@
           .addClass('spinner-overlay modal-overlay')
           .append($('<div></div>').addClass('spinner'));
 
-      $('.container').append($spinnerOverlay);
+        $('body').append($spinnerOverlay);
 
       // Auto-remove after 8 seconds
       setTimeout(() => {
