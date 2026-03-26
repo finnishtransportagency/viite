@@ -6,23 +6,10 @@
         const dynamicLinkNetwork = window.dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
 
         const showAdminPanelWindow = function () {
-            $('.container').append(`
-                <div class="admin-panel-modal-overlay viite-modal-overlay confirm-modal" id="adminPanel">
-                    <div class="admin-panel-modal-window"></div>
-                </div>
-            `);
-
-            const freshAdminPanelWindow = $(`
-                <div class="generic-window" id="adminPanelWindow">
-                    <div class="generic-window-header">
-                        <p>Admin Paneeli</p>
-                        <button class="close wbtn-close" id="closeAdminPanel">
-                            <i class="fas fa-window-close"></i>
-                        </button>
-                    </div>
-                    <div id="adminPanelWindowContent"></div>
-                </div>
-            `);
+            // Get singleton modal container
+            const modalContainer = Application.getModalContainer({
+                className: 'admin-panel-modal'
+            });
 
             const navBar = $(`
                 <nav class="navbar">
@@ -50,15 +37,18 @@
                 </div>
             `);
 
-            $('.admin-panel-modal-window').append(freshAdminPanelWindow);
-            const contentWrapper = $('#adminPanelWindowContent');
-
+            const contentWrapper = $('<div id="adminPanelWindowContent"></div>');
             contentWrapper.append(navBar);
             contentWrapper.append(contentForTabs);
 
+            modalContainer.open({
+                title: 'Admin Paneeli',
+                content: contentWrapper
+            });
+
             // Re-bind everything fresh
             dynamicLinkNetwork.addDatePickersToInputFields();
-            dynamicLinkNetwork.bindEvents('.generic-window');
+            dynamicLinkNetwork.bindEvents('.modal-container');
 
             // Initialize the new user management module
             if (root.UserManagement && root.UserManagement.Main) {
@@ -66,10 +56,6 @@
             }
 
             bindEvents();
-        };
-
-        const hideAdminPanelWindow = function () {
-            $('.admin-panel-modal-overlay').remove();
         };
 
         const controlTabs = function (clickedButton, contentWrapper) {
@@ -92,10 +78,6 @@
         };
 
         const bindEvents = function () {
-            $('.generic-window-header').on('click', '#closeAdminPanel', function () {
-                hideAdminPanelWindow();
-            });
-
             // Navbar Tab Button Event Binding
             const contentWrapper = $('#adminPanelWindowContent');
 
@@ -110,7 +92,7 @@
         };
 
         return {
-            showAdminPanelWindow: showAdminPanelWindow
+            show: showAdminPanelWindow
         };
     };
 }(this));

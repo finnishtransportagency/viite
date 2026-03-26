@@ -1,26 +1,3 @@
-//== Project Forms
-// Consolidated styles for FormCommon.js, ProjectForm.js, and ProjectEditForm.js
-
-// Import core variables and mixins
-@import "../core/variables.less";
-@import "../core/mixins.less";
-
-//========================================
-// FormCommon.js styles
-//========================================
-
-.edit-mode-title {
-  color: @gray-lighter;
-  font-size: @font-size-base;
-  font-weight: bold;
-}
-
-.caption-title {
-  color: @gray-lighter;
-  font-size: @font-size-small;
-  font-weight: normal;
-}
-
 .btn-pencil-edit {
   margin-left: 10px;
   cursor: pointer;
@@ -31,47 +8,17 @@
   }
 }
 
-.rightSideSpan {
-  float: right;
-  cursor: pointer;
-  color: @gray-lighter;
 
-  &:hover {
-    color: @gray-lightest;
-  }
-}
-
-// Project buttons
-.recalculate,
-.show-changes,
-.send {
-  margin-bottom: 5px;
-}
-
-// Road address fields
-.road-address-fields-wrapper {
-  margin-bottom: 15px;
-  margin-top: 2px;
-}
 
 .road-address-fields {
   display: flex;
   flex-wrap: nowrap;
-  gap: 4px;
-  width: fit-content;
-  min-width: 100%;
+  gap: 4px !important;
 }
 
-.road-address-field {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  padding: 0;
-  margin: 0;
-}
 
 .road-address-section {
-  margin-top: 15px;
+  margin-bottom: 15px;
   width: 100%;
 }
 
@@ -79,29 +26,19 @@
 .form-control.administrativeClassAndRoadName {
   width: 190px !important;
   margin-top: 6px !important;
+
+  &[disabled],
+  &[readonly],
+  fieldset[disabled] & {
+    border-color: #646461 !important;
+    color: #a4a4a2 !important;
+    background-color: #5a5a57 !important;
+  }
 }
 
 //========================================
 // ProjectForm.js styles
 //========================================
-
-.project-form {
-  &.form-controls {
-    margin-top: 20px;
-    text-align: right;
-  }
-}
-
-.deleteSpan {
-  color: @error;
-  cursor: pointer;
-  font-size: @font-size-small;
-  margin-right: 10px;
-}
-
-.btn-reserve {
-  margin-left: 10px;
-}
 
 // Form validation notifications
 .form-check-date-notifications {
@@ -117,16 +54,14 @@
 //========================================
 
 .project-edit-selections {
-  display: inline-block;
-  padding-left: 8px;
-  margin: 10px 0;
+  color: white;
 
   .project-edit {
-    color: @gray-lighter;
+    color: @gray-lighter !important;
     font-size: @font-size-small;
 
-    span {
-      color: @gray-lightest;
+    label {
+      color: @gray-lighter !important;
       font-weight: bold;
     }
   }
@@ -157,58 +92,6 @@
 // Shared form styles
 //========================================
 
-// Control label variations
-.control-label-small {
-  font-size: @font-size-small;
-  font-weight: normal;
-  text-transform: none;
-  color: @gray-lighter;
-}
-
-.control-label-wide {
-  font-size: @font-size-small;
-  font-weight: normal;
-  text-transform: none;
-  color: @gray-lighter;
-  width: 90px !important;
-}
-
-// Small input variations
-.small-input {
-  width: 55px !important;
-  padding: 2px;
-}
-
-.node-input {
-  width: 55px !important;
-  padding: 2px;
-  text-align: center;
-}
-
-// Form group variations
-.form-group.editable {
-  background: @gray-darker;
-  border: 1px solid @gray-darker-2;
-  border-radius: @border-radius-base;
-  padding: 15px;
-  margin-top: 15px;
-}
-
-.form-editable-roadAddressProject {
-  background: @gray-darker;
-  border: 1px solid @gray-darker-2;
-  border-radius: @border-radius-base;
-  padding: 15px;
-  margin-top: 15px;
-}
-
-// Static field styles
-.form-control-static {
-  color: @gray-lighter;
-  font-size: @font-size-small;
-  margin: 0;
-}
-
 .asset-log-info {
   color: @gray-light;
   font-size: @font-size-small;
@@ -225,16 +108,6 @@
   color: @warning !important;
   font-style: italic;
   font-size: @font-size-small;
-}
-
-// Project errors
-.form-project-errors-list {
-  margin: 10px 0;
-
-  &.warning {
-    border-left: 3px solid @warning;
-    padding-left: 10px;
-  }
 }
 
 .horizontal-line {
@@ -256,52 +129,6 @@
   height: 16px;
   margin-right: 5px;
 }
-
-//========================================
-// Responsive adjustments
-//========================================
-
-@media (max-width: 768px) {
-  .road-address-fields {
-    flex-wrap: wrap;
-  }
-
-  .road-address-field {
-    margin-bottom: 10px;
-  }
-
-  .dev-address-field-wrapper {
-    flex-direction: column;
-  }
-
-  .dev-wrapper-column {
-    margin: 5px 0;
-  }
-}
-
-.road-address-field {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  padding: 0;
-  margin: 0;
-
-  // Style inputs within road address fields
-  .road-address-input {
-    width: 100% !important;
-    height: 27px;
-    margin: 0 !important;
-    padding: 2px 4px !important;
-    margin: 0 !important
-  }
-
-  // Remove any default spacing
-  >* {
-    margin: 0;
-    padding: 0;
-  }
-}
-
 
 label.validation-warning {
   color: @warning !important;

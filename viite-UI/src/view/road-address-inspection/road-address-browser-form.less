@@ -1,0 +1,107 @@
+.road-address-browser-form {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  background-color: #e3e3e1;
+  padding: 10px 5px;
+  z-index: 10;
+}
+
+.modern-input {
+  border: 1px solid @input-border;
+  border-radius: @border-radius-base;
+  padding: 6px 8px;
+  font-size: @font-size-base;
+  background-color: @input-bg;
+  color: @input-color;
+  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+  .shadow-box();
+
+  &:focus {
+    border-color: @input-border-focus;
+    outline: none;
+    .form-control-focus();
+  }
+
+  &[disabled] {
+    background-color: @input-bg-disabled;
+    border-color: @input-border-disabled;
+    color: @input-color-placeholder;
+    cursor: not-allowed;
+  }
+}
+
+.road-address-browser-date-input {
+  width: 80px;
+
+  &.road-address-browser-road-input {
+    width: 70px;
+  }
+}
+
+.road-address-browser-road-input {
+  width: 100px;
+}
+
+.road-address-browser-form-button-wrapper {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  align-items: center;
+}
+
+.download-csv {
+  margin: 0;
+  text-transform: none;
+  background-color: #138847;
+  display: inline-block;
+  padding: 5px 10px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  vertical-align: middle;
+  font-size: 11px;
+  line-height: 15px;
+  color: #fff;
+  text-align: center;
+  background-image: none;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.55, 0, 0.1, 1);
+  height: 28px;
+
+  &:disabled {
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.65;
+  }
+
+  &:not(:disabled) {
+    cursor: pointer;
+    opacity: 1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background-color: #186e42;
+    }
+
+    &:active {
+      background-color: #186e42;
+    }
+  }
+}
+
+.input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button-container {
+  display: flex;
+  gap: 10px;
+  margin-top: 19px;
+  align-items: bottom !important;
+}

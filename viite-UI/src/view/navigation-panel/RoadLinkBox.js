@@ -4,25 +4,25 @@
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var expandedTemplate = _.template('' +
-      '<div class="panel <%= className %>">' +
-      '<header class="panel-header expanded"><%- title %></header>' +
-      '<div class="legend-container no-copy"></div>' +
-      '</div>');
+    var expandedTemplate = _.template(`
+      <div class="panel <%= className %>">
+      <header class="panel-header expanded"><%- title %></header>
+      <div class="legend-container no-copy"></div>
+      </div>`);
 
     var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
 
-    var calibrationPointPicture = $('' +
-      '<div class="legend-entry">' +
-      '    <div class="label">Kalibrointipiste</div>' +
-      '    <div class="calibration-point-image"></div>' +
-      '</div>');
+    var calibrationPointPicture = $(`
+      <div class="legend-entry">
+          <div class="label">Kalibrointipiste</div>
+          <div class="calibration-point-image"></div>
+          </div>`);
 
-    var roadPartStartPointPicture = $('' +
-      '<div class="legend-entry">' +
-      '    <div class="label">Tieosan alku</div>' +
-      '    <div class="calibration-point-image"></div>' +
-      '</div>');
+    var roadPartStartPointPicture = $(`
+      <div class="legend-entry">
+          <div class="label">Tieosan alku</div>
+          <div class="calibration-point-image"></div>
+          </div>`);
 
     var junctionPicture = $(
       `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
@@ -283,7 +283,7 @@
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(roadClassLegend);
-    var element = $('<div class="panel-group ' + className + 's"></div>').append(elements.expanded).hide();
+    var element = $(`<div class="panel-group ${className}s"></div>`).append(elements.expanded).hide();
 
     function show() {
       element.show();
@@ -294,6 +294,7 @@
     }
 
     function toggleLegends() {
+      console.log("toggleLegends", applicationModel.getSelectedLayer());
       var container = $('#legendDiv');
       if (applicationModel.getSelectedLayer() === "roadAddressProject") {
         container.empty();

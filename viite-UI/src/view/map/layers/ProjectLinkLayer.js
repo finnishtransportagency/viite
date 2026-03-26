@@ -97,7 +97,7 @@
     };
 
     var fireDeselectionConfirmation = function (ctrlPressed, selection, clickType) {
-      new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
+      new ConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
           if (!_.isUndefined(selection)) {
@@ -133,8 +133,8 @@
 
     selectSingleClick.on('select', function (event) {
       var modPressed = (event.mapBrowserEvent) ? (
-      event.mapBrowserEvent.originalEvent.ctrlKey || event.mapBrowserEvent.originalEvent.metaKey
-) : false;
+        event.mapBrowserEvent.originalEvent.ctrlKey || event.mapBrowserEvent.originalEvent.metaKey
+      ) : false;
       var rawSelection = (event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
         return feature;
       }) : event.selected;
@@ -144,15 +144,24 @@
             projectRoadAddressChangeTypeIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
         else return false;
       });
+      var isDeselectClick = event.selected.length === 0;
       if (modPressed) {
         showDoubleClickChanges(modPressed, selection);
-      } else if (isNotEditingData) {
+      } else if (!isDeselectClick) {
         showSingleClickChanges(modPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(modPressed, selection, 'single');
+
+        if (projectCollection.isDirty()) {
+          fireDeselectionConfirmation(modPressed, selection, 'single');
+        } else {
+          eventbus.trigger('roadAddressProject:discardChanges');
+          if (!_.isUndefined(selection)) {
+            showSingleClickChanges(modPressed, selection);
+          }
+        }
       }
       highlightFeatures();
     });

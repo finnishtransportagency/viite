@@ -1,0 +1,116 @@
+.modal-overlay {
+  &.viite-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 30000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.modal-window {
+  z-index: 30001;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 565px;
+  max-width: 90vw;
+  height: 500px;
+  max-height: 90vh;
+  border-radius: @border-radius-base;
+  background-color: @gray-lighter;
+  box-shadow: 0px 2px 1px 0px rgba(red(@gray-darkest), green(@gray-darkest), blue(@gray-darkest), .25);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-container {
+  background-color: #e3e3e1;
+  border-radius: @border-radius-base;
+  width: auto;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  .modal-content {
+    flex: 1;
+    width: auto;
+    overflow: hidden;
+  }
+
+  tbody {
+    overflow-x: hidden;
+  }
+}
+
+.modal-header {
+  display: flex;
+  margin: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid @gray-darkest;
+  border-top-left-radius: @border-radius-base;
+  border-top-right-radius: @border-radius-base;
+  color: #fff;
+  background-color: @gray-darker-2 !important;
+  padding: 0;
+  width: 100%;
+
+  p {
+    flex-grow: 10;
+    margin: 0;
+    padding: 10px 12px;
+    font-weight: bold;
+    font-size: 14px;
+  }
+}
+
+.btn-manual {
+  padding: 10px 10px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  color: @gray-lightest;
+  font-size: 120%;
+  font-weight: bold;
+
+  i {
+    color: #fff;
+  }
+}
+
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 10px 15px;
+  margin-left: auto;
+
+  &:hover {
+    color: @gray-lightest;
+  }
+}
+
+.hide-scroll {
+  overflow: hidden !important;
+}
+
+.modal-content-scrollable {
+  overflow-y: auto !important;
+}
+
+.content-footer {
+  padding-right: 15px;
+}

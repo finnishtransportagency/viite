@@ -41,7 +41,7 @@
     function loadChanges() {
       var warningM = projectChanges.warningMessage;
       if (!_.isUndefined(warningM))
-        new ModalConfirm(warningM);
+        new ConfirmPopup(warningM, { type: "alert" });
       if (!_.isUndefined(projectChanges) && projectChanges.discontinuity !== null) {
         eventbus.trigger('projectChanges:fetched', projectChanges);
       }

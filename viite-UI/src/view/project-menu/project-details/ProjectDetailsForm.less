@@ -1,0 +1,180 @@
+/* Road Reservation Flex Layout */
+.reservation-container {
+  display: flex;
+  justify-content: center;
+  flex-direction: row;
+  align-items: flex-end;
+  /* Keeps button and inputs on the same baseline */
+  gap: 8px;
+  /* Space between columns */
+  margin-top: 15px;
+  margin-bottom: 25px;
+
+  .btn-primary {
+    padding: 3px 15px !important;
+  }
+}
+
+.reservation-column {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reservation-column label {
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.metadata-form {
+  display: flex;
+  flex-direction: column;
+  margin: 4px 4px;
+
+  .form-row {
+    display: flex;
+    gap: 10px;
+
+    .form-group {
+      &.field-name {
+        flex: 2;
+
+        label {
+          color: #f0ad4e;
+        }
+      }
+
+      &.field-date {
+        flex: 1;
+
+        label {
+          color: #f0ad4e;
+        }
+      }
+    }
+  }
+}
+
+/* Ensure the button matches the input height */
+
+/* Table cell styling */
+.road-table-cell {
+  color: #e3e3e1;
+  font-size: 12px;
+  border-top-width: 0 !important;
+  padding: 4px 2px !important;
+  vertical-align: middle;
+}
+
+.road-table-cell-center {
+  &:extend(.road-table-cell);
+  text-align: center;
+  text-wrap: wrap !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.road-table-cell-delete {
+  &:extend(.road-table-cell);
+  text-align: center;
+  display: table-cell;
+}
+
+/* Table styling */
+.road-table {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+/* Table row styling */
+.road-table-row {
+  display: table-row;
+  width: 100%;
+}
+
+/* Table header group styling */
+.road-table-header {
+  display: table-header-group;
+  width: 100%;
+}
+
+/* Table body group styling */
+.road-table-body {
+  display: table-row-group;
+  width: 100%;
+}
+
+/* Form result label styling */
+.form-result-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* New reserved roads container */
+.new-reserved-roads {
+  margin-top: 20px;
+}
+
+/* Action button styling */
+.action-button {
+  width: auto;
+}
+
+/* Reservation container label */
+.reservation-label {
+  margin-bottom: 2px;
+}
+
+/* Form controls layout */
+.form-controls {
+  justify-content: space-between !important;
+}
+
+.form-controls.no-delete {
+  justify-content: flex-end !important;
+}
+
+.form-controls>div {
+  display: flex;
+  gap: 8px;
+}
+
+/* Column width styling */
+.col-10 {
+  width: 10%;
+}
+
+.col-17-5 {
+  width: 17.5%;
+}
+
+.col-35 {
+  width: 35%;
+}
+
+.footer-project-details {
+  display: flex;
+  justify-content: space-between !important;
+  gap: 8px;
+  margin-top: 15px;
+  border-top: 1px solid @gray-darker-2;
+  padding: 8px;
+}
+
+.deleteSpan {
+  color: @error;
+  cursor: pointer;
+  font-size: @font-size-small;
+  margin-right: 10px;
+  display: block;
+  float: left;
+  margin-top: 5px;
+  font-size: 14px;
+  width: max-content;
+  color: @warning;
+  cursor: pointer;
+}

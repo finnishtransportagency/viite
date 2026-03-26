@@ -1,5 +1,3 @@
-//== Forms
-
 label {
   display: inline-block;
   margin-bottom: @line-height-modifier / 2;
@@ -238,16 +236,6 @@ input[type="checkbox"] {
   }
 }
 
-// Static form control text
-//
-// Apply class to a `p` element to make any string of text align with labels in
-// a horizontal form layout.
-
-.form-control-static,
-.form-control-static-short {
-  margin: 0; // Remove default margin from `p`
-}
-
 // Form control sizing
 //
 // Build on `.form-control` with modifier classes to decrease or increase the
@@ -282,17 +270,9 @@ input[type="checkbox"] {
     .hyphens();
   }
 
-  .control-label-small {
-    display: block;
-    margin-left: 20px;
-    margin-right: 20px;
-  }
-
-  .form-control,
   .checkbox,
   .select,
-  .form-control-static,
-  .form-control-static-short,
+
   .choice-group,
   .project-choice-group {
     float: left;
@@ -330,13 +310,6 @@ input[type="checkbox"] {
     float: left;
   }
 
-  .form-control-static,
-  .form-control-static-short {
-    padding-top: (@line-height-modifier + 1);
-    padding-bottom: (@line-height-modifier + 1);
-    line-height: @line-height-modifier * 3;
-  }
-
   .validation-text {
     margin-bottom: 50px;
   }
@@ -344,6 +317,7 @@ input[type="checkbox"] {
 
 // Inverts the form component colors to work on darker backgrounds
 .form-dark {
+  color: white;
   label {
     color: @gray-lighter;
   }
@@ -358,7 +332,7 @@ input[type="checkbox"] {
   .action-select {
     border-color: @input-border-dark;
     color: @input-color-dark;
-    background-color: @input-bg-dark;
+    background-color: #646461;
 
     .form-control-focus(@input-border-focus-dark);
 
@@ -384,8 +358,6 @@ input[type="checkbox"] {
     color: @input-border-dark;
   }
 
-  .form-control-static,
-  .form-control-static-short,
   .unit-of-measure {
     color: @input-color-dark;
   }

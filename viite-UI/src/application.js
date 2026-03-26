@@ -1,22 +1,29 @@
+/**
+ * Main application entry point and initialization module for Viite UI.
+ * Handles application startup, map setup, layer management, and component initialization.
+ */
 (function (application) {
   application.start = function (customBackend, withTileMaps) {
-    var backend = customBackend || new Backend();
+    const backend = customBackend || new Backend();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-      var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
-      var roadCollection = new RoadCollection(backend);
-      var projectCollection = new ProjectCollection(backend, startupParameters);
-      var roadNameCollection = new RoadNameCollection(backend);
-      var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
-      var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
-      var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-      var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
+      window.startupParameters = startupParameters; // Make globally accessible
+      const tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
+      const roadCollection = new RoadCollection(backend);
+      const projectCollection = new ProjectCollection(backend, startupParameters);
+      window.projectCollection = projectCollection;
+      const roadNameCollection = new RoadNameCollection(backend);
+      const selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+      const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
+      window.selectedProjectLinkProperty = selectedProjectLinkProperty;
+      const instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
+      const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
       window.applicationModel = new ApplicationModel([selectedLinkProperty]);
-      var nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
-      var selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
+      const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, window.applicationModel));
+      const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
       proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
       ol.proj.proj4.register(proj4);
 
-      var models = {
+      const models = {
         roadCollection: roadCollection,
         projectCollection: projectCollection,
         selectedLinkProperty: selectedLinkProperty,
@@ -26,11 +33,10 @@
       };
 
       bindEvents();
+      const linkGroups = groupLinks(selectedProjectLinkProperty);
 
-      var linkGroups = groupLinks(selectedProjectLinkProperty);
-
-      var projectListModel = new ProjectListModel(projectCollection);
-      var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
+      const projectList = new ProjectList(projectCollection);
+      const projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
 
       NavigationPanel.initialize(
           jQuery('#map-tools'),
@@ -42,26 +48,29 @@
       );
 
       backend.getUserRoles();
-      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
+      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable, roadNameCollection, projectList);
     });
   };
 
-  var startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
+  // Application startup and initialization
+  const startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectList) {
     setupProjections();
-    var map = setupMap(backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel);
+    const map = setupMap(backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectList);
     new URLRouter(map, backend, models);
     eventbus.trigger('application:initialized');
   };
 
+  // Global error handling
   $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
     if (jqxhr.getAllResponseHeaders()) {
       applicationModel.removeSpinner();
-      console.log("Request '" + settings.url + "' failed: " + thrownError);
+      console.log(`Request '${settings.url}' failed: ${thrownError}`);
     }
   });
 
-  var createOpenLayersMap = function (startupParameters, layers) {
-    var map = new ol.Map({
+  // Map creation and configuration
+  const createOpenLayersMap = function (startupParameters, layers) {
+    const map = new ol.Map({
       interactions : ol.interaction.defaults.defaults({doubleClickZoom :false}),
       keyboardEventTarget: document,
       target: 'mapdiv',
@@ -75,11 +84,11 @@
       })
     });
 
-    var shiftDragZoom = new ol.interaction.DragZoom({
+    const shiftDragZoom = new ol.interaction.DragZoom({
       className: "dragZoom",
       duration: 1500,
       condition: function (mapBrowserEvent) {
-        var originalEvent = mapBrowserEvent.originalEvent;
+        const originalEvent = mapBrowserEvent.originalEvent;
         return (
           originalEvent.shiftKey &&
           !(originalEvent.metaKey || originalEvent.altKey) &&
@@ -90,7 +99,7 @@
       if (interaction instanceof ol.interaction.DragZoom) {
         map.removeInteraction(interaction);
       }
-    }, this);
+    });
 
     shiftDragZoom.setActive(true);
     map.addInteraction(shiftDragZoom);
@@ -98,65 +107,118 @@
     return map;
   };
 
-  var setupMap = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectListModel) {
-    var tileMaps = new TileMapCollection();
+  const setupMapLayers = function (map, models) {
+    const roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
+    const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
+    window.projectLinkLayer = projectLinkLayer;
+    const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, applicationModel);
+    const nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, applicationModel);
 
-    var map = createOpenLayersMap(startupParameters, tileMaps.layers);
-
-    var roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
-    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
-    var linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, applicationModel);
-    var nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, applicationModel);
-    var roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
-    var roadAddressBrowserForm = new RoadAddressBrowserForm();
-    var roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
-    var roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
-    var roadNetworkErrorsList = new RoadNetworkErrorsList(backend);
-    var adminPanel = new AdminPanel(backend);
-
-    new LinkPropertyForm(models.selectedLinkProperty, roadNamingTool, projectListModel, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel);
-
-    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
-    new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend, startupParameters);
-
-    new ProjectForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, startupParameters);
-    new ProjectEditForm(map, models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend, startupParameters);
-
-    var layers = _.merge({
+    return {
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
       linkProperty: linkPropertyLayer,
       node: nodeLayer
+    };
+  };
+
+  // Initialize UI components
+  const initializeUIComponents = function (backend, models, map, startupParameters, projectChangeTable, roadNameCollection, projectList) {
+    // Create UI components
+    const roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
+    const roadAddressBrowserForm = new RoadAddressBrowserForm();
+    const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
+    const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
+    const roadNetworkErrorsList = new RoadNetworkErrorsList(backend);
+    const adminPanel = new AdminPanel(backend);
+
+    const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel);
+    window.mainMenu = mainMenu;
+
+    // Initialize forms and tools
+    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
+    new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend, startupParameters);
+    new LinkEditForm(startupParameters);
+    
+    return { mainMenu };
+  };
+
+  // Setup project menus and event handlers
+  const setupProjectMenus = function (models, map, backend, projectChangeTable, startupParameters) {
+    const projectActionMenu = new ProjectActionMenu({
+      projectCollection: models.projectCollection,
+      map: map,
+      eventbus: eventbus,
+      applicationModel: applicationModel,
+      backend: backend,
+      projectChangeTable: projectChangeTable,
+      startupParameters: startupParameters
     });
 
-    var mapPluginsContainer = jQuery('#map-plugins');
+    const projectMenu = new ProjectMenu('#feature-attributes', eventbus, {
+      projectMenu: projectActionMenu,
+      projectCollection: models.projectCollection,
+      applicationModel,
+      map: map,
+      backend: backend,
+      projectChangeTable: projectChangeTable,
+      startupParameters: startupParameters
+    });
+
+    window.projectMenu = projectMenu;
+
+    return { projectActionMenu, projectMenu };
+  };
+
+  // Initialize map plugins and UI elements
+  const initializeMapPlugins = function (map, startupParameters) {
+    // Map plugins initialization
+    const mapPluginsContainer = jQuery('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer, applicationModel);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
-    var toolTip = '<i class="fas fa-info-circle" title="Versio: ' + startupParameters.deploy_date + '"></i>\n';
+    const toolTip = `<i class="fas fa-info-circle" title="Versio: ${startupParameters.deploy_date}"></i>\n`;
 
-    var pictureTooltip = jQuery('#pictureTooltip');
+    const pictureTooltip = jQuery('#pictureTooltip');
     pictureTooltip.empty();
     pictureTooltip.append(toolTip);
+  };
 
+  // Setup version and environment information
+  const setupVersionInfo = function (backend) {
     backend.getRoadLinkDate(function (versionData) {
       getRoadLinkDateInfo(versionData);
     });
 
-    var getRoadLinkDateInfo = function (versionData) {
-
+    const getRoadLinkDateInfo = function (versionData) {
       // Show environment name next to Viite logo
-      var notification = jQuery('#notification');
+      const notification = jQuery('#notification');
       notification.append(Environment.localizedName());
       notification.append(' Tielinkkiaineisto: ' + versionData.result);
     };
 
-    // Show information modal in integration environment (remove when not needed any more)
+    // Integration environment warning
     if (Environment.name() === 'integration') {
-      showInformationModal('Huom!<br>Olet integraatiotestiympäristössä.');
+      new ConfirmPopup('Huom!<br>Olet integraatiotestiympäristössä.', {
+        type: 'alert',
+        okButtonLbl: 'Sulje'
+      });
     }
+  };
+
+  // Main map setup with all layers and components
+  const setupMap = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectList) {
+    const tileMaps = new TileMapCollection();
+    const map = createOpenLayersMap(startupParameters, tileMaps.layers);
+
+    const layers = setupMapLayers(map, models);
+
+    initializeUIComponents(backend, models, map, startupParameters, projectChangeTable, roadNameCollection, projectList);
+    setupProjectMenus(models, map, backend, projectChangeTable, startupParameters);
+    initializeMapPlugins(map, startupParameters);
+    setupVersionInfo(backend);
 
     new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
@@ -165,33 +227,23 @@
     return map;
   };
 
-  var setupProjections = function () {
+  // Utility functions
+  const setupProjections = function () {
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   };
 
   function groupLinks(selectedProjectLinkProperty) {
-
-    var roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty);
-
+    const roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty);
     return [
       [roadLinkBox]
     ];
-  }
-
-  // Shows modal with message and close button
-  function showInformationModal(message) {
-    jQuery('.container').append('<div class="modal-overlay confirm-modal" style="z-index: 2000"><div class="modal-dialog"><div class="content">' + message + '</div><div class="actions"><button class="btn btn-secondary close">Sulje</button></div></div></div></div>');
-    jQuery('.confirm-modal .close').on('click', function () {
-      jQuery('.confirm-modal').remove();
-    });
   }
 
   application.restart = function (backend, withTileMaps) {
     this.start(backend, withTileMaps);
   };
 
-  var bindEvents = function () {
-
+  const bindEvents = function () {
     eventbus.on('linkProperties:available', function () {
       jQuery('.spinner-overlay').remove();
     });
@@ -199,6 +251,16 @@
     eventbus.on('confirm:show', function () {
       new Confirm();
     });
+  };
+
+  // Modal container singleton pattern
+  let modalContainerSingleton = null;
+  
+  application.getModalContainer = function(config) {
+    if (!modalContainerSingleton) {
+      modalContainerSingleton = new ModalContainer(config);
+    }
+    return modalContainerSingleton;
   };
 
 }(window.Application = window.Application || {}));

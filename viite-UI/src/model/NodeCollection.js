@@ -53,7 +53,7 @@
           eventbus.trigger('nodeSearchTool:fetched', searchResult.length);
         } else {
           applicationModel.removeSpinner();
-          new ModalConfirm(result.errorMessage);
+          new ConfirmPopup(result.errorMessage, { type: "alert" });
         }
       });
     };

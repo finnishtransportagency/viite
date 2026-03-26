@@ -1,0 +1,32 @@
+.number-input {
+  display: block;
+  width: 55px !important;
+  height: (@line-height-modifier * 5) + 2;
+  padding: 2px;
+  font-size: @font-size-base;
+  line-height: @line-height-modifier * 3;
+  background-color: #646461;
+  color: white;
+
+  .box-sizing(border-box);
+  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
+  .shadow-box();
+
+  // Focus state
+  .form-control-focus();
+  .placeholder();
+
+  // Ensure consistent width override
+  &.form-control.small-input {
+    width: 55px !important;
+  }
+
+  &[disabled],
+  &[readonly],
+  fieldset[disabled] & {
+    border-color: @input-border-disabled-dark;
+    color: @input-color-placeholder-dark;
+    background-color: @input-bg-disabled-dark;
+    cursor: not-allowed;
+  }
+}

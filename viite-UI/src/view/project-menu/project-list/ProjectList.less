@@ -1,0 +1,188 @@
+.content-footer label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin: 0;
+}
+
+.content-footer input[type="checkbox"] {
+  margin: 0 8px 0 0;
+  cursor: pointer;
+}
+
+#sync {
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s;
+}
+
+#sync:hover {
+  color: @blue;
+}
+
+.refresh-button {
+  color: #5a5a57;
+  border: none;
+  cursor: pointer;
+  -webkit-font-smoothing: antialiased;
+  display: inline-block;
+  line-height: 1;
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+
+.project-list-header {
+  background-color: #cbcbc9;
+  height: 42px;
+  width: 100% !important;
+}
+
+.project-list-header label {
+  color: #5a5a57;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.project-table thead th:not(:first-child) {
+  text-align: center;
+}
+
+.project-table thead th:first-child,
+.project-table tbody td:first-child {
+  padding-left: 6px;
+}
+
+.project-table tbody tr {
+  height: 38px;
+}
+
+.project-table tbody tr td {
+  vertical-align: middle;
+}
+
+.project-table tbody tr td:not(:first-child) {
+  text-align: center;
+}
+
+.control-label-projects-list {
+  text-transform: none;
+  font-size: 14px;
+  font-weight: 500 !important;
+}
+
+.project-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.project-table thead,
+.project-table tfoot {
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+}
+
+.project-table tbody {
+  display: block;
+  max-height: 382px;
+  width: 100%;
+  overflow-y: scroll;
+}
+
+.project-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.project-table tfoot {
+  background-color: #cbcbc9;
+}
+
+.content-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: #cbcbc9;
+  border-top: 1px solid #ccc;
+  width: 100% !important;
+  box-sizing: border-box;
+  flex-direction: row;
+}
+
+.btn-spin {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.project-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  background-color: #cbcbc9;
+  height: 100%;
+}
+
+.project-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  display: flex;
+  flex-direction: column;
+  height: 100%; 
+}
+
+.project-table thead,
+.project-table tfoot {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  flex-shrink: 0;
+}
+
+
+.project-table tbody {
+  display: block;
+  width: 100%;
+  overflow-y: scroll;
+  flex-grow: 1;
+  background-color: #fff;
+}
+
+.project-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.project-list {
+
+  background-color: @gray-lighter;
+
+  label {
+    text-transform: none;
+    font-weight: inherit;
+    font-size: 13px;
+    display: block;
+    margin-bottom: 0;
+    margin-top: 0;
+    line-height: 16px;
+
+    input {
+      margin-top: 1px;
+      margin-right: 5px;
+    }
+  }
+}
+
+.control-label,
+.control-label-projects {
+  width: 65px;
+  margin-top: 7px;
+}

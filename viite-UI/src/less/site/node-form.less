@@ -1,13 +1,4 @@
-//== Node Form
-// Consolidated styles for NodeForm.js
 
-// Import core variables and mixins
-@import "../core/variables.less";
-@import "../core/mixins.less";
-
-//========================================
-// Form Container
-//========================================
 
 .form {
   display: flex;
@@ -18,37 +9,13 @@
   label {
     color: @gray-lighter;
   }
-
-  .form-control,
-  .form-control-static {
-    color: @input-color-dark;
-    background-color: @input-bg-dark;
-    border-color: @input-border-dark;
-
-    &:focus {
-      border-color: @input-border-focus-dark;
-    }
-
-    &[disabled] {
-      background-color: @input-bg-disabled-dark;
-      border-color: @input-border-disabled-dark;
-      color: @input-color-placeholder-dark;
-    }
-  }
 }
 
-//========================================
-// Node Form Specific Styles
-//========================================
 
 .form-group-node-static-metadata {
   margin-top: @input-margin-short;
   margin-bottom: @input-margin-short;
-  
-  .form-control-static {
-    margin: 0;
-  }
-  
+
   .asset-log-info-metadata {
     color: @gray-light;
     font-size: @font-size-small;
@@ -59,10 +26,6 @@
 .form-group-node-input-metadata {
   margin-top: @input-margin-short;
   margin-bottom: @input-margin-short;
-
-  .form-control-static {
-    margin: 0;
-  }
 
   .asset-node-data {
     color: @input-color-dark;
@@ -92,9 +55,6 @@
   }
 }
 
-//========================================
-// Node Info Sections
-//========================================
 
 .node-info {
   color: @gray-lighter;
@@ -102,9 +62,6 @@
   margin: 10px 0;
 }
 
-//========================================
-// Node Tables
-//========================================
 
 .node-junctions-table-dimension,
 .node-points-table-dimension {
@@ -154,9 +111,6 @@
   }
 }
 
-//========================================
-// Junction Input Fields
-//========================================
 
 .junction-number-input {
   text-align: center;
@@ -174,15 +128,6 @@
   font-size: @font-size-small;
 }
 
-//========================================
-// Form Controls
-//========================================
-
-.form-controls {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
 
 .btn {
   padding: 8px 16px;
@@ -234,8 +179,8 @@
   border: 1px solid @green;
 
   &:hover:not(:disabled) {
-    background-color: @green-dark;
-    border-color: @green-dark;
+    background-color: @green;
+    border-color: @green;
   }
 
   &:disabled {
@@ -257,55 +202,11 @@
   }
 }
 
-//========================================
-// Validation Notifications
-//========================================
 
 .form-check-date-notifications {
   p {
     color: @warning;
     font-size: @font-size-small;
     margin: 5px 0;
-  }
-}
-
-//========================================
-// Responsive Design
-//========================================
-
-@media (max-width: 768px) {
-  .form-controls {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .btn {
-    padding: 6px 12px;
-    font-size: @font-size-small;
-  }
-
-  .btn-block {
-    margin-bottom: 8px;
-  }
-}
-
-@media (max-width: 480px) {
-  .form-controls {
-    gap: 6px;
-  }
-
-  .btn {
-    width: 100%;
-    padding: 4px 8px;
-    font-size: @font-size-xs;
-  }
-
-  .junction-number-input {
-    width: 40px !important;
-    margin: 8px 6px !important;
-  }
-
-  .junction-point-address-input {
-    width: 45px !important;
   }
 }

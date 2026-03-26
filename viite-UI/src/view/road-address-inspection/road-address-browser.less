@@ -1,0 +1,63 @@
+.road-address-browser-window {
+  overflow-y: auto;
+  background-color: #e3e3e1;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  margin-top: -250px;
+  margin-left: -450px;
+  min-width: fit-content;
+  height: 500px;
+
+  p {
+    margin: 10px;
+  }
+}
+
+.btn-close-road-address-browser {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 5px 10px;
+  margin-left: auto;
+
+  &:hover {
+    color: @gray-lightest;
+  }
+}
+
+.road-address-browser-window-results-table {
+  .viite-table(); // Extend base table styles
+
+  font-size: 12px;
+  border-collapse: collapse;
+  width: 100%;
+  border: 3px solid #e3e3e1;
+
+  thead th {
+    border: 1px solid #e3e3e1;
+    text-align: left;
+    padding: 8px;
+    background-color: #babbb9;
+    font-weight: bold;
+    position: sticky;
+    top: 66px;
+  }
+
+  tbody td {
+    border: 1px solid #e3e3e1;
+    text-align: left;
+    padding: 8px;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #babbb9;
+  }
+
+  tbody tr:hover {
+    background-color: #aed0fd;
+  }
+}

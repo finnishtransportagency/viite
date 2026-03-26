@@ -246,7 +246,7 @@
             if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
               eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);
             }
-            new ModalConfirm(response.errorMessage);
+            new ConfirmPopup(response.errorMessage, { type: "alert" });
             applicationModel.removeSpinner();
           }
         });
@@ -268,10 +268,10 @@
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
                 if (successObject.errorMessage) {
-                  new ModalConfirm(successObject.errorMessage);
+                  new ConfirmPopup(successObject.errorMessage, { type: "alert" });
                 }
               } else {
-                new ModalConfirm(successObject.errorMessage);
+                new ConfirmPopup(successObject.errorMessage, { type: "alert" });
                 applicationModel.removeSpinner();
               }
             });
@@ -283,7 +283,7 @@
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               } else {
-                new ModalConfirm(successObject.errorMessage);
+                new ConfirmPopup(successObject.errorMessage, { type: "alert" });
                 applicationModel.removeSpinner();
               }
             });
@@ -390,7 +390,7 @@
         roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
-        roadEly: Number(roadAddressProjectForm.find('#ely').val() || 0),
+        roadEly: Number(0), // TODO: remove this when backend supports it
         roadEvk: Number(roadAddressProjectForm.find('#elinvoimakeskus')[0].value),
         roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
         administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
@@ -401,7 +401,7 @@
         devToolData: devToolData
       };
       if (dataJson.trackCode === Track.Unknown.value) {
-        new ModalConfirm("Tarkista ajoratakoodi");
+        new ConfirmPopup("Tarkista ajoratakoodi", { type: "alert" });
         applicationModel.removeSpinner();
       }
 
@@ -412,7 +412,7 @@
 
       var validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
       if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
-        new GenericConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
+        new ConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
             createOrUpdate(dataJson);
           },
@@ -514,32 +514,6 @@
           eventbus.trigger('roadAddress:projectSentFailed', result.status);
         }
       );
-    };
-
-    var addSmallLabelWithIds = function (label, id) {
-      return '<label class="control-label-small" id=' + id + '>' + label + '</label>';
-    };
-
-    var updateReservedRoads = function (newInfo) {
-      var reservedRoads = $("#reservedRoads");
-      reservedRoads.append(reservedRoads.html(newInfo));
-    };
-
-    var parseRoadPartInfoToResultRow = function () {
-      var listContent = '';
-      var index = 0;
-      _.each(me.getReservedParts(), function (row) {
-        var button = deleteButton(index++, row.roadNumber, row.roadPartNumber, 'reservedList');
-        listContent += '<div class="form-reserved-roads-list">' + button +
-          addSmallLabelWithIds(row.roadNumber, 'reservedRoadNumber') +
-          addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') +
-          addSmallLabelWithIds((row.newLength ? row.newLength : row.currentLength), 'reservedRoadLength') +
-          addSmallLabelWithIds((row.newDiscontinuity ? row.newDiscontinuity : row.currentDiscontinuity), 'reservedDiscontinuity') +
-          addSmallLabelWithIds((row.newEly ? row.newEly : row.currentEly), 'reservedEly') +
-          addSmallLabelWithIds((row.newEvk ? row.newEvk : row.currentEvk), 'reservedEvk') + '</div>';
-      }
-      );
-      return listContent;
     };
 
     this.getDeleteButton = function (index, roadNumber, roadPartNumber, selector) {
@@ -650,12 +624,11 @@
     eventbus.on('roadAddressProject:startProject', this.getProjectsWithLinksById);
 
     eventbus.on('roadPartsValidation:checkRoadParts', function (validationResult) {
-      if (validationResult.success === "ok") {
+      if (validationResult.success === true) {
         addToReservedPartList(validationResult);
-        updateReservedRoads(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       } else {
-        eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
+        eventbus.trigger('roadAddress:projectValidationFailed', validationResult.error || validationResult.success);
       }
     });
 
@@ -722,13 +695,54 @@
         eventbus.trigger("roadAddressProject:reOpenedProject", successObject);
       }, function (errorObject) {
         if (errorObject.message) {
-          new ModalConfirm(errorObject.message.toString());
+          new ConfirmPopup(errorObject.message.toString(), { type: "alert" });
         } else {
-          new ModalConfirm(errorObject.statusText.toString());
+          new ConfirmPopup(errorObject.statusText.toString(), { type: "alert" });
         }
         applicationModel.removeSpinner();
-        console.log("Error at deleting rotatingId: " + errorObject);
+        console.error("Error at deleting rotatingId: " + errorObject);
       });
+    };
+
+    this.removeReservedPart = function (roadNumber, roadPartNumber) {
+      if (currentProject) {
+        currentProject.isDirty = true;
+      }
+      this.setReservedParts(_.filter(this.getReservedParts(), function (part) {
+        return part.roadNumber.toString() !== roadNumber.toString() || part.roadPartNumber.toString() !== roadPartNumber.toString();
+      }));
+      removeRenumberedPart(roadNumber, roadPartNumber);
+    };
+
+    this.removeFormedPart = function (roadNumber, roadPartNumber) {
+      if (currentProject) {
+        currentProject.isDirty = true;
+      }
+      _.each(this.getRoadAddressesFromFormedRoadPart(roadNumber, roadPartNumber), function (roadAddresses) {
+        _.each(roadAddresses, function (ra) {
+          this.removeFormedPart(ra.roadAddressNumber, ra.roadAddressPartNumber);
+        }.bind(this));
+      }.bind(this));
+      this.setFormedParts(_.filter(this.getFormedParts(), function (part) {
+        return part.roadNumber.toString() !== roadNumber.toString() || part.roadPartNumber.toString() !== roadPartNumber.toString();
+      }));
+    };
+
+    var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+      me.setFormedParts(_.filter(me.getFormedParts(), function (part) {
+        var reNumberedPart = false;
+        if (part.roadAddresses && part.roadAddresses.length > 0) {
+          for (var i = 0; i < part.roadAddresses.length; ++i) {
+            var ra = part.roadAddresses[i];
+            reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() &&
+                ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
+            if (reNumberedPart) {
+              break;
+            }
+          }
+        }
+        return !reNumberedPart;
+      }));
     };
   };
 }(this));

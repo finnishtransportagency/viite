@@ -1,4 +1,3 @@
-//noinspection ThisExpressionReferencesGlobalObjectJS
 (function (root) {
   root.MapView = function (map, layers, instructionsPopup) {
     var isInitialized = false;
@@ -24,12 +23,12 @@
     };
 
     var drawCenterMarker = function (position) {
-      //Create a new Feature with the exact point in the center of the map
+      // Create a new Feature with the exact point in the center of the map
       var icon = new ol.Feature({
         geometry: new ol.geom.Point(position)
       });
 
-      //create the style of the icon of the 'Merkitse' Button
+      // Create the style of the icon of the 'Merkitse' Button
       var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/center-marker.svg'
@@ -70,9 +69,11 @@
         'Attach': 'default',
         'Add': 'crosshair',
         'Cut': 'crosshair',
-        'Copy': 'copy'
+        'Copy': 'copy',
+        'Default': 'default',
+        'Unknown': 'default'
       };
-      map.getViewport().style.cursor = tool ? cursor[tool] : 'default';
+      map.getViewport().style.cursor = tool ? cursor[tool] || 'default' : 'default';
     };
 
     eventbus.on('tool:changed', function (tool) {
@@ -130,19 +131,18 @@
 
     addCenterMarkerLayerToMap(map);
 
-    //initial cursor when the map user is not dragging the map
+    // Initial cursor when the map user is not dragging the map
     map.getViewport().style.cursor = "initial";
 
-    //when the map is moving (the user is dragging the map)
-    //only work's when the developer options in the browser aren't open
+    // When the map is moving (the user is dragging the map)
+    // Only work's when the developer options in the browser aren't open
     map.on('pointerdrag', function (_evt) {
       map.getViewport().style.cursor = "move";
     });
 
-    //when the map dragging stops the cursor value returns to the initial one
+    // When the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function (_evt) {
-      if (applicationModel.getSelectedTool() === 'Select')
-        map.getViewport().style.cursor = "initial";
+      setCursor(applicationModel.getSelectedTool());
     });
 
     $('body').on('keydown', function (evt) {
@@ -152,7 +152,7 @@
 
     $('body').on('keyup', function (evt) {
       if (_.includes(metaKeyCodes, evt.which) && evt.originalEvent.key !== ViiteEnumerations.SelectKeyName) // ctrl key up
-        map.getViewport().style.cursor = "initial";
+        setCursor(applicationModel.getSelectedTool());
     });
 
     setCursor(applicationModel.getSelectedTool());

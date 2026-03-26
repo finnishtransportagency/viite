@@ -28,7 +28,6 @@
     };
 
     this.fetchRoads = function (roadNumber) {
-      applicationModel.addSpinner();
       changedIds = [];
       backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
         currentRoadNumber = roadNumber;
@@ -80,7 +79,6 @@
     };
 
     this.saveChanges = function () {
-      applicationModel.addSpinner();
       var changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
         return _.includes(changedIds, roadName.id);
       });

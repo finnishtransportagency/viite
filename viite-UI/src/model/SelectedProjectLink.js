@@ -24,7 +24,8 @@
         current = projectLinkCollection.getProjectLink([id]);
         me.ids = [id];
       }
-      eventbus.trigger('projectLink:clicked', get(id));
+      const linkData = get(id);
+      eventbus.trigger('projectLink:clicked', linkData);
     };
 
     var openWithErrorMessage = function (ids, errorMessage) {
@@ -53,7 +54,8 @@
           }
         );
         current = current.concat(projectLinkCollection.getProjectLink(added));
-        eventbus.trigger('projectLink:clicked', get());
+        const linkData = get();
+        eventbus.trigger('projectLink:clicked', linkData);
       }
     };
 

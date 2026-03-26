@@ -209,7 +209,6 @@
       $('.spinner-overlay').remove();
     };
 
-
     eventbus.on("userData:fetched", function (userData) {
       sessionUsername = userData.userName;
       sessionUserRoles = userData.roles;
@@ -267,4 +266,3 @@
     };
   };
 }(this));
-

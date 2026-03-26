@@ -6,7 +6,7 @@
     const inputWrapper = $('<div class="input-wrapper"></div>');
     const coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite / koordinaatit" title="' + tooltip + '"/>');
     const clearButton = $('<button id="clearSearch" class="close wbtn-close clear-btn" aria-label="Tyhjennä haku" title="Tyhjennä haku"><i class="fas fa-times"></i></button>');
-    const moveButton = $('<button id="executeSearch" class="btn btn-sm btn-primary">Hae</button>');
+    const moveButton = $('<button id="executeSearch" class="btn-primary">Hae</button>');
     const panelHeader = $('<div class="panel-header"></div>');
     const searchResults = $('<ul id="search-results"></ul>');
     const resultsSection = $('<div class="panel-section"></div>').append(searchResults).hide();
