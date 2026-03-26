@@ -294,7 +294,7 @@
     }
 
     function toggleLegends() {
-      console.log("toggleLegends", applicationModel.getSelectedLayer());
+
       var container = $('#legendDiv');
       if (applicationModel.getSelectedLayer() === "roadAddressProject") {
         container.empty();

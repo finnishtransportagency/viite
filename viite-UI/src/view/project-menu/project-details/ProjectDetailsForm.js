@@ -340,11 +340,11 @@
               projectData.additionalInfo = $('#lisatiedot').val();
               applicationModel.setOpenProject(false);
 
-              const formData = {
-                name: projectData.name,
-                startDate: projectData.startDate,
-                additionalInfo: projectData.additionalInfo
-              };
+              const formData = [
+                { value: projectData.name },
+                { value: projectData.startDate },
+                { value: projectData.additionalInfo }
+              ];
 
               //applicationModel.addSpinner();
               
@@ -362,6 +362,7 @@
                   // Set the selected layer to roadAddressProject when project is saved
                   applicationModel.selectLayer('roadAddressProject', true, false);
                   callbacks.closeProjectMenu();
+                  window.mainMenu.setState('main');
                 }
               });
 
@@ -370,14 +371,15 @@
               // Close without saving - reset layer to default
               applicationModel.selectLayer('linkProperty', true, false);
               callbacks.closeProjectMenu();
+              window.mainMenu.setState('main');
             }
           });
         } else {
           // No unsaved changes, close directly - reset layer to default
           applicationModel.selectLayer('linkProperty', true, false);
           callbacks.closeProjectMenu();
+          window.mainMenu.setState('main');
         }
-        window.mainMenu.setState('main');
       });
 
       $('#deleteProjectSpan').off('click').on('click', function() {
