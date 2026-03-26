@@ -18,24 +18,26 @@
     </span>
     <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
   </header>
-  <div class="container">
-    <div id="contentMap">
-      <div id="mapdiv" class="no-copy">
-        <div id="popup" class="ol-viite-roadaddress-popup">
-          <div id="popup-content"></div>
+  <div class="app-layout">
+    <div class="container">
+      <div id="contentMap">
+        <div id="mapdiv" class="no-copy">
+          <div id="popup" class="ol-viite-roadaddress-popup">
+            <div id="popup-content"></div>
+          </div>
         </div>
+        <button class="crosshair crosshair-center"></button>
+        <div class="crosshair crosshair-top"></div>
+        <div class="crosshair crosshair-bottom"></div>
+        <div class="crosshair crosshair-left"></div>
+        <div class="crosshair crosshair-right"></div>
       </div>
-      <button class="crosshair crosshair-center"></button>
-      <div class="crosshair crosshair-top"></div>
-      <div class="crosshair crosshair-bottom"></div>
-      <div class="crosshair crosshair-left"></div>
-      <div class="crosshair crosshair-right"></div>
+      <nav id="map-tools"></nav>
+      <div id="feature-attributes">
+        <div id="information-content"></div>
+      </div>
     </div>
-    <nav id="map-tools"></nav>
-    <div id="feature-attributes">
-      <div id="information-content"></div>
-    </div>
-    <div id="map-plugins"></div>
+    <footer id="map-plugins"></footer>
   </div>
   <script type="text/javascript" src="node_modules/ol/dist/ol.js"></script>
   <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
