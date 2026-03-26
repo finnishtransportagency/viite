@@ -20,7 +20,7 @@
   top: 50%;
   transform: translate(-50%, -50%);
   min-width: 565px;
-  max-width: 90vw;
+  max-width: 95vw;
   height: 500px;
   max-height: 90vh;
   border-radius: @border-radius-base;
@@ -34,6 +34,7 @@
   background-color: #e3e3e1;
   border-radius: @border-radius-base;
   width: auto;
+  max-width: 95vw;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -42,7 +43,7 @@
   .modal-content {
     flex: 1;
     width: auto;
-    overflow: hidden;
+    overflow-x: auto;
   }
 
   tbody {
@@ -108,6 +109,7 @@
 }
 
 .modal-content-scrollable {
+  overflow-x: auto !important;
   overflow-y: auto !important;
 }
 

@@ -7,15 +7,7 @@
       // Initialize ModalContainer with configuration
       const modal = Application.getModalContainer({
           helpUrl: 'manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu',
-          helpTitle: 'Avaa käyttöohje',
-          onShow: () => {
-              // Bind events for Selector components
-              const formEl = document.getElementById('roadAddressBrowser');
-              if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
-                  roadAddressBrowserForm.bindSelectorEvents(formEl);
-              }
-              bindEvents();
-          }
+          helpTitle: 'Avaa käyttöohje'
       });
 
       function createArrayOfArraysForTracks(results) {
@@ -616,11 +608,14 @@
       }
 
       function bindEvents() {
+          const eventNs = '.roadAddressBrowser';
+          const $content = modal.getContent();
 
           // Bind the enter key to the search button
-          $(document).on('keydown', function(e) {
+          $(document).off('keydown' + eventNs).on('keydown' + eventNs, function(e) {
 
-              if (!modal.isVisible()) {
+              // ModalContainer does not expose isVisible(); skip when modal is detached from DOM.
+              if (!modal.getContent().closest('body').length) {
                   return;
               }
 
@@ -699,15 +694,15 @@
               };
           }
 
-          modal.getContent().on('click', '#exportAsCsvFile', function () {
+          $content.off('click' + eventNs, '#exportAsCsvFile').on('click' + eventNs, '#exportAsCsvFile', function () {
               exportDataAsCsvFile();
               return false; // cancel form submission
           });
-          modal.getContent().on('click', 'button.close', function () {
+          $content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
               modal.close();
           });
 
-          modal.getContent().on('click', '#fetchRoadAddresses', function () {
+          $content.off('click' + eventNs, '#fetchRoadAddresses').on('click' + eventNs, '#fetchRoadAddresses', function () {
               clearResultsAndDisableCsvButton();
               getData();
               return false; // cancel form submission
@@ -731,10 +726,19 @@
       };
 
       return {
-          show: () => modal.open({
-              title: 'Tieosoitteiden katselu',
-              content: roadAddressBrowserForm.getRoadAddressBrowserForm()
-          })
+          show: () => {
+              modal.open({
+                  title: 'Tieosoitteiden katselu',
+                  content: roadAddressBrowserForm.getRoadAddressBrowserForm()
+              });
+
+              // Modal container is a singleton, so bind handlers explicitly on each open.
+              const formEl = modal.getContent().find('#roadAddressBrowser')[0];
+              if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
+                  roadAddressBrowserForm.bindSelectorEvents(formEl);
+              }
+              bindEvents();
+          }
       };
   };
 }(this));

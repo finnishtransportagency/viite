@@ -1,25 +1,14 @@
 // Allows users to search road address change history data and export it as CSV using a few filter parameters
 (function (root) {
     root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
-        const searchParams = {};
+        let searchParams = {};
         let elyEvkSelector;
         const me = this;
 
         // Initialize ModalContainer with configuration
         const modal = Application.getModalContainer({
             helpUrl: 'manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu',
-            helpTitle: 'Avaa käyttöohje',
-            onShow: () => {
-                // Insert selector only once when showing the modal
-                if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
-                    insertElyEvkSelector();
-                }
-                bindEvents();
-                // Ensure selector events are bound after insertion into DOM
-                if (elyEvkSelector) {
-                    elyEvkSelector.bindEvents();
-                }
-            }
+            helpTitle: 'Avaa käyttöohje'
         });
 
         // ========== Validation helpers (extracted) ==========
@@ -389,11 +378,14 @@
         }
 
         function bindEvents() {
+          const eventNs = '.roadAddressChangesBrowser';
+          const $content = modal.getContent();
 
           // Bind the enter key to the search button
-          $(document).on('keydown', function(e) {
+          $(document).off('keydown' + eventNs).on('keydown' + eventNs, function(e) {
 
-              if (!modal.isVisible()) {
+              // ModalContainer does not expose isVisible(); skip when modal is detached from DOM.
+              if (!modal.getContent().closest('body').length) {
                   return;
               }
 
@@ -444,58 +436,73 @@
             const startDateEl = modal.getContent().find('#roadAddrChangesStartDate')[0];
             const endDateEl = modal.getContent().find('#roadAddrChangesEndDate')[0];
             if (startDateEl) {
-                startDateEl.addEventListener('input', function () {
+                startDateEl.oninput = function () {
                     validateDate(this.value, this);
                     this.setCustomValidity("");
-                });
+                };
             }
             if (endDateEl) {
-                endDateEl.addEventListener('input', function () {
+                endDateEl.oninput = function () {
                     validateDate(this.value, this);
                     this.setCustomValidity("");
-                });
+                };
             }
 
             const startPartEl = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
             const endPartEl = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
             if (startPartEl) {
-                startPartEl.addEventListener('input', function () {
+                startPartEl.oninput = function () {
                     validateBeginningAndEndParts();
                     this.setCustomValidity("");
-                });
+                };
             }
             if (endPartEl) {
-                endPartEl.addEventListener('input', function () {
+                endPartEl.oninput = function () {
                     validateBeginningAndEndParts();
                     this.setCustomValidity("");
-                });
+                };
             }
             
-            modal.getContent().on('click', '#exportAsCsvFile', function () {
+            $content.off('click' + eventNs, '#exportAsCsvFile').on('click' + eventNs, '#exportAsCsvFile', function () {
                 exportDataAsCsvFile();
                 return false; // cancel form submission
             });
 
-            modal.getContent().on('click', 'button.close', function () {
+            $content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
                 modal.close();
             });
 
-            modal.getContent().on('click', '#fetchRoadAddressChanges', function () {
+            $content.off('click' + eventNs, '#fetchRoadAddressChanges').on('click' + eventNs, '#fetchRoadAddressChanges', function () {
                 clearResultsAndDisableCsvButton();
                 getData();
                 return false; // cancel form submission
             });
         }
 
+        this.setSearchParams = function(params) {
+            searchParams = params;
+        };
+
         this.getSearchParams = function() {
             return searchParams;
         };
 
         return {
-            show: () => modal.open({
-                title: 'Tieosoitemuutosten katselu',
-                content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm()
-            })
+            show: () => {
+                modal.open({
+                    title: 'Tieosoitemuutosten katselu',
+                    content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm()
+                });
+
+                // Modal container is a singleton, so bind handlers explicitly on each open.
+                if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
+                    insertElyEvkSelector();
+                }
+                if (elyEvkSelector) {
+                    elyEvkSelector.bindEvents();
+                }
+                bindEvents();
+            }
         };
     };
 }(this));
