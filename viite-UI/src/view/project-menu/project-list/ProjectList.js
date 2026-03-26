@@ -1,319 +1,251 @@
+// Displays road address projects in a table format, allowing sorting, filtering and opening projects.
+// Polls for project state updates every 30 seconds.
 (function (root) {
   root.ProjectList = function (projectCollection) {
     const projectStatus = ViiteEnumerations.ProjectStatus;
-    let projectArray = []; // The "Source of Truth"
+
+    const state = {
+      projects: [],
+      orderBy: { id: "sortStatus", reversed: false },
+      filterBox: { input: "", visible: false },
+      loading: false,
+      onlyActive: true
+    };
+
+    let $container = $('<div id="project-list-root"></div>');
     let pollProjects = null;
-    let eventsBound = false;
+    let modalContainer = null;
 
-    // --- State Management ---
-    const orderBy = { id: "sortStatus", reversed: false };
-    const filterBox = { input: "", visible: false };
-
-    // --- Utilities ---
-    const parseFinnishDate = (dateStr) => {
-      if (!dateStr) return new Date(0);
-      // Converts "DD.MM.YYYY" or ISO to Date object
-      const parts = dateStr.includes('.') ? dateStr.split('.') : null;
-      return parts ? new Date(parts[2], parts[1] - 1, parts[0]) : new Date(dateStr);
-    };
-
-    const getIcon = (id) => {
-      if (orderBy.id !== id) return 'fa-sort';
-      return orderBy.reversed ? 'fa-sort-down' : 'fa-sort-up';
-    };
-
-    // --- Configuration: Headers & Sorting ---
+    // --- HEADERS CONFIGURATION ---
     const headers = {
-      "sortName": {
-        toStr: "PROJEKTIN NIMI", width: "180",
-        sortFunc: (a, b) => a.name.localeCompare(b.name, 'fi')
-      },
+      "sortName": { toStr: "PROJEKTIN NIMI", width: "180", sortFunc: (a, b) => a.name.localeCompare(b.name, 'fi') },
       "sortEVK": {
-        toStr: "ELINVOIMAKESKUS", width: "170",
-        sortFunc: (a, b) => {
-          const aEvks = a.evks || [], bEvks = b.evks || [];
+        toStr: "ELINVOIMAKESKUS", width: "170", sortFunc: (a, b) => {
+          const aEvks = a.evks || [];
+          const bEvks = b.evks || [];
           for (let i = 0; i < Math.min(aEvks.length, bEvks.length); i++) {
-            if (aEvks[i] !== bEvks[i]) return aEvks[i] - bEvks[i];
+            if (aEvks[i] !== bEvks[i]) {
+              return aEvks[i] - bEvks[i];
+            }
           }
           return aEvks.length - bEvks.length;
         }
       },
-      "sortUser": {
-        toStr: "KÄYTTÄJÄ", width: "155",
-        sortFunc: (a, b) => a.createdBy.localeCompare(b.createdBy, 'fi')
-      },
-      "sortDate": {
-        toStr: "LUONTIPVM", width: "155",
-        sortFunc: (a, b) => parseFinnishDate(b.createdDate) - parseFinnishDate(a.createdDate)
-      },
-      "sortStatus": {
-        toStr: "TILA", width: "155",
-        sortFunc: (a, b) => {
-          const statusOrder = {
-            [projectStatus.ErrorInViite.value]: 1,
-            [projectStatus.InUpdateQueue.value]: 2,
-            [projectStatus.UpdatingToRoadNetwork.value]: 3,
-            [projectStatus.Incomplete.value]: 4,
-            [projectStatus.Accepted.value]: 5,
-            [projectStatus.Deleted.value]: 6,
-            [projectStatus.Unknown.value]: 99
-          };
+      "sortUser": { toStr: "KÄYTTÄJÄ", width: "155", sortFunc: (a, b) => a.createdBy.localeCompare(b.createdBy, 'fi') },
+      "sortDate": { toStr: "LUONTIPVM", width: "155", sortFunc: (a, b) => toComparableDate(b.createdDate) - toComparableDate(a.createdDate) },
+      "sortStatus": { toStr: "TILA", width: "155", sortFunc: (a, b) => {
+          const statusOrder = { [projectStatus.ErrorInViite.value]: 1, [projectStatus.InUpdateQueue.value]: 2, [projectStatus.UpdatingToRoadNetwork.value]: 3, [projectStatus.Incomplete.value]: 4, [projectStatus.Accepted.value]: 5, [projectStatus.Deleted.value]: 6, [projectStatus.Unknown.value]: 99 };
           const diff = (statusOrder[a.statusCode] || 99) - (statusOrder[b.statusCode] || 99);
-          return diff !== 0 ? diff : parseFinnishDate(b.createdDate) - parseFinnishDate(a.createdDate);
+          return diff !== 0 ? diff : toComparableDate(b.createdDate) - toComparableDate(a.createdDate);
         }
       }
     };
 
-    // --- Templates ---
+    // --- UTILITIES ---
+    const toComparableDate = (dateStr) => {
+      if (!dateStr) return new Date(0);
+      return dateutil.isFinnishDateString(dateStr) ? dateutil.parseDate(dateStr) : new Date(dateStr);
+    };
+
+    const getSortIcon = (id) => {
+      if (state.orderBy.id !== id) {
+        return 'fa-sort';
+      }
+      return state.orderBy.reversed ? 'fa-sort-down' : 'fa-sort-up';
+    };
+
     const staticField = (data) => `<div><label class="control-label-projects-list">${data || ''}</label></div>`;
 
-    const renderHeader = () => {
-      let html = '<thead class="project-list-header"><tr>';
-      Object.keys(headers).forEach(id => {
-        const h = headers[id];
-        html += `<th style="width: ${h.width}px;">
-          <label>${h.toStr}<i id="${id}" class="btn-icon sort fas ${getIcon(id)}"></i>`;
-        if (id === "sortUser") {
-          html += `<i id="filterUser" class="btn-icon fas fa-filter"></i></label>
-            <span class="user-filter-input" id="userFilterSpan" style="display:none">
-            <input type="text" id="userNameBox" placeholder="Käyttäjätunnus"></span>`;
+    const columnClassById = {
+      sortName: 'column-name',
+      sortEVK: 'column-evk',
+      sortUser: 'column-user',
+      sortDate: 'column-date',
+      sortStatus: 'column-status'
+    };
+
+    const columnGroupTemplate = () => `
+      <colgroup>
+        <col class="column-name">
+        <col class="column-evk">
+        <col class="column-user">
+        <col class="column-date">
+        <col class="column-status">
+        <col class="column-actions">
+      </colgroup>`;
+
+    // --- HANDLERS ---
+    const handleSort = ($el) => {
+      const id = $el.data('sort');
+      state.orderBy.reversed = (state.orderBy.id === id) ? !state.orderBy.reversed : false;
+      state.orderBy.id = id;
+      render();
+    };
+
+    const handleFilterToggle = () => {
+      state.filterBox.visible = !state.filterBox.visible;
+      if (state.filterBox.visible && !state.filterBox.input) {
+        state.filterBox.input = applicationModel.getSessionUsername();
+      }
+      render();
+    };
+
+    const handleProjectOpen = ($el) => {
+      const id = parseInt($el.data('id'));
+      const status = parseInt($el.data('status'));
+      const proceed = () => {
+        clearInterval(pollProjects);
+        if (status === projectStatus.ErrorInViite.value) {
+          projectCollection.reOpenProjectById(id);
+          eventbus.once("roadAddressProject:reOpenedProject", () => openProjectSteps(id));
         } else {
-          html += `</label>`;
+          openProjectSteps(id);
         }
-        html += `</th>`;
-      });
-      html += `<th style="width: 180px;"><div class="actions"><button class="new btn-primary">Uusi tieosoiteprojekti</button></div></th></tr></thead>`;
-      return html;
-    };
-
-    const renderRow = (proj) => {
-      const info = proj.statusInfo || 'Ei lisätietoja';
-      const dateStr = dateutil.dateObjectToFinnishString(parseFinnishDate(proj.createdDate));
-      const isError = proj.statusCode === projectStatus.ErrorInViite.value;
-      
-      return `
-        <tr class="project-list-row" data-id="${proj.id}">
-          <td class="project-name-cell" style="width: ${headers.sortName.width}px;">${staticField(proj.name)}</td>
-          <td class="evk-cell" style="width: ${headers.sortEVK.width}px;">${staticField(proj.evks)}</td>
-          <td class="user-cell" style="width: ${headers.sortUser.width}px;">${staticField(proj.createdBy)}</td>
-          <td class="date-cell" style="width: ${headers.sortDate.width}px;">${staticField(dateStr)}</td>
-          <td class="status-cell" title="${info}" style="width: ${headers.sortStatus.width}px;">${staticField(proj.statusDescription)}</td>
-          <td class="actions-cell" style="width: 180px;">
-            <button class="project-open ${isError ? 'btn-new-error' : 'btn-primary'}" value="${proj.id}" data-status="${proj.statusCode}">
-              ${isError ? 'Avaa uudelleen' : 'Avaa'}
-            </button>
-          </td>
-        </tr>`;
-    };
-
-    const projectList = $(`
-      <div class="project-table-wrapper">
-        <table class="project-table">
-          ${renderHeader()}
-          <tbody></tbody>
-          <tfoot>
-            <tr><td colspan="6"><div class="content-footer">
-              <label><input type="checkbox" id="OldAcceptedProjectsVisibleCheckbox"><span>Näytä kaikki tieverkolle päivitetyt projektit</span></label>
-              <i id="sync" class="fas refresh-button fa-sync-alt" title="Päivitä lista"></i>
-            </div></td></tr>
-          </tfoot>
-        </table>
-      </div>`);
-
-    let modalContainer = null;
-
-    // --- Logic & Rendering ---
-    const redrawTable = () => {
-      const searchTerm = $('#userNameBox').val() ? $('#userNameBox').val().toLowerCase() : "";
-      
-      // Filter
-      const filtered = projectArray.filter(p => 
-        !searchTerm || p.createdBy.toLowerCase().includes(searchTerm)
-      );
-
-      // Sort
-      const sorted = filtered.sort((a, b) => {
-        const res = headers[orderBy.id].sortFunc(a, b);
-        return orderBy.reversed ? -res : res;
-      });
-
-      // Render
-      const $tbody = projectList.find('tbody');
-      $tbody.empty();
-      if (sorted.length) {
-        $tbody.append(sorted.map(renderRow).join(''));
-      }
-    };
-
-    const userFilterVisibility = () => {
-      const $span = $('#userFilterSpan');
-      const $input = $('#userNameBox');
-      if (filterBox.visible) {
-        $span.show();
-        if (!$input.val()) $input.val(applicationModel.getSessionUsername());
+      };
+      if (status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
+        new ConfirmPopup("Projektia päivitetään tieverkolle. Haluatko silti avata sen?", { successCallback: proceed });
       } else {
-        $input.val("");
-        $span.hide();
+        proceed();
       }
-      redrawTable();
     };
 
-    // --- Actions ---
+    const handleSync = () => {
+      state.loading = true;
+      render();
+      fetchProjects();
+    };
+
+    const handleCreateNew = () => {
+      clearInterval(pollProjects);
+      modalContainer.close();
+      applicationModel.setOpenProject(true);
+      projectCollection.clearRoadAddressProjects();
+      const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
+      window.projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
+      if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
+    };
+
     const fetchProjects = () => {
-      const onlyActive = !$('#OldAcceptedProjectsVisibleCheckbox').is(':checked');
-      projectCollection.getProjects(onlyActive);
+      projectCollection.getProjects(state.onlyActive);
     };
 
     const openProjectSteps = (projectId) => {
       applicationModel.addSpinner();
-      projectCollection.getProjectsWithLinksById(parseInt(projectId)).then(result => {
+      projectCollection.getProjectsWithLinksById(projectId).then(result => {
         hide();
         eventbus.trigger('roadAddress:openProject', result);
         if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
       });
     };
 
+    // --- TEMPLATES / HTML ---
+    const template = () => {
+      const filtered = state.projects.filter(p => 
+        !state.filterBox.input || p.createdBy.toLowerCase().includes(state.filterBox.input.toLowerCase())
+      );
+      const sorted = filtered.sort((a, b) => {
+        const res = headers[state.orderBy.id].sortFunc(a, b);
+        return state.orderBy.reversed ? -res : res;
+      });
+
+      return `
+        <div class="project-table-wrapper">
+          <table class="project-table project-table-header">
+            ${columnGroupTemplate()}
+            <thead class="project-list-header">
+              <tr>
+                ${Object.keys(headers).map(id => {
+                  const h = headers[id];
+                  const icon = getSortIcon(id);
+                  const columnClass = columnClassById[id];
+                  const filterClass = state.filterBox.visible ? 'user-filter-input visible' : 'user-filter-input';
+                  return `<th class="${columnClass}"><label>${h.toStr}<i data-sort="${id}" class="btn-icon sort fas ${icon}"></i>
+                    ${id === "sortUser" ? `<i id="filterUser" class="btn-icon fas fa-filter"></i>` : ''}</label>
+                    ${id === "sortUser" ? `<span class="${filterClass}" id="userFilterSpan"><input type="text" id="userNameBox" placeholder="Käyttäjätunnus" value="${state.filterBox.input}"></span>` : ''}
+                  </th>`;
+                }).join('')}
+                <th class="column-actions"><div class="actions"><button class="new btn-primary">Uusi tieosoiteprojekti</button></div></th>
+              </tr>
+            </thead>
+          </table>
+          <div class="project-table-scroll">
+            <table class="project-table project-table-body">
+              ${columnGroupTemplate()}
+              <tbody>
+                ${sorted.map(proj => `
+                  <tr class="project-list-row" data-id="${proj.id}">
+                    <td class="project-name-cell column-name">${staticField(proj.name)}</td>
+                    <td class="evk-cell column-evk">${staticField(proj.evks)}</td>
+                    <td class="user-cell column-user">${staticField(proj.createdBy)}</td>
+                    <td class="date-cell column-date">${staticField(dateutil.dateObjectToFinnishString(toComparableDate(proj.createdDate)))}</td>
+                    <td class="status-cell column-status" title="${proj.statusInfo || 'Ei lisätietoja'}">${staticField(proj.statusDescription)}</td>
+                    <td class="actions-cell column-actions"><button class="project-open ${proj.statusCode === projectStatus.ErrorInViite.value ? 'btn-new-error' : 'btn-primary'}" data-id="${proj.id}" data-status="${proj.statusCode}">
+                      ${proj.statusCode === projectStatus.ErrorInViite.value ? 'Avaa uudelleen' : 'Avaa'}</button></td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+          <div class="content-footer">
+            <label><input type="checkbox" id="OldAcceptedProjectsVisibleCheckbox" ${!state.onlyActive ? 'checked' : ''}><span>Näytä kaikki tieverkolle päivitetyt projektit</span></label>
+            <i id="sync" class="fas refresh-button fa-sync-alt ${state.loading ? 'btn-spin' : ''}" title="Päivitä lista"></i>
+          </div>
+        </div>`;
+    };
+
+    const render = () => {
+      $container.html(template());
+      if (state.filterBox.visible) {
+        const input = $container.find('#userNameBox')[0];
+        if (input) { input.focus(); input.setSelectionRange(state.filterBox.input.length, state.filterBox.input.length); }
+      }
+    };
+
     function bindEvents() {
-      if (eventsBound) return;
+      window.eventutil.bindClick($container, '.sort', handleSort);
+      window.eventutil.bindClick($container, '#filterUser', handleFilterToggle);
+      window.eventutil.bindClick($container, '.project-open', handleProjectOpen);
+      window.eventutil.bindClick($container, '#sync', handleSync);
+      window.eventutil.bindClick($container, '.new', handleCreateNew);
 
-      // Data events
-      eventbus.on('roadAddressProjects:fetched', (projects) => {
-        projectArray = projects.filter(p => p.statusCode !== projectStatus.Deleted.value);
-        redrawTable();
-        userFilterVisibility();
-        $('#sync').removeClass("btn-spin");
+      $container.on('input', '#userNameBox', (e) => { state.filterBox.input = e.target.value; render(); });
+      $container.on('change', '#OldAcceptedProjectsVisibleCheckbox', (e) => { state.onlyActive = !e.target.checked; fetchProjects(); });
+
+      eventbus.off('roadAddressProjects:fetched').on('roadAddressProjects:fetched', (projects) => {
+        state.projects = projects.filter(p => p.statusCode !== projectStatus.Deleted.value);
+        state.loading = false;
+        render();
       });
-
-      eventbus.on('roadAddressProjectStates:fetched', (idsAndStates) => {
-        projectArray.forEach(p => {
-          const match = idsAndStates.find(s => s[0] === p.id);
-          if (match) {
-            p.statusCode = match[1];
-            p.statusDescription = Object.values(projectStatus).find(e => e.value === match[1]).description;
-          }
-        });
-        redrawTable();
-        $('#sync').removeClass("btn-spin");
-      });
-
-      // UI delegation
-      projectList.on('click', '.sort', function() {
-        const id = this.id;
-        orderBy.reversed = (orderBy.id === id) ? !orderBy.reversed : false;
-        orderBy.id = id;
-        
-        // Update header icons manually to avoid full header redraw
-        projectList.find('.sort').each(function() {
-          $(this).removeClass('fa-sort fa-sort-up fa-sort-down').addClass(getIcon(this.id));
-        });
-        redrawTable();
-      });
-
-      projectList.on('click', '.project-open', function() {
-        const $btn = $(this);
-        const id = $btn.val();
-        const status = parseInt($btn.data('status'));
-
-        const proceed = () => {
-          clearInterval(pollProjects);
-          if (status === projectStatus.ErrorInViite.value) {
-            projectCollection.reOpenProjectById(parseInt(id));
-            eventbus.once("roadAddressProject:reOpenedProject", () => openProjectSteps(id));
-          } else {
-            openProjectSteps(id);
-          }
-        };
-
-        if (status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
-          new ConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", { successCallback: proceed });
-        } else {
-          proceed();
-        }
-      });
-
-      // New project creation
-      projectList.on('click', '.new', () => {
-        clearInterval(pollProjects);
-
-        const newProject = {
-          id: 0,
-          name: '',
-          startDate: '',
-          additionalInfo: '',
-          createdBy: '',
-          modifiedBy: '',
-          dateModified: ''
-        };
-        
-        modalContainer.close();
-        applicationModel.setOpenProject(true);
-        projectCollection.clearRoadAddressProjects();
-        
-        window.projectMenu.showProjectDetails(newProject, true, projectCollection, newProject);
-
-        if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
-      });
-
-      projectList.on('click', '#sync', function() {
-        $(this).addClass("btn-spin");
-        fetchProjects();
-      });
-
-      $(document).on('click', '#filterUser', () => {
-        filterBox.visible = !filterBox.visible;
-        userFilterVisibility();
-      });
-
-      $(document).on('keyup', '#userNameBox', redrawTable);
-      $(document).on('change', '#OldAcceptedProjectsVisibleCheckbox', fetchProjects);
-
-      eventsBound = true;
     }
 
     function show() {
-      // Check if modal was destroyed by global modal removal
-      if (modalContainer && (!modalContainer.element || !modalContainer.element.closest('body').length)) {
-        modalContainer = null;
-      }
-      
-      if (!modalContainer) {
-          modalContainer = Application.getModalContainer({ 
-            style: 'width: 1000px;', 
-            onClose: hide
-          });
-        }
-      modalContainer.open({
-        title: 'Tieosoiteprojektit',
-        content: projectList
-      });
-      eventbus.trigger("roadAddressProject:deactivateAllSelections");
+      state.projects = [];
+      state.filterBox.input = '';
+      state.filterBox.visible = false;
+      state.loading = true;
+      state.onlyActive = true;
+      $container = $('<div id="project-list-root"></div>');
       bindEvents();
+      render();
+      modalContainer = Application.getModalContainer({ onClose: hide });
+      modalContainer.open({ title: 'Tieosoiteprojektit', content: $container });
       fetchProjects();
-      pollProjects = setInterval(() => {
-        projectCollection.getProjectStates(projectArray.map(p => p.id));
-      }, 30000);
+      pollProjects = setInterval(() => projectCollection.getProjectStates(state.projects.map(p => p.id)), 30000);
     }
 
     function hide() {
-      filterBox.visible = false;
-      $('#userNameBox').val('');
-      $('#userFilterSpan').hide();
-      eventbus.trigger("roadAddressProject:startAllInteractions");
-      modalContainer.close();
-      eventsBound = false;
+      if (pollProjects) clearInterval(pollProjects);
+      pollProjects = null;
+      state.loading = false;
+      $(document).off('.projectList');
+      if (modalContainer) modalContainer.close();
+      if ($container) { $container.remove(); $container = null; }
     }
 
-    return {
-      show, hide, element: projectList,
-      cleanup: () => {
-        if (pollProjects) clearInterval(pollProjects);
-        eventbus.off('roadAddressProjects:fetched roadAddressProjectStates:fetched');
-        projectList.off();
-        if (modalContainer) {
-          modalContainer = null;
-        }
-        eventsBound = false;
-      }
-    };
+    function cleanup() {
+      hide();
+      eventbus.off('roadAddressProjects:fetched roadAddressProjectStates:fetched');
+    }
+
+    return { show, hide, cleanup, getElement: () => $container };
   };
 }(this));
