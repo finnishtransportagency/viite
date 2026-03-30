@@ -639,7 +639,7 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
    //    dao.create(Seq(testRoadway1.copy(id = 666), testRoadway1.copy(id = 666)))
    //  }
    //  error.getMessage should include("""duplicate key value violates unique constraint "roadway_history_i"""")
-   val result = dao.create(Seq(testRoadway1, testRoadway1.copy(roadwayNumber = roadwayNumber2)))
+   val result = dao.create(Seq(testRoadway1.copy(id = 12345678), testRoadway1.copy(id = 12345678, roadwayNumber = roadwayNumber2)))
      println(s"RESULT ::: $result")
      result.size should be (1)
      result.head should be (-1L)
@@ -652,7 +652,7 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
   //     dao.create(Seq(testRoadway1.copy(id = 666), testRoadway1.copy(id = 666,roadwayNumber = roadwayNumber2)))
   //   }
   //   error.getMessage should include("""duplicate key value violates unique constraint "roadway_history_i"""")
-     val result = dao.create(Seq(testRoadway1, testRoadway1.copy(roadwayNumber = roadwayNumber2)))
+     val result = dao.create(Seq(testRoadway1.copy(id = 12345678), testRoadway1.copy(id = 12345678,roadwayNumber = roadwayNumber2)))
      println(s"RESULT ::: $result")
      result.size should be (1)
      result.head should be (-1L)
