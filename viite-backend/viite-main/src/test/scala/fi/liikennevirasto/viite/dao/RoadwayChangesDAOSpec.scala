@@ -77,7 +77,7 @@ class RoadwayChangesDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
    }
  }
 
- test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted ely code should be the roadway ely instead of project ely") {
+ test("Test RoadwayChangesDAO().insertDeltaToRoadChangeTable() When inserting the results of the delta calculation for a project, the inserted elinvoimakeskus code should be the roadway elinvoimakeskus instead of project elinvoimakeskus") {
    val newProjectLink = ProjectLink(1, RoadPart(1, 1), Track.Unknown, Discontinuity.Continuous, AddrMRange(0, 1), AddrMRange(0, 0), None, None, None, 0.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), List(), 1, RoadAddressChangeType.New, AdministrativeClass.Unknown, LinkGeomSource.NormalLinkInterface, 0.0, 0, 0, ArealRoadMaintainer.getEVK(8), reversed = false, None, 748800L)
    runWithRollback {
      addprojects()
