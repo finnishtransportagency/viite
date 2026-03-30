@@ -33,23 +33,6 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
  private val rw3roadPart = RoadPart(roadNumber2, 1)
 
 
-  /* id: Long,
-                    roadwayNumber: Long,
-                    roadPart: RoadPart,
-                    administrativeClass: AdministrativeClass,
-                    track: Track,
-                    discontinuity: Discontinuity,
-                    addrMRange: AddrMRange,
-                    reversed: Boolean = false,
-                    startDate: DateTime,
-                    endDate: Option[DateTime] = None,
-                    createdBy: String,
-                    roadName: Option[String],
-                    roadMaintainer: ArealRoadMaintainer,
-                    terminated: TerminationCode = TerminationCode.NoTermination,
-                    validFrom: DateTime = DateTime.now(),
-                    validTo: Option[DateTime] = None)*/
-
  private val testRoadway1 = Roadway(
    id = NewIdValue,
    roadwayNumber = roadwayNumber1,
@@ -651,13 +634,12 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
  // create
 
  test("Test create When insert duplicate roadway Then give error") {
-   println(s"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
    runWithRollback {
    //  val error = intercept[SQLException] {
    //    dao.create(Seq(testRoadway1.copy(id = 666), testRoadway1.copy(id = 666)))
    //  }
    //  error.getMessage should include("""duplicate key value violates unique constraint "roadway_history_i"""")
-   val result = dao.create(Seq(testRoadway1.copy(id = 666), testRoadway1.copy(id = 666,roadwayNumber = roadwayNumber2)))
+   val result = dao.create(Seq(testRoadway1, testRoadway1.copy(roadwayNumber = roadwayNumber2)))
      println(s"RESULT ::: $result")
      result.size should be (1)
      result.head should be (-1L)
@@ -665,13 +647,12 @@ class RoadwayDAOSpec extends AnyFunSuite with Matchers {
  }
 
  test("Test create When insert duplicate roadway with different roadway number Then give error") {
-   println(s"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
    runWithRollback {
   //   val error = intercept[SQLException] {
   //     dao.create(Seq(testRoadway1.copy(id = 666), testRoadway1.copy(id = 666,roadwayNumber = roadwayNumber2)))
   //   }
   //   error.getMessage should include("""duplicate key value violates unique constraint "roadway_history_i"""")
-     val result = dao.create(Seq(testRoadway1.copy(id = 666), testRoadway1.copy(id = 666,roadwayNumber = roadwayNumber2)))
+     val result = dao.create(Seq(testRoadway1, testRoadway1.copy(roadwayNumber = roadwayNumber2)))
      println(s"RESULT ::: $result")
      result.size should be (1)
      result.head should be (-1L)

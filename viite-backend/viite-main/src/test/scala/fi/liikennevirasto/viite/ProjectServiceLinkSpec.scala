@@ -184,17 +184,6 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
   // Define an implicit format for case class extraction
   implicit val formats: Formats = DefaultFormats
 
-  /* id: Long,
-                               roadPart: RoadPart,
-                               addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None,
-                     //          ely: Option[Long] = None,
-                               roadMaintainer: Option[ArealRoadMaintainer] = None,
-                               newLength: Option[Long] = None,
-                               newDiscontinuity: Option[Discontinuity] = None,
-                           //    newEly: Option[Long] = None,
-                               newRoadMaintainer: Option[ArealRoadMaintainer] = None,
-                               startingLinkId: Option[String] = None*/
 
   test("Test projectService.updateProjectLinks() When using a recently created project Then project should become publishable after the update.") {
     var count = 0

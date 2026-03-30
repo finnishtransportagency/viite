@@ -183,17 +183,6 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
  }
 
 
-  /* id: Long,
-                               roadPart: RoadPart,
-                               addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None,
-                     //          ely: Option[Long] = None,
-                               roadMaintainer: Option[ArealRoadMaintainer] = None,
-                               newLength: Option[Long] = None,
-                               newDiscontinuity: Option[Discontinuity] = None,
-                           //    newEly: Option[Long] = None,
-                               newRoadMaintainer: Option[ArealRoadMaintainer] = None,
-                               startingLinkId: Option[String] = None*/
  test("Test fetchProjectIdsWithToBePreservedStatus " +
    "When project is accepted, but yet waiting to be preserved, or at preserving to Viite DB, " +
    "Then fetchProjectIdsWithToBePreservedStatus should be increased") {

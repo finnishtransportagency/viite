@@ -236,7 +236,7 @@ class ProjectService(
         preFillRoadName(
           roadNumber,
           roadPartNumber,
-          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("EVK0")),
+          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("EVK12")), // Default to EVK11 if municipality code is not found in mapping. This is to narrow down the occurrences of the EVK0-bug
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")

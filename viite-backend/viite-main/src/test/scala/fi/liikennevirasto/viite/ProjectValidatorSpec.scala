@@ -3013,18 +3013,6 @@ Left|      |Right
      val errors = projectValidator.checkRoadContinuityCodes(project, projectLinks)
      errors should have size 0
 
-     /* id: Long,
-                               roadPart: RoadPart,
-                               addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None,
-                     //          ely: Option[Long] = None,
-                               roadMaintainer: Option[ArealRoadMaintainer] = None,
-                               newLength: Option[Long] = None,
-                               newDiscontinuity: Option[Discontinuity] = None,
-                           //    newEly: Option[Long] = None,
-                               newRoadMaintainer: Option[ArealRoadMaintainer] = None,
-                               startingLinkId: Option[String] = None*/
-
 
      // Discontinuity.MinorDiscontinuity is not anymore ok because we have now two roadparts
      val (first2Links, restOfLinks) = projectLinks.partition(_.addrMRange.end <= 10)

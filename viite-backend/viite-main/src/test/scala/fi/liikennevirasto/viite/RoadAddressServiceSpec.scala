@@ -735,18 +735,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      val roadwayPointsBeforeTransferLink = Seq(beforeChangesTransfer).filter(_.status == RoadAddressChangeType.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
      roadwayPointDAO.fetchByRoadwayNumber(rwp)
      }
-     /*
-     id: Long,
-                               roadPart: RoadPart,
-                               addressLength: Option[Long] = None,
-                               discontinuity: Option[Discontinuity] = None,
-                     //          ely: Option[Long] = None,
-                               roadMaintainer: Option[ArealRoadMaintainer] = None,
-                               newLength: Option[Long] = None,
-                               newDiscontinuity: Option[Discontinuity] = None,
-                           //    newEly: Option[Long] = None,
-                               newRoadMaintainer: Option[ArealRoadMaintainer] = None,
-                               startingLinkId: Option[String] = None) {*/
+
 
      val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), None, Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.getEVK(8)), None, None, None, Some(12345L.toString)))
      val formedParts = Seq(ProjectReservedPart(
