@@ -21,7 +21,6 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def modifiedBy: Option[String]
   def roadPart: RoadPart
   def trackCode: Long
-  def elyCode: Long
   def roadMaintainer: ArealRoadMaintainer
   def discontinuity: Long
   def addrMRange: AddrMRange
@@ -55,7 +54,6 @@ case class ProjectAddressLink(id                    : Long,
                               modifiedBy            : Option[String],
                               roadPart              : RoadPart,
                               trackCode             : Long,
-                              elyCode               : Long,
                               roadMaintainer        : ArealRoadMaintainer,
                               discontinuity         : Long,
                               addrMRange            : AddrMRange,

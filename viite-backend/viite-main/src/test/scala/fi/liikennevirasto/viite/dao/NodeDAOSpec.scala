@@ -26,12 +26,12 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
   private val roadNumber1 = 990
   private val roadwayNumber1 = 1000000000L
   private val roadPartNumber1 = 1
-  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), 1, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+  private val testRoadway1 = Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.parse("2000-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
   private val testRoadwayPoint1 = RoadwayPoint(NewIdValue, roadwayNumber1, 0, "Test", None, None, None)
   private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
     DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
   private val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, Some(testNode1.startDate), None,
-    DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, RoadPart(0, 0), Track.Combined, 0, ArealRoadMaintainer.apply("EVK1"))
+    DateTime.parse("2019-01-01"), None, "Test", None, 0, 0, RoadPart(0, 0), Track.Combined, ArealRoadMaintainer.apply("EVK0"))
 
   test("Test fetchByRoadAttributes When non-existing road number Then return None") {
     runWithRollback {
@@ -130,8 +130,8 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
 
       runUpdateToDb(
         sql"""
-             INSERT INTO ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_ely, ROADWAY_CHANGE_ID)
-             Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,8, 1)
+             INSERT INTO ROADWAY_CHANGES(project_id,change_type,new_road_number,new_road_part_number,new_TRACK,new_start_addr_m,new_end_addr_m,new_discontinuity,NEW_ADMINISTRATIVE_CLASS,new_road_maintainer, ROADWAY_CHANGE_ID)
+             Values(100,1,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,'EVK8', 1)
              """
       )
       val projectId =
@@ -166,8 +166,8 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       val ids = junctionPointDAO.create(Seq(testJunctionPoint1.copy(junctionId = junctionId, roadwayPointId = roadwayPointId)))
 
       runUpdateToDb(sql"""
-                    INSERT INTO ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_ely,new_ely, ROADWAY_CHANGE_ID)
-                    VALUES (100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,8,8, 1)
+                    INSERT INTO ROADWAY_CHANGES(project_id,change_type,old_road_number,old_road_part_number,old_TRACK,old_start_addr_m,old_end_addr_m,old_discontinuity,new_discontinuity,OLD_ADMINISTRATIVE_CLASS,NEW_ADMINISTRATIVE_CLASS,old_road_maintainer,new_road_maintainer, ROADWAY_CHANGE_ID)
+                    VALUES (100,2,$roadNumber1,$roadPartNumber1,1,0,10.5,1,1,1,1,'EVK8','EVK8', 1)
                     """)
       val projectId = runSelectSingleFirstWithType[Long](sql"""
              SELECT rac.project_id
@@ -211,8 +211,8 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       val roadwayNumber2 = Sequences.nextRoadwayNumber
       roadwayDAO.create(
         Seq(
-          Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination),
-          Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("EVK1"), TerminationCode.NoTermination)
+          Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination),
+          Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination)
 
         )
       )
@@ -226,8 +226,8 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       // create nodepoints
       nodePointDAO.create(
         Seq(
-          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("EVK1"), Point(100, 100)),
-          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("EVK1"), Point(100, 200))
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, ArealRoadMaintainer.apply("EVK1"), Point(100, 100)),
+          NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, ArealRoadMaintainer.apply("EVK1"), Point(100, 200))
 
         )
       )
@@ -248,14 +248,14 @@ class NodeDAOSpec extends AnyFunSuite with Matchers with BaseDAO {
       )
 
       // fetch
-      val resultForQuery1 = dao.fetchNodesForRoadAddressBrowser(Some("2022-01-01"), None, None, Some(roadPart.roadNumber), None, None)
+      val resultForQuery1 = dao.fetchNodesForRoadAddressBrowser(Some("2022-01-01"), None, Some(roadPart.roadNumber), None, None)
       resultForQuery1.size should be (2)
       resultForQuery1.head shouldBe a [NodeForRoadAddressBrowser]
 
-      val resultForQuery2 = dao.fetchNodesForRoadAddressBrowser(Some("1992-01-01"), None, None, Some(roadPart.roadNumber), None, None)
+      val resultForQuery2 = dao.fetchNodesForRoadAddressBrowser(Some("1992-01-01"), None, Some(roadPart.roadNumber), None, None)
       resultForQuery2.size should be (0)
 
-      val resultForQuery3 = dao.fetchNodesForRoadAddressBrowser(Some("2020-12-12"), None, None, Some(roadPart.roadNumber), None, None)
+      val resultForQuery3 = dao.fetchNodesForRoadAddressBrowser(Some("2020-12-12"), None, Some(roadPart.roadNumber), None, None)
       resultForQuery3.size should be (1)
     }
   }

@@ -66,7 +66,7 @@ class JunctionPointDAOSpec extends AnyFunSuite with Matchers {
  test("Test fetchJunctionPointsByJunctionIds When existing junctionId Then return junction points") {
    runWithRollback {
      val newRoadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
      roadwayDAO.create(Seq(roadway))
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
      val junctionId = junctionDAO.create(Seq(testJunction1)).head
@@ -82,7 +82,7 @@ class JunctionPointDAOSpec extends AnyFunSuite with Matchers {
  test("Test expireById When two created and one expired Then expire one and keep the other") {
    runWithRollback {
      val newRoadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
      roadwayDAO.create(Seq(roadway))
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
      val junctionId = junctionDAO.create(Seq(testJunction1)).head

@@ -618,6 +618,7 @@ class LinearLocationDAO extends BaseDAO {
   }
 
   def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
+    println(s"Expiring linear locations with roadway numbers: ${roadwayNumbers.mkString(", ")}")
     val query =
       sql"""
           UPDATE linear_location
@@ -824,20 +825,11 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
-  def fetchCurrentLinearLocationsByEly(ely: Int): Seq[LinearLocation] = {
+  def fetchCurrentLinearLocationsByEvk(road_maintainer: String): Seq[LinearLocation] = {
     val query =
       sql"""
             $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM ROADWAY WHERE ELY = $ely AND valid_to IS NULL AND end_date IS NULL)
-         """
-    queryList(query)
-  }
-
-  def fetchCurrentLinearLocationsByEvk(evk: Int): Seq[LinearLocation] = {
-    val query =
-      sql"""
-            $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM ROADWAY WHERE EVK = $evk AND valid_to IS NULL AND end_date IS NULL)
+            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM ROADWAY WHERE road_maintainer = $road_maintainer AND valid_to IS NULL AND end_date IS NULL)
          """
     queryList(query)
   }

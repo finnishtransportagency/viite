@@ -20,9 +20,9 @@ class NodePointDAOSpec extends AnyFunSuite with Matchers {
 
  private val testRoadwayPoint1 = RoadwayPoint(NewIdValue, -1, 10, "Test", None, None, None)
  private val testNodePoint1 = NodePoint(NewIdValue, BeforeAfter.Before, -1, None, NodePointType.UnknownNodePointType, None, None,
-   DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, RoadPart(0, 0), Track.Combined, 0, ArealRoadMaintainer.getEVK(0))
+   DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, RoadPart(0, 0), Track.Combined, ArealRoadMaintainer.getEVK(0))
  private val testNodePoint2 = NodePoint(NewIdValue, BeforeAfter.After, -1, None, NodePointType.UnknownNodePointType, None, None,
-   DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, RoadPart(0, 0), Track.Combined, 0,  ArealRoadMaintainer.getEVK(8))
+   DateTime.parse("2019-01-01"), None, "Test", None, -1, 10, RoadPart(0, 0), Track.Combined, ArealRoadMaintainer.getEVK(0))
  private val testNode1 = Node(NewIdValue, NewIdValue, Point(100, 100), Some("Test node 1"), NodeType.NormalIntersection,
    DateTime.parse("2019-01-01"), None, DateTime.parse("2019-01-01"), None, "Test", None, registrationDate = new DateTime())
  private val testLinearLocation1 = LinearLocation(NewIdValue, 1, 1000L.toString, 0.0, 2.8, SideCode.TowardsDigitizing, 10000000000L, (CalibrationPointReference.None, CalibrationPointReference.None), Seq(Point(99.0, 99.0), Point(101.0, 101.0)), LinkGeomSource.NormalLinkInterface, -1)
@@ -66,7 +66,7 @@ class NodePointDAOSpec extends AnyFunSuite with Matchers {
  test("Test fetchNodePointsByNodeId When existing nodeId Then return node points") {
    runWithRollback {
      val newRoadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1999, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now(), None, "test_user", None, 8, ArealRoadMaintainer.getEVK(8), NoTermination, DateTime.now(), None)
+     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1999, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now(), None, "test_user", None, ArealRoadMaintainer.getEVK(8), NoTermination, DateTime.now(), None)
      roadwayDAO.create(Seq(roadway))
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber ))
      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
@@ -81,7 +81,7 @@ class NodePointDAOSpec extends AnyFunSuite with Matchers {
  test("Test fetchTemplatesByBoundingBox When no matches Then return empty Seq") {
    runWithRollback {
      val roadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, roadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway = Roadway(NewIdValue, roadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
      roadwayDAO.create(Seq(roadway))
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None),
@@ -95,7 +95,7 @@ class NodePointDAOSpec extends AnyFunSuite with Matchers {
  test("Test fetchTemplatesByBoundingBox When matches Then return node points") {
    runWithRollback {
      val roadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, roadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway = Roadway(NewIdValue, roadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
      roadwayDAO.create(Seq(roadway))
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = roadwayNumber))
      dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1, nodeNumber = None, createdBy = "Test"),
@@ -112,7 +112,7 @@ class NodePointDAOSpec extends AnyFunSuite with Matchers {
  test("Test expireById When two templates created and one expired Then expire one and keep the other") {
    runWithRollback {
      val newRoadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
      roadwayDAO.create(Seq(roadway))
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))
      val ids = dao.create(Seq(testNodePoint1.copy(roadwayPointId = roadwayPointId1),
@@ -130,7 +130,7 @@ class NodePointDAOSpec extends AnyFunSuite with Matchers {
  test("Test expireById When two created and one expired Then expire one and keep the other") {
    runWithRollback {
      val newRoadwayNumber = Sequences.nextRoadwayNumber
-     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, 8L, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
+     val roadway = Roadway(NewIdValue, newRoadwayNumber, RoadPart(1, 2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 10L), reversed = false, DateTime.now, None, "user", None, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now, None)
      roadwayDAO.create(Seq(roadway))
      val nodeNumber = nodeDAO.create(Seq(testNode1)).head
      val roadwayPointId1 = roadwayPointDAO.create(testRoadwayPoint1.copy(roadwayNumber = newRoadwayNumber))

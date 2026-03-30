@@ -218,7 +218,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      p.geometry, p.linkGeomSource,
      p.roadwayNumber, Some(startDate), p.endDate),
      Roadway(-1000, p.roadwayNumber, p.roadPart, p.administrativeClass, p.track, p.discontinuity, p.addrMRange, p.reversed, startDate, p.endDate,
-       p.createdBy.getOrElse("-"), p.roadName, p.ely, p.roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None))
+       p.createdBy.getOrElse("-"), p.roadName, p.roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None))
  }
 
  test("Test getRoadAddress When the biggest address in section is greater than the parameter $addressM Then should filter out all the road addresses with start address less than $addressM") {
@@ -579,8 +579,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      //Roadways and linear location generated AFTER changes
      val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
      val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(id = id1, ely = 8L)
-     val rw2WithId = rw2.copy(id = id2, ely = 8L)
+     val rw1WithId = rw1.copy(id = id1, roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw2WithId = rw2.copy(id = id2, roadMaintainer = ArealRoadMaintainer.getEVK(8))
      val lc2WithId = lc2
      roadwayDAO.create(Seq(rw1WithId))
      linearLocationDAO.create(Seq(lc1.copy(id = linearLocationId)))
@@ -594,8 +594,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      projectDAO.create(rap)
 
-     val ra1 = RoadAddress(0, lc1.id, RoadPart(99, 2), rw1.administrativeClass, rw1.track, rw1.discontinuity, rw1.addrMRange, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None), lc1.geometry, lc1.linkGeomSource, rw1.ely, rw1.roadMaintainer, NoTermination, rw1.roadwayNumber, None, None, None)
-     val ra2 = RoadAddress(0, lc2.id, RoadPart(99, 2), rw2.administrativeClass, rw2.track, rw2.discontinuity, rw2.addrMRange, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None), lc2.geometry, lc2.linkGeomSource, rw2.ely, rw1.roadMaintainer, NoTermination, rw2.roadwayNumber, None, None, None)
+     val ra1 = RoadAddress(0, lc1.id, RoadPart(99, 2), rw1.administrativeClass, rw1.track, rw1.discontinuity, rw1.addrMRange, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None), lc1.geometry, lc1.linkGeomSource, rw1.roadMaintainer, NoTermination, rw1.roadwayNumber, None, None, None)
+     val ra2 = RoadAddress(0, lc2.id, RoadPart(99, 2), rw2.administrativeClass, rw2.track, rw2.discontinuity, rw2.addrMRange, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None), lc2.geometry, lc2.linkGeomSource, rw1.roadMaintainer, NoTermination, rw2.roadwayNumber, None, None, None)
 
      when(mockRoadAddressService.getRoadAddressWithRoadPart(any[RoadPart], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
      when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -628,7 +628,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      roadwayPointDAO.fetchByRoadwayNumber(rwp)
      }
 
-     val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), None, Option(ArealRoadMaintainer.getEVK(8)), None, None, None, Some(12345L.toString)))
+     val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), Some(20), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(8)), None, None, None, Some(12345L.toString))) //TODO: Muutos evk => None ei jäljitettävissä, mahdollinen ongelmapaikka
 
      val project = projectDAO.fetchById(projectId).get
      roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts)))
@@ -669,8 +669,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      //Roadways and linear location generated AFTER changes
      val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
      val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(id = id1, ely = 8L)
-     val rw2WithId = rw2.copy(id = id2, ely = 8L)
+     val rw1WithId = rw1.copy(id = id1, roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw2WithId = rw2.copy(id = id2, roadMaintainer = ArealRoadMaintainer.getEVK(8))
      val lc2WithId = lc2
      val pls = Seq(link1.copy(roadwayId = id1, linearLocationId = linearLocationId), link2.copy(roadwayId = id2, linearLocationId = linearLocationId+1))
      roadwayDAO.create(Seq(rw1WithId))
@@ -684,8 +684,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      projectDAO.create(rap)
 
-     val ra1 = RoadAddress(0, lc1.id, RoadPart(99, 2), rw1.administrativeClass, rw1.track, rw1.discontinuity, rw1.addrMRange, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None), lc1.geometry, lc1.linkGeomSource, rw1.ely, rw1.roadMaintainer, NoTermination, rw1.roadwayNumber, None, None, None)
-     val ra2 = RoadAddress(0, lc2.id, RoadPart(99, 2), rw2.administrativeClass, rw2.track, rw2.discontinuity, rw2.addrMRange, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None), lc2.geometry, lc2.linkGeomSource, rw2.ely, rw1.roadMaintainer, NoTermination, rw2.roadwayNumber, None, None, None)
+     val ra1 = RoadAddress(0, lc1.id, RoadPart(99, 2), rw1.administrativeClass, rw1.track, rw1.discontinuity, rw1.addrMRange, Some(rw1.startDate), rw1.endDate, Some(rw1.createdBy), lc1.linkId, lc1.startMValue, lc1.endMValue, lc1.sideCode, 1000000, (None, None), lc1.geometry, lc1.linkGeomSource, rw1.roadMaintainer, NoTermination, rw1.roadwayNumber, None, None, None)
+     val ra2 = RoadAddress(0, lc2.id, RoadPart(99, 2), rw2.administrativeClass, rw2.track, rw2.discontinuity, rw2.addrMRange, Some(rw2.startDate), rw2.endDate, Some(rw2.createdBy), lc2.linkId, lc2.startMValue, lc2.endMValue, lc2.sideCode, 1000000, (None, None), lc2.geometry, lc2.linkGeomSource, rw1.roadMaintainer, NoTermination, rw2.roadwayNumber, None, None, None)
 
      when(mockRoadAddressService.getRoadAddressWithRoadPart(any[RoadPart], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
      when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -735,16 +735,18 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      val roadwayPointsBeforeTransferLink = Seq(beforeChangesTransfer).filter(_.status == RoadAddressChangeType.Transfer).map(_.roadwayNumber).distinct.flatMap{ rwp=>
      roadwayPointDAO.fetchByRoadwayNumber(rwp)
      }
-     val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), None, Some(Discontinuity.Continuous), Some(8L), None, None, None, None, Some(12345L.toString)))
+
+
+     val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), None, Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.getEVK(8)), None, None, None, Some(12345L.toString)))
      val formedParts = Seq(ProjectReservedPart(
        id = 0L,
        roadPart = RoadPart(99, 2),
        addressLength = None,
        discontinuity = None,
-       ely = None,
+       roadMaintainer = None,
        newLength = Some(15L),
        newDiscontinuity = Some(Discontinuity.Continuous),
-       roadMaintainer = Some(ArealRoadMaintainer.getEVK(8)),
+       newRoadMaintainer = Some(ArealRoadMaintainer.getEVK(8)),
        startingLinkId = Some(12345L.toString)
      ))
 
@@ -789,7 +791,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      val projectId = Sequences.nextViiteProjectId
      val projectName = "dualRoadwayPoint"
-     val ely = 14
+     val roadMaintainer = ArealRoadMaintainer.getEVK(10)
      val user = "silari"
      val date = DateTime.parse("2022-05-09")
      val originalRoadwayNumber1 = Sequences.nextRoadwayNumber
@@ -808,12 +810,12 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      // create roadways (after projects changes situation)
      val newRoadwaysFor19510 = Seq(
-       Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,AddrMRange(0, 5), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None),
-       Roadway(Sequences.nextRoadwayId, newRoadwayNumber2,      RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(5,15), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None)
+       Roadway(Sequences.nextRoadwayId, newRoadwayNumber1, RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,AddrMRange(0, 5), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None),
+       Roadway(Sequences.nextRoadwayId, newRoadwayNumber2,      RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(5,15), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None)
      )
 
      val newRoadwaysFor19527 = Seq(
-       Roadway(Sequences.nextRoadwayId, newRoadwayNumber3,      RoadPart(19527, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None)
+       Roadway(Sequences.nextRoadwayId, newRoadwayNumber3,      RoadPart(19527, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0, 10), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), roadMaintainer, TerminationCode.NoTermination, DateTime.now(), None)
      )
 
      val newRoadways = newRoadwaysFor19510.union(newRoadwaysFor19527)
@@ -829,28 +831,28 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
      val roadwayChanges = List(
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), roadMaintainer, user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.New,
-           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(None, None, None, None, None, Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date),
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), roadMaintainer, user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 15L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date),
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), ArealRoadMaintainer.getEVK(10), user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(10, 20)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange( 0, 10)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(10, 20)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange( 0, 10)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date)
      )
 
@@ -902,7 +904,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      val projectId = Sequences.nextViiteProjectId
      val projectName = "dualRoadwayPoint"
-     val ely = 14
+     val roadMaintainer = ArealRoadMaintainer.getEVK(10)
      val user = "silari"
      val date = DateTime.parse("2022-05-09")
      val originalRoadwayNumber0 = Sequences.nextRoadwayNumber
@@ -924,13 +926,13 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      // create new roadways (after projects changes situation)
      val newRoadwaysFor19510 = Seq(
-       Roadway(Sequences.nextRoadwayId, originalRoadwayNumber0, RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 5), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None),
-       Roadway(Sequences.nextRoadwayId, newRoadwayNumber1,      RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(5,10), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None)
+       Roadway(Sequences.nextRoadwayId, originalRoadwayNumber0, RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 5), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), ArealRoadMaintainer.getEVK(10), TerminationCode.NoTermination, DateTime.now(), None),
+       Roadway(Sequences.nextRoadwayId, newRoadwayNumber1,      RoadPart(19510, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(5,10), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), ArealRoadMaintainer.getEVK(10), TerminationCode.NoTermination, DateTime.now(), None)
      )
 
      val newRoadwaysFor19527 = Seq(
-       Roadway(Sequences.nextRoadwayId, newRoadwayNumber2,      RoadPart(19527, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 3), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None),
-       Roadway(Sequences.nextRoadwayId, originalRoadwayNumber2, RoadPart(19527, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(3,13), reversed=false, DateTime.now(), None, "silari", Some("testRoadName2"), 14, ArealRoadMaintainer.getEVK(8), TerminationCode.NoTermination, DateTime.now(), None)
+       Roadway(Sequences.nextRoadwayId, newRoadwayNumber2,      RoadPart(19527, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 3), reversed=false, DateTime.now(), None, "silari", Some("testRoadName"), ArealRoadMaintainer.getEVK(10), TerminationCode.NoTermination, DateTime.now(), None),
+       Roadway(Sequences.nextRoadwayId, originalRoadwayNumber2, RoadPart(19527, 1), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad,  AddrMRange(3,13), reversed=false, DateTime.now(), None, "silari", Some("testRoadName2"), ArealRoadMaintainer.getEVK(10), TerminationCode.NoTermination, DateTime.now(), None)
      )
 
      val newRoadways = newRoadwaysFor19510.union(newRoadwaysFor19527)
@@ -947,36 +949,36 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      // create roadway changes that will be handed to the handleRoadwayPointsUpdate function
      val roadwayChanges = List(
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), roadMaintainer, user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(0L, 5L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date),
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), roadMaintainer, user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.Unchanged,
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(5L, 10L)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date),
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), roadMaintainer, user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(10, 13)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange( 0,  3)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(Some(19510), Some(0), Some(1), Some(1), Some(AddrMRange(10, 13)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange( 0,  3)), Some(AdministrativeClass.State), Some(Discontinuity.Continuous),  Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.Continuous, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date),
        ProjectRoadwayChange(
-         projectId, Some(projectName), ely, ArealRoadMaintainer.getEVK(8), user, DateTime.now(),
+         projectId, Some(projectName), roadMaintainer, user, DateTime.now(),
          RoadwayChangeInfo(
            RoadAddressChangeType.Transfer,
-           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange(0, 10)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange(3, 13)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Some(14), Option(ArealRoadMaintainer.getEVK(8))),
-           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, 14),
+           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange(0, 10)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           RoadwayChangeSection(Some(19527), Some(0), Some(1), Some(1), Some(AddrMRange(3, 13)), Some(AdministrativeClass.State), Some(Discontinuity.EndOfRoad), Option(ArealRoadMaintainer.getEVK(10))),
+           Discontinuity.EndOfRoad, AdministrativeClass.State, reversed=false, 4481L, ArealRoadMaintainer.getEVK(10)),
          date)
      )
 
@@ -1012,8 +1014,8 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      //Roadways and linear location generated AFTER changes
      val (lc1, rw1): (LinearLocation, Roadway) = Seq(link1).map(toRoadwayAndLinearLocation).head
      val (lc2, rw2): (LinearLocation, Roadway) = Seq(link2).map(toRoadwayAndLinearLocation).head
-     val rw1WithId = rw1.copy(id = Sequences.nextRoadwayId, ely = 8L)
-     val rw2WithId = rw2.copy(id = Sequences.nextRoadwayId, ely = 8L)
+     val rw1WithId = rw1.copy(id = Sequences.nextRoadwayId, roadMaintainer = ArealRoadMaintainer.getEVK(8))
+     val rw2WithId = rw2.copy(id = Sequences.nextRoadwayId, roadMaintainer = ArealRoadMaintainer.getEVK(8))
      val lc1WithId = lc1.copy(id = Sequences.nextLinearLocationId)
      val lc2WithId = lc2.copy(id = Sequences.nextLinearLocationId)
      roadwayDAO.create(Seq(rw1WithId))
@@ -1028,9 +1030,9 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
 
      projectDAO.create(rap)
 
-     val ra1 = RoadAddress(0, lc1WithId.id, rw1WithId.roadPart, rw1WithId.administrativeClass, rw1WithId.track, rw1WithId.discontinuity, rw1WithId.addrMRange, Some(rw1WithId.startDate), rw1WithId.endDate, Some(rw1WithId.createdBy), lc1WithId.linkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None), lc1WithId.geometry, lc1WithId.linkGeomSource, rw1WithId.ely, rw1WithId.roadMaintainer, NoTermination, rw1WithId.roadwayNumber, None, None, None)
+     val ra1 = RoadAddress(0, lc1WithId.id, rw1WithId.roadPart, rw1WithId.administrativeClass, rw1WithId.track, rw1WithId.discontinuity, rw1WithId.addrMRange, Some(rw1WithId.startDate), rw1WithId.endDate, Some(rw1WithId.createdBy), lc1WithId.linkId, lc1WithId.startMValue, lc1WithId.endMValue, lc1WithId.sideCode, 1000000, (None, None), lc1WithId.geometry, lc1WithId.linkGeomSource, rw1WithId.roadMaintainer, NoTermination, rw1WithId.roadwayNumber, None, None, None)
 
-     val ra2 = RoadAddress(0, lc2WithId.id, rw2WithId.roadPart, rw2WithId.administrativeClass, rw2WithId.track, rw2WithId.discontinuity, rw2WithId.addrMRange, Some(rw2WithId.startDate), rw2.endDate, Some(rw2.createdBy), lc2WithId.linkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None), lc2WithId.geometry, lc2WithId.linkGeomSource, rw2WithId.ely, rw2WithId.roadMaintainer, NoTermination, rw2WithId.roadwayNumber, None, None, None)
+     val ra2 = RoadAddress(0, lc2WithId.id, rw2WithId.roadPart, rw2WithId.administrativeClass, rw2WithId.track, rw2WithId.discontinuity, rw2WithId.addrMRange, Some(rw2WithId.startDate), rw2.endDate, Some(rw2.createdBy), lc2WithId.linkId, lc2WithId.startMValue, lc2WithId.endMValue, lc2WithId.sideCode, 1000000, (None, None), lc2WithId.geometry, lc2WithId.linkGeomSource, rw2WithId.roadMaintainer, NoTermination, rw2WithId.roadwayNumber, None, None, None)
 
      when(mockRoadAddressService.getRoadAddressWithRoadPart(any[RoadPart], any[Boolean], any[Boolean], any[Boolean])).thenReturn(Seq(ra1, ra2))
      when(mockLinearLocationDAO.fetchByRoadways(Set(rw1.roadwayNumber))).thenReturn(Seq(lc1))
@@ -1057,7 +1059,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
      val afterDualPoint  = afterUpdateProjectLinks.last.copy(roadwayNumber = roadwayNumber3)
      val mappedRoadwayChanges = projectLinkDAO.fetchProjectLinksChange(projectId)
 
-     val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), None, Some(Discontinuity.Continuous), Some(8L), None, None, None, None, Some(12345L.toString)))
+     val reservedParts = Seq(ProjectReservedPart(0, RoadPart(99, 2), None, Some(Discontinuity.Continuous), Some(ArealRoadMaintainer.getEVK(8)), None, None, None, Some(12345L.toString)))
 
      val project = projectDAO.fetchById(projectId).get
      roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, Some(project.copy(reservedParts = reservedParts)))
