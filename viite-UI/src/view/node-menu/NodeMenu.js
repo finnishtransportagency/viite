@@ -14,6 +14,7 @@
     let menu = null;
     let initialized = false;
     let currentState = STATE.SEARCH;
+    let pendingSearchNodeNumber = null;
 
     const setCurrentState = function (nextState) {
       if (currentState === nextState) {
@@ -26,6 +27,28 @@
 
     const getBodyContainer = function () {
       return menu ? menu.getBody() : $('#menu-container');
+    };
+
+    const hasCompleteNodeData = function (node) {
+      return Boolean(node) && _.isArray(node.nodePoints) && _.isArray(node.junctions);
+    };
+
+    const openSearchNodeWithMapData = function (searchNode) {
+      const completeNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
+      if (hasCompleteNodeData(completeNode)) {
+        selectedNodesAndJunctions.openNode(completeNode);
+        return;
+      }
+
+      pendingSearchNodeNumber = searchNode.nodeNumber;
+      eventbus.once('node:fetched', function () {
+        if (pendingSearchNodeNumber !== searchNode.nodeNumber) {
+          return;
+        }
+
+        const fetchedNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
+        selectedNodesAndJunctions.openNode(hasCompleteNodeData(fetchedNode) ? fetchedNode : searchNode);
+      });
     };
 
     const dataTable = new root.DataTable();
@@ -63,20 +86,13 @@
           const nodesWithAttributes = nodeCollection.getNodesWithAttributes();
           const node = nodesWithAttributes[index];
 
-          console.log('Node search click:', {
-            index: index,
-            resultsCount: nodesWithAttributes.length,
-            selectedNode: node,
-            selectedNodeKeys: node ? _.keys(node) : []
-          });
-
           if (!node) {
             console.warn('Node search click: no node found for index', index);
             return;
           }
 
           eventbus.trigger('nodeSearchTool:clickNode', index, map);
-          selectedNodesAndJunctions.openNode(node);
+          openSearchNodeWithMapData(node);
         },
         onNodePointTemplateClick: function (templateId) {
           eventbus.trigger('nodeSearchTool:clickNodePointTemplate', templateId);
