@@ -1,58 +1,3 @@
-//== Asset form
-
-#feature-attributes {
-  z-index: 1010;
-
-  header {
-    width: 100%;
-    border-bottom: 1px solid @gray-darker-2;
-    font-size: @font-size-xl;
-    color: #fff;
-    background-color: @gray-darker;
-
-    span {
-      display: block;
-      padding: @line-height-modifier * 2;
-      line-height: (@line-height-modifier * 5) + 2;
-      float: left;
-    }
-
-    span.caption-title {
-      text-transform: uppercase;
-      color: @span-caption-title;
-    }
-  }
-
-  .manualCPWarningSpan {
-    color: #FF0000;
-    font-size: 25px;
-    margin-top: 10px;
-    margin-bottom: -10px;
-    display: none;
-  }
-
-  header {
-    .form-controls {
-      bottom: 0;
-      left: auto;
-      border-top-color: transparent;
-    }
-  }
-
-  .edit-mode {
-
-    label.control-label.required:before,
-    label.control-label-projects.required:before {
-      content: '* ';
-    }
-
-    label.control-label.required,
-    label.control-label-projects.required {
-      color: @warning;
-    }
-  }
-}
-
 .form {
   width: 360px;
 
@@ -150,8 +95,6 @@
     margin-top: @control-label-margin;
   }
 
-
-
   .project-choice-group {
     width: 370px;
     margin-top: 10px;
@@ -218,9 +161,4 @@
     width: 350px;
     word-wrap: break-word;
   }
-}
-
-.menu-header {
-  display: flex;
-  justify-content: space-between;
 }

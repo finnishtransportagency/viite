@@ -1,4 +1,10 @@
-// Handles the project link changes during road addressing
+/*
+ * LinkEditForm: Form for editing individual road links (change type, address, distance).
+ * Manages complex state (FormState) for change tracking, validation, and unsaved changes.
+ * Renders complete form via render() and footer via renderFooter() for MenuContainer integration.
+ * Supports disposable lifecycle: rebuilt per show, all listeners bound to fresh DOM.
+ * Key methods: bindEvents(), cancelChanges(), validateAndSave() for form interaction.
+ */
 (function (root) {
   root.LinkEditForm = function (startupParameters) {
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
@@ -240,7 +246,7 @@
 
       return `
         <div hidden class="form-group changeDirectionDiv" style="margin-top:15px">
-          <button id="changeDirectionButton" class="form-group changeDirection btn btn-primary">Käännä tieosan kasvusuunta</button>
+          <button id="changeDirectionButton" class="form-group changeDirection btn-primary">Käännä tieosan kasvusuunta</button>
           ${infoLabel}
         </div>`;
     };
@@ -420,7 +426,7 @@
     };
 
     const checkInputs = (projectChangeTable) => {
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
       const inputs = rootElement.find('input');
       const pedestrianRoads = 70000;
       
@@ -447,7 +453,7 @@
 
     const changeDropDownValue = function (statusCode, selectedLinks, projectCollection) {
       const dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
       
       switch (statusCode) {
         case RoadAddressChangeType.Unchanged.value:
@@ -525,7 +531,7 @@
     };
 
     const updateFormControls = (changeType, selectedLinks, projectCollection) => {
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
       
       const formControls = {
         tie: $('#tie'),
@@ -656,7 +662,7 @@
     // 4. EVENT LISTENERS (CONTROLLER)
     // ==========================================
     const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable) {
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
 
       const disableFormInputs = () => {
         if (!project || _.includes(editableStatus, project.statusCode)) {

@@ -1,4 +1,9 @@
-// This handles project creation and edits, road reservations and start date selection for when the changes will take place
+/*
+ * ProjectDetailsForm: Configuration form for project metadata (name, start date, additional info).
+ * Manages project creation and editing, road part reservations, and table displays.
+ * Tracks unsaved changes state and integrates with ProjectMenu for state transitions.
+ * Component is rebuilt on each show() to support disposable lifecycle pattern.
+ */
 (function (root) {
   root.ProjectDetailsForm = function (callbacks = {}) {
     let startDatePicker = null;
@@ -157,21 +162,14 @@
 
     const renderFooter = function (project, isEditMode = false) {
       const ProjectStatus = ViiteEnumerations.ProjectStatus;
-      const isProjectPublished = Boolean(
-        project &&
-        !_.isUndefined(project.statusCode) &&
-        ![
-          ProjectStatus.Incomplete.value,
-          ProjectStatus.ErrorInViite.value,
-          ProjectStatus.Unknown.value
-        ].includes(project.statusCode)
-      );
+      const isProjectPublished = isPublishedProject(project);
       const isFormIncomplete = !(project && project.name && project.startDate);
       const isNewProject = project.name === '';
+      const isSaveDisabled = isProjectPublished || isFormIncomplete || !hasUnsavedChanges;
       const showDelete = !isNewProject && ![ProjectStatus.Accepted.value, ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode);
       const actionButton = (isNewProject || !isEditMode)
         ? `<button id="generalNext" class="save btn-primary btn-save action-button" ${isFormIncomplete ? 'disabled' : ''}>Jatka toimenpiteisiin</button>`
-        : `<button id="saveProject" class="save btn-primary btn-save action-button" ${isProjectPublished || isFormIncomplete ? 'disabled' : ''}>Tallenna</button>`;
+        : `<button id="saveProject" class="save btn-primary btn-save action-button" ${isSaveDisabled ? 'disabled' : ''}>Tallenna</button>`;
       
       const cancelButton = (isNewProject || !isEditMode)
         ? `<button id="saveAndCancelDialogue" class="cancel btn-cancel">Poistu</button>`
@@ -180,10 +178,8 @@
       return `
         <div class="footer-project-details ${!showDelete ? 'no-delete' : ''}" id="actionButtons">
           ${showDelete ? `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${project.id}" class="fas fa-trash-alt" value="${project.id}"></i></span>` : ''}
-          <div>
-            ${actionButton}
-            ${cancelButton}
-          </div>
+          ${actionButton}
+          ${cancelButton}
         </div>`;
     };
 
@@ -211,6 +207,34 @@
       const shouldDisableButton = isFormIncomplete || !isDateValid;
       $('#generalNext').prop('disabled', shouldDisableButton);
     };
+
+    const isPublishedProject = function (projectData) {
+      const ProjectStatus = ViiteEnumerations.ProjectStatus;
+      return Boolean(
+        projectData &&
+        !_.isUndefined(projectData.statusCode) &&
+        ![
+          ProjectStatus.Incomplete.value,
+          ProjectStatus.ErrorInViite.value,
+          ProjectStatus.Unknown.value
+        ].includes(projectData.statusCode)
+      );
+    };
+
+    const isProjectFormIncomplete = function () {
+      const nameValue = $('#nimi').val() || '';
+      const dateValue = $('#projectStartDate').val() || '';
+      const hasName = nameValue.trim() !== '';
+      const hasDate = dateValue.trim() !== '';
+      const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
+      const isDateValid = !hasDate || dateRegex.test(dateValue);
+      return !hasName || !hasDate || !isDateValid;
+    };
+
+    const updateSaveButtonState = function (projectData) {
+      const shouldDisable = isPublishedProject(projectData) || isProjectFormIncomplete() || !hasUnsavedChanges;
+      $('#saveProject').prop('disabled', shouldDisable);
+    };
     
     const markAsChanged = function() {
       hasUnsavedChanges = true;
@@ -224,32 +248,51 @@
       return hasUnsavedChanges;
     };
 
+    const navigateToActionMenu = function(projectData) {
+      if (typeof callbacks.continueToActions === 'function') {
+        callbacks.continueToActions({ project: projectData });
+      }
+    };
+
     const bindEvents = function (project, projCollection, currentProject) {
       const projectData = project || { name: '', startDate: '', additionalInfo: '', id: null };
+      markAsSaved();
       
+      // Clean up old listeners before binding new ones (disposable pattern)
       if (startDatePicker) {
         startDatePicker.addToElement($('#projectStartDate'));
-        startDatePicker.getElement().on('input change', function() {
+        // Unbind any previous listeners from date picker
+        startDatePicker.getElement().off('input change').on('input change', function() {
           const validationUtils = new root.ValidationUtils();
           $('#projectStartDate-validation-notification').text(validationUtils.checkDateNotification($(this).val()));
           updateContinueButtonState(projectData);
           updateReserveButtonState();
           markAsChanged();
+          updateSaveButtonState(projectData);
         });
       }
       
-      $('#nimi').on('input change', () => {
+      // Unbind form inputs before rebinding (prevents duplicate handlers on re-render)
+      $('#nimi').off('input change').on('input change', () => {
         updateContinueButtonState(projectData);
         markAsChanged();
+        updateSaveButtonState(projectData);
       });
-      $('#lisatiedot').on('input change', () => markAsChanged());
-      $('#tie, #aosa, #losa').on('input change', () => updateReserveButtonState());
+      
+      $('#lisatiedot').off('input change').on('input change', () => {
+        markAsChanged();
+        updateSaveButtonState(projectData);
+      });
+      
+      $('#tie, #aosa, #losa').off('input change').on('input change', () => updateReserveButtonState());
       
       updateContinueButtonState(projectData);
       updateReserveButtonState();
+      updateSaveButtonState(projectData);
 
-      // Set up global event listeners for project operations
-      eventbus.on('roadAddress:projectValidationFailed', function(errorMessage) {
+      // Set up global event listeners for project operations (using namespaced events for cleanup)
+      const componentNamespace = '.projectDetailsForm';
+      eventbus.off('roadAddress:projectValidationFailed' + componentNamespace).on('roadAddress:projectValidationFailed' + componentNamespace, function(errorMessage) {
         applicationModel.removeSpinner();
         console.error(errorMessage);
         new ConfirmPopup(errorMessage || 'Projektin tallennus epäonnistui.', {
@@ -258,7 +301,7 @@
         });
       });
 
-      eventbus.on('roadAddress:projectFailed', function() {
+      eventbus.off('roadAddress:projectFailed' + componentNamespace).on('roadAddress:projectFailed' + componentNamespace, function() {
         applicationModel.removeSpinner();
         new ConfirmPopup('Projektin tallennus epäonnistui.', {
           type: 'alert',
@@ -362,6 +405,11 @@
       });
 
       $('#saveAndCancelDialogue, #cancelEdit').off('click').on('click', function() {
+        const isEditCancel = $(this).attr('id') === 'cancelEdit';
+        const returnToActions = function(savedProject) {
+          const targetProject = savedProject || (projectCollection.getCurrentProject() && projectCollection.getCurrentProject().project) || projectData;
+          navigateToActionMenu(targetProject);
+        };
 
         if (getUnsavedChangesState()) {
           new ConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
@@ -397,8 +445,13 @@
                   
                   // Set the selected layer to roadAddressProject when project is saved
                   applicationModel.selectLayer('roadAddressProject', true, false);
-                  callbacks.closeProjectMenu();
-                  window.mainMenu.setState('main');
+
+                  if (isEditCancel) {
+                    returnToActions(latestProject);
+                  } else {
+                    callbacks.closeProjectMenu();
+                    window.mainMenu.setState('main');
+                  }
                 }
               });
 
@@ -410,6 +463,12 @@
 
             },
             closeCallback: function () {
+              if (isEditCancel) {
+                applicationModel.selectLayer('roadAddressProject', true, false);
+                returnToActions();
+                return;
+              }
+
               // Close without saving - reset layer to default
               applicationModel.selectLayer('linkProperty', true, false);
               callbacks.closeProjectMenu();
@@ -417,6 +476,12 @@
             }
           });
         } else {
+          if (isEditCancel) {
+            applicationModel.selectLayer('roadAddressProject', true, false);
+            returnToActions();
+            return;
+          }
+
           // No unsaved changes, close directly - reset layer to default
           applicationModel.selectLayer('linkProperty', true, false);
           callbacks.closeProjectMenu();
@@ -470,6 +535,7 @@
         }
         updateReserveButtonState();
         markAsChanged(); // Mark project as having unsaved changes when reservation is made
+        updateSaveButtonState(currentProject);
       });
     };
 
@@ -513,6 +579,7 @@
         }));
         
         refreshRoadPartsDisplay(projCollection, currentProject);
+        updateSaveButtonState(currentProject);
       };
 
       const removeReservedPart = function (roadNumber, roadPartNumber) {
@@ -524,6 +591,7 @@
         
         removeRenumberedPart(roadNumber, roadPartNumber);
         refreshRoadPartsDisplay(projCollection, currentProject);
+        updateSaveButtonState(currentProject);
       };
 
       $('.form-result').off('click', '.btn-delete').on('click', '.btn-delete', function () {

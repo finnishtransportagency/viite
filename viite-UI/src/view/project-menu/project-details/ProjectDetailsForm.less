@@ -32,6 +32,11 @@
   flex-direction: column;
   margin: 4px 4px;
 
+  textarea {
+    resize: vertical;
+    min-height: 68px;
+  }
+
   .form-row {
     display: flex;
     gap: 10px;
@@ -157,9 +162,6 @@
   justify-content: space-between !important;
   align-items: center;
   gap: 8px;
-  margin-top: 15px;
-  border-top: 1px solid @gray-darker-2;
-  padding: 8px;
 
   > div {
     display: flex;
@@ -170,6 +172,7 @@
 
 .footer-project-details.no-delete {
   justify-content: flex-end !important;
+  width: 100%;
 }
 
 .deleteSpan {

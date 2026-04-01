@@ -1,22 +1,50 @@
+/**
+ * MainMenu - Renders the main navigation panel and manages top-level UI state.
+ * Switches between the main button menu, link info view, and delegated module states.
+ */
 (function (root) {
-  root.MainMenu = function (selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel) {
-    const rootElement = $('#feature-attributes');
+  root.MainMenu = function (selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule) {
+    const rootElement = $('#menu-container');
     const linkInfo = new root.LinkInfo(selectedLinkProperty);
+    let menu = null;
 
-    const setState = (state, data) => {
-      rootElement.empty();
-      switch (state) {
-        case 'main':     renderMainMenu(); break;
-        case 'linkInfo': rootElement.html(linkInfo.render(data)); break;
-        case 'project':  /* Handled by ProjectList */ break;
-        case 'node':     /* Handled by NodesAndJunctions component */ break;
-        default:         renderMainMenu(); break;
+    const createMenuContainer = () => {
+      if (!root.MenuContainer) {
+        return null;
+      }
+        return new root.MenuContainer(rootElement);
+    };
+
+    const renderBody = (html) => {
+      menu = createMenuContainer();
+      if (menu) {
+        menu.setBody(html);
+      } else {
+        rootElement.html(html);
       }
     };
 
-    const renderMainMenu = () => {
+    const setState = (state, data) => {
+      switch (state) {
+        case 'main':
+          renderBody(renderMainMenuBody());
+          bindMenuActions();
+          break;
+        case 'linkInfo':
+          renderBody(linkInfo.render(data));
+          break;
+        case 'project':  /* Handled by ProjectList */ break;
+        case 'node':     /* Handled by NodesAndJunctions component */ break;
+        default:
+          renderBody(renderMainMenuBody());
+          bindMenuActions();
+          break;
+      }
+    };
+
+    const renderMainMenuBody = () => {
       const roles = startupParameters.roles;
-      const html = `
+      return `
         <div class="main-menu-container">
           <div class="main-menu-button-wrapper">
             ${_.includes(roles, 'viite') ? `
@@ -30,16 +58,12 @@
             ${_.includes(roles, 'admin') ? `<button id="formAdminPanelButton" class="btn-primary btn-lg">Admin paneeli</button>` : ''}
           </div>
         </div>`;
-      
-      rootElement.append(html);
-      bindMenuActions();
     };
 
     const bindMenuActions = () => {
-      // Remove any existing event handlers to prevent duplicates
-      rootElement.off('click', 'button');
+      rootElement.off('click.mainMenu', 'button');
       
-      rootElement.on('click', 'button', (e) => {
+      rootElement.on('click.mainMenu', 'button', (e) => {
         e.preventDefault();
         const buttonId = e.currentTarget.id;
         let projectOpen;
@@ -59,8 +83,7 @@
             break;
 
           case 'formNodesAndJunctionsButton':
-            //eventbus.trigger('nodesAndJunctions:open');
-            // nodesAndJuctionsMenu.show();
+            nodesAndJunctionsModule.show();
             break;
 
           case 'formRoadAddressBrowserButton':
@@ -96,6 +119,11 @@
       // Close link properties menu when map is clicked that doesn't have a link
       eventbus.on('linkProperties:unselected', () => {
         if (!applicationModel.isProjectOpen()) setState('main');
+      });
+      
+      // Close nodes and junctions menu and return to main menu
+      eventbus.on('nodesAndJunctions:close', () => {
+        setState('main');
       });
       
     };

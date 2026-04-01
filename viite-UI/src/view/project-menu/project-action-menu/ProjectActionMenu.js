@@ -1,4 +1,10 @@
-// Contains the error list and buttons for project actions, like recalculation, opening change table and saving changes to road address network
+/*
+ * ProjectActionMenu: Renders action buttons and error list for road addressing workflow.
+ * Manages project validation, recalculation, change table display, and publication.
+ * Tracks state (hasErrors, recalculated, changeTableOpen, publishable) to control button availability.
+ * Returns HTML strings (renderContent, renderFooter) for MenuContainer integration.
+ * Provides refresh() for selective DOM updates and updateState() for external state management.
+ */
 (function (root) {
   root.ProjectActionMenu = function (options) {
     const {
@@ -8,7 +14,7 @@
       applicationModel,
       backend,
       projectChangeTable,
-      container = '#feature-attributes',
+      container = '#menu-container',
       closeProjectMenu,
       initialState = {},
       onStateChange

@@ -1,4 +1,9 @@
-// The main entrypoint and orchestrator for project creation and editing
+/*
+ * ProjectMenu: Orchestrates project workflow via MenuContainer.
+ * Manages state transitions (CONFIGURATION → ROAD_ADDRESSING → LINK_EDIT)
+ * and delegates rendering to child components (ProjectDetailsForm, ProjectActionMenu, LinkEditForm).
+ * Uses MenuContainer's setHeader(), setBody(), setFooter() for clean content updates.
+ */
 (function (root) {
   const States = {
     CONFIGURATION:   'CONFIGURATION',
@@ -7,8 +12,38 @@
   };
 
   root.ProjectMenu = function (containerSelector, eventBus, options = {}) {
-    const rootElement = $(containerSelector || '#feature-attributes');
+    const rootElement = $(containerSelector || '#menu-container');
     const eventbus = eventBus;
+    let menu = null;
+
+    const closeProjectMenu = () => {
+      
+      // Reset component state
+      currentState = States.CONFIGURATION;
+      project.data = null;
+      project.isNew = false;
+      editFlag = false;
+      additionalData = { selectedLinks: [] };
+      
+      // Clean up MenuContainer and release DOM references
+      if (menu) {
+        menu.clear();
+        menu = null;
+      }
+      
+      // Restore main UI state
+      window.mainMenu.setState('main');
+      eventbus.trigger('layer:selected', 'linkProperty', null, true);
+      applicationModel.setOpenProject(false);
+      applicationModel.selectLayer('linkProperty');
+    };
+
+    const ensureMenu = () => {
+      if (!menu) {
+        menu = new root.MenuContainer(rootElement, closeProjectMenu);
+      }
+      return menu;
+    };
 
     // --- State & Project Management ---
     let currentState = States.ROAD_ADDRESSING;
@@ -103,58 +138,53 @@
           break;
       }
 
-      const html = `
-        <div class="wrapper">
-          <header class="menu-header">${renderTitle()}</header>
-          <main class="content-area">${contentHtml}</main> <footer>${footerHtml}</footer>
-        </div>`;
-
-      rootElement.html(html);
+      const activeMenu = ensureMenu();
+      // Update MenuContainer with fresh content from child component
+      activeMenu.setHeader(renderTitle());
+      activeMenu.setBody(contentHtml);
+      activeMenu.setFooter(footerHtml);
+      // Bind event handlers to newly rendered DOM (disposable pattern)
       bindInternalEvents(childInstance);
     };
 
     const renderTitle = () => {
       if (!project.data || !project.data.name) {
-        return `<span class="edit-mode-title">Uusi tieosoiteprojekti</span>`;
+        return 'Uusi tieosoiteprojekti';
       }
 
       if (currentState === States.CONFIGURATION) {
         const hasPersistedProject = !_.isUndefined(project.data.id) && project.data.id !== null && project.data.id !== 0;
         if (hasPersistedProject) {
-          return `
-            <span class="edit-mode-title">${project.data.name}</span>
-            <span id="closeProjectSpan">Sulje <i class="fas fa-window-close"></i></span>`;
+          return project.data.name;
         }
-        return `<span class="edit-mode-title">${project.data.name}</span>`;
+        return project.data.name;
       }
 
-      return `
-        <span class="edit-mode-title">${project.data.name} 
-          <i id="editProjectSpan" class="btn-pencil-edit fas fa-pencil-alt"></i>
-        </span>
-        <span id="closeProjectSpan">Sulje <i class="fas fa-window-close"></i></span>`;
+      return `${project.data.name} <i id="editProjectSpan" class="btn-pencil-edit fas fa-pencil-alt"></i>`;
     };
 
     const bindInternalEvents = function (activeChild) {
+      // Always work with fresh DOM references (disposable pattern)
+      // Unbind any previous listeners before binding new ones
       const editSpan = rootElement.find('#editProjectSpan');
-      const closeSpan = rootElement.find('#closeProjectSpan');
-
-      editSpan.on('click', () => { editFlag = true; updateUI(States.CONFIGURATION, project.data, false); });
-      closeSpan.on('click', () => closeProjectMenu());
+      editSpan.off('click').on('click', () => { 
+        editFlag = true; 
+        updateUI(States.CONFIGURATION, project.data, false); 
+      });
 
       // Bind save and cancel button events for LINK_EDIT state
       if (currentState === States.LINK_EDIT) {
         const saveButton = rootElement.find('#saveButton');
         const cancelButton = rootElement.find('#cancelButton');
 
-
-        saveButton.on('click', () => {
+        // Unbind to prevent duplicate handlers
+        saveButton.off('click').on('click', () => {
           if (options.projectCollection && activeChild) {
             activeChild.validateAndSave(options.projectCollection, additionalData.selectedLinks);
           }
         });
         
-        cancelButton.on('click', () => {
+        cancelButton.off('click').on('click', () => {
           if (activeChild && typeof activeChild.cancelChanges === 'function') {
             activeChild.cancelChanges({
               onCancel: function () {
@@ -167,6 +197,7 @@
         });
       }
 
+      // Delegate child-specific event binding
       if (activeChild && typeof activeChild.bindEvents === 'function') {
         if (currentState === States.CONFIGURATION) {
           activeChild.bindEvents(project.data, options.projectCollection, project.data);
@@ -198,19 +229,6 @@
       }
       
       render();
-    };
-
-    const closeProjectMenu = () => {
-      console.log("closing menuy");
-      currentState = States.CONFIGURATION;
-      project.data = null;
-      project.isNew = false;
-      editFlag = false;
-      rootElement.empty();
-      window.mainMenu.setState('main');
-      eventbus.trigger('layer:selected', 'linkProperty', null, true);
-      applicationModel.setOpenProject(false);
-      applicationModel.selectLayer('linkProperty');
     };
 
     // --- Listeners ---

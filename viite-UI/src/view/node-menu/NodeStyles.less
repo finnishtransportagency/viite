@@ -1,0 +1,385 @@
+// ===== Node menu color variables =====
+@node-color-gold: #e19656;
+@node-color-amber: #c09853;
+@node-color-border-gray: #a3a4a1;
+@node-color-junction-blue: #5fa6ec;
+
+// ===== Node editor form =====
+
+.node-metadata-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-right: 48px;
+
+  .node-editor-field-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .node-editor-field-label {
+    flex: 0 0 92px;
+    display: flex;
+    align-items: center;
+    margin: 0;
+    color: @node-color-gold !important;
+    line-height: 1.2;
+  }
+
+  .node-editor-field-control {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+  }
+}
+
+.required {
+  color: @node-color-amber;
+}
+
+.node-form-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .asset-input-node-data {
+    width: 210px;
+    max-width: 100%;
+  }
+}
+
+.node-editor-footer {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+// ===== Node editor tables =====
+
+.node-junctions-table-header {
+  color: #fff;
+  font-weight: bold;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  padding: 8px;
+  border-bottom: 2px solid @node-color-border-gray;
+
+  .btn-pencil-edit {
+    margin-left: 0;
+  }
+}
+
+.node-junctions-table {
+  font-size: 12px;
+  border-collapse: collapse;
+  width: 100%;
+  border: 2px solid @gray-lighter;
+
+  th {
+    border: 1px solid @gray-lighter;
+    text-align: center;
+    padding: 8px;
+    background-color: @gray-darker;
+  }
+
+  td {
+    text-align: center;
+    padding: 8px;
+    font-weight: bold;
+  }
+
+
+}
+
+.node-points-table {
+  font-size: 12px;
+  text-align: left;
+  color: @gray-lighter;
+}
+
+.node-points-table-dimension {
+  width: 100%;
+}
+
+.node-flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.junction-number-input {
+  text-align: center;
+  width: 20px !important;
+  display: block;
+  margin: 10px auto !important;
+}
+
+.junction-number-input.junction-number-input-empty {
+  border: 1px solid rgb(223, 34, 34);
+}
+
+.junction-point-address-input {
+  width: 50px !important;
+  margin: 1px 0 !important;
+}
+
+// ===== Node template table =====
+
+.node-template-table {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+  margin-top: 10px;
+
+  .node-junctions-table-border-bottom {
+    border-bottom: 2px solid @node-color-border-gray;
+  }
+
+  td {
+    padding: 5px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .node-points-table.template,
+  .node-junctions-table.template {
+    color: @node-color-gold;
+    font-weight: bold;
+  }
+}
+
+// ===== Search controls =====
+
+.label-centered {
+  text-align: center;
+  display: block;
+  margin: 0;
+  line-height: 1;
+}
+
+.node-search-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 2fr;
+  column-gap: 8px;
+  row-gap: 8px;
+  align-items: end;
+}
+
+.grid-column-center {
+  grid-column: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.grid-column-center-2 {
+  grid-column: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.grid-column-center-3 {
+  grid-column: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.grid-column-input-1 {
+  grid-column: 1;
+}
+
+.grid-column-input-2 {
+  grid-column: 2;
+}
+
+.grid-column-input-3 {
+  grid-column: 3;
+}
+
+.grid-column-button {
+  grid-column: 4;
+}
+
+.grid-column-full {
+  grid-column: 1 / 4;
+}
+
+#clear-node-search {
+  height: 20px;
+  padding: 0 8px;
+  line-height: 20px;
+  font-size: 12px;
+}
+
+.btn-clean-node-search {
+  width: 100%;
+  height: 27px !important;
+}
+
+// ===== Search results =====
+
+
+.node-search-section-title-container {
+  width: 100%;
+  display: block;
+  color: white;
+
+  label {
+    font-size: 14px;
+    font-weight: bold;
+  }
+}
+
+.evk-group-label {
+  color: @node-color-amber !important;
+}
+
+.node-search-group-row {
+  color: @node-color-amber;
+  padding-top: 15px !important;
+  padding-bottom: 5px !important;
+  text-align: left !important;
+}
+
+.node-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 10px;
+  font-size: 13px;
+
+  .node-link {
+    font-weight: bold;
+    cursor: pointer;
+    color: @node-color-junction-blue;
+
+    &:hover {
+      filter: brightness(1.1);
+    }
+  }
+}
+
+.node-search-results-address-header {
+  color: white;
+}
+
+.node-search-results-label,
+.node-search-results-value {
+  color: #f4b183;
+}
+
+// ===== Template links =====
+
+.node-point-template-link {
+  font-weight: bold;
+  cursor: pointer;
+  color: @node-color-gold;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.junction-template-link {
+  font-weight: bold;
+  cursor: pointer;
+  color: @node-color-junction-blue;
+  transition: filter 0.2s ease;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+// ===== Search table =====
+
+.node-search-table {
+  width: 100%;
+  text-align: center;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 12px;
+
+  thead {
+    border-bottom: 2px solid @node-color-border-gray;
+  }
+
+  th {
+    padding: 5px;
+    color: #fff;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  td {
+    padding: 5px;
+    border-bottom: 1px solid #4a4a4a;
+    font-weight: bold;
+    text-align: center;
+  }
+
+  .node-point-template-link,
+  .junction-template-link {
+    font-weight: bold;
+  }
+
+  .junction-template-link {
+      color: @node-color-junction-blue;
+  }
+
+  th.detach-column-left,
+  td.detach-column-left {
+    text-align: left;
+    padding-left: 8px;
+  }
+}
+
+// ===== Template lists and clickable rows =====
+
+.node-template-clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+}
+
+.node-search-table {
+  .node-point-template-static-row {
+    color: @node-color-gold;
+  }
+
+  .junction-template-static-row {
+    color: @node-color-junction-blue;
+  }
+}
+
+.node-template-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+
+  button {
+    height: 32px;
+  }
+
+  .node-template-actions-split-row {
+    display: flex;
+    gap: 6px;
+    justify-content: space-between;
+  }
+}
+
+.data-table-container {
+  p {
+    color:white;
+    font-weight: bold;
+    font-size: 14px;
+  }
+}

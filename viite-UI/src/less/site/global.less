@@ -1,5 +1,4 @@
 body {
-  min-width: (@feature-attribute-panel-width * 2);
   min-height: 100vh;
   overflow: hidden;
   display: flex;
@@ -71,11 +70,9 @@ a {
 }
 
 .header-link {
-  display: inline-block;
   float: right;
   padding: 0 8px;
   border-radius: @border-radius-base;
-  font-size: 11px;
   text-decoration: none;
   color: #fff;
   background-color: @gray-darker;
@@ -87,9 +84,6 @@ a {
     text-decoration: none;
   }
 }
-
-//== Main site structure
-@feature-attribute-panel-width: 400px;
 
 .container {
   position: relative;
@@ -115,14 +109,6 @@ a {
   background-color: #383836;
 }
 
-#feature-attributes {
-  position: relative;
-  flex: 0 0 @feature-attribute-panel-width;
-  width: @feature-attribute-panel-width;
-  min-height: 0;
-  background-color: @gray-darker;
-  overflow: hidden;
-}
 
 #contentMap {
   position: relative;
@@ -311,5 +297,13 @@ img.calibration-point {
 .fa-window-close {
   &:hover {
     cursor: pointer !important;
+  }
+}
+
+.form-check-date-notifications {
+  p {
+    color: @warning;
+    font-size: @font-size-small;
+    margin: 5px 0 0 110px;
   }
 }

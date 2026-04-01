@@ -131,13 +131,20 @@
     const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
     const roadNetworkErrorsList = new RoadNetworkErrorsList(backend);
     const adminPanel = new AdminPanel(backend);
+    
+    // Initialize node menu state router
+    const nodesAndJunctionsModule = new NodeMenu(
+      map,
+      models.nodeCollection,
+      backend,
+      models.selectedNodesAndJunctions,
+      models.roadCollection,
+      startupParameters
+    );
+    nodesAndJunctionsModule.initialize();
 
-    const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel);
+    const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule);
     window.mainMenu = mainMenu;
-
-    // Initialize forms and tools
-    new NodeSearchForm(new InstructionsPopup(jQuery('.digiroad2')), map, models.nodeCollection, backend);
-    new NodeForm(models.selectedNodesAndJunctions, models.roadCollection, backend, startupParameters);
     
     return { mainMenu };
   };
@@ -154,7 +161,7 @@
       startupParameters: startupParameters
     });
 
-    const projectMenu = new ProjectMenu('#feature-attributes', eventbus, {
+    const projectMenu = new ProjectMenu('#menu-container', eventbus, {
       projectMenu: projectActionMenu,
       projectCollection: models.projectCollection,
       applicationModel,
