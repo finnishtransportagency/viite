@@ -1,9 +1,20 @@
-(function (root) {
-  /**
-   * NodeMenu - State-driven wrapper for Search -> DataMenu -> Editor flow.
-   * Owns panel rendering, event wiring and search-first transition rules.
-   */
-  root.NodeMenu = function (map, nodeCollection, backend, selectedNodesAndJunctions, roadCollection, startupParameters) {
+/**
+ * Coordinates the node search, detail display, and edit flows inside the node side panel.
+ * Switches between search, template, and editor states while keeping map actions synchronized.
+ */
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { DataTable } from '@node-menu/DataTable.js';
+import { InstructionsPopup } from '@components/InstructionsPopup.js';
+import { MenuContainer } from '@components/MenuContainer.js';
+import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
+import { NodeEditor } from '@node-menu/NodeEditor.js';
+import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
+export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions, roadCollection, startupParameters, dependencies) {
+  const applicationModel = dependencies.applicationModel;
+  const navigateToHash = dependencies.navigateToHash;
+
     const STATE = {
       SEARCH: 'search',
       DISPLAY_NODE: 'display-node',
@@ -51,12 +62,20 @@
       });
     };
 
-    const dataTable = new root.DataTable();
-    const searchMenu = new root.NodeSearchMenu(dataTable, getBodyContainer, {
+    const dataTable = new DataTable();
+    const searchMenu = new NodeSearchMenu(dataTable, getBodyContainer, {
       searchResultsFontSize: startupParameters.nodeSearchResultsFontSize || 12
     });
-    const dataMenu = new root.NodeDataMenu(dataTable, getBodyContainer);
-    const nodeEditor = new root.NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, getBodyContainer);
+    const dataMenu = new NodeDataMenu(dataTable, getBodyContainer, {
+      applicationModel: applicationModel
+    });
+    const nodeEditor = new NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, getBodyContainer, {
+      ConfirmPopup: ConfirmPopup,
+      dateutil: dependencies.dateutil,
+      moment: dependencies.moment,
+      ViiteEnumerations: ViiteEnumerations,
+      eventbus: eventbus
+    });
 
     const showSearch = function () {
       setCurrentState(STATE.SEARCH);
@@ -96,11 +115,11 @@
         },
         onNodePointTemplateClick: function (templateId) {
           eventbus.trigger('nodeSearchTool:clickNodePointTemplate', templateId);
-          window.location.hash = 'node/nodePointTemplate/' + templateId;
+          navigateToHash(`node/nodePointTemplate/${templateId}`);
         },
         onJunctionTemplateClick: function (templateId) {
           eventbus.trigger('nodeSearchTool:clickJunctionTemplate', templateId);
-          window.location.hash = 'node/junctionTemplate/' + templateId;
+          navigateToHash(`node/junctionTemplate/${templateId}`);
         }
       });
 
@@ -232,7 +251,7 @@
         eventbus.trigger('nodesAndJunctions:close');
       };
 
-      menu = new root.MenuContainer('#menu-container', closeHandler);
+      menu = new MenuContainer('#menu-container', closeHandler);
       eventbus.trigger('nodesAndJunctions:open');
     };
 
@@ -259,7 +278,7 @@
       hide: hide,
       setState: setState
     };
-  };
+  }
 
-  root.NodeMenuStateRouter = root.NodeMenu;
-}(this));
+window.NodeMenu = NodeMenu;
+window.NodeMenuStateRouter = NodeMenu;

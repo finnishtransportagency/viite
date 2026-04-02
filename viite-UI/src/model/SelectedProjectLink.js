@@ -8,8 +8,7 @@
  * - Error handling for problematic links
  * - Event triggering for selection changes
  */
-(function (root) {
-  root.SelectedProjectLink = function (projectLinkCollection) {
+export function SelectedProjectLink(projectLinkCollection) {
 
     var current = [];
     var me = this;
@@ -152,5 +151,6 @@
       isDirty: isDirty,
       setDirty: setDirty
     };
-  };
-}(this));
+}
+
+window.SelectedProjectLink = SelectedProjectLink;

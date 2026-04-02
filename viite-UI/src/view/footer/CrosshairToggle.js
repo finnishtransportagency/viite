@@ -11,7 +11,7 @@
  * Capture data of the clicked feature:
  * const data = await page.evaluate(() => window.crosshair.click());
  */
-window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
+export const createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
   const crosshairSelector = '.crosshair';
 
   const performClick = (callback, isDoubleClick = false) => {
@@ -127,3 +127,5 @@ window.createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
     }
   }
 };
+
+window.createCrosshairToggle = createCrosshairToggle;

@@ -1,5 +1,8 @@
-(function (root) {
-  root.DatePicker = function (options) {
+import { dateutil } from '@utils/DateUtils.js';
+
+export function DatePicker(options) {
+  const momentLib = window.moment;
+  const PikadayCtor = window.Pikaday;
     const defaults = {
       id: '',
       className: 'form-control date-picker-input',
@@ -65,22 +68,22 @@
       };
 
       if (config.minDate) {
-        const minDate = moment(config.minDate, dateutil.FINNISH_DATE_FORMAT);
+        const minDate = momentLib(config.minDate, dateutil.FINNISH_DATE_FORMAT);
         pickerOptions.minDate = minDate.toDate();
       }
 
       if (config.maxDate) {
-        const maxDate = moment(config.maxDate, dateutil.FINNISH_DATE_FORMAT);
+        const maxDate = momentLib(config.maxDate, dateutil.FINNISH_DATE_FORMAT);
         pickerOptions.maxDate = maxDate.toDate();
       }
 
       if (config.defaultDate) {
         if (config.setDefaultDate) {
-          pickerOptions.defaultDate = moment(config.defaultDate, dateutil.FINNISH_DATE_FORMAT).toDate();
+          pickerOptions.defaultDate = momentLib(config.defaultDate, dateutil.FINNISH_DATE_FORMAT).toDate();
         }
       }
 
-      picker = new Pikaday(pickerOptions);
+      picker = new PikadayCtor(pickerOptions);
 
       // Handle enter key press
       $input.keypress(function (e) {
@@ -110,12 +113,12 @@
       const pickerOptions = config.defaultDate ? { defaultDate: config.defaultDate, setDefaultDate: config.setDefaultDate } : {};
       
       if (config.minDate) {
-        const minDate = moment(config.minDate, dateutil.FINNISH_DATE_FORMAT);
+        const minDate = momentLib(config.minDate, dateutil.FINNISH_DATE_FORMAT);
         pickerOptions.minDate = minDate.toDate();
       }
       
       if (config.maxDate) {
-        const maxDate = moment(config.maxDate, dateutil.FINNISH_DATE_FORMAT);
+        const maxDate = momentLib(config.maxDate, dateutil.FINNISH_DATE_FORMAT);
         pickerOptions.maxDate = maxDate.toDate();
       }
       
@@ -154,7 +157,7 @@
       if ($input.length) {
         $input.val(value);
         if (picker && value) {
-          const date = moment(value, dateutil.FINNISH_DATE_FORMAT);
+          const date = momentLib(value, dateutil.FINNISH_DATE_FORMAT);
           if (date.isValid()) {
             picker.setDate(date.toDate());
           }
@@ -192,6 +195,5 @@
       destroy,
       getElement
     };
-  };
+  }
 
-}(this));

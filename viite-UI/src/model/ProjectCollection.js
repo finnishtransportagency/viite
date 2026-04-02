@@ -8,8 +8,7 @@
  * - Backend integration for project operations
  * - Dirty state tracking and change management
  */
-(function (root) {
-  root.ProjectCollection = function (backend, startupParameters) {
+export function ProjectCollection(backend, startupParameters) {
     var me = this;
     // eslint-disable-next-line no-unused-vars
     var roadAddressProjects = [];
@@ -748,5 +747,6 @@
         return !reNumberedPart;
       }));
     };
-  };
-}(this));
+}
+
+window.ProjectCollection = ProjectCollection;

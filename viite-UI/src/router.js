@@ -1,7 +1,12 @@
+/**
+ * Synchronizes URL routes with the selected map layer, link selection, and project navigation state.
+ * Keeps Backbone history aligned with map-driven UI actions.
+ */
 /* eslint-disable prefer-named-capture-group */
-(function (root) {
-  root.URLRouter = function (map, backend, models) {
-    var Router = Backbone.Router.extend({
+import { eventbus } from '@utils/eventbus.js';
+
+export function URLRouter(map, backend, models) {
+  const Router = Backbone.Router.extend({
       initialize: function () {
 
         this.route(/^(\d+)$/, function (layer) {
@@ -66,7 +71,7 @@
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
-        var parsedProjectId = parseInt(projectId);
+        const parsedProjectId = parseInt(projectId);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       },
 
@@ -80,7 +85,7 @@
     });
 
 
-    var router = new Router();
+    const router = new Router();
 
     // We need to restart the router history so that tests can reset
     // the application before each test.
@@ -92,25 +97,25 @@
     });
 
     eventbus.on('roadAddressProject:selected', function (id, _layerName, _selectedLayer) {
-      router.navigate('roadAddressProject/' + id);
+      router.navigate(`roadAddressProject/${id}`);
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if (!_.isEmpty(models.selectedLinkProperty.get())) {
         if (_.isArray(linkProperty)) {
-          router.navigate('linkProperty/' + _.head(linkProperty).linkId);
+          router.navigate(`linkProperty/${_.head(linkProperty).linkId}`);
         } else {
-          router.navigate('linkProperty/' + linkProperty.linkId);
+          router.navigate(`linkProperty/${linkProperty.linkId}`);
         }
       }
     });
 
     eventbus.on('linkProperties:selectedProject', function (linkId, project) {
       if (typeof project.id !== 'undefined') {
-        var baseUrl = 'roadAddressProject/' + project.id;
-        var linkIdUrl = linkId ? '/' + linkId : '';
-        router.navigate(baseUrl + linkIdUrl);
-        var initialCenter = map.getView().getCenter();
+        const baseUrl = `roadAddressProject/${project.id}`;
+        const linkIdUrl = linkId ? `/${linkId}` : '';
+        router.navigate(`${baseUrl}${linkIdUrl}`);
+        const initialCenter = map.getView().getCenter();
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
           applicationModel.selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
@@ -121,7 +126,7 @@
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           });
         }
-        var newCenter = map.getView().getCenter();
+        const newCenter = map.getView().getCenter();
         if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
           applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
@@ -139,5 +144,6 @@
       }
       router.navigate(layerAdjusted);
     });
-  };
-}(this));
+}
+
+window.URLRouter = URLRouter;

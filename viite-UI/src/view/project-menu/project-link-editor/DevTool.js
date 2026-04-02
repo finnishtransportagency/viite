@@ -1,7 +1,11 @@
-// Users with dev rights can make direct edits to address data using dev tool
-// as alternative option to direct DB changes
-(function (root) {
-  root.DevAddressTool = function (prefix) {
+/**
+ * DevAddressTool component
+ * Provides development tools for making direct edits to address data (calibration points, side codes, etc.)
+ * Only available to users with development rights.
+ * @param {string} prefix - CSS class prefix for form controls
+ * @returns {Object} Component with render method
+ */
+export function DevAddressTool(prefix) {
 
     const render = function (links) {
       const startOfSection = Math.min(...links.map((link) => Number(link.addrMRange.start)));
@@ -104,5 +108,6 @@
     return {
       render: render
     };
-  };
-}(window));
+  }
+
+window.DevAddressTool = DevAddressTool;

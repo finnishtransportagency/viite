@@ -1,5 +1,6 @@
-(function (root) {
-  root.RoadAddressChangeType = {
+const ViiteEnumerations = {};
+
+ViiteEnumerations.RoadAddressChangeType = {
     NotHandled: {value: 0, description: "NotHandled", transitionFrom: [0], displayText: "Käsittelemätön"},
     Unchanged: {value: 1, description: "Unchanged", transitionFrom: [0, 1, 3, 5], displayText: "Ennallaan"},
     New: {value: 2, description: "New", transitionFrom: [99, 2], displayText: "Uusi"},
@@ -10,7 +11,7 @@
     Undefined: {value: 99, description: "?", transitionFrom: []}
   };
 
-  root.ChangeType = {
+ViiteEnumerations.ChangeType = {
     Unchanged: {value: 1, description: "Unchanged", displayText: "Ennallaan"},
     New: {value: 2, description: "New", displayText: "Uusi"},
     Transfer: {value: 3, description: "Transfer", displayText: "Siirto"},
@@ -18,7 +19,7 @@
     Terminated: {value: 5, description: "Terminated", displayText: "Lakkautus"}
   };
 
-  root.LinkGeomSource = {
+ViiteEnumerations.LinkGeomSource = {
     NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
     ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
     SuravageLinkInterface: {value: 3, descriptionFI: "Suravage", description: "SuravageLinkInterface"},
@@ -27,19 +28,19 @@
     Unknown: {value: 99, descriptionFI: "Tuntematon", description: "Unknown"}
   };
 
-  root.lifecycleStatus = {
+ViiteEnumerations.lifecycleStatus = {
       Planned: {value: 1, description: "Planned"},
       UnderConstruction: {value: 2, description: "UnderConstruction"},
       InUse: {value: 3, description: "InUse"},
       UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
   };
 
-  root.SelectionType = {
+ViiteEnumerations.SelectionType = {
     All: {value: 0, description: "all"},
     Unknown: {value: 99, description: "unknown"}
   };
 
-  root.RoadClass = {
+ViiteEnumerations.RoadClass = {
     HighwayClass: {value: 1, description: "HighwayClass"},
     MainRoadClass: {value: 2, description: "MainRoadClass"},
     RegionalClass: {value: 3, description: "RegionalClass"},
@@ -54,33 +55,33 @@
     NoClass: {value: 99, description: "NoClass"}
   };
 
-  root.LifeCycleStatus = {
+ViiteEnumerations.LifeCycleStatus = {
     UnderConstructionPrivate: {value: 0, description: "Rakenteilla (kunta/yksityinen)"},
     UnderConstructionState: {value: 1, description: "Rakenteilla (valtio)"}
   };
 
-  root.TrafficDirection = {
+ViiteEnumerations.TrafficDirection = {
     BothDirections: {value: 2, description: "Molempiin suuntiin"},
     AgainstDigitizing: {value: 3, description: "Digitointisuuntaa vastaan"},
     TowardsDigitizing: {value: 4, description: "Digitointisuuntaan"},
     UnknownDirection: {value: 99, description: "Tuntemattomaan suuntaan"}
   };
 
-  root.SideCode = {
+ViiteEnumerations.SideCode = {
     BothDirections: {value: 1, description: "BothDirections"},
     TowardsDigitizing: {value: 2, description: "TowardsDigitizing"},
     AgainstDigitizing: {value: 3, description: "AgainstDigitizing"},
     Unknown: {value: 99, description: "Unknown"}
   };
 
-  root.CalibrationCode = {
+ViiteEnumerations.CalibrationCode = {
     None: {value: 0, description: "None"},
     AtEnd: {value: 1, description: "AtEnd"},
     AtBeginning: {value: 2, description: "AtBeginning"},
     AtBoth: {value: 3, description: "AtBoth"}
   };
 
-  root.ProjectStatus = {
+ViiteEnumerations.ProjectStatus = {
     ErrorInViite: {value: 0, description: "Virhe Viite-sovelluksessa"},
     Incomplete: {value: 1, description: "Keskeneräinen"},
     Deleted: {value: 7, description: "Poistettu projekti"},
@@ -90,18 +91,18 @@
     Unknown: {value: 99, description: "Tuntematon"}
   };
 
-  root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value,
-    root.ProjectStatus.InUpdateQueue.value, root.ProjectStatus.UpdatingToRoadNetwork.value,
-    root.ProjectStatus.ErrorInViite.value];
+ViiteEnumerations.ProjectStatusToDisplay = [ViiteEnumerations.ProjectStatus.Incomplete.value,
+  ViiteEnumerations.ProjectStatus.InUpdateQueue.value, ViiteEnumerations.ProjectStatus.UpdatingToRoadNetwork.value,
+  ViiteEnumerations.ProjectStatus.ErrorInViite.value];
 
-  root.Track = {
+ViiteEnumerations.Track = {
     Combined: {value: 0, description: "Combined"},
     RightSide: {value: 1, description: "RightSide"},
     LeftSide: {value: 2, description: "LeftSide"},
     Unknown: {value: 99, description: "Unknown"}
   };
 
-  root.NodesAndJunctionsZIndex = {
+ViiteEnumerations.NodesAndJunctionsZIndex = {
     DirectionMarker: {value: 140},
     NodePointTemplate: {value: 160, selected: 165},
     NodeMarker: {value: 170, selected: 175},
@@ -109,7 +110,7 @@
     JunctionMarker: {value: 190, selected: 195}
   };
 
-  root.ViewModeZIndex = {
+ViiteEnumerations.ViewModeZIndex = {
     BorderStyle: {value: 1},
     UnAddressedOther: {border: 10, stroke: 11, fill: 12},
     UnAddressedState: {border: 20, stroke: 20, fill: 20},
@@ -128,7 +129,7 @@
     CalibrationPoint: {value: 150}
   };
 
-  root.ProjectModeZIndex = {
+ViiteEnumerations.ProjectModeZIndex = {
     BorderStyle: {value: 1},
     NotInProjectRoadLinks: {border: 10, stroke: 11, fill: 12},
     TerminatedProjectLinks: {border: 20, stroke: 21, fill: 22},
@@ -146,7 +147,7 @@
     DirectionMarker: {value: 110}
   };
 
-  root.AdministrativeClass = {
+ViiteEnumerations.AdministrativeClass = {
     Empty: {value: 0, description: "", displayText: "--", textValue: ""},
     PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio", textValue: "Valtio"},
     MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta", textValue: "Kunta"},
@@ -154,26 +155,26 @@
     Unknown: {value: 99, description: "Ei määritelty", displayText: "--", textValue: ""}
   };
 
-  root.AdministrativeClassShort = {
+ViiteEnumerations.AdministrativeClassShort = {
     PublicRoad: {value: 1, description: "valtio"},
     MunicipalityStreetRoad: {value: 2, description: "kunta"},
     PrivateRoad: {value: 3, description: "yksit."}
   };
 
-  root.RoadLinkType = {
+ViiteEnumerations.RoadLinkType = {
     UnknownRoadLinkType: {value: 0, description: "UnknownRoadLinkType"},
     NormalRoadLinkType: {value: 1, description: "NormalRoadLinkType"},
     ComplementaryRoadLinkType: {value: 3, description: "ComplementaryRoadLinkType"},
     SuravageRoadLink: {value: 4, description: "SuravageRoadLink"}
   };
 
-  root.RoadNameSource = {
+ViiteEnumerations.RoadNameSource = {
     UnknownSource: {value: 99, description: "Unknown Source"},
     ProjectLinkSource: {value: 0, description: "Project Link Source"},
     RoadAddressSource: {value: 1, description: "Road Name Source"}
   };
 
-  root.ProjectError = {
+ViiteEnumerations.ProjectError = {
     TerminationContinuity: {value: 18},
     DoubleEndOfRoad: {value: 19},
     RoadNotReserved: {value: 27}
@@ -187,17 +188,17 @@
 
    A blessing in disguise, CTRL key code is always fixed to 17.
    */
-  root.MetaKeyCodes = [91, 93, 224, 17];
+ViiteEnumerations.MetaKeyCodes = [91, 93, 224, 17];
 
-  root.SelectKeyName = "ContextMenu";
+ViiteEnumerations.SelectKeyName = "ContextMenu";
 
-  root.UnknownRoadId = 0;
+ViiteEnumerations.UnknownRoadId = 0;
 
-  root.NewRoadId = -1000;
+ViiteEnumerations.NewRoadId = -1000;
 
-  root.BlackUnderlineAdministrativeClasses = [root.AdministrativeClass.MunicipalityStreetRoad.value, root.AdministrativeClass.PrivateRoad.value];
+ViiteEnumerations.BlackUnderlineAdministrativeClasses = [ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.value, ViiteEnumerations.AdministrativeClass.PrivateRoad.value];
 
-  root.ElyCodes = {
+ViiteEnumerations.ElyCodes = {
     ELY_U: {value: 1, name: "Uusimaa", shortName: "UUD"},
     ELY_T: {value: 2, name: "Varsinais-Suomi", shortName: "VAR"},
     ELY_KAS: {value: 3, name: "Kaakkois-Suomi", shortName: "KAS"},
@@ -209,7 +210,7 @@
     ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
   };
 
-  root.EVKCodes = { // Elinvoimakeskus codes
+ViiteEnumerations.EVKCodes = { // Elinvoimakeskus codes
     EVK_UUD: {value: 1, name: "Uudenmaan elinvoimakeskus", shortName: "UUD"},
     EVK_LOU: {value: 2, name: "Lounais-Suomen elinvoimakeskus", shortName: "LOU"},
     EVK_KAS: {value: 3, name: "Kaakkois-Suomen elinvoimakeskus", shortName: "KAS"},
@@ -222,7 +223,7 @@
     EVK_LAP: {value: 10, name: "Lapin elinvoimakeskus", shortName: "LAP"}
   };
 
-  root.NodeType = {
+ViiteEnumerations.NodeType = {
     NormalIntersection: {value: 1, description: "Normaali tasoliittymä"},
     Roundabout: {value: 3, description: "Kiertoliittymä"},
     YIntersection: {value: 4, description: "Y-liittymä"},
@@ -240,18 +241,18 @@
     UnknownNodeType: {value: 99, description: "Ei määritelty"}
   };
 
-  root.NodePointType = {
+ViiteEnumerations.NodePointType = {
     RoadNodePoint: {value: 1, description: "Tien solmukohta"},
     CalculatedNodePoint: {value: 2, description: "Laskettu solmukohta"},
     UnknownNodePointType: {value: 99, description: "Ei määritelty"}
   };
 
-  root.BeforeAfter = {
+ViiteEnumerations.BeforeAfter = {
     Before: {value: 1, description: "Ennen", displayLetter: "E"},
     After: {value: 2, description: "Jälkeen", displayLetter: "J"}
   };
 
-  root.Tool = {
+ViiteEnumerations.Tool = {
     Select: {value: "Select", description: 'Solmun valinta'},
     Attach: {value: "Attach", alias: ["Select"]},
     Add: {value: "Add"},
@@ -259,7 +260,7 @@
     Unknown: {value: ""}
   };
 
-  root.Discontinuity = {
+ViiteEnumerations.Discontinuity = {
     EndOfRoad: {value: 1, description: "Tien loppu"},
     Discontinuous: {value: 2, description: "Epäjatkuva"},
     ChangingELYCode: {value: 3, description: "Elinvoimakeskuksen raja"},
@@ -267,5 +268,7 @@
     Continuous: {value: 5, description: "Jatkuva"}
 
   };
-}(window.ViiteEnumerations = window.ViiteEnumerations || {}));
+
+export { ViiteEnumerations };
+window.ViiteEnumerations = ViiteEnumerations;
 

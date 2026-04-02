@@ -8,8 +8,7 @@
  * - Backend integration for node operations
  * - Node point and junction template handling
  */
-(function (root) {
-  root.NodeCollection = function (backend, locationSearch) {
+export function NodeCollection(backend, locationSearch) {
     var me = this;
     var nodes = [];
     var nodesWithAttributes = [];
@@ -245,5 +244,6 @@
       });
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
     });
-  };
-}(this));
+}
+
+window.NodeCollection = NodeCollection;

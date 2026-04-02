@@ -1,30 +1,39 @@
-(function (root) {
-  root.RoadLinkBox = function (selectedProjectLinkProperty) {
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var className = 'road-link';
-    var title = 'Selite';
-    var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var expandedTemplate = _.template(`
+/**
+ * RoadLinkBox component
+ * Displays road link legend and tool selection panel for road address link properties.
+ * @param {Object} selectedProjectLinkProperty - Selected project link property manager
+ * @returns {Object} Component with element, title, and visibility control methods
+ */
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
+
+export function RoadLinkBox(selectedProjectLinkProperty) {
+  const applicationModel = window.applicationModel;
+  const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    const className = 'road-link';
+    const title = 'Selite';
+    const selectToolIcon = '<img src="images/select-tool.svg"/>';
+    const expandedTemplate = _.template(`
       <div class="panel <%= className %>">
       <header class="panel-header expanded"><%- title %></header>
       <div class="legend-container no-copy"></div>
       </div>`);
 
-    var roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
+    const roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
 
-    var calibrationPointPicture = $(`
+    const calibrationPointPicture = $(`
       <div class="legend-entry">
           <div class="label">Kalibrointipiste</div>
           <div class="calibration-point-image"></div>
           </div>`);
 
-    var roadPartStartPointPicture = $(`
+    const roadPartStartPointPicture = $(`
       <div class="legend-entry">
           <div class="label">Tieosan alku</div>
           <div class="calibration-point-image"></div>
           </div>`);
 
-    var junctionPicture = $(
+    const junctionPicture = $(
       `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
         <object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">
         </object>
@@ -32,21 +41,21 @@
       </div>`
     );
 
-    var junctionTemplatePicture = $(
+    const junctionTemplatePicture = $(
       `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
         <object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>
         <div class="label">Liittymäaihio</div>
       </div>`
     );
 
-    var nodeTemplatePicture = $(
+    const nodeTemplatePicture = $(
       `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
         <object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>
         <div class="label">Solmukohta-aihio</div>
       </div>`
     );
 
-    var roadClasses = [
+    const roadClasses = [
       [1, 'Valtatie (1-39)'],
       [2, 'Kantatie (40-99)'],
       [3, 'Seututie (100-999)'],
@@ -61,9 +70,9 @@
       [99, 'Osoitteeton (valtio)']
     ];
 
-    var buildMultiColoredSegments = function () {
+    const buildMultiColoredSegments = function () {
       let segments = '<div class="rainbow-container"><div class="edge-left symbol linear linear-asset-1"></div>';
-      for (var i = 1; i <= 6; i++) {
+      for (let i = 1; i <= 6; i++) {
         segments += `<div class="middle symbol linear rainbow-asset-${i}"></div>`;
       }
       return `${segments}<div class="middle symbol linear rainbow-asset-2"></div><div class="middle symbol linear rainbow-asset-1 "></div> <div class="edge-right symbol linear linear-asset-1"></div></div>`;
@@ -92,7 +101,7 @@
       return html;
     }
 
-    var roadClassLegendEntries = _.map(roadClasses, function (roadClass) {
+    const roadClassLegendEntries = _.map(roadClasses, function (roadClass) {
       const getColorClass = function(roadClassId) {
         const colorMap = {
           1: 'red',
@@ -119,7 +128,7 @@
       return `${defaultLegendEntry}</div>`;
     }).join('');
 
-    function createNodeLegendEntries() {
+    const createNodeLegendEntries = function() {
       let html = '';
       for (const node in ViiteEnumerations.NodeType) {
         if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.NodeType, node) && ViiteEnumerations.NodeType[node] !== ViiteEnumerations.NodeType.UnknownNodeType)
@@ -129,9 +138,9 @@
               </div>`;
       }
       return html;
-    }
+    };
 
-    var roadProjectOperations = function () {
+    const roadProjectOperations = function () {
       return (
         `<div class="legend-entry">
           <div class="label">${RoadAddressChangeType.Unchanged.displayText}</div>
@@ -173,22 +182,22 @@
     roadClassLegend.append(createLifecycleStatusLegendEntries());
     roadClassLegend.append(calibrationPointPicture);
 
-    var Tool = function (toolName, icon, description) {
-      var classNameForTool = toolName.toLowerCase();
-      var toolElement = $('<div class="action"></div>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function () {
+    const Tool = function (toolName, icon, description) {
+      const classNameForTool = toolName.toLowerCase();
+      const toolElement = $('<div class="action"></div>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function () {
         executeOrShowConfirmDialog(function () {
           applicationModel.setSelectedTool(toolName);
         });
       });
 
-      var deactivate = function () {
+      const deactivate = function () {
         toolElement.removeClass('active');
       };
-      var activate = function () {
+      const activate = function () {
         toolElement.addClass('active');
       };
 
-      var executeOrShowConfirmDialog = function (f) {
+      const executeOrShowConfirmDialog = function (f) {
         if (selectedProjectLinkProperty.isDirty()) {
           new Confirm();
         } else {
@@ -205,17 +214,17 @@
       };
     };
 
-    var ToolSelection = function (tools) {
-      var toolSelectionElement = $('<div class="panel-section panel-actions"></div>');
+    const ToolSelection = function (tools) {
+      const toolSelectionElement = $('<div class="panel-section panel-actions"></div>');
       _.each(tools, function (tool) {
         toolSelectionElement.append(tool.element);
         toolSelectionElement.append(`<div>${tool.description}</div>`);
       });
 
-      var doHide = function () {
+      const doHide = function () {
         toolSelectionElement.hide();
       };
-      var doShow = function () {
+      const doShow = function () {
         toolSelectionElement.show();
       };
 
@@ -233,7 +242,7 @@
         reset();
       });
 
-      var reset = function () {
+      const reset = function () {
         _.each(tools, function (tool) {
           tool.deactivate();
         });
@@ -249,20 +258,20 @@
       };
     };
 
-    var nodeToolSelection = new ToolSelection([
+    const nodeToolSelection = new ToolSelection([
       new Tool(ViiteEnumerations.Tool.Select.value, selectToolIcon, ViiteEnumerations.Tool.Select.description)
     ]);
 
-    var templateAttributes = {
+    const templateAttributes = {
       className: className,
       title: title
     };
 
-    var elements = {
+    const elements = {
       expanded: $(expandedTemplate(templateAttributes))
     };
 
-    var bindExternalEventHandlers = function () {
+    const bindExternalEventHandlers = function () {
       eventbus.on('userData:fetched', function (userData) {
         if (_.includes(userData.roles, 'viite')) {
           $('#formProjectButton').removeAttr('style');
@@ -283,7 +292,7 @@
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(roadClassLegend);
-    var element = $(`<div class="panel-group ${className}s"></div>`).append(elements.expanded).hide();
+    const element = $(`<div class="panel-group ${className}s"></div>`).append(elements.expanded).hide();
 
     function show() {
       element.show();
@@ -295,7 +304,7 @@
 
     function toggleLegends() {
 
-      var container = $('#legendDiv');
+      const container = $('#legendDiv');
       if (applicationModel.getSelectedLayer() === "roadAddressProject") {
         container.empty();
         container.append(roadProjectOperations());
@@ -326,5 +335,6 @@
       show: show,
       hide: hide
     };
-  };
-}(this));
+  }
+
+window.RoadLinkBox = RoadLinkBox;

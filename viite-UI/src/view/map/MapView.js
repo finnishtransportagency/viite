@@ -1,5 +1,11 @@
-(function (root) {
-  root.MapView = function (map, layers, instructionsPopup) {
+import { createCrosshairToggle } from '@view/footer/CrosshairToggle.js';
+import { eventbus } from '@utils/eventbus.js';
+import { geometrycalculator } from '@utils/GeometryCalculations.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+
+export function MapView(map, layers, instructionsPopup) {
+  var applicationModel = window.applicationModel;
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
     var enableCtrlModifier = false;
@@ -56,7 +62,6 @@
       var zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
 
-      // eslint-disable-next-line no-undef
       const crosshair = createCrosshairToggle($('.mapplugin.coordinates'), map);
       window.crosshair = crosshair; 
       isInitialized = true;
@@ -155,6 +160,7 @@
         setCursor(applicationModel.getSelectedTool());
     });
 
-    setCursor(applicationModel.getSelectedTool());
-  };
-}(this));
+  setCursor(applicationModel.getSelectedTool());
+}
+
+window.MapView = MapView;

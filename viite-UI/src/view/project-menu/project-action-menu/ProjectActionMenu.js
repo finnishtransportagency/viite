@@ -5,12 +5,16 @@
  * Returns HTML strings (renderContent, renderFooter) for MenuContainer integration.
  * Provides refresh() for selective DOM updates and updateState() for external state management.
  */
-(function (root) {
-  root.ProjectActionMenu = function (options) {
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+
+export function ProjectActionMenu(options) {
     const {
       projectCollection,
       map,
-      eventbus,
+      eventbus: injectedEventbus,
       applicationModel,
       backend,
       projectChangeTable,
@@ -19,6 +23,9 @@
       initialState = {},
       onStateChange
     } = options;
+    const mainMenu = options.mainMenu;
+    const startupParameters = options.startupParameters;
+    const activeEventbus = injectedEventbus || eventbus;
 
     const state = Object.assign({
       hasErrors: false,
@@ -217,7 +224,7 @@ const getProjectErrors = function (projectErrors, links) {
       const btns = config.buttonStates;
       
       let validateBtn = '';
-      if (window.startupParameters && _.includes(window.startupParameters.roles, 'dev')) {
+      if (startupParameters && _.includes(startupParameters.roles, 'dev')) {
         validateBtn = `<button id="validate-button" class="${config.cssClasses.validate}" ${btns.validate.disabled ? 'disabled' : ''} title="${btns.validate.title}">Validoi projekti</button>`;
       }
 
@@ -235,20 +242,22 @@ const getProjectErrors = function (projectErrors, links) {
     // ==========================================
 
     const closeProjectMode = (changeLayerMode, noSave) => {
-      eventbus.trigger('roadAddressProject:startAllInteractions');
-      eventbus.trigger('projectChangeTable:hide');
+      activeEventbus.trigger('roadAddressProject:startAllInteractions');
+      activeEventbus.trigger('projectChangeTable:hide');
       applicationModel.setOpenProject(false);
 
       projectCollection.clearRoadAddressProjects();
-      eventbus.trigger('layer:enableButtons', false);
+      activeEventbus.trigger('layer:enableButtons', false);
       if (typeof closeProjectMenu === 'function') {
         closeProjectMenu();
       } else {
-        window.mainMenu.setState('main');
+        if (mainMenu && typeof mainMenu.setState === 'function') {
+          mainMenu.setState('main');
+        }
       }
       
       if (changeLayerMode) {
-        eventbus.trigger('roadAddressProject:clearOnClose');
+        activeEventbus.trigger('roadAddressProject:clearOnClose');
         applicationModel.selectLayer('linkProperty', true, noSave);
       }
     };
@@ -410,5 +419,4 @@ const getProjectErrors = function (projectErrors, links) {
       bindEvents,
       updateState 
     };
-  };
-}(this));
+}

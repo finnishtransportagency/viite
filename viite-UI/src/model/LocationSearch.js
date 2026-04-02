@@ -8,8 +8,7 @@
  * - Error handling for unknown addresses
  */
 /* eslint-disable new-cap */
-(function (root) {
-  root.LocationSearch = function (backend, applicationModel) {
+export function LocationSearch(backend, applicationModel) {
     /**
      * Search by street address
      *
@@ -147,5 +146,6 @@
         return _.map(result, addDistance);
       });
     };
-  };
-}(this));
+}
+
+window.LocationSearch = LocationSearch;

@@ -3,8 +3,7 @@
 // Usage example: Toast.show("Message", { type: 'success' });
 // Add "." at the end of the message to maintain consistency
 
-(function (root) {
-    root.Toast = (function () {
+const Toast = (function () {
         let container;
 
         const icons = {
@@ -55,5 +54,7 @@
 
 
         return { show };
-    }());
-}(this));
+}());
+
+window.Toast = Toast;
+export { Toast };

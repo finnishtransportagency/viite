@@ -1,6 +1,12 @@
 // Allows users to search road address change history data and export it as CSV using a few filter parameters
-(function (root) {
-    root.RoadAddressChangesBrowserWindow = function (backend, roadAddressBrowserForm) {
+import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
+import * as ViiteConstants from '@utils/ViiteConstants.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { dateutil } from '@utils/DateUtils.js';
+
+export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm) {
+    const Application = window.Application;
+    const applicationModel = window.applicationModel;
         let searchParams = {};
         let elyEvkSelector;
         const me = this;
@@ -504,5 +510,6 @@
                 bindEvents();
             }
         };
-    };
-}(this));
+}
+
+window.RoadAddressChangesBrowserWindow = RoadAddressChangesBrowserWindow;

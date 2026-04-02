@@ -323,7 +323,6 @@ module.exports = {
             "warn",
             "last"
         ],
-        "sort-imports": "error",
         "sort-keys": "off",
         "sort-vars": "off",
         "space-before-blocks": "off",

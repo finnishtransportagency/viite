@@ -1,6 +1,23 @@
-(function (root) {
-  root.NodeLayer = function (map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
-    Layer.call(this, map);
+/**
+ * NodeLayer component
+ * Manages the vector layer for displaying nodes and junctions with selection and translation interactions.
+ * Handles node/junction highlighting, templates, and coordinate display.
+ * @param {Object} map - OpenLayers map instance
+ * @param {Object} roadLayer - Road layer reference
+ * @param {Object} selectedNodesAndJunctions - Selected nodes and junctions manager
+ * @param {Object} nodeCollection - Node collection manager
+ * @param {Object} roadCollection - Road collection manager
+ * @param {Object} applicationModel - Application model
+ * @returns {Object} Layer with show/hide methods and minimum zoom level
+ */
+import { eventbus } from '@utils/eventbus.js';
+import { GeometryUtils } from '@utils/GeometryUtils.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+import { Layer } from './Layer.js';
+
+export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
+  Layer.call(this, map);
 
     window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
 
@@ -860,6 +877,4 @@
       hide: hideLayer,
       minZoomForContent: me.minZoomForContent
     };
-  };
-
-}(this));
+  }

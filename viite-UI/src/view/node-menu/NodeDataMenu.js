@@ -1,10 +1,13 @@
-(function (root) {
-  /**
-   * NodeDataMenu - Read-only detail panel for searched node and template data.
-   * Shows node/junction tables and exposes buttons that continue into editing flows.
-   */
-  root.NodeDataMenu = function (dataTable, containerElement) {
-    const tableUtils = root.NodeMenuTableUtils;
+import { NodeMenuTableUtils } from './DataTable.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+
+/**
+ * NodeDataMenu - Read-only detail panel for searched node and template data.
+ * Shows node/junction tables and exposes buttons that continue into editing flows.
+ */
+export function NodeDataMenu(dataTable, containerElement, dependencies) {
+  const tableUtils = NodeMenuTableUtils;
+  const applicationModel = dependencies.applicationModel;
 
     const renderDataTable = function (props) {
       return dataTable.setProps(props).render();
@@ -19,7 +22,7 @@
     };
 
     const staticField = function (labelText, dataField) {
-      return `<p class="form-control-static asset-log-info-metadata"><label>` + labelText + `</label>` + dataField`</p>`;
+      return `<p class="form-control-static asset-log-info-metadata"><label>` + labelText + `</label>` + dataField + `</p>`;
     };
 
     const toNodePointsRows = function (nodePointsInfo, isTemplate) {
@@ -235,7 +238,5 @@
       getTemplateHeader: function () { return 'Aihioiden tiedot:'; },
       renderTemplateFooter: renderTemplateFooter
     };
-  };
+  }
 
-  root.NodeDataDisplay = root.NodeDataMenu;
-}(this));

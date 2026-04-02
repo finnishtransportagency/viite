@@ -1,6 +1,7 @@
 /* eslint-disable new-cap */
-(function (root) {
-  root.Backend = function () {
+import { eventbus } from '@utils/eventbus.js';
+
+export function Backend() {
     var loadingProject;
     // var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
     var gettingRoadLinks;
@@ -446,5 +447,6 @@
       });
     }, 1000);
 
-  };
-}(this));
+}
+
+window.Backend = Backend;

@@ -1,5 +1,4 @@
-(function (root) {
-    root.dynamicLinkNetworkContent = function (backend, dateutil, ViiteConstants) {
+export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
         let sourcePicker = '';
         let targetPicker = '';
 
@@ -162,5 +161,6 @@
             addDatePickersToInputFields: addDatePickersToInputFields,
             bindEvents: bindEvents
         };
-    };
-}(this));
+}
+
+window.dynamicLinkNetworkContent = DynamicLinkNetworkContent;

@@ -1,24 +1,19 @@
-(function (root) {
-  root.ProjectLinkStyler = function () {
+/**
+ * Defines layered project road-link styles for project mode rendering.
+ * Chooses widths, colors, and z-index ordering from link metadata and zoom level.
+ */
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
-    /**
-     * ProjectLinkStyler is a styler for road links in project mode. It is used for setting the color, borders and dashes of the road link based on the link data.
-     * Each road link may have up to three different styles that are stacked on top of each other.
-     * The three styles are:
-     * Border: Links with Road number and Administrative class Municipality or Private. zIndex: lowest
-     * Stroke: This is the "base color" for the link, for example this determines the base color for under construction links (road links that have "dashes"). zIndex: middle
-     * Fill: This is the main color for the road link. zIndex: highest
-     */
+export function ProjectLinkStyler() {
+  const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+  const notHandledStatus = RoadAddressChangeType.NotHandled.value;
+  const unchangedStatus = RoadAddressChangeType.Unchanged.value;
+  const newRoadAddressStatus = RoadAddressChangeType.New.value;
+  const transferredStatus = RoadAddressChangeType.Transfer.value;
+  const numberingStatus = RoadAddressChangeType.Numbering.value;
+  const terminatedStatus = RoadAddressChangeType.Terminated.value;
 
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var notHandledStatus = RoadAddressChangeType.NotHandled.value;
-    var unchangedStatus = RoadAddressChangeType.Unchanged.value;
-    var newRoadAddressStatus = RoadAddressChangeType.New.value;
-    var transferredStatus = RoadAddressChangeType.Transfer.value;
-    var numberingStatus = RoadAddressChangeType.Numbering.value;
-    var terminatedStatus = RoadAddressChangeType.Terminated.value;
-
-    var strokeWidthRules = [
+  const strokeWidthRules = [
       new StyleRule().where('zoomLevel').isIn([5, 6]).use({stroke: {width: 3}}),
       new StyleRule().where('zoomLevel').isIn([7, 8]).use({stroke: {width: 4}}),
       new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 5}}),
@@ -66,7 +61,7 @@
       new StyleRule().where('zoomLevel').is(15).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({stroke: {width: 11}})
     ];
 
-    var fillWidthRules = [
+    const fillWidthRules = [
       new StyleRule().where('zoomLevel').isIn([5, 6]).use({stroke: {width: 1}}),
       new StyleRule().where('zoomLevel').isIn([7, 8]).use({stroke: {width: 2}}),
       new StyleRule().where('zoomLevel').is(9).use({stroke: {width: 3}}),
@@ -105,7 +100,7 @@
       new StyleRule().where('zoomLevel').is(15).and('roadClass').is(99).use({stroke: {width: 11}})
     ];
 
-    var strokeRulesForNotInProjectLinks = [
+    const strokeRulesForNotInProjectLinks = [
       new StyleRule().where('roadClass').is(ViiteEnumerations.RoadClass.HighwayClass.value).use({
         stroke: {
           color: '#FF0000',
@@ -392,5 +387,6 @@
       getNotHandledProjectLinksStyle: getNotHandledProjectLinksStyle,
       getTerminatedProjectLinksStyle: getTerminatedProjectLinksStyle
     };
-  };
-}(this));
+}
+
+window.ProjectLinkStyler = ProjectLinkStyler;

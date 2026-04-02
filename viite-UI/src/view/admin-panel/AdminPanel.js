@@ -1,7 +1,5 @@
 // Panel that contains all the tools available for users with admin role
-(function (root) {
-
-    root.AdminPanel = function (backend) {
+export function AdminPanel(backend) {
 
         const dynamicLinkNetwork = window.dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
 
@@ -94,5 +92,6 @@
         return {
             show: showAdminPanelWindow
         };
-    };
-}(this));
+}
+
+window.AdminPanel = AdminPanel;

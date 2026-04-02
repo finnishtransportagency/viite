@@ -1,5 +1,21 @@
-(function (root) {
-  root.LinkPropertyLayer = function (map, roadLayer, selectedLinkProperty, roadCollection, applicationModel) {
+/**
+ * LinkPropertyLayer component
+ * Manages the vector layer for displaying link properties in view mode with selection and styling.
+ * Handles link selection, reserved roads highlighting, and calibration points.
+ * @param {Object} map - OpenLayers map instance
+ * @param {Object} roadLayer - Road layer reference
+ * @param {Object} selectedLinkProperty - Selected link property manager
+ * @param {Object} roadCollection - Road collection manager
+ * @param {Object} applicationModel - Application model
+ * @returns {Object} Layer with methods for refresh, dirty check, and view management
+ */
+import { eventbus } from '@utils/eventbus.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
+import { Layer } from './Layer.js';
+
+export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection, applicationModel) {
     Layer.call(this, map);
     var me = this;
 
@@ -692,5 +708,6 @@
       hide: hideLayer,
       minZoomForContent: me.minZoomForContent
     };
-  };
-}(this));
+}
+
+window.LinkPropertyLayer = LinkPropertyLayer;

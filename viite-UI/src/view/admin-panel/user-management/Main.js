@@ -1,25 +1,22 @@
-// This is the "parent container" of user management related content
-(function (root) {
-    root.UserManagement = root.UserManagement || {};
+/**
+ * Main - Parent container of user management related content
+ */
+export const Main = {
+    init: function (containerSelector) {
+        const { AddUserForm, UpdateUserForm, View } = window.UserManagement;
+        const container = document.querySelector(containerSelector);
 
-    root.UserManagement.Main = {
-        init: function (containerSelector) {
-
-            const { AddUserForm, UpdateUserForm, View } = root.UserManagement;
-
-            const container = document.querySelector(containerSelector);
-            
-            // Ensure all dependencies exist before calling methods
-            if (!container || !View || !AddUserForm || !UpdateUserForm) {
-                console.error("UserManagement components not loaded yet. Check script order.");
-                return;
-            }
-
-            container.innerHTML = View.getContent(); 
-
-            AddUserForm.bindEvents(containerSelector);
-            UpdateUserForm.bindEvents(containerSelector);
-            UpdateUserForm.fetchUsers();
+        if (!container || !View || !AddUserForm || !UpdateUserForm) {
+            console.error("UserManagement components not loaded yet. Check script order.");
+            return;
         }
-    };
-}(this));
+
+        container.innerHTML = View.getContent();
+        AddUserForm.bindEvents(containerSelector);
+        UpdateUserForm.bindEvents(containerSelector);
+        UpdateUserForm.fetchUsers();
+    }
+};
+
+window.UserManagement = window.UserManagement || {};
+window.UserManagement.Main = Main;

@@ -1,17 +1,20 @@
 // Displays changes made to the project once "avaa projektin yhteenvetotaulukko" button is clicked. It supports sorting and is used for entering project edit/creation menu
-(function (root) {
-  root.ProjectChangeTable = function (projectChangeInfoModel, projectCollection) {
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
 
-    var changeTableOpen = false;
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var ProjectStatus = ViiteEnumerations.ProjectStatus;
-    var windowMaximized = false;
-    var callbacks = {
+export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
+
+    let changeTableOpen = false;
+    let currentValidations = {};
+    const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    const ProjectStatus = ViiteEnumerations.ProjectStatus;
+    let windowMaximized = false;
+    let callbacks = {
       onClosed: null,
       onValidationResult: null
     };
 
-    var isChangeTableOpen = function () {
+    const isChangeTableOpen = function () {
       return changeTableOpen;
     };
 
@@ -115,7 +118,7 @@
     }
 
     function resetInteractions() {
-      var dragTable = $('.change-table-frame');
+      const dragTable = $('.change-table-frame');
       if (dragTable && dragTable.length > 0) {
         dragTable[0].setAttribute('data-x', 0);
         dragTable[0].setAttribute('data-y', 0);
@@ -131,10 +134,10 @@
     }
 
     function getChanges() {
-      var currentProject = projectCollection.getCurrentProject();
+      const currentProject = projectCollection.getCurrentProject();
       projectChangeInfoModel.getChanges(currentProject.project.id, function () {
-        var source = $('[id=label-source-btn]');
-        var target = $('[id=label-target-btn]');
+        const source = $('[id=label-source-btn]');
+        const target = $('[id=label-target-btn]');
         if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
           projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
         } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
@@ -203,10 +206,10 @@
     }
 
     function showChangeTable(projectChangeData) {
-      var htmlTable = "";
-      var warningM = projectChangeData.warningMessage;
-      var hasLengthMismatch = false;
-      var hasNegativeLength = false;
+      let htmlTable = "";
+      const warningM = projectChangeData.warningMessage;
+      let hasLengthMismatch = false;
+      let hasNegativeLength = false;
       const $changeTableHeader = $('.change-table-header');
       const $changeTableFrame = $('.change-table-frame');
 
@@ -225,19 +228,19 @@
           $changeTableHeader.html($(`<div class="warning-message">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>`));
         }
 
-        window.currentValidations = {};
+        currentValidations = {};
         if (validation.results) {
           validation.results.forEach((result, index) => {
             if (!result.isValid && result.change) {
-              window.currentValidations[result.change.id || index] = result;
+              currentValidations[result.change.id || index] = result;
             }
           });
         }
 
         _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
-          var rowColorClass = (index % 2 !== 1) ? 'white-row' : 'gray-row';
+          const rowColorClass = (index % 2 !== 1) ? 'white-row' : 'gray-row';
           
-          const rowValidation = window.currentValidations[changeInfoSeq.id || index];
+          const rowValidation = currentValidations[changeInfoSeq.id || index];
           const hasLengthError = rowValidation && !rowValidation.isValid;
           const rowClass = `${rowColorClass}${hasLengthError ? ' invalid-row' : ''}`;
           const rowId = changeInfoSeq.id || index;
@@ -269,7 +272,7 @@
       changeTableOpen = true;
       
       if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
-        var projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
+        const projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
 
         if (!hasLengthMismatch && !hasNegativeLength) {
           $changeTableHeader.html($(`
@@ -278,14 +281,13 @@
           `));
         }
 
-        var currentProject = projectCollection.getCurrentProject();
+        const currentProject = projectCollection.getCurrentProject();
 
-        // Keep compatibility for global validation consumers.
         if ($changeTableFrame.css('display') === "block" &&
             currentProject.project.statusCode === ProjectStatus.Incomplete.value &&
             !hasLengthMismatch &&
             !hasNegativeLength) {
-          window.currentValidations = {};
+          currentValidations = {};
         }
 
         if (typeof callbacks.onValidationResult === 'function') {
@@ -354,13 +356,13 @@
         $btn.addClass('fa-sort-up');
       }
 
-      var side = btn.id.match('-(.*)-')[1];
-      var otherBtn = $('[id=label-' + (side === 'source' ? 'target' : 'source') + '-btn');
+      const side = btn.id.match('-(.*)-')[1];
+      const otherBtn = $(`[id=label-${side === 'source' ? 'target' : 'source'}-btn`);
       otherBtn.removeClass('fa-sort-down');
       otherBtn.removeClass('fa-sort-up');
       otherBtn.addClass('fa-sort');
 
-      var projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
+      const projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
       eventbus.trigger('projectChanges:fetched', projectChanges);
     }
 
@@ -396,7 +398,7 @@
 
     function getTargetInfo(changeInfoSeq, rowId) {
       const targetLength = changeInfoSeq.target.addrMRange.end - changeInfoSeq.target.addrMRange.start;
-      const rowValidation = rowId && window.currentValidations && window.currentValidations[rowId];
+      const rowValidation = rowId && currentValidations && currentValidations[rowId];
       const isLengthInvalid = rowValidation && !rowValidation.isValid;
 
       const formatLength = (value) => {
@@ -419,7 +421,7 @@
 
     function getSourceInfo(changeInfoSeq, rowId) {
       const sourceLength = changeInfoSeq.source.addrMRange.end - changeInfoSeq.source.addrMRange.start;
-      const rowValidation = rowId && window.currentValidations && window.currentValidations[rowId];
+      const rowValidation = rowId && currentValidations && currentValidations[rowId];
       const isLengthInvalid = rowValidation && !rowValidation.isValid;
 
       const formatLength = (value) => {
@@ -442,9 +444,9 @@
     }
 
     function dragListener(event) {
-      var target = event.target,
-        x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx,
-        y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
+      const target = event.target;
+      const x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
+      const y = (parseFloat(target.getAttribute('data-y')) || 0) + event.dy;
       target.style.transform = `translate(${x}px, ${y}px)`;
       target.style.webkitTransform = target.style.transform;
       target.setAttribute('data-x', x);
@@ -470,11 +472,11 @@
         },
         inertia: true
       }).on('resizemove', function (event) {
-        var target = event.target,
-          x = (parseFloat(target.getAttribute('data-x')) || 0),
-          y = (parseFloat(target.getAttribute('data-y')) || 0);
-        target.style.width = event.rect.width + 'px';
-        target.style.height = event.rect.height + 'px';
+        const target = event.target;
+        let x = (parseFloat(target.getAttribute('data-x')) || 0);
+        let y = (parseFloat(target.getAttribute('data-y')) || 0);
+        target.style.width = `${event.rect.width}px`;
+        target.style.height = `${event.rect.height}px`;
         x += event.deltaRect.left;
         y += event.deltaRect.top;
         target.style.transform = `translate(${x}px, ${y}px)`;
@@ -501,5 +503,6 @@
       isChangeTableOpen: isChangeTableOpen,
       setCallbacks: setCallbacks
     };
-  };
-}(this));
+}
+
+window.ProjectChangeTable = ProjectChangeTable;

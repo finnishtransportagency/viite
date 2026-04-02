@@ -1,5 +1,8 @@
-(function (root) {
-  root.ValidationUtils = function () {
+/**
+ * Validates project form inputs related to dates and reserved road-part fields.
+ * Provides small reusable checks for project detail forms.
+ */
+export function ValidationUtils() {
     
     const checkDateNotification = function (projectStartDate) {
       let projectNotificationText = "";
@@ -57,5 +60,6 @@
       checkDateNotification,
       isRoadPartInvalid
     };
-  };
-}(this));
+}
+
+window.ValidationUtils = ValidationUtils;

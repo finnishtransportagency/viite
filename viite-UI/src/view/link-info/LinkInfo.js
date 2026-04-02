@@ -1,8 +1,8 @@
 // Displays data about clicked link
-(function (root) {
-  root.LinkInfo = function (selectedLinkProperty) {
-    const ViiteEnumerations = window.ViiteEnumerations;
-    
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+
+export function LinkInfo(selectedLinkProperty) {
+
     // Helper to handle null/undefined values by returning a fallback string.
     function withFallback(val) {
       if (val === null || val === undefined) return '';
@@ -172,5 +172,6 @@
           </div>
         </div><footer></footer>`;
     };
-  };
-}(this));
+}
+
+window.LinkInfo = LinkInfo;

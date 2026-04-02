@@ -1,5 +1,6 @@
-(function (root) {
-  const NodeMenuTableUtils = {
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+
+const NodeMenuTableUtils = {
     getNodePointsRowsInfo: function (nodePoints) {
       if (_.isUndefined(nodePoints) || nodePoints.length === 0) {
         return [];
@@ -206,7 +207,7 @@
     }
   };
 
-  root.NodeMenuTableUtils = NodeMenuTableUtils;
+export { NodeMenuTableUtils };
 
   /**
    * DataTable - Dumb, props-driven table renderer.
@@ -245,7 +246,7 @@
   *   }
   * }).render();
    */
-  root.DataTable = function (options) {
+export function DataTable(options) {
 
     const defaults = {
       title: '',
@@ -435,5 +436,5 @@
     };
 
     return api;
-  };
-}(this));
+  }
+

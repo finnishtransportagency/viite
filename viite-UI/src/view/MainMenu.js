@@ -2,18 +2,24 @@
  * MainMenu - Renders the main navigation panel and manages top-level UI state.
  * Switches between the main button menu, link info view, and delegated module states.
  */
-(function (root) {
-  root.MainMenu = function (selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule) {
-    const rootElement = $('#menu-container');
-    const linkInfo = new root.LinkInfo(selectedLinkProperty);
-    let menu = null;
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { LinkInfo } from './link-info/LinkInfo.js';
+import { MenuContainer } from '@components/MenuContainer.js';
+import { eventbus } from '@utils/eventbus.js';
 
-    const createMenuContainer = () => {
-      if (!root.MenuContainer) {
-        return null;
-      }
-        return new root.MenuContainer(rootElement);
-    };
+export function MainMenu(selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, options = {}) {
+  const rootElement = $('#menu-container');
+  const linkInfo = new LinkInfo(selectedLinkProperty);
+  const applicationModel = options.applicationModel;
+  const activeEventbus = options.eventbus || eventbus;
+  let menu = null;
+
+  const createMenuContainer = () => {
+    if (!MenuContainer) {
+      return null;
+    }
+      return new MenuContainer(rootElement);
+  };
 
     const renderBody = (html) => {
       menu = createMenuContainer();
@@ -111,28 +117,27 @@
     const bindEvents = () => {
 
       // When link is clicked on a map, show link properties
-      eventbus.on('linkProperties:selected linkProperties:cancelled', (linkProperties) => {
+      activeEventbus.on('linkProperties:selected linkProperties:cancelled', (linkProperties) => {
         const props = _.isArray(linkProperties) ? _.head(linkProperties) : linkProperties;
         if (props) setState('linkInfo', props);
       });
 
       // Close link properties menu when map is clicked that doesn't have a link
-      eventbus.on('linkProperties:unselected', () => {
+      activeEventbus.on('linkProperties:unselected', () => {
         if (!applicationModel.isProjectOpen()) setState('main');
       });
       
       // Close nodes and junctions menu and return to main menu
-      eventbus.on('nodesAndJunctions:close', () => {
+      activeEventbus.on('nodesAndJunctions:close', () => {
         setState('main');
       });
       
     };
 
-    bindEvents();
-    setState('main');
-    
-    return {
-      setState
-    };
+  bindEvents();
+  setState('main');
+  
+  return {
+    setState
   };
-}(this));
+}

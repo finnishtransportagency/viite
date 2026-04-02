@@ -1,5 +1,6 @@
-(function (root) {
-  root.TileMapSelector = function (container, applicationModel) {
+import { eventbus } from '@utils/eventbus.js';
+
+export function TileMapSelector(container, applicationModel) {
     const element = `
       <div class="tile-map-selector">
         <ul>
@@ -200,5 +201,6 @@
         $dropdownToggle.attr('aria-expanded', 'false');
       }
     });
-  };
-}(this));
+}
+
+window.TileMapSelector = TileMapSelector;

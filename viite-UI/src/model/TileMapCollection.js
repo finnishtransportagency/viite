@@ -1,5 +1,8 @@
-(function (root) {
-  root.TileMapCollection = function () {
+/**
+ * Creates the background tile layers used by the map view and wires layer visibility events.
+ * Manages base maps plus optional property and regional border overlays.
+ */
+export function TileMapCollection() {
     const layerConfig = {
       visible: false,
       extent: [-548576, 6291456, 1548576, 8388608]
@@ -94,7 +97,7 @@
       regionsBorder: regionBordersLayer
     };
 
-    var selectMap = function (tileMap) {
+    const selectMap = function (tileMap) {
       _.forEach(tileMapLayers, function (layer, key) {
         // Don't hide the property and region borders when changing base maps
         if (key === 'propertyBorder' || key === 'regionsBorder') {
@@ -123,5 +126,6 @@
         return tileMapLayers[name];
       }
     };
-  };
-}(this));
+}
+
+window.TileMapCollection = TileMapCollection;

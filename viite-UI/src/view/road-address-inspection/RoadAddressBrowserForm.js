@@ -1,6 +1,9 @@
 // This form is used to enter search criteria for road addresses, and supports CSV export
-(function (root) {
-  root.RoadAddressBrowserForm = function () {
+import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { dateutil } from '@utils/DateUtils.js';
+
+export function RoadAddressBrowserForm() {
 
     // Initialize multi-column selectors
     let dateTargetSelector, elyEvkSelector, targetSelector;
@@ -207,5 +210,6 @@
       },
       initializeSelectors: initializeSelectors
     };
-  };
-}(this));
+}
+
+window.RoadAddressBrowserForm = RoadAddressBrowserForm;

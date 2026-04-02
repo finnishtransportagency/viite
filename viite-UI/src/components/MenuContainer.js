@@ -3,8 +3,7 @@
  * Header and footer are hidden when no content is set.
  * MenuWrapper remains as a compatibility alias while callers move to MenuContainer.
  */
-(function (root) {
-  root.MenuContainer = function (container, onClose) {
+export function MenuContainer(container, onClose) {
     const $container = $(container);
     let $root = null;
     let $headerEl = null;
@@ -84,7 +83,7 @@
     buildDOM();
 
     return { setHeader, setBody, setFooter, setOnClose, getBody, clear };
-  };
+  }
 
-  root.MenuWrapper = root.MenuContainer;
-}(this));
+window.MenuContainer = MenuContainer;
+window.MenuWrapper = MenuContainer;

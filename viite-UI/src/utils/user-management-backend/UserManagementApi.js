@@ -1,16 +1,16 @@
-// This file contains functions for communicating with the backend routes that handle user management (add,get, delete, update)
-(function(root) {
-
-    function getAllUsers(callback) {
+/**
+ * UserManagementApi - Communicates with backend user management routes
+ */
+export const userManagementApi = {
+    getAllUsers: function(callback) {
         $.get('api/viite/users', function(data) {
-            // eslint-disable-next-line callback-return
             if (_.isFunction(callback)) callback(data.users);
         }).fail(function(jqXHR) {
             console.error('Virhe käyttäjien haussa:', jqXHR.responseText);
         });
-    }
+    },
 
-    function addUser(newUser, success, failure) {
+    addUser: function(newUser, success, failure) {
         $.ajax({
             url: 'api/viite/users',
             type: 'POST',
@@ -28,14 +28,12 @@
                 } catch (e) {
                     console.error("Odottamaton virhe", e);
                 }
-
                 if (_.isFunction(failure)) failure(errorMessage);
             }
-
         });
-    }
+    },
 
-    function deleteUser(username, success, failure) {
+    deleteUser: function(username, success, failure) {
         $.ajax({
             url: `api/viite/users/${encodeURIComponent(username)}`,
             type: 'DELETE',
@@ -54,9 +52,9 @@
                 }
             }
         });
-    }
+    },
 
-    function updateUsers(users, success, failure) {
+    updateUsers: function(users, success, failure) {
         $.ajax({
             url: 'api/viite/users',
             type: 'PUT',
@@ -69,11 +67,6 @@
             }
         });
     }
+};
 
-    root.userManagementApi = {
-        getAllUsers,
-        addUser,
-        deleteUser,
-        updateUsers
-    };
-}(this));
+window.userManagementApi = userManagementApi;

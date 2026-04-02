@@ -1,11 +1,12 @@
-(function (root) {
-  /**
-   * NodeSearchMenu - Search-first menu for finding nodes and opening node/template details.
-   * Renders search controls, result rows and untreated template lists.
-   */
-  root.NodeSearchMenu = function (dataTable, containerElement) {
-    const formCommon = new FormCommon('node-search-');
-    const tableUtils = root.NodeMenuTableUtils;
+/**
+ * Renders node search controls, search result rows, and untreated template lists.
+ * Keeps the node search panel focused on locating nodes before opening details or editor views.
+ */
+import { NodeMenuTableUtils } from './DataTable.js';
+import { createNodeSearchFormFields } from './NodeSearchFormFields.js';
+export function NodeSearchMenu(dataTable, containerElement) {
+  const formFields = createNodeSearchFormFields('node-search-');
+    const tableUtils = NodeMenuTableUtils;
 
     const renderDataTable = function (props) {
       return dataTable.setProps(props).render();
@@ -27,9 +28,9 @@
             <div class="grid-column-center-3"><label class="label-centered">LOSA</label></div>
             <div class="grid-column-button"></div>
 
-            <div class="grid-column-input-1">${formCommon.nodeInputNumber('tie', 5)}</div>
-            <div class="grid-column-input-2">${formCommon.nodeInputNumber('aosa', 3)}</div>
-            <div class="grid-column-input-3">${formCommon.nodeInputNumber('losa', 3)}</div>
+            <div class="grid-column-input-1">${formFields.nodeInputNumber('tie', 5)}</div>
+            <div class="grid-column-input-2">${formFields.nodeInputNumber('aosa', 3)}</div>
+            <div class="grid-column-input-3">${formFields.nodeInputNumber('losa', 3)}</div>
             <div class="grid-column-button">
               <button id="node-search-btn" type="button" class="btn-primary node-search-btn" disabled>Hae solmut</button>
             </div>
@@ -74,9 +75,7 @@
 
         return {
           id: index,
-          tieOsaEt: (nodeWithAttributes.roadNumber || '') + '/' +
-            (nodeWithAttributes.roadPartNumber || '') + '/' +
-            addrMValue,
+          tieOsaEt: `${nodeWithAttributes.roadNumber || ''}/${nodeWithAttributes.roadPartNumber || ''}/${addrMValue}`,
           name: nodeWithAttributes.name || '',
           type: nodeWithAttributes.type || '-',
           nodeNumber: nodeWithAttributes.nodeNumber || '-'
@@ -253,5 +252,5 @@
       setSearchEnabled: setSearchEnabled,
       setClearEnabled: setClearEnabled
     };
-  };
-}(this));
+  }
+

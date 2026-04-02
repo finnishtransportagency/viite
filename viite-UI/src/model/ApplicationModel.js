@@ -8,8 +8,7 @@
  * - Project state and user session
  * - Selection types and special configurations
  */
-(function (root) {
-  root.ApplicationModel = function (models) {
+export function ApplicationModel(models) {
     const zoom = {
       level: undefined
     };
@@ -264,5 +263,6 @@
       getSessionUserRoles: getSessionUserRoles,
       specialSelectionTypes: specialSelectionTypes
     };
-  };
-}(this));
+}
+
+window.ApplicationModel = ApplicationModel;

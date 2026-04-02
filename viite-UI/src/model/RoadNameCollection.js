@@ -8,8 +8,7 @@
  * - Date range management for road names
  * - Backend integration for road name operations
  */
-(function (root) {
-  root.RoadNameCollection = function (backend) {
+export function RoadNameCollection(backend) {
 
     var me = this;
     var newId = -1000;
@@ -94,5 +93,6 @@
       });
     };
 
-  };
-}(this));
+}
+
+window.RoadNameCollection = RoadNameCollection;

@@ -33,8 +33,7 @@
  * @property {string|jQuery} content - HTML string or jQuery object to set as content
  */
         
-(function (root) {
-    root.ModalContainer = function (config) {
+export function ModalContainer(config) {
 
         const {
             helpUrl = null,
@@ -179,5 +178,6 @@
             close: close,
             getContent: getContent
         };
-    };
-}(this));
+}
+
+window.ModalContainer = ModalContainer;

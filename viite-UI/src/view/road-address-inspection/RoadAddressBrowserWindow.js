@@ -1,5 +1,4 @@
-(function (root) {
-  root.RoadAddressBrowserWindow = function (backend, roadAddressBrowserForm) {
+export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm) {
       const me = this;
       let searchParams = {};
       let searchResults = [];
@@ -740,5 +739,6 @@
               bindEvents();
           }
       };
-  };
-}(this));
+}
+
+window.RoadAddressBrowserWindow = RoadAddressBrowserWindow;

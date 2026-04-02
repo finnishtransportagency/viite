@@ -8,8 +8,7 @@
  * - Link property validation and editing
  * - Backend integration for link operations
  */
-(function (root) {
-  root.SelectedLinkProperty = function (backend, roadCollection) {
+export function SelectedLinkProperty(backend, roadCollection) {
     var current = [];
     var dirty = false;
     var featuresToKeep = [];
@@ -249,5 +248,6 @@
       setCurrent: setCurrent,
       canOpenByLinearLocationId: canOpenByLinearLocationId
     };
-  };
-}(this));
+}
+
+window.SelectedLinkProperty = SelectedLinkProperty;

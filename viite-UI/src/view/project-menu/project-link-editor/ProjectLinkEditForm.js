@@ -5,8 +5,12 @@
  * Supports disposable lifecycle: rebuilt per show, all listeners bound to fresh DOM.
  * Key methods: bindEvents(), cancelChanges(), validateAndSave() for form interaction.
  */
-(function (root) {
-  root.LinkEditForm = function (startupParameters) {
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
+import { DevAddressTool } from './DevTool.js';
+
+export function LinkEditForm(startupParameters) {
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const Track = ViiteEnumerations.Track;
     const AdministrativeClass = ViiteEnumerations.AdministrativeClass;
@@ -14,6 +18,11 @@
     const CalibrationCode = ViiteEnumerations.CalibrationCode;
     const editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.ErrorInViite.value];
     const validEvks = _.map(ViiteEnumerations.EVKCodes, evk => evk);
+    const activeContext = {
+      projectCollection: null,
+      projectLinkLayer: null,
+      selectedProjectLinkProperty: null
+    };
 
     // ==========================================
     // STATE MANAGEMENT
@@ -223,7 +232,7 @@
 
     const renderDevTool = function (links, project) {
       if (!startupParameters || !_.includes(startupParameters.roles, 'dev')) return '';
-      const devTool = new root.DevAddressTool('', editableStatus);
+      const devTool = new DevAddressTool('');
       return devTool.render(links, project);
     };
 
@@ -661,8 +670,11 @@
     // ==========================================
     // 4. EVENT LISTENERS (CONTROLLER)
     // ==========================================
-    const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable) {
+    const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable, editContext = {}) {
       const rootElement = $('#menu-container');
+      activeContext.projectCollection = projectCollection || editContext.projectCollection;
+      activeContext.projectLinkLayer = editContext.projectLinkLayer;
+      activeContext.selectedProjectLinkProperty = editContext.selectedProjectLinkProperty;
 
       const disableFormInputs = () => {
         if (!project || _.includes(editableStatus, project.statusCode)) {
@@ -808,12 +820,22 @@
     };
 
       const cancelChanges = (callbacks = {}) => {
-        window.projectCollection.revertRoadAddressChangeType();
-        window.projectCollection.setDirty([]);
-        window.projectCollection.setTmpDirty([]);
-        window.projectLinkLayer.clearHighlights();
-        window.selectedProjectLinkProperty.cleanIds();
-        window.selectedProjectLinkProperty.clean();
+        const projectCollectionRef = activeContext.projectCollection;
+        const projectLinkLayerRef = activeContext.projectLinkLayer;
+        const selectedProjectLinkPropertyRef = activeContext.selectedProjectLinkProperty;
+
+        if (projectCollectionRef) {
+          projectCollectionRef.revertRoadAddressChangeType();
+          projectCollectionRef.setDirty([]);
+          projectCollectionRef.setTmpDirty([]);
+        }
+        if (projectLinkLayerRef) {
+          projectLinkLayerRef.clearHighlights();
+        }
+        if (selectedProjectLinkPropertyRef) {
+          selectedProjectLinkPropertyRef.cleanIds();
+          selectedProjectLinkPropertyRef.clean();
+        }
 
         eventbus.trigger('roadAddress:projectLinksEdited');
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
@@ -868,5 +890,6 @@
         return true;
       }
     };
-  };
-}(this));
+}
+
+window.LinkEditForm = LinkEditForm;

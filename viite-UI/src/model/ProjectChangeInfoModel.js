@@ -8,8 +8,7 @@
  * - Backend integration for change history
  * - Warning message handling for changes
  */
-(function (root) {
-  root.ProjectChangeInfoModel = function (backend) {
+export function ProjectChangeInfoModel(backend) {
     var addrMRange = [{
       start:0,
       end: 0
@@ -72,5 +71,6 @@
       getChanges: getChanges,
       sortChanges: sortChanges
     };
-  };
-}(this));
+}
+
+window.ProjectChangeInfoModel = ProjectChangeInfoModel;

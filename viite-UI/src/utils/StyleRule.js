@@ -1,6 +1,5 @@
 /* eslint-disable no-throw-literal */
-(function (root) {
-  root.StyleRule = function () {
+export function StyleRule() {
     var expressionFn = [];
     var styles = [];
 
@@ -190,7 +189,7 @@
     };
   };
 
-  root.StyleRuleProvider = function (defaultStyle) {
+export function StyleRuleProvider(defaultStyle) {
 
     var mergeColorOpacity = function (color, opacity) {
       var rgb = {};
@@ -324,6 +323,8 @@
         }
       }
       return createOpenLayerStyle(configObj, feature);
-    };
   };
-}(this));
+}
+
+window.StyleRule = StyleRule;
+window.StyleRuleProvider = StyleRuleProvider;

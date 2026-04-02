@@ -74,8 +74,7 @@ return `<div>${selector.render()}</div>`;
 ```
 */
 
-(function (root) {
-  root.Selector = function (props) {
+export function Selector(props) {
     const defaults = {
       id: '',
       data: {},
@@ -299,6 +298,6 @@ return `<div>${selector.render()}</div>`;
       getElement: getElement,
       config: config
     };
-  };
+}
 
-}(this));
+window.Selector = Selector;

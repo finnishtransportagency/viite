@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": ["src/components/*"],
+      "@model/*": ["src/model/*"],
+      "@node-menu/*": ["src/view/node-menu/*"],
+      "@utils/*": ["src/utils/*"],
+      "@view/*": ["src/view/*"]
+    },
+    "target": "ES2020",
+    "module": "ESNext"
+  },
+  "exclude": ["dist", "node_modules"]
+}

@@ -1,6 +1,5 @@
 // Generic confirm popup component for confirmation and alert dialogs
-(function (root) {
-  root.ConfirmPopup = function (message, options = {}) {
+export function ConfirmPopup(message, options = {}) {
     const defaultOptions = {
       type: "confirm",
       okButtonLbl: 'Sulje',
@@ -69,5 +68,4 @@
     };
 
     show();
-  };
-}(window));
+  }

@@ -52,118 +52,118 @@
   <script type="text/javascript" src="node_modules/pikaday/pikaday.js"></script>
   <script type="text/javascript" src="node_modules/proj4/dist/proj4.js"></script>
   <script type="text/javascript" src="node_modules/interactjs/dist/interact.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@components/": "./src/components/",
+        "@model/": "./src/model/",
+        "@node-menu/": "./src/view/node-menu/",
+        "@utils/": "./src/utils/",
+        "@view/": "./src/view/"
+      }
+    }
+  </script>
   <!-- @if NODE_ENV == 'DEVELOPMENT' -->
-  <script type="text/javascript" src="src/main.js"></script>
+  <script type="module" src="src/main.js"></script>
 
-  <script type="text/javascript" src="src/application.js"></script>
+  <script type="module" src="src/view/map/markers/LinkPropertyMarker.js"></script>
+  <script type="module" src="src/view/map/markers/ProjectLinkMarker.js"></script>
+  <script type="module" src="src/view/map/markers/CalibrationPointMarker.js"></script>
+  <script type="module" src="src/view/map/markers/NodeMarker.js"></script>
+  <script type="module" src="src/view/map/markers/JunctionTemplateMarker.js"></script>
+  <script type="module" src="src/view/map/markers/NodePointTemplateMarker.js"></script>
+  <script type="module" src="src/view/map/markers/JunctionMarker.js"></script>
+  <script type="module" src="src/utils/eventbus.js"></script>
+  <script type="module" src="src/utils/GeometryCalculations.js"></script>
+  <script type="module" src="src/utils/LocationInputParser.js"></script>
+  <script type="module" src="src/utils/Session.js"></script>
+  <script type="module" src="src/utils/DateUtils.js"></script>
+  <script type="module" src="src/utils/BackendUtils.js"></script>
+  <script type="module" src="src/utils/EnumerationUtils.js"></script>
+  <script type="module" src="src/utils/ViiteConstants.js"></script>
+  <script type="module" src="src/utils/EnvironmentUtils.js"></script>
+  <script type="module" src="src/utils/ZoomLevels.js"></script>
+  <script type="module" src="src/utils/GeometryUtils.js"></script>
+  <script type="module" src="src/utils/OpenLayersRule.js"></script>
+  <script type="module" src="src/utils/StyleRule.js"></script>
+  <script type="module" src="src/utils/EventUtils.js"></script>
 
-  <script type="text/javascript" src="src/router.js"></script>
+  <script type="module" src="src/components/dropdowns/Dropdown.js"></script>
+  <script type="module" src="src/components/dropdowns/MultiColumnDropdown.js"></script>
 
-  <script type="text/javascript" src="src/view/map/markers/LinkPropertyMarker.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/ProjectLinkMarker.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/CalibrationPointMarker.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/NodeMarker.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/JunctionTemplateMarker.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/NodePointTemplateMarker.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/JunctionMarker.js"></script>
-  <script type="text/javascript" src="src/utils/EventBus.js"></script>
-  <script type="text/javascript" src="src/utils/GeometryCalculations.js"></script>
-  <script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
-  <script type="text/javascript" src="src/utils/Session.js"></script>
-  <script type="text/javascript" src="src/utils/DateUtils.js"></script>
-  <script type="text/javascript" src="src/utils/BackendUtils.js"></script>
-  <script type="text/javascript" src="src/utils/ViiteEnumerations.js"></script>
-  <script type="text/javascript" src="src/utils/EnumerationUtils.js"></script>
-  <script type="text/javascript" src="src/utils/ViiteConstants.js"></script>
-  <script type="text/javascript" src="src/utils/EnvironmentUtils.js"></script>
-  <script type="text/javascript" src="src/utils/ZoomLevels.js"></script>
-  <script type="text/javascript" src="src/utils/GeometryUtils.js"></script>
-  <script type="text/javascript" src="src/utils/OpenLayersRule.js"></script>
-  <script type="text/javascript" src="src/utils/StyleRule.js"></script>
-  <script type="text/javascript" src="src/utils/EventUtils.js"></script>
+  <script type="module" src="src/components/modals/ModalContainer.js"></script>
 
-  <script type="text/javascript" src="src/components/dropdowns/Dropdown.js"></script>
-  <script type="text/javascript" src="src/components/dropdowns/MultiColumnDropdown.js"></script>
+  <script type="module" src="src/components/date-picker/DatePicker.js"></script>
 
-  <script type="text/javascript" src="src/components/modals/ModalContainer.js"></script>
+  <script type="module" src="src/view/navigation-panel/NavigationPanel.js"></script>
+  <script type="module" src="src/view/navigation-panel/RoadLinkBox.js"></script>
+  <script type="module" src="src/view/navigation-panel/SearchBox.js"></script>
+  <script type="module" src="src/view/project-menu/project-list/ProjectList.js"></script>
 
-  <script type="text/javascript" src="src/components/date-picker/DatePicker.js"></script>
+  <script type="module" src="src/view/road-name-maintenance-modal/RoadNamingToolWindow.js"></script>
+  <script type="module" src="src/view/road-address-inspection/RoadAddressBrowserForm.js"></script>
+  <script type="module" src="src/view/road-address-inspection/RoadAddressBrowserWindow.js"></script>
+  <script type="module" src="src/view/road-address-inspection/RoadAddressChangesBrowserWindow.js"></script>
+  <script type="module" src="src/view/project-menu/project-action-menu/ProjectActionMenu.js"></script>
+  <script type="module" src="src/view/project-menu/ProjectChangeTable.js"></script>
+  <script type="module" src="src/model/TileMapCollection.js"></script>
+  <script type="module" src="src/view/map/layers/Layer.js"></script>
+  <script type="module" src="src/view/map/RoadLinkStyler.js"></script>
+  <script type="module" src="src/view/map/ProjectLinkStyler.js"></script>
+  <script type="module" src="src/view/map/layers/RoadLayer.js"></script>
+  <script type="module" src="src/view/map/layers/ProjectLinkLayer.js"></script>
+  <script type="module" src="src/view/map/MapView.js"></script>
+  <script type="module" src="src/view/map/MapOverlay.js"></script>
+  <script type="module" src="src/view/footer/CoordinatesDisplay.js"></script>
+  <script type="module" src="src/view/map/markers/ScaleBar.js"></script>
+  <script type="module" src="src/view/footer/TileMapSelector.js"></script>
+  <script type="module" src="src/components/InstructionsPopup.js"></script>
+  <script type="module" src="src/view/map/markers/ZoomBox.js"></script>
+  <script type="module" src="src/view/map/layers/LinkPropertyLayer.js"></script>
+  <script type="module" src="src/view/map/layers/NodeLayer.js"></script>
+  <script type="module" src="src/view/project-menu/project-details/ProjectDetailsForm.js"></script>
+  <script type="module" src="src/view/project-menu/project-details/ValidationUtils.js"></script>
+  <script type="module" src="src/view/project-menu/project-link-editor/ProjectLinkEditForm.js"></script>
+  <script type="module" src="src/view/project-menu/ProjectMenu.js"></script>
+  <script type="module" src="src/view/footer/CrosshairToggle.js"></script>
+  <script type="module" src="src/view/map/markers/RoadMarker.js"></script>
 
-  <script type="text/javascript" src="src/view/navigation-panel/NavigationPanel.js"></script>
-  <script type="text/javascript" src="src/view/navigation-panel/RoadLinkBox.js"></script>
-  <script type="text/javascript" src="src/view/navigation-panel/SearchBox.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/project-list/ProjectList.js"></script>
-
-  <script type="text/javascript" src="src/view/road-name-maintenance-modal/RoadNamingToolWindow.js"></script>
-  <script type="text/javascript" src="src/view/road-address-inspection/RoadAddressBrowserForm.js"></script>
-  <script type="text/javascript" src="src/view/road-address-inspection/RoadAddressBrowserWindow.js"></script>
-  <script type="text/javascript" src="src/view/road-address-inspection/RoadAddressChangesBrowserWindow.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/project-action-menu/ProjectActionMenu.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/ProjectChangeTable.js"></script>
-  <script type="text/javascript" src="src/model/TileMapCollection.js"></script>
-  <script type="text/javascript" src="src/view/map/layers/Layer.js"></script>
-  <script type="text/javascript" src="src/view/map/RoadLinkStyler.js"></script>
-  <script type="text/javascript" src="src/view/map/ProjectLinkStyler.js"></script>
-  <script type="text/javascript" src="src/view/map/layers/RoadLayer.js"></script>
-  <script type="text/javascript" src="src/view/map/layers/ProjectLinkLayer.js"></script>
-  <script type="text/javascript" src="src/view/map/MapView.js"></script>
-  <script type="text/javascript" src="src/view/map/MapOverlay.js"></script>
-  <script type="text/javascript" src="src/view/footer/CoordinatesDisplay.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/ScaleBar.js"></script>
-  <script type="text/javascript" src="src/view/footer/TileMapSelector.js"></script>
-  <script type="text/javascript" src="src/components/InstructionsPopup.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/ZoomBox.js"></script>
-  <script type="text/javascript" src="src/view/map/layers/LinkPropertyLayer.js"></script>
-  <script type="text/javascript" src="src/view/map/layers/NodeLayer.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/project-details/ProjectDetailsForm.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/project-details/ValidationUtils.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/project-link-editor/ProjectLinkEditForm.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/ProjectMenu.js"></script>
-  <script type="text/javascript" src="src/view/footer/CrosshairToggle.js"></script>
-  <script type="text/javascript" src="src/view/map/markers/RoadMarker.js"></script>
-
-  <script type="text/javascript" src="src/components/number-input/NumberInput.js"></script>
-  <script type="text/javascript" src="src/view/project-menu/project-link-editor/DevTool.js"></script>
-  <script type="text/javascript" src="src/components/MenuContainer.js"></script>
-  <script type="text/javascript" src="src/view/MainMenu.js"></script>
-  <script type="text/javascript" src="src/view/node-menu/DataTable.js"></script>
-  <script type="text/javascript" src="src/view/node-menu/NodeSearchMenu.js"></script>
-  <script type="text/javascript" src="src/view/node-menu/NodeDataMenu.js"></script>
-  <script type="text/javascript" src="src/view/node-menu/NodeEditor.js"></script>
-  <script type="text/javascript" src="src/view/node-menu/NodeMenu.js"></script>
-  <script type="text/javascript" src="src/view/road-network-errors-list/RoadNetworkErrorsList.js"></script>
-  <script type="text/javascript" src="src/view/admin-panel/AdminPanel.js"></script>
+  <script type="module" src="src/components/number-input/NumberInput.js"></script>
+  <script type="module" src="src/view/project-menu/project-link-editor/DevTool.js"></script>
+  <script type="module" src="src/components/MenuContainer.js"></script>
+  <script type="module" src="src/view/MainMenu.js"></script>
+  <script type="module" src="src/view/road-network-errors-list/RoadNetworkErrorsList.js"></script>
+  <script type="module" src="src/view/admin-panel/AdminPanel.js"></script>
   <script type="text/javascript" src="toBeDeleted/FormCommon.js"></script>
 
-  <script type="text/javascript" src="src/model/SelectedProjectLink.js"></script>
-  <script type="text/javascript" src="src/model/ProjectCollection.js"></script>
-  <script type="text/javascript" src="src/model/RoadNameCollection.js"></script>
-  <script type="text/javascript" src="src/model/ApplicationModel.js"></script>
-  <script type="text/javascript" src="src/model/RoadCollection.js"></script>
-  <script type="text/javascript" src="src/model/SelectedLinkProperty.js"></script>
-  <script type="text/javascript" src="src/model/LocationSearch.js"></script>
-  <script type="text/javascript" src="src/model/ProjectChangeInfoModel.js"></script>
-  <script type="text/javascript" src="src/model/NodeCollection.js"></script>
-  <script type="text/javascript" src="src/model/SelectedNodesAndJunctions.js"></script>
+  <script type="module" src="src/model/SelectedProjectLink.js"></script>
+  <script type="module" src="src/model/ProjectCollection.js"></script>
+  <script type="module" src="src/model/RoadNameCollection.js"></script>
+  <script type="module" src="src/model/ApplicationModel.js"></script>
+  <script type="module" src="src/model/RoadCollection.js"></script>
+  <script type="module" src="src/model/SelectedLinkProperty.js"></script>
+  <script type="module" src="src/model/LocationSearch.js"></script>
+  <script type="module" src="src/model/ProjectChangeInfoModel.js"></script>
+  <script type="module" src="src/model/NodeCollection.js"></script>
+  <script type="module" src="src/model/SelectedNodesAndJunctions.js"></script>
 
-  <script type="text/javascript" src="src/components/modals/ConfirmPopup.js"></script>
+  <script type="module" src="src/components/modals/ConfirmPopup.js"></script>
 
-  <script src="src/components/Toast.js"></script>
+  <script type="module" src="src/components/Toast.js"></script>
 
-  <script src="src/view/link-info/LinkInfo.js"></script>
+  <script type="module" src="src/view/link-info/LinkInfo.js"></script>
 
-  <script type="text/javascript" type="module" src="src/utils/user-management-backend/UserManagementApi.js"></script>
+  <script type="module" src="src/utils/user-management-backend/UserManagementApi.js"></script>
 
   <!-- User management -->
-  <script src="src/view/admin-panel/user-management/FormValidation.js"></script>
-  <script src="src/view/admin-panel/user-management/Dropdowns.js"></script>
-  <script src="src/view/admin-panel/user-management/AddUserForm.js"></script>
-  <script src="src/view/admin-panel/user-management/UpdateUsersForm.js"></script>
-  <script src="src/view/admin-panel/user-management/View.js"></script>
-  <script src="src/view/admin-panel/user-management/Main.js"></script>
+  <script type="module" src="src/view/admin-panel/user-management/FormValidation.js"></script>
+  <script type="module" src="src/view/admin-panel/user-management/Dropdowns.js"></script>
+  <script type="module" src="src/view/admin-panel/user-management/AddUserForm.js"></script>
+  <script type="module" src="src/view/admin-panel/user-management/UpdateUsersForm.js"></script>
+  <script type="module" src="src/view/admin-panel/user-management/View.js"></script>
+  <script type="module" src="src/view/admin-panel/user-management/Main.js"></script>
 
-  <script src="src/view/admin-panel/DynamicLinkNetworkContent.js"></script>
-  <script type="text/javascript" src="src/view/admin-panel/AdminPanel.js"></script>
+  <script type="module" src="src/view/admin-panel/DynamicLinkNetworkContent.js"></script>
 
   <!-- @endif -->
   <!-- @if NODE_ENV == 'STAGING' -->

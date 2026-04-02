@@ -1,6 +1,5 @@
 // Common dropdown component for rendering select elements
-(function (root) {
-  root.dropdown = function (config) {
+export function dropdown(config) {
     const {
       id = '',
       className = '',
@@ -43,5 +42,6 @@
         ${optionsHtml}
       </select>
     `.trim();
-  };
-}(window));
+}
+
+window.dropdown = dropdown;

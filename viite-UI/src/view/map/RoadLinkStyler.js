@@ -1,5 +1,8 @@
-(function (root) {
-  root.RoadLinkStyler = function () {
+import { StyleRule, StyleRuleProvider } from '@utils/StyleRule.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+
+export function RoadLinkStyler() {
     /**
      * RoadLinkstyler is a styler for road links in view mode. It is used for setting the color, borders and dashes of the road link based on the link data.
      * Each road link may have up to three different styles that are stacked on top of each other.
@@ -473,5 +476,6 @@
       getUnAddressedStyles: getUnAddressedStyles,
       getUnderConstructionStyles: getUnderConstructionStyles
     };
-  };
-}(this));
+}
+
+window.RoadLinkStyler = RoadLinkStyler;

@@ -8,8 +8,7 @@
  * - Current state management for nodes/templates
  * - Event triggering for selection changes
  */
-(function (root) {
-  root.SelectedNodesAndJunctions = function (nodeCollection) {
+export function SelectedNodesAndJunctions(nodeCollection) {
     var current = {};
 
     var openNode = function (node, openNodetemplates) {
@@ -345,5 +344,6 @@
       saveNode: saveNode,
       updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
-  };
-}(this));
+}
+
+window.SelectedNodesAndJunctions = SelectedNodesAndJunctions;

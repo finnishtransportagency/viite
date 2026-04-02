@@ -1,6 +1,18 @@
-(function (root) {
-  root.RoadLayer = function (map) {
-    Layer.call(this, map);
+/**
+ * RoadLayer component
+ * Manages the vector layer for displaying road links and handling road address information overlays.
+ * @param {Object} map - OpenLayers map instance
+ * @returns {Object} Layer with refresh and clear methods
+ */
+import { eventbus } from '@utils/eventbus.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
+import { Layer } from './Layer.js';
+
+export function RoadLayer(map) {
+  Layer.call(this, map);
+    var applicationModel = window.applicationModel;
 
     window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
 
@@ -149,5 +161,6 @@
       layer: roadLayer,
       clear: clear
     };
-  };
-}(this));
+  }
+
+window.RoadLayer = RoadLayer;

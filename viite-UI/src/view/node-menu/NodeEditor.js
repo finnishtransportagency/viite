@@ -1,12 +1,19 @@
-(function (root) {
+import { DatePicker } from '@components/date-picker/DatePicker.js';
+import { NodeMenuTableUtils } from '@node-menu/DataTable.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+
   /**
    * NodeEditor - Editable node form with detach, validation and save flows.
    * Supports editing node metadata, junction numbers and junction ET values.
    */
-  root.NodeEditor = function (selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, containerElement) {
+export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, containerElement, dependencies) {
     const nodeEditingDisabledAttribute = _.includes(startupParameters.roles, 'viite') ? '' : 'disabled';
     const userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
-    const tableUtils = root.NodeMenuTableUtils;
+    const tableUtils = NodeMenuTableUtils;
+  const ConfirmPopup = dependencies.ConfirmPopup;
+  const dateutil = dependencies.dateutil;
+  const moment = dependencies.moment;
+  const eventbus = dependencies.eventbus;
 
     let picker;
     let editorExitHandler = _.noop;
@@ -172,7 +179,7 @@
     };
 
     const addDatePicker = function (fromElement, minDate) {
-      picker = new root.DatePicker({
+      picker = new DatePicker({
         id: fromElement.attr('id'),
         minDate: minDate,
         onChange: function (value) {
@@ -778,5 +785,5 @@
       getHeader: function () { return 'Solmun tiedot:'; },
       renderFooter: renderFooter
     };
-  };
-}(this));
+  }
+

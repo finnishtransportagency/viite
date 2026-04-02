@@ -1,5 +1,21 @@
-(function (root) {
-  root.ProjectLinkLayer = function (map, projectCollection, selectedProjectLinkProperty) {
+/**
+ * ProjectLinkLayer component
+ * Manages the vector layer for displaying project links with various visual states (terminated, not handled, etc.).
+ * Handles link selection, highlighting, and interaction management.
+ * @param {Object} map - OpenLayers map instance
+ * @param {Object} projectCollection - Project collection manager
+ * @param {Object} selectedProjectLinkProperty - Selected project link property manager
+ * @returns {Object} Layer with redraw method
+ */
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { eventbus } from '@utils/eventbus.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+import { ProjectLinkStyler } from '@view/map/ProjectLinkStyler.js';
+import { Layer } from './Layer.js';
+
+export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
+  var applicationModel = window.applicationModel;
     var layerName = 'roadAddressProject';
     Layer.call(this, map);
     var me = this;
@@ -606,6 +622,6 @@
       hide: hideLayer,
       clearHighlights: clearHighlights
     };
-  };
+}
 
-}(this));
+window.ProjectLinkLayer = ProjectLinkLayer;

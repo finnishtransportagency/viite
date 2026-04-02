@@ -1,5 +1,4 @@
-(function (root) {
-    root.RoadNetworkErrorsList = function (backend) {
+export function RoadNetworkErrorsList(backend) {
 
         let modalContainer;
 
@@ -326,6 +325,6 @@
             show: showRoadNetworkErrorsListWindow,
             hide: hideRoadNetworkErrorsListWindow
         };
+}
 
-    };
-}(this));
+window.RoadNetworkErrorsList = RoadNetworkErrorsList;

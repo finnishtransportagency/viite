@@ -1,6 +1,11 @@
-(function (root) {
-  root.Layer = function (map) {
-    var me = this;
+/**
+ * Provides shared layer lifecycle helpers for map-related layer controllers.
+ * Handles starting, stopping, clearing, and deriving calibration markers from road link data.
+ */
+import { eventbus } from '@utils/eventbus.js';
+
+export function Layer(map) {
+  const me = this;
     this.eventListener = _.extend({running: false}, eventbus);
 
     this.addLayers = function (layers) {
@@ -48,12 +53,12 @@
     };
 
     this.drawCalibrationMarkers = function (layer, roadLinks) {
-      var calibrationPointsWithValue = [];
+      const calibrationPointsWithValue = [];
       _.filter(roadLinks, function (roadLink) {
         return roadLink.calibrationPoints.length > 0 && roadLink.addrMRange.start === 0;
       }).forEach(function (roadLink) {
         roadLink.calibrationPoints.forEach(function (currentPoint) {
-          var point = currentPoint.point;
+          const point = currentPoint.point;
           if (point && currentPoint.value === 0)
             calibrationPointsWithValue.push({points: point, calibrationCode: roadLink.calibrationCode});
         });
@@ -62,17 +67,16 @@
     };
 
     this.drawProjectCalibrationMarkers = function (layer, roadLinks) {
-      var calibrationPointsWithValue = [];
+      const calibrationPointsWithValue = [];
       _.filter(roadLinks, function (roadLink) {
         return roadLink.calibrationPoints.length > 0;
       }).forEach(function (roadLink) {
         roadLink.calibrationPoints.forEach(function (currentPoint) {
-          var point = currentPoint.point;
+          const point = currentPoint.point;
           if (point)
             calibrationPointsWithValue.push({points: point, calibrationCode: roadLink.calibrationCode});
         });
       });
       return calibrationPointsWithValue;
     };
-  };
-}(this));
+}

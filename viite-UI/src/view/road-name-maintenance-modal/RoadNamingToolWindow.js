@@ -1,11 +1,15 @@
-(function (root) {
-  root.RoadNamingToolWindow = function (roadNameCollection) {
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { DatePicker } from '@components/date-picker/DatePicker.js';
+import { eventbus } from '@utils/eventbus.js';
+
+export function RoadNamingToolWindow(roadNameCollection, options = {}) {
+  const applicationApi = options.applicationApi;
 
     const newId = -1000;
     const defaultDateFormat = 'DD.MM.YYYY';
     
     // Get the shared modal instance via the singleton getter
-    const modal = Application.getModalContainer({
+    const modal = applicationApi.getModalContainer({
       onClose: () => {
         $('.roadList-item').remove(); 
         roadNameCollection.clear();
@@ -91,7 +95,7 @@
       const inputs = $('.date-picker-input:not([placeholder])');
       inputs.each((_, input) => {
         if (parseInt(input.dataset.roadid) === newId && !$(input).hasClass('hasDatepicker')) {
-          const datePicker = new root.DatePicker({
+          const datePicker = new DatePicker({
             id: input.id,
             minDate: originalStartDate,
             onChange: () => {
@@ -272,5 +276,4 @@
     }
 
     return { show: showRoadNamingToolWindow };
-  };
-}(this));
+}

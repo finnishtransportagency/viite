@@ -4,8 +4,16 @@
  * Tracks unsaved changes state and integrates with ProjectMenu for state transitions.
  * Component is rebuilt on each show() to support disposable lifecycle pattern.
  */
-(function (root) {
-  root.ProjectDetailsForm = function (callbacks = {}) {
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { DatePicker } from '@components/date-picker/DatePicker.js';
+import { ValidationUtils } from './ValidationUtils.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+
+export function ProjectDetailsForm(callbacks = {}) {
+  const applicationModel = callbacks.applicationModel;
+    const mainMenu = callbacks.mainMenu;
     let startDatePicker = null;
     const projectCollection = callbacks.projectCollection;
     const map = callbacks.map;
@@ -82,7 +90,7 @@
       const createdString = isNewProject ? '-' : `${project.createdBy} ${project.startDate}`;
       const modifiedString = isNewProject ? '-' : `${project.modifiedBy} ${project.dateModified}`;
       if (startDatePicker) startDatePicker.destroy();
-      startDatePicker = new root.DatePicker({
+      startDatePicker = new DatePicker({
         id: 'projectStartDate',
         className: 'form-control',
         containerClass: '', 
@@ -263,7 +271,7 @@
         startDatePicker.addToElement($('#projectStartDate'));
         // Unbind any previous listeners from date picker
         startDatePicker.getElement().off('input change').on('input change', function() {
-          const validationUtils = new root.ValidationUtils();
+          const validationUtils = new ValidationUtils();
           $('#projectStartDate-validation-notification').text(validationUtils.checkDateNotification($(this).val()));
           updateContinueButtonState(projectData);
           updateReserveButtonState();
@@ -450,7 +458,9 @@
                     returnToActions(latestProject);
                   } else {
                     callbacks.closeProjectMenu();
-                    window.mainMenu.setState('main');
+                    if (mainMenu && typeof mainMenu.setState === 'function') {
+                      mainMenu.setState('main');
+                    }
                   }
                 }
               });
@@ -472,7 +482,9 @@
               // Close without saving - reset layer to default
               applicationModel.selectLayer('linkProperty', true, false);
               callbacks.closeProjectMenu();
-              window.mainMenu.setState('main');
+              if (mainMenu && typeof mainMenu.setState === 'function') {
+                mainMenu.setState('main');
+              }
             }
           });
         } else {
@@ -485,7 +497,9 @@
           // No unsaved changes, close directly - reset layer to default
           applicationModel.selectLayer('linkProperty', true, false);
           callbacks.closeProjectMenu();
-          window.mainMenu.setState('main');
+          if (mainMenu && typeof mainMenu.setState === 'function') {
+            mainMenu.setState('main');
+          }
         }
       });
 
@@ -650,5 +664,4 @@
       markAsSaved,
       getUnsavedChangesState
     };
-  };
-}(this));
+}

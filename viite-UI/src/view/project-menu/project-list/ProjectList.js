@@ -1,7 +1,20 @@
 // Displays road address projects in a table format, allowing sorting, filtering and opening projects.
 // Polls for project state updates every 30 seconds.
-(function (root) {
-  root.ProjectList = function (projectCollection) {
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { dateutil } from '@utils/DateUtils.js';
+import { eventbus } from '@utils/eventbus.js';
+import { eventutil } from '@utils/EventUtils.js';
+
+export function ProjectList(projectCollection, options = {}) {
+  const applicationApi = options.applicationApi;
+  const applicationModel = options.applicationModel;
+  const resolveProjectMenu = function () {
+    if (_.isFunction(options.projectMenu)) {
+      return options.projectMenu();
+    }
+    return options.projectMenu;
+  };
     const projectStatus = ViiteEnumerations.ProjectStatus;
 
     const state = {
@@ -121,7 +134,10 @@
       applicationModel.setOpenProject(true);
       projectCollection.clearRoadAddressProjects();
       const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
-      window.projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
+      const projectMenu = resolveProjectMenu();
+      if (projectMenu && _.isFunction(projectMenu.showProjectDetails)) {
+        projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
+      }
       if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
     };
 
@@ -201,11 +217,11 @@
     };
 
     function bindEvents() {
-      window.eventutil.bindClick($container, '.sort', handleSort);
-      window.eventutil.bindClick($container, '#filterUser', handleFilterToggle);
-      window.eventutil.bindClick($container, '.project-open', handleProjectOpen);
-      window.eventutil.bindClick($container, '#sync', handleSync);
-      window.eventutil.bindClick($container, '.new', handleCreateNew);
+      eventutil.bindClick($container, '.sort', handleSort);
+      eventutil.bindClick($container, '#filterUser', handleFilterToggle);
+      eventutil.bindClick($container, '.project-open', handleProjectOpen);
+      eventutil.bindClick($container, '#sync', handleSync);
+      eventutil.bindClick($container, '.new', handleCreateNew);
 
       $container.on('input', '#userNameBox', (e) => { state.filterBox.input = e.target.value; render(); });
       $container.on('change', '#OldAcceptedProjectsVisibleCheckbox', (e) => { state.onlyActive = !e.target.checked; fetchProjects(); });
@@ -226,7 +242,7 @@
       $container = $('<div id="project-list-root"></div>');
       bindEvents();
       render();
-      modalContainer = Application.getModalContainer({ onClose: hide });
+      modalContainer = applicationApi.getModalContainer({ onClose: hide });
       modalContainer.open({ title: 'Tieosoiteprojektit', content: $container });
       fetchProjects();
       pollProjects = setInterval(() => projectCollection.getProjectStates(state.projects.map(p => p.id)), 30000);
@@ -247,5 +263,4 @@
     }
 
     return { show, hide, cleanup, getElement: () => $container };
-  };
-}(this));
+}

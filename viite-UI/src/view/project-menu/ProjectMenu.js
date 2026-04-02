@@ -4,15 +4,24 @@
  * and delegates rendering to child components (ProjectDetailsForm, ProjectActionMenu, LinkEditForm).
  * Uses MenuContainer's setHeader(), setBody(), setFooter() for clean content updates.
  */
-(function (root) {
-  const States = {
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { LinkEditForm } from './project-link-editor/ProjectLinkEditForm.js';
+import { MenuContainer } from '@components/MenuContainer.js';
+import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
+import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
+import { Toast } from '@components/Toast.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+
+const States = {
     CONFIGURATION:   'CONFIGURATION',
     ROAD_ADDRESSING: 'ROAD_ADDRESSING',
     LINK_EDIT:       'LINK_EDIT'
   };
 
-  root.ProjectMenu = function (containerSelector, eventBus, options = {}) {
+export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const rootElement = $(containerSelector || '#menu-container');
+  const applicationModel = options.applicationModel;
+  const mainMenu = options.mainMenu;
     const eventbus = eventBus;
     let menu = null;
 
@@ -32,7 +41,9 @@
       }
       
       // Restore main UI state
-      window.mainMenu.setState('main');
+      if (mainMenu && typeof mainMenu.setState === 'function') {
+        mainMenu.setState('main');
+      }
       eventbus.trigger('layer:selected', 'linkProperty', null, true);
       applicationModel.setOpenProject(false);
       applicationModel.selectLayer('linkProperty');
@@ -40,7 +51,7 @@
 
     const ensureMenu = () => {
       if (!menu) {
-        menu = new root.MenuContainer(rootElement, closeProjectMenu);
+        menu = new MenuContainer(rootElement, closeProjectMenu);
       }
       return menu;
     };
@@ -76,11 +87,13 @@
 
       switch (currentState) {
         case States.CONFIGURATION: {
-          const detailsForm = new root.ProjectDetailsForm({
+          const detailsForm = new ProjectDetailsForm({
             closeProjectMenu: closeProjectMenu,
             continueToActions: (actionData) => {
               updateUI(States.ROAD_ADDRESSING, actionData.project, false);
             },
+            applicationModel: applicationModel,
+            mainMenu: mainMenu,
             backend: options.backend,
             projectCollection: options.projectCollection,
             map: options.map,
@@ -103,10 +116,11 @@
         }
 
         case States.ROAD_ADDRESSING: {
-          const actionMenu = new root.ProjectActionMenu({
+          const actionMenu = new ProjectActionMenu({
             ...options,
             eventbus: eventbus,
             project: project.data,
+            mainMenu: mainMenu,
             closeProjectMenu: closeProjectMenu,
             initialState: roadAddressingState,
             onStateChange: syncRoadAddressingState
@@ -119,7 +133,7 @@
         }
 
         case States.LINK_EDIT: {
-          const linkEditForm = new root.LinkEditForm(options.startupParameters);
+          const linkEditForm = new LinkEditForm(options.startupParameters);
           const links = options.projectCollection ? options.projectCollection.getProjectLinks() : [];
           contentHtml = linkEditForm.render(
             project.data, 
@@ -202,7 +216,18 @@
         if (currentState === States.CONFIGURATION) {
           activeChild.bindEvents(project.data, options.projectCollection, project.data);
         } else if (currentState === States.LINK_EDIT) {
-          activeChild.bindEvents(project.data, additionalData.selectedLinks, options.backend, options.projectCollection, options.projectChangeTable);
+          activeChild.bindEvents(
+            project.data,
+            additionalData.selectedLinks,
+            options.backend,
+            options.projectCollection,
+            options.projectChangeTable,
+            {
+              projectCollection: options.projectCollection,
+              projectLinkLayer: options.projectLinkLayer,
+              selectedProjectLinkProperty: options.selectedProjectLinkProperty
+            }
+          );
         } else {
           activeChild.bindEvents();
         }
@@ -353,5 +378,4 @@
       },
       closeProjectMenu: closeProjectMenu
     };
-  };
-}(this));
+}
