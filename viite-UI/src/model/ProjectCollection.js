@@ -154,6 +154,12 @@
       } else if (currentProject !== undefined && currentProject.project.id !== undefined) {
         projectId = currentProject.project.id;
       }
+      console.log("SAVING A PROJECT")
+      console.log("LOOKING FOR ROAD MAINTAINER")
+      console.log("currentProject.project.evk ", currentProject.project.evk)
+      console.log("currentProject.project.roadEvk ", currentProject.project.roadEvk)
+      
+
       var dataJson = {
         id: projectId,
         projectEly: currentProject.project.ely,
@@ -164,9 +170,12 @@
         reservedPartList: _.map(_.filter(me.getReservedParts(), function (part) {
           return !_.isUndefined(part.currentLength, part.currentEly);
         }), function (part) {
+          console.log("WHAT DOES A PART HAVE ::: ")
+          console.log(part)
           return {
             discontinuity: (part.currentDiscontinuity),
             ely: (part.currentEly),
+       //     evk: (part.currentEvk),
             roadLength: (part.currentLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
@@ -180,6 +189,7 @@
           return {
             discontinuity: (part.newDiscontinuity),
             ely: (part.newEly),
+   //         evk: (part.newEvk),
             roadLength: (part.newLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
@@ -380,7 +390,7 @@
         roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
-        roadEly: Number(roadAddressProjectForm.find('#ely').val() || 0),
+     //   roadEly: Number(roadAddressProjectForm.find('#ely').val() || 0),
         roadEvk: Number(roadAddressProjectForm.find('#elinvoimakeskus')[0].value),
         roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
         administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
@@ -416,11 +426,15 @@
     };
 
     this.createProject = function (data, resolution) {
+      console.log("ProjectCollection.createProject :::")
+      console.log(data)
       var roadPartList = _.map(reservedParts, function (part) {
+        console.log("PART IN ROADPARTLIST ::: ")
+        console.log(part)
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
-          ely: (part.newEly ? part.newEly : part.currentEly),
+      //    ely: (part.newEly ? part.newEly : part.currentEly),
           evk: (part.newEvk ? part.newEvk : part.currentEvk)
         };
       });

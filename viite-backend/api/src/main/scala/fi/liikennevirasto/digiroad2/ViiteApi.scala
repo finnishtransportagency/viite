@@ -519,7 +519,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       queryParam[String]("situationDate").description("Situation date (yyyy-MM-dd)"),
       queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
       queryParam[Long]("ely").description("Ely number of a road address").optional,
-      queryParam[Long]("roadMaintainer").description("Elinvoimakeskus number or older Ely number of a road address in road maintainer format").optional,
+      queryParam[Long]("roadMaintainer").description("Elinvoimakeskus number of a road address in road maintainer format").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
       queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
@@ -544,7 +544,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         val mandatoryInputsDefinedAndValid =
           parseDate(situationDate).isDefined && // situationDate is mandatory for all targets
           target.isDefined && // target is always mandatory
-            (roadMaintainer.isDefined && roadMaintainer.get > 0L && roadMaintainer.get < 11 || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || //either ely OR road number is required
+            (ely.isDefined && ely.get > 0L && ely.get <= 14L || roadMaintainer.isDefined && roadMaintainer.get > 0L && roadMaintainer.get < 11 || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || //either ely OR road number is required
             target.get == "RoadNames" || //  unless target is RoadNames
             target.get == "Nodes" || // unless target is Nodes
             target.get == "Junctions" // unless target is Junctions
@@ -728,6 +728,11 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       val project = parsedBody.extract[RoadAddressProjectExtractor]
       val user = userProvider.getCurrentUser
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
+
+      println(s"ViiteApi.createRoadAddressProject (POST) roadAddressProject: ${roadAddressProject.id}")
+      println(s"Persisting with roadMaintainers :: ${roadAddressProject.roadMaintainers.size}")
+      roadAddressProject.roadMaintainers.foreach(rm => println(s"RoadMaintainer: ${rm}"))
+
       try {
         val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
         val fetched = projectService.getSingleProjectById(projectSaved.id).get
@@ -762,6 +767,11 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       val project = parsedBody.extract[RoadAddressProjectExtractor]
       val user = userProvider.getCurrentUser
       val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
+
+      println(s"ViiteApi.saveRoadAddressProject roadAddressProject: ${roadAddressProject.id}")
+      println(s"Persisting with roadMaintainers :: ${roadAddressProject.roadMaintainers.size}")
+      roadAddressProject.roadMaintainers.foreach(rm => println(s"RoadMaintainer: ${rm}"))
+
       try {
         val projectSaved = projectService.saveProject(roadAddressProject)
         val firstLink = projectService.getFirstProjectLink(projectSaved)
@@ -1476,6 +1486,9 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     time(logger, s"GET request for /templates") {
       val authorizedElys = userProvider.getCurrentUser.getAuthorizedElys
       val authorizedEvks = userProvider.getCurrentUser.getAuthorizedEKeskus
+
+      println(s"Authorized ELYs: ${authorizedElys.mkString(", ")}")
+      println(s"Authorized EVKs: ${authorizedEvks.mkString(", ")}")
 
       Map("nodePointTemplates" -> nodesAndJunctionsService.getNodePointTemplates(authorizedEvks.toSeq).map(nodePointTemplateToApi),
         "junctionTemplates" -> nodesAndJunctionsService.getJunctionTemplates(authorizedEvks.toSeq).map(junctionTemplateToApi))
@@ -2343,12 +2356,13 @@ object ProjectConverter {
   }
 
   def toReservedRoadPartRoadMaintainer(rp: RoadPartRoadMaintainerExtractor): ProjectReservedPart = {
-    val arealRoadMaintainerOpt: Option[ArealRoadMaintainer] = (rp.evk, rp.ely) match {
-      case (evk, None) => Some(ArealRoadMaintainer.getEVKFromLong(evk.getOrElse(0L)))
-      case (None, ely) => Some(ArealRoadMaintainer.getEVKFromLong(ely.getOrElse(0L)))
-      case _ => None
-    }
-    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, arealRoadMaintainerOpt, None, None)
+//   val arealRoadMaintainerOpt: Option[ArealRoadMaintainer] = (rp.evk, rp.ely) match {
+//     case (evk, None) => Some(ArealRoadMaintainer.getEVKFromLong(evk.getOrElse(0L)))
+//     case (None, ely) => Some(ArealRoadMaintainer.getEVKFromLong(ely.getOrElse(0L)))
+//     case _ => None
+//   }
+    // After 1.1.2026 no longer any need to preserve projects reserved to elys, so we can just use evk to get the road maintainer.
+    ProjectReservedPart(0L, RoadPart(rp.roadNumber, rp.roadPartNumber), None, None, rp.evk.map(e => ArealRoadMaintainer.getEVKFromLong(e)), None, None)
   }
 
 }

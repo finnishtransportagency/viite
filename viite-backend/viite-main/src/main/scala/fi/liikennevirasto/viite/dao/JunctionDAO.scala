@@ -54,7 +54,7 @@ class JunctionDAO extends BaseDAO {
       addrM     = rs.long("addr_m"),
       roadMaintainer   = rs.stringOpt("road_maintainer") match {
         case Some(value) => ArealRoadMaintainer.apply(value)
-        case None => ArealRoadMaintainer.apply("EVK0")
+        case None => ArealRoadMaintainer.apply("EVK14") // Further debugging of the origin of EVK0 issue
       }
     )
   }

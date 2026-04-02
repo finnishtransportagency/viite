@@ -226,6 +226,8 @@ class ProjectService(
         Left(s"Link could not be found from project: $projectId")
       }
       else {
+        println(s"ProjectService.scala :: parsePreFillData :: projectLinks: ${projectLinks.map(_.linkId).mkString(", ")}")
+        println(s"projectLinks.head.roadMaintainer: ${projectLinks.head.roadMaintainer}")
         preFillRoadName(Some(projectLinks.head.roadPart.roadNumber), Some(projectLinks.head.roadPart.partNumber), projectLinks.head.roadMaintainer, projectId)
       }
   }
@@ -2257,8 +2259,19 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
     val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
+
+    println(s"HUNTING THE EVK0 ISSUE in ProjectService.newProjectTemplate: Matching to see if reserved part roadPart matches the road address roadPart")
+
+
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
-      case Some(rp) => rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
+      case Some(rp) => {
+        println(s"MATCHED")
+        val previousImpl = rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
+        println(s"Previous impl: ${previousImpl.id}")
+        val currentImpl = rp.roadMaintainer.getOrElse(ra.roadMaintainer)
+        println(s"Current impl: ${currentImpl.id}")
+        currentImpl
+      }// rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
       case _ => ra.roadMaintainer
     }
     ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newRoadMaintainer, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
@@ -2690,6 +2703,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     val result = runWithReadOnlySession {
       projectDAO.fetchProjectEvkById(projectId).map(e => ArealRoadMaintainer.getEVK(e).number.toLong)
     }
+    println(s"GETTINBG PROJECT EVK FOR PROJECT $projectId:::")
+    result.foreach(e => println(s"EVK: $e"))
     result
   }
 
