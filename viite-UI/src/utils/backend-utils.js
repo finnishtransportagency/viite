@@ -150,8 +150,8 @@
       }, 500);
 
     this.saveRoadAddressProject = _.throttle(function (data, success, failure) {
-      console.log("SAVING PROJECT WITH PAYLOAD :::: ")
-      console.log(data)
+      console.log("SAVING PROJECT WITH PAYLOAD :::: ");
+      console.log(data);
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -164,8 +164,8 @@
     }, 1000);
 
     this.createRoadAddressProject = _.throttle(function (data, success, failure) {
-      console.log("CREATED PROJECT WITH PAYLOAD :::: ")
-      console.log(data)
+      console.log("CREATED PROJECT WITH PAYLOAD :::: ");
+      console.log(data);
       $.ajax({
         contentType: "application/json",
         type: "POST",
