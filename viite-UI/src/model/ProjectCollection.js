@@ -174,7 +174,6 @@
           console.log(part)
           return {
             discontinuity: (part.currentDiscontinuity),
-        //    ely: (part.currentEly),
             evk: (part.currentEvk),
             roadLength: (part.currentLength),
             roadNumber: part.roadNumber,
@@ -188,7 +187,6 @@
         }), function (part) {
           return {
             discontinuity: (part.newDiscontinuity),
-   //         ely: (part.newEly),
             evk: (part.newEvk),
             roadLength: (part.newLength),
             roadNumber: part.roadNumber,
@@ -390,7 +388,6 @@
         roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
         trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
         discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
-     //   roadEly: Number(roadAddressProjectForm.find('#ely').val() || 0),
         roadEvk: Number(roadAddressProjectForm.find('#elinvoimakeskus')[0].value),
         roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
         administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
@@ -434,7 +431,6 @@
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
-      //    ely: (part.newEly ? part.newEly : part.currentEly),
           evk: (part.newEvk ? part.newEvk : part.currentEvk)
         };
       });
