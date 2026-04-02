@@ -323,8 +323,7 @@ println("Threading print test: Now in avoidRestrictions")
           "startAddrMValue" -> r.addrMRange.start,
           "endAddrMValue"   -> r.addrMRange.end,
           "discontinuity" -> r.discontinuity.value,
-          "ely" -> r.ely,
-        //  "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = true), //ArealRoadMaintainer.getELY(r.ely.toString),
+          "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = true),
           "elinvoimakeskus" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(r.roadMaintainer, elyContext = false), //ArealRoadMaintainer.getEVK(r.roadMaintainer.id),
           "roadType" -> r.administrativeClass.asRoadTypeValue,
           "administrativeClass" -> r.administrativeClass.value,
@@ -399,8 +398,8 @@ println("Threading print test: Now in avoidRestrictions")
                 "jatkuvuuskoodi" -> roadwayChangesInfo.old_discontinuity,
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.old_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.old_administrative_class,
-                "ely" -> roadwayChangesInfo.old_ely,
-                "elinvoimakeskus" -> roadwayChangesInfo.old_road_maintainer //ArealRoadMaintainer.getEVK(roadwayChangesInfo.old_road_maintainer.id)
+                "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(roadwayChangesInfo.old_road_maintainer, elyContext = true),
+                "elinvoimakeskus" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(roadwayChangesInfo.old_road_maintainer, elyContext = false) //roadwayChangesInfo.old_road_maintainer //ArealRoadMaintainer.getEVK(roadwayChangesInfo.old_road_maintainer.id)
               ),
             "kohde" ->
               Map(
@@ -412,8 +411,8 @@ println("Threading print test: Now in avoidRestrictions")
                 "jatkuvuuskoodi" -> roadwayChangesInfo.new_discontinuity,
                 "tietyyppi" -> AdministrativeClass.apply(roadwayChangesInfo.new_administrative_class).asRoadTypeValue,
                 "hallinnollinen_luokka" -> roadwayChangesInfo.new_administrative_class,
-                "ely" -> roadwayChangesInfo.new_ely,
-                "elinvoimakeskus" -> roadwayChangesInfo.new_road_maintainer // ArealRoadMaintainer.getEVK(roadwayChangesInfo.new_road_maintainer.id)
+                "ely" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(roadwayChangesInfo.new_road_maintainer, elyContext = true),
+                "elinvoimakeskus" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(roadwayChangesInfo.new_road_maintainer, elyContext = false) // roadwayChangesInfo.new_road_maintainer // ArealRoadMaintainer.getEVK(roadwayChangesInfo.new_road_maintainer.id)
               )
           )
         }
@@ -788,8 +787,8 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
           "side_code" -> roadAddressLink.sideCode.value,
           "start_addr_m" -> roadAddressLink.addrMRange.start,
           "end_addr_m"   -> roadAddressLink.addrMRange.end,
-          "ely_code" -> roadAddressLink.elyCode,
-          "elinvoimakeskus_code" -> ArealRoadMaintainer.getEVKNumber(roadAddressLink.roadMaintainer),
+          "ely_code" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(roadAddressLink.roadMaintainer, elyContext = true), // roadAddressLink.elyCode,
+          "elinvoimakeskus_code" -> ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(roadAddressLink.roadMaintainer, elyContext = false),
           "road_type" -> roadAddressLink.administrativeClass.asRoadTypeValue,
           "administrative_class" -> roadAddressLink.administrativeClass.value,
           "discontinuity" -> roadAddressLink.discontinuity,

@@ -1131,7 +1131,7 @@ class ProjectValidator {
         } else {
           val biggestPrevious = processed.head._2.maxBy(_.addrMRange.end)
           val lowestCurrent = unprocessed.head._2.minBy(_.addrMRange.start)
-          if (biggestPrevious.roadMaintainer.number != lowestCurrent.roadMaintainer.number) {
+          if (biggestPrevious.roadMaintainer.id != lowestCurrent.roadMaintainer.id) {
             val lastLinkDoesNotHaveChangeOfEvk = biggestPrevious.discontinuity != Discontinuity.ChangingEVKCode && biggestPrevious.roadPart.roadNumber == lowestCurrent.roadPart.roadNumber
             val roadNumbersAreDifferent = !(lowestCurrent.roadPart.isAfter(biggestPrevious.roadPart))
 
@@ -1644,7 +1644,7 @@ class ProjectValidator {
 
   private def alterMessage(validationError: ValidationError,
                            // elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
-                           evkBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
+                           evkBorderData: Option[Seq[String]] = Option.empty[Seq[String]],
                            currentRoadPart: Option[RoadPart] = Option.empty[RoadPart],
                            nextRoadPart   : Option[RoadPart] = Option.empty[RoadPart],
                            discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]],

@@ -36,6 +36,29 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val groupedNewLinks = newProjectLinks.groupBy(projectLink => (projectLink.roadPart))
     val groupedOldLinks = oldProjectLinks.groupBy(projectLink => (projectLink.roadPart))
 
+    println(s"ASSIGNING NEW ADDRMVALUES: newProjectLinks: ${newProjectLinks.size} oldProjectLinks: ${oldProjectLinks.size} userCalibrationPoints: ${userCalibrationPoints.size}")
+
+// UserDefinedCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
+    userCalibrationPoints.foreach(u => println(s"USER CALIBRATION POINT ::: u.id: ${u.id} u.projectLinkId: ${u.projectLinkId} u.projectId: ${u.projectId} u.segmentMValue: ${u.segmentMValue} u.addressMValue: ${u.addressMValue}"))
+
+
+    newProjectLinks.foreach(n => println(s"NEW: ${n.linkId} ${n.roadPart} ${n.track} ${n.addrMRange} ${n.status}"))
+
+    oldProjectLinks.foreach(n => println(s"OLD: ${n.linkId} ${n.roadPart} ${n.track} ${n.addrMRange} ${n.status}"))
+
+    groupedNewLinks.foreach(g => println(s"GROUPED NEW: ${g._1} ${g._2.size}"))
+
+    groupedNewLinks.foreach(g => {
+      println(s"GROUPED NEW LINKS FOR ROAD PART ${g._1}:")
+      g._2.foreach(gg => println(s"${gg.linkId} ${gg.roadPart} ${gg.track} ${gg.addrMRange} ${gg.status}"))
+    })
+
+
+    groupedOldLinks.foreach(g => {
+      println(s"GROUPED OLD LINKS FOR ROAD PART ${g._1}:")
+      g._2.foreach(gg => println(s"${gg.linkId} ${gg.roadPart} ${gg.track} ${gg.addrMRange} ${gg.status}"))
+    })
+
     // Combine grouped project links
     val group = (groupedNewLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedNewLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
@@ -63,6 +86,16 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val rightSections = ordSections.flatMap(_.right.links).distinct
         val leftSections = ordSections.flatMap(_.left.links).distinct
 
+        println(s"LEFT SECTIONS FOR ROAD PART $part: ${leftSections.size}")
+
+        leftSections.foreach(l => println(s"LEFT SECTION: ${l.linkId} ${l.roadPart} ${l.track} ${l.addrMRange} ${l.status}"))
+
+        println(s"RIGHT SECTIONS FOR ROAD PART $part: ${rightSections.size}")
+
+        rightSections.foreach(r => println(s"RIGHT SECTION: ${r.linkId} ${r.roadPart} ${r.track} ${r.addrMRange} ${r.status}"))
+
+
+
         // Map user-defined calibration points to a map
         val userDefinedCalibrationPointsMap = userCalibrationPoints.map(c => c.projectLinkId -> c).toMap
 
@@ -70,11 +103,24 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
         val rightLinks = ProjectSectionMValueCalculator.calculateAddressMValuesForTrack(rightSections, userDefinedCalibrationPointsMap)
         val leftLinks = ProjectSectionMValueCalculator.calculateAddressMValuesForTrack(leftSections, userDefinedCalibrationPointsMap)
 
+        println(s"AFTER CALCULATING ADDRESS MVALUES FOR TRACKS FOR ROAD PART $part: ")
+
+        rightLinks.foreach(r => println(s"RIGHT LINK: ${r.linkId} ${r.roadPart} ${r.track} ${r.addrMRange} ${r.status}"))
+
+        leftLinks.foreach(l => println(s"LEFT LINK: ${l.linkId} ${l.roadPart} ${l.track} ${l.addrMRange} ${l.status}"))
+
         // Calculate section address values
         // (creates splits at status changing spots on opposite tracks, adjusts calibration points etc)
         val calculatedSections = calculateSectionAddressValues(leftLinks, rightLinks, userDefinedCalibrationPointsMap)
         val calculatedLeftLinks = calculatedSections.flatMap(_.left.links)
         val calculatedRightLinks = calculatedSections.flatMap(_.right.links)
+
+
+        println(s"AFTER CALCULATING SECTION ADDRESS VALUES FOR ROAD PART $part: ")
+
+        calculatedLeftLinks.foreach(l => println(s"LEFT LINK: ${l.linkId} ${l.roadPart} ${l.track} ${l.addrMRange} ${l.status}"))
+
+        calculatedRightLinks.foreach(r => println(s"RIGHT LINK: ${r.linkId} ${r.roadPart} ${r.track} ${r.addrMRange} ${r.status}"))
 
         runCalculationValidations(calculatedLeftLinks, calculatedRightLinks)
 
@@ -674,8 +720,12 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftLinksWithAddrMValues = ProjectSectionMValueCalculator.assignLinkValues(leftProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint,
       leftProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.addrMRange.end.toDouble).sorted.lastOption)
 
+    leftLinksWithAddrMValues.foreach(l => println(s"Left link with assigned addrMValue: ${l.linkId} ${l.addrMRange} ${l.originalAddrMRange} ${l.status}"))
+
     val rightLinksWithAddrMValues = ProjectSectionMValueCalculator.assignLinkValues(rightProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint,
       rightProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.addrMRange.end.toDouble).sorted.lastOption)
+
+    rightLinksWithAddrMValues.foreach(r => println(s"Right link with assigned addrMValue: ${r.linkId} ${r.addrMRange} ${r.originalAddrMRange} ${r.status}"))
 
     // combine the unchanged links and the adjusted links
     val leftLinks = leftProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ leftLinksWithAddrMValues
@@ -683,6 +733,14 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     // adjusts tracks to match
     val (trackAdjustedLeftLinks, trackAdjustedRightLinks) = adjustLinksOnTracks(rightLinks, leftLinks, userDefinedCalibrationPoint)
+
+    println("Track adjusted left links:")
+    trackAdjustedLeftLinks.foreach(l => println(s"linkId: ${l.linkId} addrMRange: ${l.addrMRange} status: ${l.status} track: ${l.track} originalTrack: ${l.originalTrack}"))
+    println("Track adjusted right links:")
+    trackAdjustedRightLinks.foreach(r => println(s"linkId: ${r.linkId} addrMRange: ${r.addrMRange} status: ${r.status} track: ${r.track} originalTrack: ${r.originalTrack}"))
+
+
+
 
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(trackAdjustedLeftLinks, trackAdjustedRightLinks)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)

@@ -30,9 +30,17 @@ class RoadNameService {
     }
   }
 
-  def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
+  def getRoadNamesForRoadAddressBrowser(situationDate: Option[String], ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadNameForRoadAddressBrowser] = {
+
+
+    val roadMaintainerOpt = (ely, roadMaintainer) match {
+      case (ely, None) => ely
+      case (None, roadMaintainer) => roadMaintainer
+      case (ely, roadMaintainer) => roadMaintainer
+      case _ => None
+    }
     runWithReadOnlySession {
-      RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(situationDate, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 

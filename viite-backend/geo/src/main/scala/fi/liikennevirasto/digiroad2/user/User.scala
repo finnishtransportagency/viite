@@ -8,7 +8,7 @@ case class Configuration(
                         authorizedElys: Set[Int] = Set(),
                         authorizedElinvoimakeskus: Set[Int] = Set()
                         )
-case class User(id: Long, username: String, configuration: Configuration, authorizedEKeskus: Set[Int] = Set()) {
+case class User(id: Long, username: String, configuration: Configuration) {
 
   def isViewer:            Boolean = configuration.roles(Role.Viewer)
   def isViiteUser:         Boolean = configuration.roles(Role.ViiteUser)

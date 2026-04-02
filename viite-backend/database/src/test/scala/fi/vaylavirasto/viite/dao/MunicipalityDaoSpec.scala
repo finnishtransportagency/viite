@@ -19,4 +19,13 @@ class MunicipalityDaoSpec extends AnyFunSuite with Matchers{
     }
   }
 
+  test("Test getViiteMunicipalityToEvkMapping When getting all Viite EVKs (road maintainers) Then should return some"){
+    runWithRollback{
+      val municipalityRoadMaitainerMap = MunicipalityDAO.getViiteMunicipalityToEvkMapping
+      val allElinvoimaKeskusCodes = Seq("EVK1", "EVK2", "EVK3", "EVK4", "EVK5", "EVK6", "EVK7", "EVK8", "EVK9", "EVK10", "EVK0")
+      municipalityRoadMaitainerMap.isEmpty should be(false)
+      municipalityRoadMaitainerMap.values.forall(value => allElinvoimaKeskusCodes.contains(value)) should be(true)
+    }
+  }
+
 }

@@ -120,8 +120,8 @@ class JunctionDAOSpec extends AnyFunSuite with Matchers {
      val roadwayNumber2 = Sequences.nextRoadwayNumber
      roadwayDAO.create(
        Seq(
-         Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("EVK0"), TerminationCode.NoTermination),
-         Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), 8, ArealRoadMaintainer.apply("EVK0"), TerminationCode.NoTermination)
+         Roadway(Sequences.nextRoadwayId, roadwayNumber1, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(  0, 300), reversed = false, DateTime.parse("1992-10-08"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination),
+         Roadway(Sequences.nextRoadwayId, roadwayNumber2, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(300, 500), reversed = false, DateTime.parse("2021-01-01"), None, "test", Some("TEST ROAD 1"), ArealRoadMaintainer.apply("EVK8"), TerminationCode.NoTermination)
 
        )
      )
@@ -135,8 +135,8 @@ class JunctionDAOSpec extends AnyFunSuite with Matchers {
      // create node points
      nodePointDAO.create(
        Seq(
-         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("EVK0"), Point(100, 100)),
-         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, 1, ArealRoadMaintainer.apply("EVK0"), Point(100, 200))
+         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId,  Some(nodeNumber1), NodePointType.RoadNodePoint, Some(DateTime.parse("1992-10-08")), None, DateTime.parse("1992-10-08"), None, "test", Some(DateTime.parse("1992-10-08")), roadwayNumber1, junctionAddrM, roadPart, Track.Combined, ArealRoadMaintainer.apply("EVK1"), Point(100, 100)),
+         NodePoint(Sequences.nextNodePointId, BeforeAfter.Before, rwpId2, Some(nodeNumber2), NodePointType.RoadNodePoint, Some(DateTime.parse("2021-01-01")), None, DateTime.parse("2021-01-01"), None, "test", Some(DateTime.parse("2021-01-01")), roadwayNumber2, endAddrM,      roadPart, Track.Combined, ArealRoadMaintainer.apply("EVK1"), Point(100, 200))
        )
      )
      // create junction
@@ -154,13 +154,16 @@ class JunctionDAOSpec extends AnyFunSuite with Matchers {
        )
      )
 
+     /* fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long],
+                                          minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = */
+
      // fetch and test
-     val resultForQuery1 = dao.fetchJunctionsForRoadAddressBrowser(Some("2022-01-01"), None, None, Some(roadPart.roadNumber), None, None)
+     val resultForQuery1 = dao.fetchJunctionsForRoadAddressBrowser(situationDate = Some("2022-01-01"), roadMaintainer= None, roadNumber = Some(roadPart.roadNumber), minRoadPartNumber = None, maxRoadPartNumber = None)
      resultForQuery1.size should be (1)
      resultForQuery1.head shouldBe a [JunctionForRoadAddressBrowser]
      resultForQuery1.head.beforeAfter should (contain (1) and contain (2) and have length 2) // 1 = Before, 2 = After
 
-     val resultForQuery2 = dao.fetchJunctionsForRoadAddressBrowser(Some("1992-01-01"), None,None, Some(roadPart.roadNumber), None, None)
+     val resultForQuery2 = dao.fetchJunctionsForRoadAddressBrowser(Some("1992-01-01"), None, Some(roadPart.roadNumber), None, None)
      resultForQuery2.size should be (0)
    }
  }

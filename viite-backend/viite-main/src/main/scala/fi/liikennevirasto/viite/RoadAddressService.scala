@@ -644,23 +644,65 @@ class RoadAddressService(
     roadwayAddressMapper.getRoadAddressesByRoadway(roadways)
   }
 
-  def getTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+  def getTracksForRoadAddressBrowser(situationDate: Option[String], ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
+    val roadMaintainerOpt = (ely, roadMaintainer) match {
+      case (ely, None) => ely
+      case (None, roadMaintainer) => roadMaintainer
+      case _ => None
+    }
+
+    println(s"MAPPING THE OPTIONAL ELY AND EVK PARAMETERS TO A SINGLE FILTER ::getTracksForRoadAddressBrowser:: ")
+    println(s"ELY :: $ely")
+    println(s"EVK :: $roadMaintainer")
+
+    println(s"MATCHED INTO ::: $roadMaintainerOpt")
+
     runWithReadOnlySession {
-      roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
-  def getRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+  def getRoadPartsForRoadAddressBrowser(situationDate: Option[String], ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+
+    val roadMaintainerOpt = (ely, roadMaintainer) match {
+      case (ely, None) => ely
+      case (None, roadMaintainer) => roadMaintainer
+      case _ => None
+    }
+
+    println(s"MAPPING THE OPTIONAL ELY AND EVK PARAMETERS TO A SINGLE FILTER :: getRoadPartsForRoadAddressBrowser :: ")
+    println(s"ELY :: $ely")
+    println(s"EVK :: $roadMaintainer")
+
+    println(s"MATCHED INTO ::: $roadMaintainerOpt")
+
+
     runWithReadOnlySession {
-      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)
+      roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
   }
 
   def getChangeInfosForRoadAddressChangesBrowser(startDate: Option[String], endDate: Option[String], dateTarget: Option[String],
-                                                 ely: Option[Long], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
+                                                 ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
                                                  maxRoadPartNumber: Option[Long]): Seq[ChangeInfoForRoadAddressChangesBrowser] = {
+
+
+    val roadMaintainerOpt = (ely, roadMaintainer) match {
+      case (ely, None) => ely
+      case (None, roadMaintainer) => roadMaintainer
+      case _ => None
+    }
+
+    println(s"MAPPING THE OPTIONAL ELY AND EVK PARAMETERS TO A SINGLE FILTER :: getChangeInfosForRoadAddressChangesBrowser :: ")
+    println(s"ELY :: $ely")
+    println(s"EVK :: $roadMaintainer")
+
+    println(s"MATCHED INTO ::: $roadMaintainerOpt")
+
+
+
     runWithReadOnlySession {
-      roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber) //TODO: Add evk to the called function
+      roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber) //TODO: Add evk to the called function
     }
   }
 
@@ -750,7 +792,7 @@ class RoadAddressService(
     }
   }
 
-  def updateChangeSet(changeSet: ChangeSet): Unit = { //Olisiko tämä? 
+  def updateChangeSet(changeSet: ChangeSet): Unit = {
 
     runWithTransaction {
       //Getting the linearLocations before the drop

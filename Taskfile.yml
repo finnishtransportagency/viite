@@ -1,7 +1,10 @@
 version: '3'
-  
-dotenv: [".env"]
-set: [u, pipefail]
+
+dotenv:
+  - .env
+set:
+  - u
+  - pipefail
 
 includes:
   db:
@@ -17,17 +20,17 @@ includes:
     dir: .
 
   restore:
-      taskfile: ./taskfiles/db-restore.yml
-      dir: .
+    taskfile: ./taskfiles/db-restore.yml
+    dir: .
 
 tasks:
   default:
-    desc: Commands available. 
+    desc: Commands available.
     silent: true
     cmds:
       - |
         cat <<'EOF'
-        
+
         -- COMMON -----------------------------------
         * db:connect:                 Open SSM port-forward to DEFAULT DB (background via tmux)
         * db:disconnect:              Stop DEFAULT SSM port-forward
@@ -43,6 +46,7 @@ tasks:
         -- FLYWAY ------------------------------------
         * flyway:history:             Show flyway_schema_history
         * flyway:migrate:             Flyway migrate via DataFixture (uses tunnel unless FLYWAY_URL is set)
+        * flyway:repair:              Flyway repair via DataFixture (fix checksum metadata)
         * flyway:tunnel:start:        Open SSM port-forward to RDS (dev) via tmux
         * flyway:tunnel:stop:         Stop SSM tunnel (tmux)
 
@@ -50,5 +54,5 @@ tasks:
         * restore:connect-target:     Open SSM port-forward to TARGET DB
         * restore:disconnect-target:  Stop TARGET SSM port-forward
         * restore:restore:            Restore latest dump to TARGET
-        
+
         EOF

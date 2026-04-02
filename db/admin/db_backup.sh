@@ -65,6 +65,7 @@ TS="$(date -u +"%Y%m%dT%H%M%SZ")"
 
 # Include env label in filename
 DUMPFILE="$OUTDIR/backup_${ENV_LABEL}_${PGDATABASE}_${SCHEMA}_${TS}.dump"
+SEQFILE="${DUMPFILE%.dump}.sequences.sql"
 
 # Prefer PG tools if installed. Fallback to PATH if not found.
 PSQL_BIN="${PSQL_BIN:-/usr/lib/postgresql/13/bin/psql}"
@@ -106,6 +107,7 @@ echo "  psql   = $($PSQL_BIN --version)"
 echo "  pg_dump= $($PG_DUMP_BIN --version)"
 echo "Output:"
 echo "  file   = $DUMPFILE"
+echo "  seqfile= $SEQFILE"
 echo
 
 psql_src() {
@@ -153,6 +155,28 @@ echo
 echo "✅ Backup complete"
 echo "Dump file:"
 echo "  $DUMPFILE"
+echo
+
+echo "== Export source sequence values =="
+{
+  echo "-- Source sequence values snapshot"
+  echo "-- source_host=${ENV_HOST} db=${PGDATABASE} captured_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  psql_src -tA -c "
+    SELECT format(
+      'SELECT setval(%L, %s, true);',
+      format('%I.%I', schemaname, sequencename),
+      COALESCE(last_value::bigint, 1)
+    )
+    FROM pg_sequences
+    WHERE schemaname = '${SCHEMA}'
+      AND sequencename <> 'db_restore_log_id_seq'
+    ORDER BY schemaname, sequencename;
+  "
+} > "$SEQFILE"
+
+SEQ_LINES="$(grep -c '^SELECT setval(' "$SEQFILE" || true)"
+echo "  sequence statements = $SEQ_LINES"
+echo "  sequence file       = $SEQFILE"
 echo
 
 echo "== Verify: dump contains TABLE DATA entries =="

@@ -21,7 +21,7 @@ class RoadNameDAOSpec extends AnyFunSuite with Matchers {
      // create roadway
      roadwayDAO.create(
        Seq(
-         Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(date), None, "test", Some("testRoad"), 1L, ArealRoadMaintainer.getEVK(1), validFrom = DateTime.parse(date), validTo = None)
+         Roadway(Sequences.nextRoadwayId, Sequences.nextRoadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(date), None, "test", Some("testRoad"), ArealRoadMaintainer.getEVK(1), validFrom = DateTime.parse(date), validTo = None)
        )
      )
 
@@ -33,27 +33,32 @@ class RoadNameDAOSpec extends AnyFunSuite with Matchers {
      )
 
      // fetch with situation date the same as the roadways startDate
-     val resForFetch1 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(date), None, None, Some(roadNumber), None, None )
+     val resForFetch1 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(date), None, Some(roadNumber), None, None )
+
+     println("Test when fetchRoadNamesForRoadAddressBrowser then return RoadNameForRoadAddressBrowser based on the query")
+     println(s"FETCHED ROAD NAMES FOR ROAD ADDRESS BROWSER ::: ${resForFetch1.size}")
+     resForFetch1.foreach(r => println(s"ROADNAME : ${r.roadName} :: ROADNUMBER : ${r.roadNumber} :: EVK : ${r.evk} :: ELY : ${r.ely} ::"))
+
      resForFetch1.size should be (1)
      resForFetch1.head shouldBe a [RoadNameForRoadAddressBrowser]
      resForFetch1.head.roadNumber should equal(roadNumber)
 
      // fetch with situation date older than the roadway of the road name
-     val resForFetch2 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(olderDate), None, None, Some(roadNumber), None, None)
+     val resForFetch2 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(olderDate), None, Some(roadNumber), None, None)
      resForFetch2.size should be (0)
    }
  }
 
- test("Test fetchRoadNamesForRoadAddressBrowser when situation date is equal to the end date of the history road name and start date of the current road name, then return the current road name with the correct ely number") {
+ test("Test fetchRoadNamesForRoadAddressBrowser when situation date is equal to the end date of the history road name and start date of the current road name, then return the current road name with the correct elinvoimakeskus number") {
    /**
-     *                                               Ely & Road name changes
+     *                                               Elinvoimakeskus & Road name changes
      *                          TIME                 v
      * ------------------------------------------------------------->
      * 1990                                    2022-12-15
      *
      *                       old name
-     *                       ely 1                       new name
-     *                       history rw                  ely 9
+     *                       elinvoimakeskus 1           new name
+     *                       history rw                  elinvoimakeskus 9
      *  -------------------------------------------->    new rw
      *                                               --------------->
      */
@@ -68,14 +73,16 @@ class RoadNameDAOSpec extends AnyFunSuite with Matchers {
      val roadNumber = 99
      val roadPartNumber = 1
      val roadwayNumber = Sequences.nextRoadwayNumber
-     val ely1 = 1L
-     val ely9 = 9L
+
+     val roadMaintainer1 = ArealRoadMaintainer.apply("EVK1")
+     val roadMaintainer9 = ArealRoadMaintainer.apply("EVK9")
+
      val situationDate = "2022-12-15"
      val situationDateDayBeforeChanges = "2022-12-14"
 
      // ely changes from 1 to 9
-     val historyRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(rwHistoryStartDate),Some(DateTime.parse(rwHistoryEndDate)), "test", Some("oldName"),ely1, ArealRoadMaintainer.getEVK(1), validFrom = DateTime.parse(validFrom), validTo = None)
-     val currentRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(rwCurrentStartDate), None, "test", Some("newName"),ely9, ArealRoadMaintainer.getEVK(9), validFrom = DateTime.parse(validFrom), validTo = None)
+     val historyRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(rwHistoryStartDate),Some(DateTime.parse(rwHistoryEndDate)), "test", Some("oldName"),roadMaintainer1, validFrom = DateTime.parse(validFrom), validTo = None)
+     val currentRoadway = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(roadNumber, roadPartNumber), AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(0L, 1000L), reversed=false, DateTime.parse(rwCurrentStartDate), None, "test", Some("newName"),roadMaintainer9, validFrom = DateTime.parse(validFrom), validTo = None)
 
      // create roadways
      roadwayDAO.create(
@@ -98,17 +105,18 @@ class RoadNameDAOSpec extends AnyFunSuite with Matchers {
      )
 
      // result for situation date after changes
-     val res = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(situationDate), None, None, Some(roadNumber), None, None)
+     val res = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(situationDate), None, Some(roadNumber), None, None)
+
      res.size should be (1)
      res.head shouldBe a [RoadNameForRoadAddressBrowser]
-     res.head.ely should be (9)
+     res.head.evk should be (9)
      res.head.roadName should be ("newName")
 
      // result for history situation date
-     val res2 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(situationDateDayBeforeChanges), None, None, Some(roadNumber), None, None)
+     val res2 = RoadNameDAO.fetchRoadNamesForRoadAddressBrowser(Some(situationDateDayBeforeChanges), None, Some(roadNumber), None, None)
      res2.size should be (1)
      res2.head shouldBe a [RoadNameForRoadAddressBrowser]
-     res2.head.ely should be (1)
+     res2.head.evk should be (1)
      res2.head.roadName should be ("oldName")
    }
  }

@@ -121,8 +121,14 @@ class RoadNetworkDAO extends BaseDAO {
         partNumber        = rs.long("road_part_number")
       ),
       roadName            = rs.string("road_name"),
-      elyCode             = rs.int("ely"),
-      elinvoimakeskus     = ArealRoadMaintainer.apply(rs.string("road_maintainer")).number,
+      elyCode             = ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(ArealRoadMaintainer.apply(rs.string("road_maintainer")), elyContext = true) match {
+        case Some(value) => value
+        case None => 0
+      },
+      elinvoimakeskus     = ArealRoadMaintainer.getELYOrElinvoimakeskusNumber(ArealRoadMaintainer.apply(rs.string("road_maintainer")), elyContext = false) match {
+        case Some(value) => value
+        case None => 0
+      },
       administrativeClass = rs.int("administrative_class"),
       track               = rs.int("track"),
       startAddressM       = rs.int("start_addr_m"),
@@ -552,7 +558,7 @@ class RoadNetworkDAO extends BaseDAO {
     sqls"""
        SELECT DISTINCT r.id, r.roadway_number, r.road_number, r.road_part_number, r.track,
         r.start_addr_m, r.end_addr_m, r.reversed, r.discontinuity, r.start_date, r.end_date,
-        r.created_by, r.administrative_class, r.ely, r.road_maintainer, r.terminated, r.valid_from, r.valid_to,
+        r.created_by, r.administrative_class, r.road_maintainer, r.terminated, r.valid_from, r.valid_to,
           (
           SELECT rn.road_name
           FROM road_name rn
@@ -695,7 +701,7 @@ class RoadNetworkDAO extends BaseDAO {
   private val selectOverlappingRoadway =
     sqls"""
            SELECT DISTINCT r.id, r.ROADWAY_NUMBER, r.road_number, r.road_part_number, r.TRACK, r.start_addr_m, r.end_addr_m,
-            r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.ely, r.road_maintainer, r.terminated,
+            r.reversed, r.discontinuity, r.start_date, r.end_date, r.created_by, r.ADMINISTRATIVE_CLASS, r.road_maintainer, r.terminated,
             r.valid_from, r.valid_to,
             (
               SELECT rn.road_name from road_name rn
@@ -812,7 +818,7 @@ class RoadNetworkDAO extends BaseDAO {
 
       val query = sql"""
          SELECT r.road_number, n.road_name,
-                r.road_part_number, r.ely, r.road_maintainer, r.administrative_class,
+                r.road_part_number, r.road_maintainer, r.administrative_class,
                 r.track, r.start_addr_m, r.end_addr_m, r.discontinuity
            FROM roadway r
       LEFT JOIN $roadNameTable n ON n.road_number = r.road_number

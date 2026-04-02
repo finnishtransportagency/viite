@@ -24,7 +24,7 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
       projectId = 1L, status = status,
       administrativeClass = adminClass,
       geometryLength = (addr._2 - addr._1).toDouble,
-      roadwayId = id, linearLocationId = id, ely = 8L,
+      roadwayId = id, linearLocationId = id,
       reversed = false, roadwayNumber = 100,
       roadMaintainer = ArealRoadMaintainer.getEVK(8),
       linkGeometryTimeStamp = 0L
@@ -39,7 +39,7 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
       baseLink.sideCode, baseLink.calibrationPointTypes, baseLink.originalCalibrationPointTypes,
       baseLink.geometry, baseLink.projectId, baseLink.status, baseLink.administrativeClass,
       baseLink.linkGeomSource, baseLink.geometryLength, baseLink.roadwayId, baseLink.linearLocationId,
-      baseLink.ely, baseLink.roadMaintainer, baseLink.reversed, baseLink.connectedLinkId,
+      baseLink.roadMaintainer, baseLink.reversed, baseLink.connectedLinkId,
       baseLink.linkGeometryTimeStamp, baseLink.roadwayNumber, baseLink.roadName,
       baseLink.roadAddressLength, baseLink.roadAddressStartAddrM, baseLink.roadAddressEndAddrM,
       baseLink.roadAddressTrack, baseLink.roadAddressRoadPart) {
