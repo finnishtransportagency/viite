@@ -174,8 +174,8 @@
           console.log(part)
           return {
             discontinuity: (part.currentDiscontinuity),
-            ely: (part.currentEly),
-       //     evk: (part.currentEvk),
+        //    ely: (part.currentEly),
+            evk: (part.currentEvk),
             roadLength: (part.currentLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
@@ -188,8 +188,8 @@
         }), function (part) {
           return {
             discontinuity: (part.newDiscontinuity),
-            ely: (part.newEly),
-   //         evk: (part.newEvk),
+   //         ely: (part.newEly),
+            evk: (part.newEvk),
             roadLength: (part.newLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
