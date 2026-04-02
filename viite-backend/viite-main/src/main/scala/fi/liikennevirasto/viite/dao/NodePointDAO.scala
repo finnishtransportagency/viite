@@ -484,25 +484,6 @@ class NodePointDAO extends BaseDAO {
   }
 
   def insertRoadNodePoint(roadwayPointId: Long, beforeAfter: BeforeAfter, nodeNumber: Long, username: String): Unit = {
-    /*create(Seq(
-    NodePoint(
-    NewIdValue,
-    beforeAfter,
-    roadwayPointId,
-    Some(nodeNumber),
-    NodePointType.RoadNodePoint,
-    None,
-    None,
-    DateTime.now(),
-    None,
-    username,
-    Some(DateTime.now()),
-    0L,
-    11,
-    RoadPart(0, 0),
-    null,
-    8
-    )))*/
     create(Seq(NodePoint(id = NewIdValue,
       beforeAfter = beforeAfter,
       roadwayPointId = roadwayPointId,
@@ -518,7 +499,7 @@ class NodePointDAO extends BaseDAO {
       addrM = 11,
       roadPart = RoadPart(0, 0),
       track =  null,
-      roadMaintainer = ArealRoadMaintainer.apply("EVK0"),       //TODO: Verify the validity of these default values
+      roadMaintainer = ArealRoadMaintainer.apply("EVK13"),       //TODO: Verify the validity of these default values
       coordinates = Point(0.0, 0.0)
 
     )))
@@ -542,7 +523,7 @@ class NodePointDAO extends BaseDAO {
       RoadPart(0, 0),
       null,
     //8, //TODO: Verify the validity of these default values
-      ArealRoadMaintainer.apply("EVK0"),       //TODO: Verify the validity of these default values
+      ArealRoadMaintainer.apply("EVK14"),       //TODO: Verify the validity of these default values
 
     )))
   }
