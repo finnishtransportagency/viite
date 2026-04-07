@@ -1,3 +1,5 @@
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+
 /**
  * NodeCollection - Manages road nodes and junctions data
  * 
@@ -9,13 +11,13 @@
  * - Node point and junction template handling
  */
 export function NodeCollection(backend, locationSearch) {
-    var me = this;
-    var nodes = [];
-    var nodesWithAttributes = [];
-    var mapTemplates = [];
-    var userNodePointTemplates = [];
-    var userJunctionTemplates = [];
-    var saving = events.spinners.saving;
+    const me = this;
+    let nodes = [];
+    let nodesWithAttributes = [];
+    let mapTemplates = [];
+    let userNodePointTemplates = [];
+    let userJunctionTemplates = [];
+    const saving = events.spinners.saving;
 
     this.setMapTemplates = function (templates) {
       mapTemplates = templates;
@@ -47,7 +49,7 @@ export function NodeCollection(backend, locationSearch) {
     this.getNodesByRoadAttributes = function (roadAttributes) {
       return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
         if (result.success) {
-          var searchResult = result.nodes;
+          const searchResult = result.nodes;
           me.setNodesWithAttributes(searchResult);
           eventbus.trigger('nodeSearchTool:fetched', searchResult.length);
         } else {
@@ -125,9 +127,9 @@ export function NodeCollection(backend, locationSearch) {
           me.setMapTemplates(templates);
 
           // Open template form with filtered data matching reference point
-          var coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
+          const coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
 
-          var isSameLocation = function(coords1, coords2) {
+          const isSameLocation = function(coords1, coords2) {
               if (!coords1 || !coords2) return false;
               return Math.abs(coords1.x - coords2.x) < coordinateToleranceMeters && 
                     Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
@@ -157,8 +159,8 @@ export function NodeCollection(backend, locationSearch) {
 
     // Update map with the nodes and junctions of the fetched location
     eventbus.on('node:fetched', function (fetchResult, zoom) {
-      var resultNodes = fetchResult.nodes;
-      var templates = {
+      const resultNodes = fetchResult.nodes;
+      const templates = {
         nodePoints: fetchResult.nodePointTemplates,
         junctions: fetchResult.junctionTemplates
       };
@@ -170,7 +172,7 @@ export function NodeCollection(backend, locationSearch) {
     });
 
     eventbus.on('node:save', function (node) {
-      var fail = function (message) {
+      const fail = function (message) {
         eventbus.trigger('node:saveFailed', message.errorMessage || 'Solmun tallennus epäonnistui.', saving);
       };
 
@@ -203,7 +205,7 @@ export function NodeCollection(backend, locationSearch) {
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
-      var node = nodesWithAttributes[index];
+      const node = nodesWithAttributes[index];
       map.getView().animate({
         center: [node.coordinates.x, node.coordinates.y],
         zoom: 12,
@@ -212,7 +214,7 @@ export function NodeCollection(backend, locationSearch) {
     });
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function (id) {
-      var nodePointTemplate = _.find(userNodePointTemplates, function (template) {
+      const nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id);
       });
       if (_.isUndefined(nodePointTemplate)) {
@@ -238,7 +240,7 @@ export function NodeCollection(backend, locationSearch) {
     });
 
     eventbus.on('nodeSearchTool:refreshView', function (map) {
-      var coords = [];
+      const coords = [];
       _.each(nodesWithAttributes, function (node) {
         coords.push([node.coordinates.x, node.coordinates.y]);
       });
