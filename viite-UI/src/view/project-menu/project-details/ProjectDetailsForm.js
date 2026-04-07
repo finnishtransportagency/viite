@@ -20,6 +20,8 @@ export function ProjectDetailsForm(callbacks = {}) {
     
     // Track unsaved changes state
     let hasUnsavedChanges = false;
+    let projectValidationFailedHandler = null;
+    let projectFailedHandler = null;
 
     const deleteRoadPartButton = function (roadNumber, roadPartNumber, selector) {
       return `
@@ -143,7 +145,7 @@ export function ProjectDetailsForm(callbacks = {}) {
             </div>
 
             <div class="form-group">
-              <label class="control-label">LISÄTIEDOT</label>
+              <label class="control-label">Lisätiedot</label>
               <textarea class="form-control large-input" id="lisatiedot">${info}</textarea>
             </div>
           </form>
@@ -256,6 +258,13 @@ export function ProjectDetailsForm(callbacks = {}) {
       return hasUnsavedChanges;
     };
 
+    const getBackendErrorMessage = function(result, fallback) {
+      if (!result) return fallback;
+      if (typeof result === 'string') return result;
+      if (result.errorMessage) return result.errorMessage;
+      return fallback;
+    };
+
     const navigateToActionMenu = function(projectData) {
       if (typeof callbacks.continueToActions === 'function') {
         callbacks.continueToActions({ project: projectData });
@@ -298,24 +307,32 @@ export function ProjectDetailsForm(callbacks = {}) {
       updateReserveButtonState();
       updateSaveButtonState(projectData);
 
-      // Set up global event listeners for project operations (using namespaced events for cleanup)
-      const componentNamespace = '.projectDetailsForm';
-      eventbus.off('roadAddress:projectValidationFailed' + componentNamespace).on('roadAddress:projectValidationFailed' + componentNamespace, function(errorMessage) {
+      // Backbone.Events does not support jQuery-style event namespaces.
+      // Keep stable handler references so we can safely rebind on each render.
+      if (projectValidationFailedHandler) {
+        eventbus.off('roadAddress:projectValidationFailed', projectValidationFailedHandler);
+      }
+      projectValidationFailedHandler = function(errorMessage) {
         applicationModel.removeSpinner();
         console.error(errorMessage);
         new ConfirmPopup(errorMessage || 'Projektin tallennus epäonnistui.', {
           type: 'alert',
           okButtonLbl: 'OK'
         });
-      });
+      };
+      eventbus.on('roadAddress:projectValidationFailed', projectValidationFailedHandler);
 
-      eventbus.off('roadAddress:projectFailed' + componentNamespace).on('roadAddress:projectFailed' + componentNamespace, function() {
+      if (projectFailedHandler) {
+        eventbus.off('roadAddress:projectFailed', projectFailedHandler);
+      }
+      projectFailedHandler = function(error) {
         applicationModel.removeSpinner();
-        new ConfirmPopup('Projektin tallennus epäonnistui.', {
+        new ConfirmPopup(getBackendErrorMessage(error, 'Projektin tallennus epäonnistui.'), {
           type: 'alert',
           okButtonLbl: 'OK'
         });
-      });
+      };
+      eventbus.on('roadAddress:projectFailed', projectFailedHandler);
 
       if (projCollection && currentProject) {
         bindReservationHandler(projCollection, currentProject);
@@ -400,6 +417,11 @@ export function ProjectDetailsForm(callbacks = {}) {
             if (callbacks.continueToActions) {
               callbacks.continueToActions({ project: savedProject });
             }
+          } else {
+            new ConfirmPopup(getBackendErrorMessage(result, 'Projektin tallennus epäonnistui.'), {
+              type: 'alert',
+              okButtonLbl: 'OK'
+            });
           }
         });
 
@@ -462,6 +484,11 @@ export function ProjectDetailsForm(callbacks = {}) {
                       mainMenu.setState('main');
                     }
                   }
+                } else {
+                  new ConfirmPopup(getBackendErrorMessage(result, 'Projektin tallennus epäonnistui.'), {
+                    type: 'alert',
+                    okButtonLbl: 'OK'
+                  });
                 }
               });
 
