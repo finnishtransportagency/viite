@@ -63,13 +63,14 @@
 }
 
 .project-table tbody tr {
-  height: 38px;
+  height: auto;
+  min-height: 38px;
 }
 
 .project-table tbody tr td {
   vertical-align: middle;
+  padding: 8px 4px;
 }
-
 .project-table tbody tr td:not(:first-child) {
   text-align: center;
 }
@@ -170,9 +171,9 @@
 .user-cell,
 .evk-cell,
 .project-name-cell {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  word-wrap: break-word;
+  white-space: normal;
 }
 
 .actions-cell button {

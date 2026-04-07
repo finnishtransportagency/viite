@@ -221,7 +221,17 @@
   height: 27px !important;
 }
 
-// ===== Search results =====
+// Hide number input spinner arrows
+.node-input {
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  // For Firefox
+  -moz-appearance: textfield;
+}
 
 
 .node-search-section-title-container {
@@ -237,6 +247,7 @@
 
 .evk-group-label {
   color: @node-color-amber !important;
+  text-transform: capitalize;
 }
 
 .node-search-group-row {
