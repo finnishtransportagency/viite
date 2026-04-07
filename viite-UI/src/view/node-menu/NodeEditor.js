@@ -1,5 +1,5 @@
 import { DatePicker } from '@components/date-picker/DatePicker.js';
-import { NodeMenuTableUtils } from '@node-menu/DataTable.js';
+import { NodeTableUtils } from '@node-menu/DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
   /**
@@ -9,7 +9,7 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, containerElement, dependencies) {
     const nodeEditingDisabledAttribute = _.includes(startupParameters.roles, 'viite') ? '' : 'disabled';
     const userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
-    const tableUtils = NodeMenuTableUtils;
+    const tableUtils = NodeTableUtils;
   const ConfirmPopup = dependencies.ConfirmPopup;
   const dateutil = dependencies.dateutil;
   const moment = dependencies.moment;

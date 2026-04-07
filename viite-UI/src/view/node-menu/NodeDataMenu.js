@@ -1,4 +1,4 @@
-import { NodeMenuTableUtils } from './DataTable.js';
+import { NodeTableUtils } from './DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
 /**
@@ -6,7 +6,7 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
  * Shows node/junction tables and exposes buttons that continue into editing flows.
  */
 export function NodeDataMenu(dataTable, containerElement, dependencies) {
-  const tableUtils = NodeMenuTableUtils;
+  const tableUtils = NodeTableUtils;
   const applicationModel = dependencies.applicationModel;
 
     const renderDataTable = function (props) {

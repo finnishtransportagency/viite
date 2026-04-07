@@ -63,9 +63,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
     };
 
     const dataTable = new DataTable();
-    const searchMenu = new NodeSearchMenu(dataTable, getBodyContainer, {
-      searchResultsFontSize: startupParameters.nodeSearchResultsFontSize || 12
-    });
+    const searchMenu = new NodeSearchMenu(dataTable);
     const dataMenu = new NodeDataMenu(dataTable, getBodyContainer, {
       applicationModel: applicationModel
     });
@@ -85,21 +83,20 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
         menu.setFooter('');
       }
 
-      searchMenu.show();
-      searchMenu.bindEvents({
+      const $bodyContainer = getBodyContainer();
+      $bodyContainer.html(searchMenu.render());
+      searchMenu.setClearEnabled($bodyContainer, false);
+
+      searchMenu.bindEvents($bodyContainer, {
         onSearch: function (data) {
           applicationModel.addSpinner();
-          searchMenu.clearSearchResults();
-          searchMenu.clearUntreatedTemplates();
+          searchMenu.setClearEnabled($bodyContainer, false);
           nodeCollection.getNodesByRoadAttributes(data);
         },
         onClear: function () {
           applicationModel.addSpinner();
-          searchMenu.clearSearchResults();
-          searchMenu.clearUntreatedTemplates();
+          searchMenu.setClearEnabled($bodyContainer, false);
           fetchUntreatedTemplates();
-          searchMenu.setClearEnabled(false);
-          searchMenu.setSearchEnabled(false);
         },
         onResultClick: function (index) {
           const nodesWithAttributes = nodeCollection.getNodesWithAttributes();
@@ -126,8 +123,6 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
       applicationModel.selectLayer('node');
       applicationModel.addSpinner();
       fetchUntreatedTemplates();
-      searchMenu.setClearEnabled(false);
-      searchMenu.setSearchEnabled(false);
     };
 
     const showNodeDisplay = function (node, templates) {
@@ -198,7 +193,10 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
         const nodePointTemplates = data.nodePointTemplates;
         const junctionTemplates = data.junctionTemplates;
         eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
-        searchMenu.showUntreatedTemplates(nodePointTemplates, junctionTemplates);
+        if (currentState === STATE.SEARCH) {
+          const $bodyContainer = getBodyContainer();
+          $bodyContainer.find('#untreated-nodes-junctions-content').html(searchMenu.renderUntreatedTemplates(nodePointTemplates, junctionTemplates));
+        }
         applicationModel.removeSpinner();
       });
     };
@@ -209,13 +207,15 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
           return;
         }
 
+        const $bodyContainer = getBodyContainer();
         applicationModel.removeSpinner();
-        searchMenu.setClearEnabled(true);
         if (hasResults) {
-          searchMenu.showSearchResults(nodeCollection.getNodesWithAttributes());
-          searchMenu.clearUntreatedTemplates();
+          $bodyContainer.find('#node-search-results-content').html(searchMenu.renderSearchResults(nodeCollection.getNodesWithAttributes()));
+          $bodyContainer.find('#untreated-nodes-junctions-content').empty();
+          searchMenu.setClearEnabled($bodyContainer, true);
           eventbus.trigger('nodeSearchTool:refreshView', map);
         } else {
+          searchMenu.setClearEnabled($bodyContainer, false);
           new InstructionsPopup(jQuery('.digiroad2')).show('Ei tuloksia', 3000);
         }
       });
