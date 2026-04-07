@@ -280,7 +280,7 @@
 
     var bindEvents = function () {
 
-      var rootElement = $('#feature-attributes');
+      var rootElement = $('#menu-container');
 
       var removeReservedPart = function (roadNumber, roadPartNumber) {
         currentProject.isDirty = true;

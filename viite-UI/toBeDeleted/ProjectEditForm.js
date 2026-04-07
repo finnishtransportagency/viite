@@ -150,7 +150,7 @@
     const isProjectEditable = () => _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
 
     const checkInputs = () => {
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
       const inputs = rootElement.find('input');
       const pedestrianRoads = 70000;
       
@@ -179,7 +179,7 @@
     // It also handles the visibility of the new road address form and the change direction div
     const changeDropDownValue = function (statusCode) {
       const dropdown_0_new = $("#dropDown_0 option[value=" + RoadAddressChangeType.New.description + "]");
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
       switch (statusCode) {
         case RoadAddressChangeType.Unchanged.value:
           dropdown_0_new.prop('disabled', true);
@@ -260,7 +260,7 @@
     };
 
     const bindEvents = () => {
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
 
       eventbus.on('projectLink:clicked', (selected) => {
         selectedProjectLink = selected;
@@ -780,7 +780,7 @@
           ViiteEnumerations.ProjectError.RoadNotReserved.value
         ];
         if (_.includes(roadPartErrors, error.errorCode)) {
-          var attributeElement = $('#feature-attributes');
+          var attributeElement = $('#menu-container');
           attributeElement.find('#editProjectSpan').click();
         } else {
           eventbus.trigger('projectCollection:clickCoordinates', event, map);

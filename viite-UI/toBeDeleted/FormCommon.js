@@ -380,7 +380,7 @@
     };
     
     const checkInputs = function (localPrefix) {
-      const rootElement = $('#feature-attributes');
+      const rootElement = $('#menu-container');
       const inputs = rootElement.find('input');
       let filled = true;
       for (let i = 0; i < inputs.length; i++) {
