@@ -12,6 +12,24 @@ tasks:
     cmds:
       - |
         set -euo pipefail
+
+        # Local run or explicit JDBC URL: no tunnel needed.
+        if [[ -n "${FLYWAY_URL:-}" ]]; then
+          echo "FLYWAY_URL is set. Skipping SSM tunnel."
+          exit 0
+        fi
+        if [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
+          echo "DB_HOST is local (${DB_HOST:-127.0.0.1}). Skipping SSM tunnel."
+          exit 0
+        fi
+
+        : "${AWS_REGION:?AWS_REGION missing (needed for SSM)}"
+        : "${AWS_PROFILE:?AWS_PROFILE missing (needed for SSM)}"
+        : "${SSM_TARGET:?SSM_TARGET missing (needed for SSM)}"
+        : "${DB_HOST:?DB_HOST missing}"
+        : "${DB_PORT:?DB_PORT missing}"
+        : "${LOCAL_DB_PORT:?LOCAL_DB_PORT missing}"
+
         echo "Starting SSM tunnel to $DB_HOST:$DB_PORT on localhost:$LOCAL_DB_PORT (profile: $AWS_PROFILE)"
 
         if tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null; then
@@ -54,9 +72,6 @@ tasks:
         echo "ERROR: Tunnel did not open in time."
         tmux capture-pane -p -t {{.TUNNEL_SESSION}} -S -120 2>/dev/null || true
         exit 1
-    requires:
-      vars:
-        [AWS_PROFILE, AWS_REGION, SSM_TARGET, DB_HOST, DB_PORT, LOCAL_DB_PORT]
 
   tunnel:stop:
     desc: "Stop SSM tunnel (tmux)"
