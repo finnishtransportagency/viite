@@ -2,7 +2,9 @@
  * Defines layered project road-link styles for project mode rendering.
  * Chooses widths, colors, and z-index ordering from link metadata and zoom level.
  */
+import { StyleRule, StyleRuleProvider } from '@utils/StyleRule.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function ProjectLinkStyler() {
   const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
@@ -214,7 +216,7 @@ export function ProjectLinkStyler() {
       })
     ];
 
-    var fillRulesForUnderConstruction = [
+    const fillRulesForUnderConstruction = [
       new StyleRule().where('lifecycleStatus').is(ViiteEnumerations.lifecycleStatus.UnderConstruction.value).and('roadClass').is(ViiteEnumerations.RoadClass.NoClass.value).use({
         stroke: {
           color: '#000',
@@ -292,7 +294,7 @@ export function ProjectLinkStyler() {
       })
     ];
 
-    var borderRules = [
+    const borderRules = [
       new StyleRule().where('zoomLevel').isIn([5, 6]).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 7}}),
       new StyleRule().where('zoomLevel').isIn([7, 8]).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 8}}),
       new StyleRule().where('zoomLevel').is(9).and('administrativeClassId').isIn(ViiteEnumerations.BlackUnderlineAdministrativeClasses).use({stroke: {width: 9}}),
@@ -349,8 +351,8 @@ export function ProjectLinkStyler() {
         borderStyle.getStyle(linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
     };
 
-    var getSelectionLinkStyle = function (linkData, map) {
-      var selectionLinkStyle = new StyleRuleProvider({
+    const getSelectionLinkStyle = function (linkData, map) {
+      const selectionLinkStyle = new StyleRuleProvider({
         stroke: {
           lineCap: 'round',
           color: '#00FF00'
@@ -388,5 +390,3 @@ export function ProjectLinkStyler() {
       getTerminatedProjectLinksStyle: getTerminatedProjectLinksStyle
     };
 }
-
-window.ProjectLinkStyler = ProjectLinkStyler;

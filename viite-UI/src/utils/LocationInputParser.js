@@ -2,13 +2,13 @@
 
 /* Categorizes input type as 'coordinate', 'road', or 'street', or to be 'invalid'. */
 const parse = function (input) {
-  var coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
-  var wildLetterRegex = /^(\s*[*]*[A-Za-zÀ-ÿ].*)/;
-  var roadNumberRegex = /^\s*(\d+(\s+\d+(\s+\d+(\s+\d)?)?)?)\s*$/; // road addr separated with whitespaces.
-  var roadNumberRegex2 = /^\s*(\d+(\/\d+(\/\d+(\/\d)?)?)?)\s*$/; // road addr separated with slashes.
+  const coordinateRegex = /^\s*(\d+)\s*,\s*(\d+)\s*$/;
+  const wildLetterRegex = /^(\s*[*]*[A-Za-zÀ-ÿ].*)/;
+  const roadNumberRegex = /^\s*(\d+(\s+\d+(\s+\d+(\s+\d)?)?)?)\s*$/; // road addr separated with whitespaces.
+  const roadNumberRegex2 = /^\s*(\d+(\/\d+(\/\d+(\/\d)?)?)?)\s*$/; // road addr separated with slashes.
   const linkIdRegex = /^\s*(\w+-\w+-\w+-\w+-\w+:\d+)\s*$/;
 
-  var matchedCoordinates = input.match(coordinateRegex);
+  const matchedCoordinates = input.match(coordinateRegex);
   if (matchedCoordinates) { return parseCoordinates(matchedCoordinates); }
   else if (input.match(roadNumberRegex)) { return {type: 'road', search: input}; }
   else if (input.match(roadNumberRegex2)) { return {type: 'road', search: input}; }
@@ -24,5 +24,3 @@ const parseCoordinates = function (coordinates) {
 export const LocationInputParser = {
   parse: parse
 };
-
-window.LocationInputParser = LocationInputParser;

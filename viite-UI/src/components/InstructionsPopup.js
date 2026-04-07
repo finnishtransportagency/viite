@@ -24,6 +24,3 @@ export function InstructionsPopup(container) {
       show: show
     };
   }
-
-window.InstructionsPopup = InstructionsPopup;
-

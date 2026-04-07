@@ -16,5 +16,3 @@ export const zoomlevels = {
   minZoomForJunctions: 12,
   maxZoomLevel: 15
 };
-
-window.zoomlevels = zoomlevels;

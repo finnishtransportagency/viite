@@ -79,5 +79,3 @@ export function OpenLayersRule() {
     where: createWhereFunction(state)
   };
 }
-
-window.OpenLayersRule = OpenLayersRule;

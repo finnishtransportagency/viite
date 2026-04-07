@@ -63,9 +63,9 @@ export function ProjectLinkMarker() {
 
     function hex2Rgba(hexa) {
       const hex = hexa.replace('#', '');
-      var colorR = parseInt(hex.substring(0, hex.length / 3), 16);
-      var colorG = parseInt(hex.substring(hex.length / 3, 2 * hex.length / 3), 16);
-      var colorB = parseInt(hex.substring(2 * hex.length / 3, 3 * hex.length / 3), 16);
+      const colorR = parseInt(hex.substring(0, hex.length / 3), 16);
+      const colorG = parseInt(hex.substring(hex.length / 3, 2 * hex.length / 3), 16);
+      const colorB = parseInt(hex.substring(2 * hex.length / 3, 3 * hex.length / 3), 16);
       return 'rgba(' + colorR + ',' + colorG + ',' + colorB + ',1)';
     }
 
@@ -104,5 +104,3 @@ export function ProjectLinkMarker() {
     createProjectMarker: createProjectMarker
   };
 }
-
-window.ProjectLinkMarker = ProjectLinkMarker;

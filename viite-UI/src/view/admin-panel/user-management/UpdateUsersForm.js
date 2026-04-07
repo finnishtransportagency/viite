@@ -1,9 +1,10 @@
 /**
  * UpdateUsersForm - Handles updating existing users
  */
-import { validateUserFields, validateUserFieldsAndToastErrors } from './FormValidation.js';
+import { validateUserFieldsAndToastErrors } from './FormValidation.js';
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, getSelectedElinvoimakeskus } from './Dropdowns.js';
-import { Toast } from '@components/Toast.js';
+import { showToast } from '@components/Toast.js';
+import { userManagementApi } from '@utils/user-management-backend/UserManagementApi.js';
 
 const DEFAULT_COORDINATES = {
     zoom: 3,
@@ -23,24 +24,25 @@ const COORD_LIMITS = {
 function handleApiResponse(response, successMessage, errorMessage, onSuccess) {
     if (response && response.success === true) {
         const msg = response.message || successMessage;
-        Toast.show(msg, { type: 'success' });
+        showToast(msg, { type: 'success' });
         if (typeof onSuccess === 'function') onSuccess();
     } else {
         const reason = (response && response.reason) || errorMessage;
-        Toast.show(reason, { type: 'error' });
+        showToast(reason, { type: 'error' });
     }
 }
 
 export const UpdateUserForm = {
     // Fetch all users and render them into the table with editable field
-    fetchUsers: function () {
-        window.userManagementApi.getAllUsers(function (users) {
+    fetchUsers: function (options = {}) {
+        const { applicationModel } = options;
+
+        userManagementApi.getAllUsers(function (users) {
             const tableBody = document.getElementById('userTableBody');
             if (!tableBody) return;
             tableBody.innerHTML = '';
 
             if (!users || users.length === 0) {
-                Toast.show("Käyttäjiä ei löytynyt.", "warning");
                 return;
             }
 
@@ -83,26 +85,28 @@ export const UpdateUserForm = {
             document.querySelectorAll('.delete-user').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     const username = this.dataset.username;
-                    const currentUsername = window.applicationModel.getSessionUsername();
+                    const currentUsername = applicationModel && typeof applicationModel.getSessionUsername === 'function'
+                        ? applicationModel.getSessionUsername()
+                        : undefined;
 
                     if (username === currentUsername) {
-                        Toast.show("Et voi poistaa itseäsi.", "warning");
+                        showToast("Et voi poistaa itseäsi.", { type: 'warning' });
                         return;
                     }
 
                     if (confirm(`Poistetaanko käyttäjä ${username}?`)) {
-                        window.userManagementApi.deleteUser(
+                        userManagementApi.deleteUser(
                             username,
                             function (response) {
                                 handleApiResponse(
                                     response,
                                     "Käyttäjä poistettu!",
                                     "Virhe poistettaessa käyttäjää.",
-                                    () => UpdateUserForm.fetchUsers()
+                                    () => UpdateUserForm.fetchUsers(options)
                                 );
                             },
                             function (errorMessage) {
-                                Toast.show(errorMessage, { type: 'error' });
+                                showToast(errorMessage, { type: 'error' });
                             }
                         );
                     }
@@ -112,7 +116,7 @@ export const UpdateUserForm = {
     },
 
     // Gather updated user data from table rows, validate, and send to API
-    updateAllUsers: function (container) {
+    updateAllUsers: function (container, options = {}) {
         const rows = container.find('#userTableBody tr');
         const usersToUpdate = [];
         let hasErrors = false;
@@ -169,34 +173,31 @@ export const UpdateUserForm = {
 
         if (hasErrors) return;
 
-        window.userManagementApi.updateUsers(
+        userManagementApi.updateUsers(
             usersToUpdate,
             function (response) {
                 handleApiResponse(
                     response,
                     "Käyttäjät päivitetty!",
                     "Virhe käyttäjien päivityksessä.",
-                    () => UpdateUserForm.fetchUsers()
+                    () => UpdateUserForm.fetchUsers(options)
                 );
             },
             function (errorMessage) {
-                Toast.show(errorMessage, { type: 'error' });
+                showToast(errorMessage, { type: 'error' });
             }
         );
     },
 
     // Bind update button click handler to a container
-    bindEvents: function (containerSelector) {
+    bindEvents: function (containerSelector, options = {}) {
         const container = $(containerSelector);
         if (!container.length) return;
 
         container.off('click', '#updateUsersButton');
         container.on('click', '#updateUsersButton', function (e) {
             e.preventDefault();
-            UpdateUserForm.updateAllUsers(container);
+            UpdateUserForm.updateAllUsers(container, options);
         });
     }
 };
-
-window.UserManagement = window.UserManagement || {};
-window.UserManagement.UpdateUserForm = UpdateUserForm;

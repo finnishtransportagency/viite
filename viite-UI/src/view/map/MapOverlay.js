@@ -19,5 +19,3 @@ export function MapOverlay(container) {
     hide: hide
   };
 }
-
-window.MapOverlay = MapOverlay;

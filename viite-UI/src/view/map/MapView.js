@@ -5,37 +5,37 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function MapView(map, layers, instructionsPopup) {
-  var applicationModel = window.applicationModel;
-    var isInitialized = false;
-    var centerMarkerLayer = new ol.source.Vector({});
-    var enableCtrlModifier = false;
-    var metaKeyCodes = ViiteEnumerations.MetaKeyCodes;
+  const applicationModel = window.applicationModel;
+    let isInitialized = false;
+    const centerMarkerLayer = new ol.source.Vector({});
+    let enableCtrlModifier = false;
+    const metaKeyCodes = ViiteEnumerations.MetaKeyCodes;
 
-    var showAssetZoomDialog = function () {
+    const showAssetZoomDialog = function () {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
     };
 
-    var minZoomForContent = function () {
+    const minZoomForContent = function () {
       if (applicationModel.getSelectedLayer()) {
         return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForRoadNetwork;
       }
       return zoomlevels.minZoomForRoadNetwork;
     };
 
-    var refreshMap = function (mapState) {
+    const refreshMap = function (mapState) {
       if (mapState.zoom < minZoomForContent() && (isInitialized && mapState.hasZoomLevelChanged)) {
         showAssetZoomDialog();
       }
     };
 
-    var drawCenterMarker = function (position) {
+    const drawCenterMarker = function (position) {
       // Create a new Feature with the exact point in the center of the map
-      var icon = new ol.Feature({
+      const icon = new ol.Feature({
         geometry: new ol.geom.Point(position)
       });
 
       // Create the style of the icon of the 'Merkitse' Button
-      var styleIcon = new ol.style.Style({
+      const styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/center-marker.svg'
         })
@@ -49,27 +49,26 @@ export function MapView(map, layers, instructionsPopup) {
       centerMarkerLayer.addFeature(icon);
     };
 
-    var vectorLayer = new ol.layer.Vector({
+    const vectorLayer = new ol.layer.Vector({
       source: centerMarkerLayer
     });
     vectorLayer.set('name', 'mapViewVectorLayer');
 
-    var addCenterMarkerLayerToMap = function (mapMarker) {
+    const addCenterMarkerLayerToMap = function (mapMarker) {
       mapMarker.addLayer(vectorLayer);
     };
 
     eventbus.on('application:initialized layer:fetched', function () {
-      var zoom = zoomlevels.getViewZoom(map);
+      const zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
 
-      const crosshair = createCrosshairToggle($('.mapplugin.coordinates'), map);
-      window.crosshair = crosshair; 
+      createCrosshairToggle($('.mapplugin.coordinates'), map);
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);
 
-    var setCursor = function (tool) {
-      var cursor = {
+    const setCursor = function (tool) {
+      const cursor = {
         'Select': 'default',
         'Attach': 'default',
         'Add': 'crosshair',
@@ -91,7 +90,7 @@ export function MapView(map, layers, instructionsPopup) {
 
     eventbus.on('coordinates:selected', function (position) {
       if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
-        var zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
+        let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
         if (!_.isUndefined(position.zoom))
           zoomLevel = position.zoom;
         map.getView().setCenter([position.lon, position.lat]);
@@ -106,8 +105,8 @@ export function MapView(map, layers, instructionsPopup) {
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-      var layerToBeHidden = layers[previouslySelectedLayer];
-      var layerToBeShown = layers[layer];
+      const layerToBeHidden = layers[previouslySelectedLayer];
+      const layerToBeShown = layers[layer];
 
       if (layerToBeHidden) {
         layerToBeHidden.hide(map);
@@ -123,7 +122,7 @@ export function MapView(map, layers, instructionsPopup) {
     });
 
     map.on('pointermove', function (event) {
-      var pixel = map.getEventPixel(event.originalEvent);
+      const pixel = map.getEventPixel(event.originalEvent);
       eventbus.trigger('map:mouseMoved', event, pixel);
     }, true);
 
@@ -162,5 +161,3 @@ export function MapView(map, layers, instructionsPopup) {
 
   setCursor(applicationModel.getSelectedTool());
 }
-
-window.MapView = MapView;

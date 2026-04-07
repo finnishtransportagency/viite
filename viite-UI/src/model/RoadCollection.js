@@ -7,45 +7,49 @@
  * - Traffic direction and functional class handling
  * - Point geometry management
  */
-var RoadLinkModel = function (data) {
-  var selected = false;
-  var original = _.cloneDeep(data);
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+import { eventbus } from '@utils/eventbus.js';
 
-  var getId = function () {
+const RoadLinkModel = function (data) {
+  let selected = false;
+  const original = _.cloneDeep(data);
+
+  const getId = function () {
     return data.roadLinkId || data.linkId;
   };
 
-  var getData = function () {
+  const getData = function () {
     return data;
   };
 
-  var getPoints = function () {
+  const getPoints = function () {
     return _.cloneDeep(data.points);
   };
 
-  var setLinkProperty = function (name, value) {
+  const setLinkProperty = function (name, value) {
     if (value !== data[name]) {
       data[name] = value;
     }
   };
 
-  var select = function () {
+  const select = function () {
     selected = true;
   };
 
-  var unselect = function () {
+  const unselect = function () {
     selected = false;
   };
 
-  var isSelected = function () {
+  const isSelected = function () {
     return selected;
   };
 
-  var isCarTrafficRoad = function () {
+  const isCarTrafficRoad = function () {
     return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
   };
 
-  var cancel = function () {
+  const cancel = function () {
     data.trafficDirection = original.trafficDirection;
     data.functionalClass = original.functionalClass;
     data.linkType = original.linkType;
@@ -64,26 +68,26 @@ var RoadLinkModel = function (data) {
   };
 };
 
-export function RoadCollection(backend) {
-    var currentAllRoadLinks = [];
-    var roadLinkGroups = [];
-    var unaddressedRoadLinkGroups = [];
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var LinkSource = ViiteEnumerations.LinkGeomSource;
-    var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
-    var clickedLinearLocationId = 0;
-    var selectedRoadLinkModels = [];
+export function RoadCollection(backend, applicationModel) {
+    let currentAllRoadLinks = [];
+    let roadLinkGroups = [];
+    let unaddressedRoadLinkGroups = [];
+    const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    const LinkSource = ViiteEnumerations.LinkGeomSource;
+    const lifecycleStatus = ViiteEnumerations.lifecycleStatus;
+    let clickedLinearLocationId = 0;
+    let selectedRoadLinkModels = [];
 
-    var roadLinks = function () {
+    const roadLinks = function () {
       return _.flatten(roadLinkGroups);
     };
 
 
-    var getSelectedRoadLinkModels = function () {
+    const getSelectedRoadLinkModels = function () {
       return selectedRoadLinkModels;
     };
 
-    var getGroupByLinearLocationId = function (linearLocationId) {
+    const getGroupByLinearLocationId = function (linearLocationId) {
       return _.find(roadLinkGroups, function (roadLinkGroup) {
         return _.some(roadLinkGroup, function (roadLink) {
           return roadLink.getData().linearLocationId === linearLocationId;
@@ -91,10 +95,10 @@ export function RoadCollection(backend) {
       });
     };
 
-    var updateGroup = function (linearLocationId, fetchedGroups) {
-      var indexOfGroupToBeUpdated = roadLinkGroups.indexOf(getGroupByLinearLocationId(linearLocationId));
+    const updateGroup = function (linearLocationId, fetchedGroups) {
+      const indexOfGroupToBeUpdated = roadLinkGroups.indexOf(getGroupByLinearLocationId(linearLocationId));
 
-      var fetchedGroupThatWasClicked = _.find(fetchedGroups, function (roadLinkGroup) {
+      const fetchedGroupThatWasClicked = _.find(fetchedGroups, function (roadLinkGroup) {
         return _.some(roadLinkGroup, function (roadLink) {
           return roadLink.getData().linearLocationId === linearLocationId;
         });
@@ -131,8 +135,8 @@ export function RoadCollection(backend) {
       });
     };
 
-    var updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, selection) {
-      var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
+    const updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, selection) {
+      const fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
         return _.map(roadLinkGroup, function (roadLink) {
           return new RoadLinkModel(roadLink);
         });
@@ -144,13 +148,13 @@ export function RoadCollection(backend) {
     };
 
 
-    var fetchProcess = function (fetchedRoadLinks, zoom) {
-      var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
+    const fetchProcess = function (fetchedRoadLinks, zoom) {
+      const fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
         return _.map(roadLinkGroup, function (roadLink) {
           return new RoadLinkModel(roadLink);
         });
       });
-      var [fetchedUnaddressed, fetchedWithAddresses] = _.partition(fetchedRoadLinkModels, function (model) {
+      const [fetchedUnaddressed, fetchedWithAddresses] = _.partition(fetchedRoadLinkModels, function (model) {
         return _.every(model, function (mod) {
           return mod.getData().roadNumber === 0;
         });
@@ -170,8 +174,8 @@ export function RoadCollection(backend) {
 
       // get the selected links that were not fetched (i.e. were not inside the bounding box) and add them to the roadLinkGroups
       if (!_.isEmpty(getSelectedRoadLinkModels())) {
-        var nonFetchedLinksInSelection = _.reject(getSelectedRoadLinkModels(), function (selected) {
-          var allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
+        const nonFetchedLinksInSelection = _.reject(getSelectedRoadLinkModels(), function (selected) {
+          const allGroups = _.map(_.flatten(fetchedRoadLinkModels), function (group) {
             return group.getData();
           });
           return _.includes(_.map(allGroups, 'linkId'), selected.getData().linkId);
@@ -179,19 +183,29 @@ export function RoadCollection(backend) {
         setRoadLinkGroups(roadLinkGroups.concat(nonFetchedLinksInSelection));
       }
 
-      var nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
+      const nonHistoryConstructionRoadLinkGroups = _.reject(roadLinkGroups, function (group) {
         return groupDataSourceFilter(group, LinkSource.HistoryLinkInterface);
       });
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched');
-      if (applicationModel.isProjectButton()) {
-        eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
-        applicationModel.setProjectButton(false);
+      const hasProjectButtonState =
+        applicationModel &&
+        _.isFunction(applicationModel.isProjectButton) &&
+        applicationModel.isProjectButton();
+
+      if (hasProjectButtonState) {
+        const projectFeature = _.isFunction(applicationModel.getProjectFeature)
+          ? applicationModel.getProjectFeature()
+          : undefined;
+        eventbus.trigger('linkProperties:highlightSelectedProject', projectFeature);
+        if (_.isFunction(applicationModel.setProjectButton)) {
+          applicationModel.setProjectButton(false);
+        }
       }
     };
 
-    var groupDataSourceFilter = function (group, dataSource) {
+    const groupDataSourceFilter = function (group, dataSource) {
       if (_.isArray(group)) {
         return _.some(group, function (roadLink) {
           if (roadLink)
@@ -203,7 +217,7 @@ export function RoadCollection(backend) {
       }
     };
 
-    var groupDataConstructionTypeFilter = function (group, dataConstructionType) {
+    const groupDataConstructionTypeFilter = function (group, dataConstructionType) {
       if (_.isArray(group)) {
         return _.some(group, function (roadLink) {
           if (roadLink)
@@ -240,7 +254,7 @@ export function RoadCollection(backend) {
     };
 
     this.getByLinkId = function (ids) {
-      var segments = _.filter(roadLinks(), function (road) {
+      const segments = _.filter(roadLinks(), function (road) {
         return road.getData().linkId === ids;
       });
       return segments;
@@ -261,7 +275,7 @@ export function RoadCollection(backend) {
     };
 
     this.getByLinearLocationId = function (id) {
-      var segments = _.filter(roadLinks(), function (road) {
+      const segments = _.filter(roadLinks(), function (road) {
         return road.getData().linearLocationId === id;
       });
       return segments;
@@ -289,7 +303,7 @@ export function RoadCollection(backend) {
       });
     };
 
-    var setRoadLinkGroups = function (groups) {
+    const setRoadLinkGroups = function (groups) {
       roadLinkGroups = groups;
     };
 
@@ -307,7 +321,7 @@ export function RoadCollection(backend) {
         zoom: zoomLevel,
         projectId: projectId
       }, function (fetchedLinks) {
-        var projectLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
+        const projectLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
           return link.status === RoadAddressChangeType.NotHandled.value ||
               link.status === RoadAddressChangeType.New.value ||
               link.status === RoadAddressChangeType.Terminated.value ||
@@ -315,11 +329,11 @@ export function RoadCollection(backend) {
               link.status === RoadAddressChangeType.Numbering.value ||
               link.status === RoadAddressChangeType.Transfer.value;
         }).uniq().value();
-        var projectLinkFeatures = _.map(projectLinks, function (road) {
-          var points = _.map(road.points, function (point) {
+        const projectLinkFeatures = _.map(projectLinks, function (road) {
+          const points = _.map(road.points, function (point) {
             return [point.x, point.y];
           });
-          var feature = new ol.Feature({
+          const feature = new ol.Feature({
             geometry: new ol.geom.LineString(points)
           });
           feature.linkData = road;
@@ -330,5 +344,3 @@ export function RoadCollection(backend) {
       });
     };
 }
-
-window.RoadCollection = RoadCollection;

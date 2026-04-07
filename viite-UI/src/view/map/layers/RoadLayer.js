@@ -12,16 +12,16 @@ import { Layer } from './Layer.js';
 
 export function RoadLayer(map) {
   Layer.call(this, map);
-    var applicationModel = window.applicationModel;
+    const applicationModel = window.applicationModel;
 
     window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
 
-    var me = this;
-    var roadLinkStyler = new RoadLinkStyler();
+    const me = this;
+    const roadLinkStyler = new RoadLinkStyler();
 
-    var roadVector = new ol.source.Vector({});
+    const roadVector = new ol.source.Vector({});
 
-    var roadLayer = new ol.layer.Vector({
+    const roadLayer = new ol.layer.Vector({
       source: roadVector,
       style: function (feature) {
         return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
@@ -30,10 +30,10 @@ export function RoadLayer(map) {
     roadLayer.setVisible(true);
     roadLayer.set('name', 'roadLayer');
 
-    var infoContainer = document.getElementById('popup');
-    var infoContent = document.getElementById('popup-content');
+    const infoContainer = document.getElementById('popup');
+    const infoContent = document.getElementById('popup-content');
 
-    var overlay = new ol.Overlay(({
+    const overlay = new ol.Overlay(({
       element: infoContainer
     }));
 
@@ -95,8 +95,8 @@ export function RoadLayer(map) {
       }
     };
 
-    var displayAdministrativeClass = function (administrativeClassCode) {
-      var administrativeClass;
+    function displayAdministrativeClass(administrativeClassCode) {
+      let administrativeClass;
       switch (administrativeClassCode) {
         case ViiteEnumerations.AdministrativeClassShort.PublicRoad.value:
           administrativeClass = ViiteEnumerations.AdministrativeClassShort.PublicRoad.description;
@@ -111,14 +111,14 @@ export function RoadLayer(map) {
           break;
       }
       return administrativeClass;
-    };
+    }
 
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
       displayRoadAddressInfo(event, pixel);
     });
 
-    var handleRoadsVisibility = function () {
+    const handleRoadsVisibility = function () {
       roadLayer.setVisible(applicationModel.getRoadVisibility() && zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadLinks);
     };
 
@@ -153,7 +153,7 @@ export function RoadLayer(map) {
 
     this.eventListener.listenTo(eventbus, 'map:refresh', me.refreshMap, this);
 
-    var clear = function () {
+    const clear = function () {
       roadLayer.getSource().clear();
     };
 
@@ -162,5 +162,3 @@ export function RoadLayer(map) {
       clear: clear
     };
   }
-
-window.RoadLayer = RoadLayer;

@@ -40,6 +40,3 @@ export const Environment = {
   urlPath: urlPath,
   localizedName: localizedName
 };
-
-window.Environment = Environment;
-

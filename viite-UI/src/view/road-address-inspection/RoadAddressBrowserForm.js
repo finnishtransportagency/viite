@@ -211,5 +211,3 @@ export function RoadAddressBrowserForm() {
       initializeSelectors: initializeSelectors
     };
 }
-
-window.RoadAddressBrowserForm = RoadAddressBrowserForm;

@@ -25,5 +25,8 @@ export function getBeforeAfterDisplayText(beforeAfterValues) {
     return letterString.split('').sort().join(''); // sort letter string so that 'JE' becomes 'EJ'
 }
 
-window.EnumerationUtils = { getAdministrativeClassTextValue, getChangeTypeDisplayText, getBeforeAfterDisplayText };
-
+export const EnumerationUtils = {
+    getAdministrativeClassTextValue,
+    getChangeTypeDisplayText,
+    getBeforeAfterDisplayText
+};

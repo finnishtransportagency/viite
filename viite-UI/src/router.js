@@ -4,6 +4,7 @@
  */
 /* eslint-disable prefer-named-capture-group */
 import { eventbus } from '@utils/eventbus.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function URLRouter(map, backend, models) {
   const Router = Backbone.Router.extend({
@@ -145,5 +146,3 @@ export function URLRouter(map, backend, models) {
       router.navigate(layerAdjusted);
     });
 }
-
-window.URLRouter = URLRouter;

@@ -84,6 +84,3 @@ export function MenuContainer(container, onClose) {
 
     return { setHeader, setBody, setFooter, setOnClose, getBody, clear };
   }
-
-window.MenuContainer = MenuContainer;
-window.MenuWrapper = MenuContainer;

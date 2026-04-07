@@ -31,5 +31,3 @@ export function ZoomBox(map, container, appModel) {
     }
   });
 }
-
-window.ZoomBox = ZoomBox;

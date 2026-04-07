@@ -4,7 +4,10 @@
 export const userManagementApi = {
     getAllUsers: function(callback) {
         $.get('api/viite/users', function(data) {
-            if (_.isFunction(callback)) callback(data.users);
+            if (_.isFunction(callback)) {
+                return callback(data.users);
+            }
+            return undefined;
         }).fail(function(jqXHR) {
             console.error('Virhe käyttäjien haussa:', jqXHR.responseText);
         });
@@ -68,5 +71,3 @@ export const userManagementApi = {
         });
     }
 };
-
-window.userManagementApi = userManagementApi;

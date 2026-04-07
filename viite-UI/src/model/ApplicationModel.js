@@ -1,3 +1,7 @@
+import { eventbus } from '@utils/eventbus.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
+
 /**
  * ApplicationModel - Central application state management
  * 
@@ -264,5 +268,3 @@ export function ApplicationModel(models) {
       specialSelectionTypes: specialSelectionTypes
     };
 }
-
-window.ApplicationModel = ApplicationModel;

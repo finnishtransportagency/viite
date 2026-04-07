@@ -336,5 +336,3 @@ export function RoadLinkBox(selectedProjectLinkProperty) {
       hide: hide
     };
   }
-
-window.RoadLinkBox = RoadLinkBox;

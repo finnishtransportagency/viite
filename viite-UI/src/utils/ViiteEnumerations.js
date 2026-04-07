@@ -270,5 +270,3 @@ ViiteEnumerations.Discontinuity = {
   };
 
 export { ViiteEnumerations };
-window.ViiteEnumerations = ViiteEnumerations;
-

@@ -326,5 +326,3 @@ export function RoadNetworkErrorsList(backend) {
             hide: hideRoadNetworkErrorsListWindow
         };
 }
-
-window.RoadNetworkErrorsList = RoadNetworkErrorsList;

@@ -37,5 +37,3 @@ export function JunctionMarker() {
     createJunctionMarker: createJunctionMarker
   };
 }
-
-window.JunctionMarker = JunctionMarker;

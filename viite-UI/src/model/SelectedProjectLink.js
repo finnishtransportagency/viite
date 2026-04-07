@@ -1,3 +1,5 @@
+import { eventbus } from '@utils/eventbus.js';
+
 /**
  * SelectedProjectLink - Manages selected project links state
  * 
@@ -10,12 +12,12 @@
  */
 export function SelectedProjectLink(projectLinkCollection) {
 
-    var current = [];
-    var me = this;
-    var featuresToKeep = [];
-    var dirty = false;
+    let current = [];
+    const me = this;
+    let featuresToKeep = [];
+    let dirty = false;
 
-    var open = function (id, multiSelect) {
+    const open = function (id, multiSelect) {
       if (multiSelect) {
         me.ids = projectLinkCollection.getMultiProjectLinks(id);
         current = projectLinkCollection.getProjectLink(me.ids);
@@ -27,26 +29,26 @@ export function SelectedProjectLink(projectLinkCollection) {
       eventbus.trigger('projectLink:clicked', linkData);
     };
 
-    var openWithErrorMessage = function (ids, errorMessage) {
+    const openWithErrorMessage = function (ids, errorMessage) {
       current = projectLinkCollection.getProjectLink(ids);
       me.ids = ids;
       eventbus.trigger('projectLink:errorClicked', get(ids[0]), errorMessage);
     };
 
-    var isDirty = function () {
+    const isDirty = function () {
       return dirty;
     };
 
-    var setDirty = function (value) {
+    const setDirty = function (value) {
       dirty = value;
     };
 
-    var openCtrl = function (linkIds) {
+    const openCtrl = function (linkIds) {
       if (linkIds.length === 0) {
         cleanIds();
         close();
       } else {
-        var added = _.difference(linkIds, me.ids);
+        const added = _.difference(linkIds, me.ids);
         me.ids = linkIds;
         current = _.filter(current, function (link) {
             return _.includes(linkIds, link.getData().id || link.getData().linkId);
@@ -58,15 +60,15 @@ export function SelectedProjectLink(projectLinkCollection) {
       }
     };
 
-    var get = function (id) {
-      var clicked = _.filter(current, function (c) {
+    function get(id) {
+      const clicked = _.filter(current, function (c) {
         if (c.getData().id > 0) {
           return c.getData().id === id;
         } else {
           return c.getData().linkId === id;
         }
       });
-      var others = _.filter(_.map(current, function (projectLink) {
+      const others = _.filter(_.map(current, function (projectLink) {
         return projectLink.getData();
       }), function (link) {
         if (link.id > 0) {
@@ -79,23 +81,23 @@ export function SelectedProjectLink(projectLinkCollection) {
         return [clicked[0].getData()].concat(others);
       }
       return others;
-    };
+    }
 
-    var setCurrent = function (newSelection) {
+    const setCurrent = function (newSelection) {
       current = newSelection;
     };
 
-    var getCurrent = function () {
+    const getCurrent = function () {
       return _.map(current, function (curr) {
         return curr.getData();
       });
     };
 
-    var getFeaturesToKeep = function () {
+    const getFeaturesToKeep = function () {
       return featuresToKeep;
     };
 
-    var addToFeaturesToKeep = function (data4Display) {
+    const addToFeaturesToKeep = function (data4Display) {
       if (_.isArray(data4Display)) {
         featuresToKeep = featuresToKeep.concat(data4Display);
       } else {
@@ -103,32 +105,32 @@ export function SelectedProjectLink(projectLinkCollection) {
       }
     };
 
-    var clearFeaturesToKeep = function () {
+    const clearFeaturesToKeep = function () {
       featuresToKeep = [];
     };
 
-    var isSelected = function (linkId) {
+    const isSelected = function (linkId) {
       return _.includes(me.ids, linkId);
     };
 
-    var clean = function () {
+    const clean = function () {
       current = [];
     };
 
-    var cleanIds = function () {
+    function cleanIds() {
       me.ids = [];
-    };
+    }
 
-    var close = function () {
+    function close() {
       current = [];
       eventbus.trigger('layer:enableButtons', true);
-    };
+    }
 
-    var isSplit = function () {
+    const isSplit = function () {
       return get().length > 1 && !_.isUndefined(get()[0].connectedLinkId);
     };
 
-    var isMultiLink = function () {
+    const isMultiLink = function () {
       return get().length > 1 && _.isUndefined(get()[0].connectedLinkId);
     };
 
@@ -152,5 +154,3 @@ export function SelectedProjectLink(projectLinkCollection) {
       setDirty: setDirty
     };
 }
-
-window.SelectedProjectLink = SelectedProjectLink;

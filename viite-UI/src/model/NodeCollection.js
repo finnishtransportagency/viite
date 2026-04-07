@@ -1,4 +1,7 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { events } from '@utils/EventUtils.js';
+import { eventbus } from '@utils/eventbus.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -10,7 +13,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
  * - Backend integration for node operations
  * - Node point and junction template handling
  */
-export function NodeCollection(backend, locationSearch) {
+export function NodeCollection(backend, locationSearch, applicationModel) {
     const me = this;
     let nodes = [];
     let nodesWithAttributes = [];
@@ -247,5 +250,3 @@ export function NodeCollection(backend, locationSearch) {
       map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
     });
 }
-
-window.NodeCollection = NodeCollection;

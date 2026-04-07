@@ -35,5 +35,3 @@ export function CoordinatesDisplay(map, container) {
       eventbus.trigger('coordinates:marked', centerLonLat);
   });
 }
-
-window.CoordinatesDisplay = CoordinatesDisplay;

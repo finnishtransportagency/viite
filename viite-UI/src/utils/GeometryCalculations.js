@@ -5,5 +5,3 @@ export const geometrycalculator = {
     return ((x >= bounds[0] || x <= bounds[2]) && (y >= bounds[1] || y <= bounds[3]));
   }
 };
-
-window.geometrycalculator = geometrycalculator;

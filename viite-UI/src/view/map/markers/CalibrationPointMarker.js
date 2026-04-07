@@ -70,5 +70,3 @@ export function CalibrationPoint(data) {
     rePlaceInGroup: rePlaceInGroup
   };
 }
-
-window.CalibrationPoint = CalibrationPoint;

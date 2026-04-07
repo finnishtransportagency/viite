@@ -279,6 +279,3 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
       setState: setState
     };
   }
-
-window.NodeMenu = NodeMenu;
-window.NodeMenuStateRouter = NodeMenu;

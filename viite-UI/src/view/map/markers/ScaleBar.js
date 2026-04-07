@@ -9,5 +9,3 @@ export function ScaleBar(map, container) {
     className: 'olScaleLine'
   }));
 }
-
-window.ScaleBar = ScaleBar;

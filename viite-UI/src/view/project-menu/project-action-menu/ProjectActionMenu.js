@@ -250,11 +250,9 @@ const getProjectErrors = function (projectErrors, links) {
       activeEventbus.trigger('layer:enableButtons', false);
       if (typeof closeProjectMenu === 'function') {
         closeProjectMenu();
-      } else {
-        if (mainMenu && typeof mainMenu.setState === 'function') {
+      } else if (mainMenu && typeof mainMenu.setState === 'function') {
           mainMenu.setState('main');
         }
-      }
       
       if (changeLayerMode) {
         activeEventbus.trigger('roadAddressProject:clearOnClose');

@@ -2,8 +2,9 @@
  * AddUserForm - Handles user creation with validation
  */
 import { getSelectedElinvoimakeskus, getSelectedRoles, setSelectedElinvoimakeskus, setSelectedRoles } from './Dropdowns.js';
-import { Toast } from '@components/Toast.js';
+import { showToast } from '@components/Toast.js';
 import { validateUserFields } from './FormValidation.js';
+import { userManagementApi } from '@utils/user-management-backend/UserManagementApi.js';
 
 const DEFAULT_COORDINATES = {
     zoom: 3,
@@ -14,7 +15,7 @@ const DEFAULT_COORDINATES = {
 function showFormErrors(errors) {
     const messages = Object.values(errors);
     if (messages.length) {
-        Toast.show(messages.join(" "), { type: 'warning' });
+        showToast(messages.join(" "), { type: 'warning' });
     }
 }
 
@@ -28,7 +29,8 @@ function resetForm() {
 }
 
 export const AddUserForm = {
-    handleAddUser: function () {
+    handleAddUser: function (options = {}) {
+        const { onUserAdded } = options;
         const username = document.getElementById('newUserUsername').value.trim();
         const roles = getSelectedRoles('newUserRoles');
         const zoom = parseInt(document.getElementById('newUserZoom').value || DEFAULT_COORDINATES.zoom);
@@ -54,34 +56,33 @@ export const AddUserForm = {
             }
         };
 
-        window.userManagementApi.addUser(
+        userManagementApi.addUser(
             newUser,
             function (response) {
                 if (response && response.success === false) {
-                    Toast.show(response.reason || "Virhe lisättäessä käyttäjää.", { type: 'error' });
+                    showToast(response.reason || "Virhe lisättäessä käyttäjää.", { type: 'error' });
                 } else {
-                    Toast.show("Käyttäjä lisätty!", { type: 'success' });
-                    window.UserManagement.UpdateUserForm.fetchUsers();
+                    showToast("Käyttäjä lisätty!", { type: 'success' });
+                    if (typeof onUserAdded === 'function') {
+                        onUserAdded();
+                    }
                     resetForm();
                 }
             },
             function (errorMessage) {
-                Toast.show(errorMessage, { type: 'error' });
+                showToast(errorMessage, { type: 'error' });
             }
         );
     },
 
-    bindEvents: function (containerSelector) {
+    bindEvents: function (containerSelector, options = {}) {
         const container = $(containerSelector);
         if (!container.length) return;
 
         container.off('click', '#addUserButton');
         container.on('click', '#addUserButton', function (e) {
             e.preventDefault();
-            AddUserForm.handleAddUser();
+            AddUserForm.handleAddUser(options);
         });
     }
 };
-
-window.UserManagement = window.UserManagement || {};
-window.UserManagement.AddUserForm = AddUserForm;

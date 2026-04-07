@@ -189,16 +189,3 @@ export {
     updateElinvoimakeskusDropdownLabel,
     updateRoleDropdownLabel
 };
-
-window.UserManagement = window.UserManagement || {};
-window.UserManagement.Dropdowns = {
-    getElinvoimakeskusDropdownHtml,
-    getElinvoimakeskusOptions,
-    getRoleDropdownHtml,
-    getSelectedElinvoimakeskus,
-    getSelectedRoles,
-    setSelectedElinvoimakeskus,
-    setSelectedRoles,
-    updateElinvoimakeskusDropdownLabel,
-    updateRoleDropdownLabel
-};

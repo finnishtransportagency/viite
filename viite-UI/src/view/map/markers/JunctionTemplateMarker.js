@@ -37,5 +37,3 @@ export function JunctionTemplateMarker() {
     createJunctionTemplateMarker: createJunctionTemplateMarker
   };
 }
-
-window.JunctionTemplateMarker = JunctionTemplateMarker;

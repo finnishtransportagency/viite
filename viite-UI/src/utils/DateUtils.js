@@ -154,5 +154,3 @@ export const dateutil = {};
 
     return returnISO ? dateObj.toISOString() : dateObj;
   };
-
-window.dateutil = dateutil;

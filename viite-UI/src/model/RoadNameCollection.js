@@ -8,17 +8,19 @@
  * - Date range management for road names
  * - Backend integration for road name operations
  */
+import { eventbus } from '@utils/eventbus.js';
+
 export function RoadNameCollection(backend) {
 
-    var me = this;
-    var newId = -1000;
-    var currentRoadNumber = -1;
-    var currentRoadNameData = [];
-    var changedIds = [];
-    var newRoadName = {id: newId};
+    const me = this;
+    const newId = -1000;
+    let currentRoadNumber = -1;
+    let currentRoadNameData = [];
+    let changedIds = [];
+    let newRoadName = {id: newId};
 
-    var findCurrentRoadName = function (id) {
-      var roadName = _.find(currentRoadNameData, function (roadData) {
+    const findCurrentRoadName = function (id) {
+      let roadName = _.find(currentRoadNameData, function (roadData) {
         return roadData.id === parseInt(id);
       });
       roadName = roadName ? roadName : newRoadName;
@@ -30,10 +32,10 @@ export function RoadNameCollection(backend) {
       changedIds = [];
       backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
         currentRoadNumber = roadNumber;
-        var sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
+        const sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
           return rd.roadNumber === parseInt(roadNumber);
         }).map(function (road) {
-          var roadCopy = road;
+          const roadCopy = road;
           if (road.endDate)
             roadCopy.endDate = moment(road.endDate, 'DD.MM.YYYY, HH:mm:ss');
           if (road.startDate)
@@ -46,17 +48,17 @@ export function RoadNameCollection(backend) {
     };
 
     this.setRoadName = function (id, name) {
-      var roadName = findCurrentRoadName(id);
+      const roadName = findCurrentRoadName(id);
       roadName.name = name;
     };
 
     this.setStartDate = function (id, startDate) {
-      var roadName = findCurrentRoadName(id);
+      const roadName = findCurrentRoadName(id);
       roadName.startDate = startDate;
     };
 
     this.setEndDate = function (id, endDate) {
-      var roadName = findCurrentRoadName(id);
+      const roadName = findCurrentRoadName(id);
       if (endDate === '')
         delete roadName.endDate;
       else
@@ -78,7 +80,7 @@ export function RoadNameCollection(backend) {
     };
 
     this.saveChanges = function () {
-      var changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
+      const changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
         return _.includes(changedIds, roadName.id);
       });
       backend.saveRoadNamesChanges(currentRoadNumber, changedData, function (result) {
@@ -92,7 +94,4 @@ export function RoadNameCollection(backend) {
         eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
       });
     };
-
 }
-
-window.RoadNameCollection = RoadNameCollection;

@@ -19,7 +19,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     };
 
 
-    var changeTable = $(`
+    const changeTable = $(`
       <div class="change-table-frame">
 
             <div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>
@@ -504,5 +504,3 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       setCallbacks: setCallbacks
     };
 }
-
-window.ProjectChangeTable = ProjectChangeTable;

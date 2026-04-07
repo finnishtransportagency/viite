@@ -9,7 +9,7 @@ import { LinkEditForm } from './project-link-editor/ProjectLinkEditForm.js';
 import { MenuContainer } from '@components/MenuContainer.js';
 import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
-import { Toast } from '@components/Toast.js';
+import { showToast } from '@components/Toast.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
 const States = {
@@ -20,8 +20,8 @@ const States = {
 
 export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const rootElement = $(containerSelector || '#menu-container');
-  const applicationModel = options.applicationModel;
-  const mainMenu = options.mainMenu;
+    const applicationModel = options.applicationModel;
+    const mainMenu = options.mainMenu;
     const eventbus = eventBus;
     let menu = null;
 
@@ -320,7 +320,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     });
 
     eventbus.on('roadAddress:projectSentSuccess', function () {
-      Toast.show('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
+      showToast('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
       closeProjectMenu();
       eventbus.trigger('layer:enableButtons', false);
       eventbus.trigger('roadAddressProject:deselectFeaturesSelected');

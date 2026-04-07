@@ -1,3 +1,6 @@
+import { eventbus } from '@utils/eventbus.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+
 /**
  * SelectedNodesAndJunctions - Manages selected nodes and junctions state
  * 
@@ -9,70 +12,70 @@
  * - Event triggering for selection changes
  */
 export function SelectedNodesAndJunctions(nodeCollection) {
-    var current = {};
+    let current = {};
 
-    var openNode = function (node, openNodetemplates) {
+    const openNode = function (node, openNodetemplates) {
       clean();
       setCurrentNode(node);
       eventbus.trigger('node:selected', current.node, openNodetemplates);
     };
 
-    var getCurrentNode = function () {
+    const getCurrentNode = function () {
       return current.node;
     };
 
-    var setCurrentNode = function (node) {
+    function setCurrentNode(node) {
       current.node = _.cloneDeep(node);
-    };
+    }
 
-    var templates = function (coordinates) {
+    const templates = function (coordinates) {
       return {
         nodePoints: nodeCollection.getNodePointTemplatesByCoordinates(coordinates),
         junctions: nodeCollection.getJunctionTemplateByCoordinates(coordinates)
       };
     };
 
-    var openNodePointTemplate = function (nodePointTemplate) {
+    const openNodePointTemplate = function (nodePointTemplate) {
       openTemplates(templates(nodePointTemplate.coordinates));
     };
 
-    var openJunctionTemplate = function (junctionTemplate) {
+    const openJunctionTemplate = function (junctionTemplate) {
       openTemplates(templates(_.first(junctionTemplate.junctionPoints).coordinates));
     };
 
-    var openTemplates = function (templatesToOpen) {
+    function openTemplates(templatesToOpen) {
       clean();
       setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
       eventbus.trigger('templates:selected', current.templates);
-    };
+    }
 
-    var getCurrentTemplates = function () {
+    const getCurrentTemplates = function () {
       return current.templates;
     };
 
-    var setCurrentTemplates = function (nodePoints, junctions) {
+    function setCurrentTemplates(nodePoints, junctions) {
       current.templates = {
         nodePoints: _.cloneDeep(nodePoints),
         junctions: _.cloneDeep(junctions)
       };
-    };
+    }
 
-    var getJunctions = function () {
+    const getJunctions = function () {
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).junctions;
     };
 
-    var getNodePoints = function () {
+    const getNodePoints = function () {
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).nodePoints;
     };
 
-    var addNodePointTemplates = function (nodePoints) {
+    const addNodePointTemplates = function (nodePoints) {
       _.each(nodePoints, function (nodePoint) {
         current.node.nodePoints.push(nodePoint);
       });
       eventbus.trigger('nodePointTemplates:selected', {nodePoints: nodePoints});
     };
 
-    var addJunctionTemplates = function (junctions) {
+    const addJunctionTemplates = function (junctions) {
       _.each(junctions, function (junction) {
         current.node.junctions.push(junction);
       });
@@ -80,45 +83,45 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       eventbus.trigger('junctionTemplates:selected', {junctions: junctions});
     };
 
-    var getStartingCoordinates = function () {
+    const getStartingCoordinates = function () {
       return current.node.startingCoordinates;
     };
 
-    var setStartingCoordinates = function (coordinates) {
+    const setStartingCoordinates = function (coordinates) {
       current.node.startingCoordinates = coordinates;
     };
 
-    var setCoordinates = function (coordinates) {
+    const setCoordinates = function (coordinates) {
       current.node.coordinates = coordinates;
       eventbus.trigger('change:node-coordinates');
     };
 
-    var setNodeName = function (name) {
+    const setNodeName = function (name) {
       current.node.name = name;
       updateNodesAndJunctionsMarker();
     };
 
-    var setNodeType = function (type) {
+    const setNodeType = function (type) {
       current.node.type = type;
       updateNodesAndJunctionsMarker();
     };
 
-    var setStartDate = function (startDate) {
+    const setStartDate = function (startDate) {
       current.node.startDate = startDate;
     };
 
-    var typeHasChanged = function (nodeType) {
+    const typeHasChanged = function (nodeType) {
       if (current.node.nodeNumber) {
         return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
       } else return ViiteEnumerations.NodeType.UnknownNodeType.value !== nodeType;
     };
 
-    var getInitialStartDate = function () {
+    const getInitialStartDate = function () {
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
     };
 
-    var setJunctionNumber = function (id, junctionNumber) {
-      var junction = _.find(current.node.junctions, function (junctionToSet) {
+    const setJunctionNumber = function (id, junctionNumber) {
+      const junction = _.find(current.node.junctions, function (junctionToSet) {
         return junctionToSet.id === id;
       });
 
@@ -129,8 +132,8 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       }
     };
 
-    var getJunctionPoint = function (id) {
-      var junctionPoints = _.flatMap(current.node.junctions, function (junction) {
+    const getJunctionPoint = function (id) {
+      const junctionPoints = _.flatMap(current.node.junctions, function (junction) {
         return junction.junctionPoints;
       });
       return _.find(junctionPoints, function (jp) {
@@ -138,11 +141,11 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       });
     };
 
-    var setJunctionPointAddress = function (idString, addr) {
-      var ids = idString.split("-");
+    const setJunctionPointAddress = function (idString, addr) {
+      const ids = idString.split("-");
       if (ids.length === 2) {
         _.each(ids, function (id) {
-          var jp = getJunctionPoint(parseInt(id));
+          const jp = getJunctionPoint(parseInt(id));
           if (_.isUndefined(jp)) {
             console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
           } else {
@@ -155,7 +158,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       }
     };
 
-    var detachJunctionAndNodePoints = function (junction, nodePoints) {
+    const detachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
         _.remove(current.node.junctions, function (j) {
           return j.id === junction.id;
@@ -170,7 +173,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       });
     };
 
-    var attachJunctionAndNodePoints = function (junction, nodePoints) {
+    const attachJunctionAndNodePoints = function (junction, nodePoints) {
       if (!_.isUndefined(junction)) {
         if (_.filter(current.node.junctions, function (j) {
           return j.id === junction.id;
@@ -189,10 +192,10 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       });
     };
 
-    var validateJunctionNumbers = function () {
+    const validateJunctionNumbers = function () {
 
-      var errorMessage = function (junctions) {
-        var message = '';
+      const errorMessage = function (junctions) {
+        let message = '';
 
         if (junctions.length !== 1) {
           message = 'Liittymänumero on jo käytössä'; // junction number is already in use
@@ -206,7 +209,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
         return message;
       };
 
-      var verified = true;
+      let verified = true;
 
       _.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
         eventbus.trigger('junction:setCustomValidity', junctions, errorMessage(junctions));
@@ -215,8 +218,8 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       return verified;
     };
 
-    var validateJunctionPointAddress = function (idString, addr) {
-      var message = '';
+    const validateJunctionPointAddress = function (idString, addr) {
+      let message = '';
 
       if (addr < 1) {
         message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
@@ -228,16 +231,16 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       return _.isEmpty(message);
     };
 
-    var isDirty = function () {
-      var original = false;
+    const isDirty = function () {
+      let original = false;
       if (current.node.nodeNumber) {
         original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
       }
-      var nodePointsEquality = false;
-      var junctionsEquality = false;
-      var junctionPointsEquality = false;
+      let nodePointsEquality = false;
+      let junctionsEquality = false;
+      let junctionPointsEquality = false;
       //  comparing nodes without junctions or nodePoints
-      var nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
+      const nodesEquality = isEqualWithout(original, current.node, ['junctions', 'nodePoints']);
       //  comparing the nodePoints of both nodes
       if (original && original.nodePoints && original.nodePoints.length !== 0 && original.nodePoints.length === current.node.nodePoints.length) {
         nodePointsEquality = !_.some(_.flatMap(_.zip(_.sortBy(original.nodePoints, 'id'), _.sortBy(current.node.nodePoints, 'id')), _.spread(function (originalNodePoint, currentNodePoint) {
@@ -263,50 +266,50 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       return !(nodesEquality && nodePointsEquality && junctionsEquality && junctionPointsEquality);
     };
 
-    var isObsoleteNode = function () {
+    const isObsoleteNode = function () {
       return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function (np) {
         return np.type !== ViiteEnumerations.NodePointType.CalculatedNodePoint.value;
       }));
     };
 
-    var isEqualWithout = function (original, currentObject, toIgnore) {
+    function isEqualWithout(original, currentObject, toIgnore) {
       return _.isEqual(
         _.omit(original, toIgnore),
         _.omit(currentObject, toIgnore)
       );
-    };
+    }
 
-    var clean = function () {
+    function clean() {
       current = {};
-    };
+    }
 
-    var close = function (options, params, cancel) {
+    const close = function (options, params, cancel) {
       eventbus.trigger(options, params, cancel);
       eventbus.trigger('nodesAndJunctions:open');
     };
 
-    var closeForm = function () {
+    const closeForm = function () {
       eventbus.trigger('nodeLayer:closeForm', current); // all nodes and junctions forms should listen to this trigger
     };
 
-    var closeNode = function (cancel) {
+    const closeNode = function (cancel) {
       close('node:unselected', current.node, cancel);
       clean();
       eventbus.trigger('nodeLayer:refreshView');
     };
 
-    var closeTemplates = function () {
+    const closeTemplates = function () {
       clean();
       close('templates:unselected');
     };
 
-    var saveNode = function () {
+    const saveNode = function () {
       eventbus.trigger('node:save', current.node);
     };
 
-    var updateNodesAndJunctionsMarker = function (junction) {
+    function updateNodesAndJunctionsMarker(junction) {
       eventbus.trigger('change:node', current.node, junction);
-    };
+    }
 
     eventbus.on('selectedNodesAndJunctions:openTemplates', function (templatesToOpen) {
       openTemplates(templatesToOpen);
@@ -345,5 +348,3 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       updateNodesAndJunctionsMarker: updateNodesAndJunctionsMarker
     };
 }
-
-window.SelectedNodesAndJunctions = SelectedNodesAndJunctions;

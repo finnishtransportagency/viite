@@ -83,6 +83,3 @@ export const View = {
           `;
     }
 };
-
-window.UserManagement = window.UserManagement || {};
-window.UserManagement.View = View;

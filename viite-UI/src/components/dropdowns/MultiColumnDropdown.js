@@ -299,5 +299,3 @@ export function Selector(props) {
       config: config
     };
 }
-
-window.Selector = Selector;

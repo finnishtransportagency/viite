@@ -109,5 +109,3 @@ export function DevAddressTool(prefix) {
       render: render
     };
   }
-
-window.DevAddressTool = DevAddressTool;

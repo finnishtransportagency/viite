@@ -1,18 +1,18 @@
 /* eslint-disable no-throw-literal */
 export function StyleRule() {
-    var expressionFn = [];
-    var styles = [];
+    const expressionFn = [];
+    const styles = [];
 
-    var runExpression = function (expression, obj, previousCondition) {
+    const runExpression = function (expression, obj, previousCondition) {
       if (previousCondition !== undefined)
         return expression.compareExpressions(previousCondition, expression.compare(expression.getValue(obj)));
       return expression.compare(expression.getValue(obj));
     };
 
-    var generateExpression = function (property, propertyValue) {
+    const generateExpression = function (property, propertyValue) {
 
       // eslint-disable-next-line no-nested-ternary
-      var expression = _.isFunction(property)
+      const expression = _.isFunction(property)
         ? {getValue: property}
         : (propertyValue
             ? {
@@ -39,7 +39,7 @@ export function StyleRule() {
     this.and = function (property, propertyValue) {
       if (expressionFn.length === 0)
         throw 'You must have a "where" function before use the "and" function.';
-      var expression = generateExpression(property, propertyValue);
+      const expression = generateExpression(property, propertyValue);
       expression.compareExpressions = function (arg1, arg2) {
         return arg1 && arg2;
       };
@@ -49,7 +49,7 @@ export function StyleRule() {
     this.or = function (property, propertyValue) {
       if (expressionFn.length === 0)
         throw 'You must have a "where" function before use the "or" function.';
-      var expression = generateExpression(property, propertyValue);
+      const expression = generateExpression(property, propertyValue);
       expression.compareExpressions = function (arg1, arg2) {
         return arg1 || arg2;
       };
@@ -57,7 +57,7 @@ export function StyleRule() {
     };
 
     this.isDefined = function () {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
       expression.compare = function (propertyValue) {
@@ -67,7 +67,7 @@ export function StyleRule() {
     };
 
     this.isUndefined = function () {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
       expression.compare = function (propertyValue) {
@@ -77,7 +77,7 @@ export function StyleRule() {
     };
 
     this.is = function (value) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "is".';
       expression.compare = function (propertyValue) {
@@ -87,7 +87,7 @@ export function StyleRule() {
     };
 
     this.isNot = function (value) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isNot".';
       expression.compare = function (propertyValue) {
@@ -97,11 +97,11 @@ export function StyleRule() {
     };
 
     this.isIn = function (values) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isIn".';
       expression.compare = function (propertyValue) {
-        for (var i = 0; i < values.length; ++i)
+        for (let i = 0; i < values.length; ++i)
           if (values[i] === propertyValue)
             return true;
         return false;
@@ -110,12 +110,12 @@ export function StyleRule() {
     };
 
     this.isNotIn = function (values) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isNotIn".';
       expression.compare = function (propertyValue) {
-        var exists = false;
-        for (var i = 0; i < values.length; ++i)
+        let exists = false;
+        for (let i = 0; i < values.length; ++i)
           if (values[i] === propertyValue)
             exists = true;
         return !exists;
@@ -132,8 +132,8 @@ export function StyleRule() {
       if (expressionFn.length === 0)
         return false;
 
-      var condition = runExpression(expressionFn[0], obj);
-      for (var i = 1; i < expressionFn.length; i++)
+      let condition = runExpression(expressionFn[0], obj);
+      for (let i = 1; i < expressionFn.length; i++)
         condition = runExpression(expressionFn[i], obj, condition);
 
       return condition;
@@ -144,7 +144,7 @@ export function StyleRule() {
     };
 
     this.isBetween = function (values) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isBetween".';
       if (values.length !== 2)
@@ -156,7 +156,7 @@ export function StyleRule() {
     };
 
     this.isGreater = function (value) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isGreater".';
 
@@ -167,7 +167,7 @@ export function StyleRule() {
     };
 
     this.isGreaterOrEqual = function (value) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isGreater".';
 
@@ -178,7 +178,7 @@ export function StyleRule() {
     };
 
     this.isLessOrEqual = function (value) {
-      var expression = expressionFn[expressionFn.length - 1];
+      const expression = expressionFn[expressionFn.length - 1];
       if (!expression || expression.compare)
         throw 'You must have on of the following functions ["where", "and", "or"] before use the "isLess".';
 
@@ -187,12 +187,12 @@ export function StyleRule() {
       };
       return this;
     };
-  };
+  }
 
 export function StyleRuleProvider(defaultStyle) {
 
-    var mergeColorOpacity = function (color, opacity) {
-      var rgb = {};
+    const mergeColorOpacity = function (color, opacity) {
+      const rgb = {};
 
       if (color.substring(0, 1) !== '#' || !opacity) {
         return color;
@@ -217,9 +217,9 @@ export function StyleRuleProvider(defaultStyle) {
       return rgb.css;
     };
 
-    var stateRules = [];
-    var defaultRuleName = 'default';
-    var openLayerStyleClassConfigs = [
+    const stateRules = [];
+    const defaultRuleName = 'default';
+    const openLayerStyleClassConfigs = [
       {
         name: 'stroke',
         factory: function (settings) {
@@ -259,8 +259,8 @@ export function StyleRuleProvider(defaultStyle) {
       }
     ];
 
-    var getOpenLayerStyleConf = function (name) {
-      for (var i in openLayerStyleClassConfigs) {
+    const getOpenLayerStyleConf = function (name) {
+      for (const i in openLayerStyleClassConfigs) {
         if ({}.hasOwnProperty.call(openLayerStyleClassConfigs, i)) {
           if (openLayerStyleClassConfigs[i].name === name)
             return openLayerStyleClassConfigs[i];
@@ -269,11 +269,11 @@ export function StyleRuleProvider(defaultStyle) {
       return undefined;
     };
 
-    var createOpenLayerStyle = function (configObj, feature) {
-      var styleOptions = {};
-      for (var propertyName in configObj) {
+    const createOpenLayerStyle = function (configObj, feature) {
+      const styleOptions = {};
+      for (const propertyName in configObj) {
         if ({}.hasOwnProperty.call(configObj, propertyName)) {
-          var olConf = getOpenLayerStyleConf(propertyName);
+          const olConf = getOpenLayerStyleConf(propertyName);
           if (olConf)
             _.merge(styleOptions, olConf.factory(configObj[propertyName], feature));
           else
@@ -283,14 +283,14 @@ export function StyleRuleProvider(defaultStyle) {
       return new ol.style.Style(styleOptions);
     };
 
-    var getRulesByName = function (name) {
-      var stateRule = stateRules[name];
+    const getRulesByName = function (name) {
+      const stateRule = stateRules[name];
       if (stateRule)
         return stateRule;
       return [];
     };
 
-    var setRulesByName = function (name, rules) {
+    const setRulesByName = function (name, rules) {
       stateRules[defaultRuleName] = rules;
     };
 
@@ -299,8 +299,8 @@ export function StyleRuleProvider(defaultStyle) {
     };
 
     this.addRulesByName = function (name, rules) {
-      var allRules = getRulesByName(name);
-      for (var i = 0; i < rules.length; i++)
+      const allRules = getRulesByName(name);
+      for (let i = 0; i < rules.length; i++)
         allRules.push(rules[i]);
       setRulesByName(name, allRules);
     };
@@ -310,14 +310,14 @@ export function StyleRuleProvider(defaultStyle) {
     };
 
     this.getStyleByName = function (name, feature, extraProperties) {
-      var context = _.merge({}, feature, extraProperties);
-      var allRules = getRulesByName(name);
-      var configObj = _.merge({}, defaultStyle);
-      for (var i = 0; i < allRules.length; i++) {
-        var rule = allRules[i];
+      const context = _.merge({}, feature, extraProperties);
+      const allRules = getRulesByName(name);
+      let configObj = _.merge({}, defaultStyle);
+      for (let i = 0; i < allRules.length; i++) {
+        const rule = allRules[i];
         if (rule._match(context)) {
-          var styles = rule._get();
-          for (var j = 0; j < styles.length; j++) {
+          const styles = rule._get();
+          for (let j = 0; j < styles.length; j++) {
             configObj = _.merge(configObj, styles[j]);
           }
         }
@@ -325,6 +325,3 @@ export function StyleRuleProvider(defaultStyle) {
       return createOpenLayerStyle(configObj, feature);
   };
 }
-
-window.StyleRule = StyleRule;
-window.StyleRuleProvider = StyleRuleProvider;

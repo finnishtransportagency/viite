@@ -58,5 +58,3 @@ export function RoadMarker(data) {
         rePlaceInGroup
     };
 }
-
-window.RoadMarker = RoadMarker;

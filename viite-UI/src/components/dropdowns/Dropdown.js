@@ -43,5 +43,3 @@ export function dropdown(config) {
       </select>
     `.trim();
 }
-
-window.dropdown = dropdown;

@@ -1,3 +1,5 @@
+import { EnumerationUtils } from '@utils/EnumerationUtils.js';
+
 export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm) {
       const me = this;
       let searchParams = {};
@@ -740,5 +742,3 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm) {
           }
       };
 }
-
-window.RoadAddressBrowserWindow = RoadAddressBrowserWindow;

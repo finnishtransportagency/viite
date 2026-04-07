@@ -23,5 +23,3 @@ export function NodePointTemplateMarker() {
     createNodePointTemplateMarker: createNodePointTemplateMarker
   };
 }
-
-window.NodePointTemplateMarker = NodePointTemplateMarker;

@@ -1,3 +1,5 @@
+import { eventbus } from '@utils/eventbus.js';
+
 /**
  * Creates the background tile layers used by the map view and wires layer visibility events.
  * Manages base maps plus optional property and regional border overlays.
@@ -127,5 +129,3 @@ export function TileMapCollection() {
       }
     };
 }
-
-window.TileMapCollection = TileMapCollection;

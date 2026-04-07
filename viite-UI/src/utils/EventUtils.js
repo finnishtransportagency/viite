@@ -12,7 +12,3 @@ export const eventutil = {
     });
   }
 };
-
-window.events = events;
-window.eventutil = eventutil;
-

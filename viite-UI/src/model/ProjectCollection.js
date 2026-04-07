@@ -8,36 +8,41 @@
  * - Backend integration for project operations
  * - Dirty state tracking and change management
  */
-export function ProjectCollection(backend, startupParameters) {
-    var me = this;
-    // eslint-disable-next-line no-unused-vars
-    var roadAddressProjects = [];
-    var projectErrors = [];
-    var reservedParts = [];
-    var formedParts = [];
-    var coordinateButtons = [];
-    var projectInfo;
-    var currentProject;
-    var fetchedProjectLinks = [];
-    var dirtyProjectLinkIds = [];
-    var dirtyProjectLinks = [];
-    var publishableProject = false;
-    var RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-    var ProjectStatus = ViiteEnumerations.ProjectStatus;
-    var Track = ViiteEnumerations.Track;
-    var BAD_REQUEST_400 = 400;
-    var PRECONDITION_FAILED_412 = 412;
-    var INTERNAL_SERVER_ERROR_500 = 500;
-    var ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
-    var editedEndDistance = false;
-    var editedBeginDistance = false;
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { eventbus } from '@utils/eventbus.js';
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { GeometryUtils } from '@utils/GeometryUtils.js';
 
-    var resetEditedDistance = function () {
+export function ProjectCollection(backend, startupParameters, applicationModel) {
+    const me = this;
+    // eslint-disable-next-line no-unused-vars
+    let roadAddressProjects = [];
+    let projectErrors = [];
+    let reservedParts = [];
+    let formedParts = [];
+    let coordinateButtons = [];
+    let projectInfo;
+    let currentProject;
+    let fetchedProjectLinks = [];
+    let dirtyProjectLinkIds = [];
+    let dirtyProjectLinks = [];
+    let publishableProject = false;
+    const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
+    const ProjectStatus = ViiteEnumerations.ProjectStatus;
+    const Track = ViiteEnumerations.Track;
+    const BAD_REQUEST_400 = 400;
+    const PRECONDITION_FAILED_412 = 412;
+    const INTERNAL_SERVER_ERROR_500 = 500;
+    const ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
+    let editedEndDistance = false;
+    let editedBeginDistance = false;
+
+    const resetEditedDistance = function () {
       editedEndDistance = false;
       editedBeginDistance = false;
     };
 
-    var projectLinks = function () {
+    const projectLinks = function () {
       return _.flatten(fetchedProjectLinks);
     };
 
@@ -56,8 +61,8 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.getMultiProjectLinks = function (id) {
-      var chain = _.find(fetchedProjectLinks, function (linkChain) {
-        var pureChain = _.map(linkChain, function (l) {
+      const chain = _.find(fetchedProjectLinks, function (linkChain) {
+        const pureChain = _.map(linkChain, function (l) {
           return l.getData();
         });
         return _.some(pureChain, {"id": id}) || _.some(pureChain, {"linkId": id});
@@ -82,7 +87,7 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.fetch = function (boundingBox, zoom, projectId, isPublishable) {
-      var id = projectId;
+      let id = projectId;
       if (typeof id === 'undefined' && typeof projectInfo !== 'undefined')
         id = projectInfo.id;
       if (id) {
@@ -136,7 +141,7 @@ export function ProjectCollection(backend, startupParameters) {
 
     this.revertRoadAddressChangeType = function () {
       resetEditedDistance();
-      var fetchedLinks = this.getAll();
+      const fetchedLinks = this.getAll();
       dirtyProjectLinkIds.forEach(function (dirtyLink) {
         _.filter(fetchedLinks, {linkId: dirtyLink.id}).forEach(function (fetchedLink) {
           fetchedLink.status = dirtyLink.status;
@@ -157,13 +162,13 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.saveProject = function (data, resolution) {
-      var projectId = 0;
+      let projectId = 0;
       if (projectInfo !== undefined) {
         projectId = projectInfo.id;
       } else if (currentProject !== undefined && currentProject.project.id !== undefined) {
         projectId = currentProject.project.id;
       }
-      var dataJson = {
+      const dataJson = {
         id: projectId,
         projectEly: currentProject.project.ely,
         status: currentProject.project.statusCode,
@@ -224,8 +229,8 @@ export function ProjectCollection(backend, startupParameters) {
     this.revertChangesRoadlink = function (links) {
       if (!_.isEmpty(links)) {
         applicationModel.addSpinner();
-        var coordinates = applicationModel.getUserGeoLocation();
-        var data = {
+        const coordinates = applicationModel.getUserGeoLocation();
+        const data = {
           'projectId': currentProject.project.id,
           'roadNumber': links[0].roadNumber,
           'roadPartNumber': links[0].roadPartNumber,
@@ -252,12 +257,12 @@ export function ProjectCollection(backend, startupParameters) {
       }
     };
 
-    var createOrUpdate = function (dataJson) {
+    const createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
         if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
           applicationModel.addSpinner();
           resetEditedDistance();
-          var ids = dataJson.ids;
+          const ids = dataJson.ids;
           if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
             backend.createProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
@@ -296,20 +301,20 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.saveProjectLinks = function (changedLinks, statusCode, touchedEndDistance) {
-      var validUserGivenAddrMValues = function (linkId, userEndAddr) {
+      const validUserGivenAddrMValues = function (linkId, userEndAddr) {
         if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
-          var roadPartIds = me.getMultiProjectLinks(linkId);
-          var roadPartLinks = me.getProjectLink(_.map(roadPartIds, function (road) {
+          const roadPartIds = me.getMultiProjectLinks(linkId);
+          const roadPartLinks = me.getProjectLink(_.map(roadPartIds, function (road) {
             return road;
           }));
-          var startAddrFromChangedLinks = _.minBy(_.map(roadPartLinks, function (link) {
+          const startAddrFromChangedLinks = _.minBy(_.map(roadPartLinks, function (link) {
             return link.getData().addrMRange.start;
           }));
-          var userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
-          var roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
+          const userDiffFromChangedLinks = userEndAddr - startAddrFromChangedLinks;
+          const roadPartGeometries = _.map(roadPartLinks, function (roadPart) {
             return roadPart.getData().points;
           });
-          var roadPartLength = _.reduce((roadPartGeometries), function (length, geom) {
+          const roadPartLength = _.reduce((roadPartGeometries), function (length, geom) {
             return GeometryUtils.geometryLength(geom) + length;
           }, 0.0);
           return (userDiffFromChangedLinks >= (roadPartLength * (1 - ALLOWED_ADDR_M_VALUE_PERCENTAGE))) && (userDiffFromChangedLinks <= (roadPartLength * (1 + ALLOWED_ADDR_M_VALUE_PERCENTAGE)));
@@ -317,30 +322,30 @@ export function ProjectCollection(backend, startupParameters) {
           return true;
         }
       };
-      var newAndOtherLinks = _.partition(changedLinks, function (l) {
+      const newAndOtherLinks = _.partition(changedLinks, function (l) {
         return l.id === 0;
       });
-      var newLinks = newAndOtherLinks[0];
-      var otherLinks = newAndOtherLinks[1];
+      const newLinks = newAndOtherLinks[0];
+      const otherLinks = newAndOtherLinks[1];
 
-      var linkIds = _.uniq(_.map(newLinks, function (t) {
+      const linkIds = _.uniq(_.map(newLinks, function (t) {
         if (t.linkId)
           return t.linkId;
         else
           return 0;
       }));
 
-      var ids = _.uniq(_.map(otherLinks, function (t) {
+      const ids = _.uniq(_.map(otherLinks, function (t) {
         if (t.id)
           return t.id;
         else
           return 0;
       }));
 
-      var projectId = projectInfo.id;
-      var coordinates = applicationModel.getUserGeoLocation();
-      var roadAddressProjectForm = $('#roadAddressProjectForm');
-      var endDistance = $('#endDistance')[0];
+      const projectId = projectInfo.id;
+      const coordinates = applicationModel.getUserGeoLocation();
+      const roadAddressProjectForm = $('#roadAddressProjectForm');
+      const endDistance = $('#endDistance')[0];
       const hasDevRights = _.includes(startupParameters.roles, 'dev');
 
       const getValueWithId = function (id) {
@@ -373,14 +378,14 @@ export function ProjectCollection(backend, startupParameters) {
         };
       }
 
-      var reversed = _.chain(changedLinks).map(function (c) {
+      const reversed = _.chain(changedLinks).map(function (c) {
         return c.reversed;
       }).reduceRight(function (a, b) {
         return a || b;
       }).value();
       let userDefinedEndAddressM = null;
       if (endDistance && touchedEndDistance) userDefinedEndAddressM = (isNaN(Number(endDistance.value)) ? null : Number(endDistance.value));
-      var dataJson = {
+      const dataJson = {
         ids: ids,
         linkIds: linkIds,
         roadAddressChangeType: statusCode,
@@ -404,12 +409,12 @@ export function ProjectCollection(backend, startupParameters) {
         applicationModel.removeSpinner();
       }
 
-      var changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
+      const changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
         return cl.endAddressM;
       }).last().value();
-      var isNewRoad = changedLink.status === RoadAddressChangeType.New.value;
+      const isNewRoad = changedLink.status === RoadAddressChangeType.New.value;
 
-      var validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
+      const validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
       if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
         new ConfirmPopup("Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?", {
           successCallback: function () {
@@ -425,7 +430,7 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.createProject = function (data, resolution) {
-      var roadPartList = _.map(reservedParts, function (part) {
+      const roadPartList = _.map(reservedParts, function (part) {
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
@@ -434,7 +439,7 @@ export function ProjectCollection(backend, startupParameters) {
         };
       });
 
-      var dataJson = {
+      const dataJson = {
         id: 0,
         status: 1,
         name: data[0].value,
@@ -480,11 +485,11 @@ export function ProjectCollection(backend, startupParameters) {
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks) {
       applicationModel.addSpinner();
-      var links = _.filter(selectedLinks, function (link) {
+      const links = _.filter(selectedLinks, function (link) {
         return link.status !== RoadAddressChangeType.Terminated.value;
       });
-      var coordinates = applicationModel.getUserGeoLocation();
-      var dataJson = {
+      const coordinates = applicationModel.getUserGeoLocation();
+      const dataJson = {
         projectId: projectId,
         roadNumber: selectedLinks[0].roadNumber,
         roadPartNumber: selectedLinks[0].roadPartNumber,
@@ -523,21 +528,21 @@ export function ProjectCollection(backend, startupParameters) {
       return deleteButton(index, roadNumber, roadPartNumber, selector);
     };
 
-    var deleteButton = function (index, roadNumber, roadPartNumber, selector) {
-      var disabledInput = !_.isUndefined(currentProject) &&
+    const deleteButton = function (index, roadNumber, roadPartNumber, selector) {
+      const disabledInput = !_.isUndefined(currentProject) &&
         (currentProject.project.statusCode === ProjectStatus.InUpdateQueue.value ||
           currentProject.project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value);
       return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete mt-1 btn-delete ' + selector + ' fas fa-trash-alt fa-lg" style="position: absolute; left: 365px;" ' + (disabledInput ? 'disabled' : '') + '></i>';
     };
 
 
-    var addToReservedPartList = function (queryResult) {
-      var qRoadParts = [];
+    const addToReservedPartList = function (queryResult) {
+      const qRoadParts = [];
       _.each(queryResult.reservedInfo, function (row) {
         qRoadParts.push(row);
       });
 
-      var sameElements = arrayIntersection(qRoadParts, reservedParts, function (arrayarow, arraybrow) {
+      const sameElements = arrayIntersection(qRoadParts, reservedParts, function (arrayarow, arraybrow) {
         return arrayarow.roadNumber === arraybrow.roadNumber && arrayarow.roadPartNumber === arraybrow.roadPartNumber;
       });
       _.each(sameElements, function (row) {
@@ -640,12 +645,12 @@ export function ProjectCollection(backend, startupParameters) {
     });
 
     eventbus.on('projectCollection:clickCoordinates', function (event, map) {
-      var currentCoordinates = map.getView().getCenter();
-      var errorIndex = event.currentTarget.id;
-      var errorCoordinates = _.find(coordinateButtons, function (b) {
+      const currentCoordinates = map.getView().getCenter();
+      const errorIndex = event.currentTarget.id;
+      const errorCoordinates = _.find(coordinateButtons, function (b) {
         return b.index === parseInt(errorIndex);
       }).coordinates;
-      var index = _.findIndex(errorCoordinates, function (coordinates) {
+      const index = _.findIndex(errorCoordinates, function (coordinates) {
         return coordinates.x === currentCoordinates[0] && coordinates.y === currentCoordinates[1];
       });
       if (index >= 0 && index + 1 < errorCoordinates.length) {
@@ -682,9 +687,9 @@ export function ProjectCollection(backend, startupParameters) {
 
     };
 
-    var ProjectLinkModel = function (data) {
+    const ProjectLinkModel = function (data) {
 
-      var getData = function () {
+      const getData = function () {
         return data;
       };
 
@@ -731,12 +736,12 @@ export function ProjectCollection(backend, startupParameters) {
       }));
     };
 
-    var removeRenumberedPart = function (roadNumber, roadPartNumber) {
+    const removeRenumberedPart = function (roadNumber, roadPartNumber) {
       me.setFormedParts(_.filter(me.getFormedParts(), function (part) {
-        var reNumberedPart = false;
+        let reNumberedPart = false;
         if (part.roadAddresses && part.roadAddresses.length > 0) {
-          for (var i = 0; i < part.roadAddresses.length; ++i) {
-            var ra = part.roadAddresses[i];
+          for (let i = 0; i < part.roadAddresses.length; ++i) {
+            const ra = part.roadAddresses[i];
             reNumberedPart = (ra.roadAddressNumber.toString() === roadNumber.toString() &&
                 ra.roadAddressPartNumber.toString() === roadPartNumber.toString()) && ra.isNumbering;
             if (reNumberedPart) {
@@ -748,5 +753,3 @@ export function ProjectCollection(backend, startupParameters) {
       }));
     };
 }
-
-window.ProjectCollection = ProjectCollection;

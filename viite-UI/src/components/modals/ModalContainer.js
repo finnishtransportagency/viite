@@ -179,5 +179,3 @@ export function ModalContainer(config) {
             getContent: getContent
         };
 }
-
-window.ModalContainer = ModalContainer;

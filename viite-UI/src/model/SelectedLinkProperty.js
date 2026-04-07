@@ -8,15 +8,19 @@
  * - Link property validation and editing
  * - Backend integration for link operations
  */
-export function SelectedLinkProperty(backend, roadCollection) {
-    var current = [];
-    var dirty = false;
-    var featuresToKeep = [];
-    var LinkSource = ViiteEnumerations.LinkGeomSource;
-    var SelectionType = ViiteEnumerations.SelectionType;
+import { eventbus } from '@utils/eventbus.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { dateutil } from '@utils/DateUtils.js';
+
+export function SelectedLinkProperty(backend, roadCollection, applicationModel) {
+    let current = [];
+    let dirty = false;
+    let featuresToKeep = [];
+    const LinkSource = ViiteEnumerations.LinkGeomSource;
+    const SelectionType = ViiteEnumerations.SelectionType;
 
 
-    var close = function () {
+    const close = function () {
       if (!_.isEmpty(current) && !isDirty()) {
         _.each(current, function (selected) {
           selected.unselect();
@@ -32,29 +36,29 @@ export function SelectedLinkProperty(backend, roadCollection) {
     };
 
 
-    var setCurrent = function (data) {
+    function setCurrent(data) {
       current = data;
-    };
+    }
 
-    var canOpenByLinearLocationId = function (linearLocationId) {
+    const canOpenByLinearLocationId = function (linearLocationId) {
       return !_.isUndefined(linearLocationId) && linearLocationId > ViiteEnumerations.UnknownRoadId;
     };
 
-    var extractDataForDisplay = function (selectedData) {
+    const extractDataForDisplay = function (selectedData) {
 
-      var extractUniqueValues = function (dataToExtract, property) {
+      const extractUniqueValues = function (dataToExtract, property) {
         return _.chain(dataToExtract).map(property).uniq().value().join(', ');
       };
 
-      var isMultiSelect = selectedData.length > 1;
-      var selectedLinkIds = {selectedLinks: _.map(selectedData, 'linkId')};
-      var selectedIds = {selectedIds: _.map(selectedData, 'id')};
-      var properties = _.merge(_.cloneDeep(_.head(selectedData)), selectedLinkIds, selectedIds);
-      var roadLinkSource = {
+      const isMultiSelect = selectedData.length > 1;
+      const selectedLinkIds = {selectedLinks: _.map(selectedData, 'linkId')};
+      const selectedIds = {selectedIds: _.map(selectedData, 'id')};
+      let properties = _.merge(_.cloneDeep(_.head(selectedData)), selectedLinkIds, selectedIds);
+      const roadLinkSource = {
         roadLinkSource: _.chain(selectedData).map(function (s) {
           return s.roadLinkSource;
         }).uniq().map(function (a) {
-          var linkGeom = _.find(LinkSource, function (source) {
+          const linkGeom = _.find(LinkSource, function (source) {
             return source.value === parseInt(a);
           });
           if (_.isUndefined(linkGeom))
@@ -63,29 +67,29 @@ export function SelectedLinkProperty(backend, roadCollection) {
         }).uniq().join(", ").value()
       };
       if (isMultiSelect) {
-        var endRoadOnSelection = _.chain(selectedData).sortBy(function (sd) {
+        const endRoadOnSelection = _.chain(selectedData).sortBy(function (sd) {
           return sd.addrMRange.end;
         }).last().value();
-        var ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
+        const ambiguousFields = ['maxAddressNumberLeft', 'maxAddressNumberRight', 'minAddressNumberLeft', 'minAddressNumberRight',
           'municipalityCode', 'verticalLevel', 'roadNameFi', 'roadNameSe', 'roadNameSm', 'modifiedAt', 'modifiedBy',
           'endDate', 'discontinuity', 'addrMRange.start', 'addrMRange.end'];
         properties = _.omit(properties, ambiguousFields);
-        var latestModified = dateutil.extractLatestModifications(selectedData);
-        var municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
-        var verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
-        var roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
-        var elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
-        var evkCodes = {evkCode: extractUniqueValues(selectedData, 'evkCode')};
+        const latestModified = dateutil.extractLatestModifications(selectedData);
+        const municipalityCodes = {municipalityCode: extractUniqueValues(selectedData, 'municipalityCode')};
+        const verticalLevels = {verticalLevel: extractUniqueValues(selectedData, 'verticalLevel')};
+        const roadPartNumbers = {roadPartNumber: extractUniqueValues(selectedData, 'roadPartNumber')};
+        const elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
+        const evkCodes = {evkCode: extractUniqueValues(selectedData, 'evkCode')};
         // TODO Check that merge was done correctly
-        var discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
-        var addrMRange = {
+        const discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
+        const addrMRange = {
           addrMRange: {
             start: _.minBy(_.chain(selectedData).map('addrMRange.start').uniq().value()),
             end: _.maxBy(_.chain(selectedData).map('addrMRange.end').uniq().value())
           }
         };
 
-        var roadNames = {
+        const roadNames = {
           roadNameFi: extractUniqueValues(selectedData, 'roadNameFi'),
           roadNameSe: extractUniqueValues(selectedData, 'roadNameSe'),
           roadNameSm: extractUniqueValues(selectedData, 'roadNameSm')
@@ -96,11 +100,11 @@ export function SelectedLinkProperty(backend, roadCollection) {
       return properties;
     };
 
-    var isOnLinearLocation = function (data) {
+    const isOnLinearLocation = function (data) {
       return !_.isUndefined(data) && !_.isUndefined(data.linearLocationId) && data.linearLocationId !== 0;
     };
 
-    var openSingleClick = function (data) {
+    const openSingleClick = function (data) {
       if (isOnLinearLocation(data)) {
         setCurrent(roadCollection.getGroupByLinearLocationId(data.linearLocationId));
       } else {
@@ -108,7 +112,7 @@ export function SelectedLinkProperty(backend, roadCollection) {
       }
     };
 
-    var openDoubleClick = function (data) {
+    const openDoubleClick = function (data) {
       if (isOnLinearLocation(data)) {
         setCurrent(roadCollection.getByLinearLocationId(data.linearLocationId));
       } else {
@@ -116,12 +120,12 @@ export function SelectedLinkProperty(backend, roadCollection) {
       }
     };
 
-    var openCtrl = function (linearLocationIds, linkIds, isCtrlClick, visibleFeatures) {
+    const openCtrl = function (linearLocationIds, linkIds, isCtrlClick, visibleFeatures) {
       if (isCtrlClick) {
         setCurrent([]);
-        var addressedRoadLinkModels = roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds);
-        var unAddressedRoadLinkModels = roadCollection.getByLinkIds(linkIds);
-        var roadLinks = addressedRoadLinkModels.concat(unAddressedRoadLinkModels);
+        const addressedRoadLinkModels = roadCollection.getRoadLinkModelsByLinearLocationIds(linearLocationIds);
+        const unAddressedRoadLinkModels = roadCollection.getByLinkIds(linkIds);
+        const roadLinks = addressedRoadLinkModels.concat(unAddressedRoadLinkModels);
         setCurrent(roadLinks);
         _.forEach(current, function (selected) {
           selected.select();
@@ -132,7 +136,7 @@ export function SelectedLinkProperty(backend, roadCollection) {
       }
     };
 
-    var open = function (data, isSingleClick, visibleFeatures) {
+    const open = function (data, isSingleClick, visibleFeatures) {
       if (isSingleClick) {
         openSingleClick(data);
       } else {
@@ -145,8 +149,8 @@ export function SelectedLinkProperty(backend, roadCollection) {
       eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
     };
 
-    var processOlFeatures = function (visibleFeatures) {
-      var selectedFeatures = _.filter(visibleFeatures, function (vf) {
+    function processOlFeatures(visibleFeatures) {
+      const selectedFeatures = _.filter(visibleFeatures, function (vf) {
         return (_.some(get().concat(featuresToKeep), function (s) {
           if (s.linearLocationId !== ViiteEnumerations.UnknownRoadId && s.linearLocationId !== ViiteEnumerations.NewRoadId) {
             return s.linearLocationId === vf.linkData.linearLocationId && s.mmlId === vf.linkData.mmlId;
@@ -156,7 +160,7 @@ export function SelectedLinkProperty(backend, roadCollection) {
         }));
       });
       eventbus.trigger('linkProperties:olSelected', selectedFeatures);
-    };
+    }
 
     eventbus.on('linkProperties:closed', function () {
       eventbus.trigger('layer:enableButtons', true);
@@ -168,40 +172,40 @@ export function SelectedLinkProperty(backend, roadCollection) {
       close();
     });
 
-    var isDirty = function () {
+    function isDirty() {
       return dirty;
-    };
+    }
 
-    var setDirty = function (state) {
+    const setDirty = function (state) {
       dirty = state;
     };
 
-    var cancel = function () {
+    const cancel = function () {
       dirty = false;
       _.each(current, function (selected) {
         selected.cancel();
       });
       if (!_.isUndefined(_.head(current))) {
-        var originalData = _.head(current).getData();
+        const originalData = _.head(current).getData();
         eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
       }
     };
 
-    var get = function () {
+    function get() {
       return _.map(current, function (roadLink) {
         return roadLink.getData();
       });
-    };
+    }
 
-    var count = function () {
+    const count = function () {
       return current.length;
     };
 
-    var getFeaturesToKeep = function () {
+    const getFeaturesToKeep = function () {
       return _.cloneDeep(featuresToKeep);
     };
 
-    var addToFeaturesToKeep = function (data4Display) {
+    const addToFeaturesToKeep = function (data4Display) {
       if (_.isArray(data4Display)) {
         featuresToKeep = featuresToKeep.concat(data4Display);
       } else {
@@ -209,12 +213,12 @@ export function SelectedLinkProperty(backend, roadCollection) {
       }
     };
 
-    var clearFeaturesToKeep = function () {
+    function clearFeaturesToKeep() {
       featuresToKeep = [];
-    };
+    }
 
-    var filterFeaturesAfterSimulation = function (features) {
-      var linkIdsToRemove = linkIdsToExclude();
+    const filterFeaturesAfterSimulation = function (features) {
+      const linkIdsToRemove = linkIdsToExclude();
       if (linkIdsToRemove.length === 0) {
         return features;
       } else {
@@ -224,11 +228,11 @@ export function SelectedLinkProperty(backend, roadCollection) {
       }
     };
 
-    var linkIdsToExclude = function () {
+    function linkIdsToExclude() {
       return _.chain(getFeaturesToKeep().concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function (feature) {
         return feature.linkId;
       }).uniq().value();
-    };
+    }
 
     return {
       getFeaturesToKeep: getFeaturesToKeep,
@@ -249,5 +253,3 @@ export function SelectedLinkProperty(backend, roadCollection) {
       canOpenByLinearLocationId: canOpenByLinearLocationId
     };
 }
-
-window.SelectedLinkProperty = SelectedLinkProperty;

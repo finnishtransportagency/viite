@@ -15,16 +15,20 @@ import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Layer } from './Layer.js';
+import { JunctionMarker } from '../markers/JunctionMarker.js';
+import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
+import { NodeMarker } from '../markers/NodeMarker.js';
+import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
 
 export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
   Layer.call(this, map);
 
     window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
 
-    var me = this;
-    var userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
-    var directionMarkerVector = new ol.source.Vector({});
-    var dblVector = function () {
+    const me = this;
+    let userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
+    const directionMarkerVector = new ol.source.Vector({});
+    const dblVector = function () {
       return { selected: new ol.source.Vector({}), unselected: new ol.source.Vector({}) };
     };
 
@@ -36,71 +40,71 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     const isOverlaySuppressed = () => Date.now() < suppressOverlayUntilTs;
     const isNodeDragged = () => Boolean(window.ViiteState && window.ViiteState.isTranslatingNode); // Avoid dragging bugs and hide tooltip
 
-    var nodeMarkerVector = dblVector();
-    var junctionMarkerVector = dblVector();
-    var nodePointTemplateVector = dblVector();
-    var junctionTemplateVector = dblVector();
+    const nodeMarkerVector = dblVector();
+    const junctionMarkerVector = dblVector();
+    const nodePointTemplateVector = dblVector();
+    const junctionTemplateVector = dblVector();
 
     let selectedNodeStartingCoordinates = null;
 
-    var directionMarkerLayer = new ol.layer.Vector({
+    const directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.DirectionMarker.value
     });
 
-    var nodeMarkerLayer = new ol.layer.Vector({
+    const nodeMarkerLayer = new ol.layer.Vector({
       source: nodeMarkerVector.unselected,
       name: 'nodeMarkerLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodeMarker.value,
       selectable: false
     });
 
-    var nodeMarkerSelectedLayer = new ol.layer.Vector({
+    const nodeMarkerSelectedLayer = new ol.layer.Vector({
       source: nodeMarkerVector.selected,
       name: 'nodeMarkerSelectedLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodeMarker.selected
     });
 
-    var junctionMarkerLayer = new ol.layer.Vector({
+    const junctionMarkerLayer = new ol.layer.Vector({
       source: junctionMarkerVector.unselected,
       name: 'junctionMarkerLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionMarker.value
     });
 
-    var junctionMarkerSelectedLayer = new ol.layer.Vector({
+    const junctionMarkerSelectedLayer = new ol.layer.Vector({
       source: junctionMarkerVector.selected,
       name: 'junctionMarkerSelectedLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionMarker.selected
     });
 
-    var nodePointTemplateLayer = new ol.layer.Vector({
+    const nodePointTemplateLayer = new ol.layer.Vector({
       source: nodePointTemplateVector.unselected,
       name: 'nodePointTemplateLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodePointTemplate.value,
       selectable: false
     });
 
-    var nodePointTemplateSelectedLayer = new ol.layer.Vector({
+    const nodePointTemplateSelectedLayer = new ol.layer.Vector({
       source: nodePointTemplateVector.selected,
       name: 'nodePointTemplateSelectedLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodePointTemplate.selected
     });
 
-    var junctionTemplateLayer = new ol.layer.Vector({
+    const junctionTemplateLayer = new ol.layer.Vector({
       source: junctionTemplateVector.unselected,
       name: 'junctionTemplateLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionTemplate.value,
       selectable: false
     });
 
-    var junctionTemplateSelectedLayer = new ol.layer.Vector({
+    const junctionTemplateSelectedLayer = new ol.layer.Vector({
       source: junctionTemplateVector.selected,
       name: 'junctionTemplateSelectedLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionTemplate.selected
     });
 
-    var layers = [directionMarkerLayer, nodeMarkerLayer, nodeMarkerSelectedLayer, junctionMarkerLayer, junctionMarkerSelectedLayer, nodePointTemplateLayer, nodePointTemplateSelectedLayer, junctionTemplateLayer, junctionTemplateSelectedLayer];
+    const layers = [directionMarkerLayer, nodeMarkerLayer, nodeMarkerSelectedLayer, junctionMarkerLayer, junctionMarkerSelectedLayer, nodePointTemplateLayer, nodePointTemplateSelectedLayer, junctionTemplateLayer, junctionTemplateSelectedLayer];
 
     // Popup content shown when hovering mouse over a node which is not moved
     const infoContent = document.getElementById('popup-content');
@@ -200,7 +204,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       overlay.setPosition(coordinate);
     };
 
-    var setGeneralOpacity = function (opacity) {
+    const setGeneralOpacity = function (opacity) {
       roadLayer.layer.setOpacity(opacity);
       directionMarkerLayer.setOpacity(opacity);
       nodeMarkerLayer.setOpacity(opacity);
@@ -213,7 +217,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       junctionTemplateSelectedLayer.setOpacity(opacity);
     };
 
-    var setProperty = function (propertyLayers, propertyName, propertyValue) {
+    const setProperty = function (propertyLayers, propertyName, propertyValue) {
       _.each(propertyLayers, function (layer) {
         layer.set(propertyName, propertyValue);
       });
@@ -226,7 +230,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
      * delay between single clicks in order to differentiate from double click).
      * @type {ol.interaction.Select}
      */
-    var nodeLayerSelectInteraction = new ol.interaction.Select({
+    const nodeLayerSelectInteraction = new ol.interaction.Select({
       // This will limit the interaction to the specific layer
       layers: function (layer) {
         return layer.get('selectable');
@@ -246,16 +250,16 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
      */
     nodeLayerSelectInteraction.on('select', function (event) {
 
-      var selectedNode = _.find(event.selected, function (selectionTarget) {
+      const selectedNode = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.node);
       });
 
       // select all node point templates in same place.
-      var selectedNodePointTemplate = _.find(event.selected, function (selectionTarget) {
+      const selectedNodePointTemplate = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.nodePointTemplate);
       });
 
-      var selectedJunctionTemplate = _.find(event.selected, function (selectionTarget) {
+      const selectedJunctionTemplate = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.junctionTemplate);
       });
 
@@ -291,16 +295,29 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
      * within a maximum of 200m distance.
      * @type {ol.interaction.Translate}
      */
-    var nodeTranslate = new ol.interaction.Translate({
+    const nodeTranslate = new ol.interaction.Translate({
       layers: [nodeMarkerSelectedLayer]
     });
 
     /**
      * Save initial node position for comparison purposes
      */
-    nodeTranslate.on('translatestart', function () {
+    nodeTranslate.on('translatestart', function (evt) {
       window.ViiteState.isTranslatingNode = true;
-      selectedNodesAndJunctions.setStartingCoordinates(selectedNodeStartingCoordinates);
+      const feature = evt.features && evt.features.item(0);
+      const geometry = feature && feature.getGeometry && feature.getGeometry();
+      const geometryCoordinates = geometry && geometry.getCoordinates && geometry.getCoordinates();
+      const geometryStart = geometryCoordinates ? { x: geometryCoordinates[0], y: geometryCoordinates[1] } : null;
+
+      const startingCoordinates =
+        selectedNodeStartingCoordinates ||
+        selectedNodesAndJunctions.getStartingCoordinates() ||
+        geometryStart;
+
+      selectedNodesAndJunctions.setStartingCoordinates(startingCoordinates);
+      if (!selectedNodeStartingCoordinates && startingCoordinates) {
+        selectedNodeStartingCoordinates = startingCoordinates;
+      }
       // Hide any visible overlay immediately and suppress updates briefly to avoid flicker
       suppressOverlayForMs(150);
       clearOverlay();
@@ -311,12 +328,16 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
      * and stop the node movement when that limitation is not obeyed
      */
     nodeTranslate.on('translating', function (evt) {
-      var coordinates = {
+      const coordinates = {
         x: evt.coordinate[0],
         y: evt.coordinate[1]
       };
+      const startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
+      if (!startingCoordinates) {
+        return;
+      }
 
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
+      if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         eventbus.trigger('node:displayCoordinates', {
           x: evt.coordinate[0],
           y: evt.coordinate[1]
@@ -331,8 +352,14 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       coordinates = { x: coordinates[0], y: coordinates[1] }; // Format coordinates correctly
       const startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
 
+      if (!startingCoordinates) {
+        selectedNodesAndJunctions.setCoordinates(coordinates);
+        selectedNodeStartingCoordinates = coordinates;
+        return;
+      }
+
       // Check if node was moved over 200m
-      if (GeometryUtils.distanceBetweenPoints(selectedNodesAndJunctions.getStartingCoordinates(), coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
+      if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
         selectedNodeStartingCoordinates = coordinates;
       } else {
@@ -346,7 +373,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
      * - nodeLayerSelectInteraction
      * - nodeTranslate
      */
-    var addInteractions = function () {
+    const addInteractions = function () {
       addSelectInteractions();
       if (userHasPermissionToEdit) {
         // only let the user move nodes if the user has permission to edit nodes
@@ -354,30 +381,30 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
     };
 
-    var removeInteractions = function () {
+    const removeInteractions = function () {
       removeSelectInteractions();
       removeTranslateInteractions();
     };
 
-    var toggleSelectInteractions = function (activate) {
+    const toggleSelectInteractions = function (activate) {
       nodeLayerSelectInteraction.setActive(activate);
     };
 
-    var addSelectInteractions = function () {
+    function addSelectInteractions() {
       map.addInteraction(nodeLayerSelectInteraction);
-    };
+    }
 
-    var removeSelectInteractions = function () {
+    function removeSelectInteractions() {
       map.removeInteraction(nodeLayerSelectInteraction);
-    };
+    }
 
-    var addTranslateInteractions = function () {
+    function addTranslateInteractions() {
       map.addInteraction(nodeTranslate);
-    };
+    }
 
-    var removeTranslateInteractions = function () {
+    function removeTranslateInteractions() {
       map.removeInteraction(nodeTranslate);
-    };
+    }
 
 
     // Add the defined interactions to the map after userData has been fetched
@@ -389,7 +416,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     // Immediately hide overlay when user starts interacting over node/junction to avoid flicker
     map.on('pointerdown', function (evt) {
       // Only act if clicking over a node or junction marker
-      var featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
+      const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
       if (featureAtPixel && (featureAtPixel.node || featureAtPixel.junction)) {
         suppressOverlayForMs(200);
         clearOverlay();
@@ -397,56 +424,56 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     });
 
 
-    var selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
+    const selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
       vector.selected.clear();
       vector.selected.addFeatures(featuresToHighlight);
       vector.unselected.clear();
       vector.unselected.addFeatures(otherFeatures);
     };
 
-    var selectNode = function (node) {
+    function selectNode(node) {
       clearHighlights();
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNode(node);
       highlightNode(node);
       selectedNodeStartingCoordinates = node.coordinates;
-    };
+    }
 
-    var attachNode = function (node, templates) {
+    function attachNode(node, templates) {
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
       applicationModel.setSelectedTool(ViiteEnumerations.Tool.Select.value);
-    };
+    }
 
-    var selectNodePointTemplate = function (nodePointTemplate) {
+    function selectNodePointTemplate(nodePointTemplate) {
       clearHighlights();
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNodePointTemplate(nodePointTemplate);
-    };
+    }
 
-    var selectJunctionTemplate = function (junctionTemplate) {
+    function selectJunctionTemplate(junctionTemplate) {
       clearHighlights();
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openJunctionTemplate(junctionTemplate);
-    };
+    }
 
-    var addFeature = function (layer, feature, predicate) {
+    const addFeature = function (layer, feature, predicate) {
       if (_.isUndefined(_.find(layer.getSource().getFeatures(), predicate))) {
         layer.getSource().addFeature(feature);
       }
     };
 
-    var highlightTemplates = function (templates) {
+    const highlightTemplates = function (templates) {
       if (!_.isUndefined(templates.nodePoints) && !_.isEmpty(templates.nodePoints)) {
-        var nodePointTemplates = _.partition(nodePointTemplateLayer.getSource().getFeatures(), function (nodePointTemplateFeature) {
+        const nodePointTemplates = _.partition(nodePointTemplateLayer.getSource().getFeatures(), function (nodePointTemplateFeature) {
           return _.includes(_.map(templates.nodePoints, 'id'), nodePointTemplateFeature.nodePointTemplate.id);
         });
         selectFeaturesToHighlight(nodePointTemplateVector, nodePointTemplates[0], nodePointTemplates[1]);
       }
 
       if (!_.isUndefined(templates.junctions) && !_.isEmpty(templates.junctions)) {
-        var junctionTemplates = _.partition(junctionTemplateLayer.getSource().getFeatures(), function (junctionTemplateFeature) {
+        const junctionTemplates = _.partition(junctionTemplateLayer.getSource().getFeatures(), function (junctionTemplateFeature) {
           return _.includes(_.map(templates.junctions, 'id'), junctionTemplateFeature.junctionTemplate.id);
         });
         selectFeaturesToHighlight(junctionTemplateVector, junctionTemplates[0], junctionTemplates[1]);
@@ -456,16 +483,16 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       junctionTemplateLayer.setOpacity(0.2);
     };
 
-    var highlightNode = function (node) {
-      var highlightJunctions = function () {
-        var junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
+    function highlightNode(node) {
+      const highlightJunctions = function () {
+        const junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
           return node.nodeNumber && junctionFeature.junction.nodeNumber === node.nodeNumber;
         });
         selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
         junctionMarkerLayer.setOpacity(0.2);
       };
 
-      var nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
+      const nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
         return nodeFeature.node.id === node.id;
       });
 
@@ -481,12 +508,12 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
       selectFeaturesToHighlight(nodeMarkerVector, nodes[0], nodes[1]);
       nodeMarkerLayer.setOpacity(0.2);
-    };
+    }
 
-    var clearHighlights = function () {
-      var nodes = nodeMarkerLayer.getSource().getFeatures().concat(nodeMarkerSelectedLayer.getSource().getFeatures());
-      var junctions = junctionMarkerLayer.getSource().getFeatures().concat(junctionMarkerSelectedLayer.getSource().getFeatures());
-      var templates = {
+    function clearHighlights() {
+      const nodes = nodeMarkerLayer.getSource().getFeatures().concat(nodeMarkerSelectedLayer.getSource().getFeatures());
+      const junctions = junctionMarkerLayer.getSource().getFeatures().concat(junctionMarkerSelectedLayer.getSource().getFeatures());
+      const templates = {
         nodePoints: nodePointTemplateLayer.getSource().getFeatures().concat(nodePointTemplateSelectedLayer.getSource().getFeatures()),
         junctions: junctionTemplateLayer.getSource().getFeatures().concat(junctionTemplateSelectedLayer.getSource().getFeatures())
       };
@@ -498,11 +525,11 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
       setGeneralOpacity(1);
       nodeLayerSelectInteraction.getFeatures().clear();
-    };
+    }
 
     me.eventListener.listenTo(eventbus, 'node:unselected', function (current, cancel) {
       if (cancel) {
-        var original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
+        const original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
         if (original && original.nodeNumber) {
           updateCurrentNodeMarker(original);
         } else {
@@ -542,8 +569,8 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
     });
 
-    var createNewNodeMarker = function (coords) {
-      var node = {
+    function createNewNodeMarker(coords) {
+      const node = {
         coordinates: { x: coords.x, y: coords.y },
         type: ViiteEnumerations.NodeType.UnknownNodeType.value,
         nodePoints: [],
@@ -554,17 +581,17 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
           return feature.node.id === node.id;
         });
       attachNode(node, selectedNodesAndJunctions.getCurrentTemplates());
-    };
+    }
 
-    var removeCurrentNodeMarker = function (node) {
+    function removeCurrentNodeMarker(node) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
         if (_.isEqual(nodeFeature.node, node)) {
           nodeMarkerSelectedLayer.getSource().removeFeature(nodeFeature);
         }
       });
-    };
+    }
 
-    var updateCurrentNodeMarker = function (node) {
+    function updateCurrentNodeMarker(node) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
         if (nodeFeature.node.id === node.id) {
           nodeFeature.setProperties({ type: node.type });
@@ -582,16 +609,16 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       });
 
       _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-        var junction = _.find(node.junctions, function (junctionFound) {
+        const junction = _.find(node.junctions, function (junctionFound) {
           return junctionFound.id === junctionFeature.junction.id;
         });
         if (!_.isUndefined(junction)) {
           junctionFeature.setProperties({ junctionNumber: junction.junctionNumber });
         }
       });
-    };
+    }
 
-    var addJunctionToMap = function (junction, layer) {
+    const addJunctionToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
         addFeature(layer, new JunctionMarker().createJunctionMarker(junction),
           function (feature) {
@@ -600,7 +627,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
     };
 
-    var addJunctionTemplateToMap = function (junction, layer) {
+    const addJunctionTemplateToMap = function (junction, layer) {
       if (_.has(junction, 'junctionPoints') && !_.isEmpty(junction.junctionPoints)) {
         addFeature(layer, new JunctionTemplateMarker().createJunctionTemplateMarker(junction), function (feature) {
           if (feature.junctionTemplate) {
@@ -613,7 +640,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     };
 
 
-    var toggleJunctionToTemplate = function (junction, toTemplate) {
+    function toggleJunctionToTemplate(junction, toTemplate) {
       if (toTemplate) {
         _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
           if (_.isEqual(junctionFeature.junction, junction)) {
@@ -629,26 +656,26 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         });
         addJunctionToMap(junction, junctionMarkerSelectedLayer);
       }
-    };
+    }
 
-    var toggleNodePointToTemplate = function (nodePoint, toTemplate) {
+    function toggleNodePointToTemplate(nodePoint, toTemplate) {
       if (toTemplate) {
         addFeature(nodePointTemplateSelectedLayer, new NodePointTemplateMarker().createNodePointTemplateMarker(nodePoint),
           function (feature) {
             return feature.nodePointTemplate.id === nodePoint.id;
           });
       } else {
-        var nodePointTemplateFeature = _.find(nodePointTemplateSelectedLayer.getSource().getFeatures(), function (feature) {
+        const nodePointTemplateFeature = _.find(nodePointTemplateSelectedLayer.getSource().getFeatures(), function (feature) {
           return feature.nodePointTemplate.id === nodePoint.id;
         });
         if (!_.isUndefined(nodePointTemplateFeature)) {
           nodePointTemplateSelectedLayer.getSource().removeFeature(nodePointTemplateFeature);
         }
       }
-    };
+    }
 
     me.eventListener.listenTo(eventbus, 'junction:mapNumberUpdate', function (junction) {
-      var updateJunctionTemplateNumberOnMap = function (junctionToUpdate) {
+      const updateJunctionTemplateNumberOnMap = function (junctionToUpdate) {
         _.each(junctionTemplateSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
           if (_.isEqual(junctionFeature.junctionTemplate.id, junctionToUpdate.id)) {
             junctionFeature.setProperties({ junctionNumber: junctionToUpdate.junctionNumber });
@@ -656,7 +683,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         });
       };
 
-      var updateJunctionNumberOnMap = function (junctionToMap) {
+      const updateJunctionNumberOnMap = function (junctionToMap) {
         _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
           if (_.isEqual(junctionFeature.junction.id, junctionToMap.id)) {
             junctionFeature.setProperties({ junctionNumber: junctionToMap.junctionNumber });
@@ -743,12 +770,12 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       });
 
       eventListener.listenTo(eventbus, 'node:addNodesToMap', function (nodes, templates, zoom) {
-        var filteredNodes = nodes;
-        var currentNode = selectedNodesAndJunctions.getCurrentNode();
-        var currentTemplates = selectedNodesAndJunctions.getCurrentTemplates();
+        let filteredNodes = nodes;
+        const currentNode = selectedNodesAndJunctions.getCurrentNode();
+        const currentTemplates = selectedNodesAndJunctions.getCurrentTemplates();
 
         if (parseInt(zoom) >= zoomlevels.minZoomForNodes) {
-          var filteredNodePointTemplates = templates.nodePoints;
+          let filteredNodePointTemplates = templates.nodePoints;
 
           if (currentNode) {
             eventbus.trigger('node:fetchCoordinates', nodeCollection.getNodeByNodeNumber(currentNode.nodeNumber));
@@ -801,11 +828,11 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
         if (parseInt(zoom) >= zoomlevels.minZoomForJunctions) {
 
-          var filteredJunctions = _.flatten(_.map(filteredNodes, "junctions"));
-          var filteredJunctionTemplates = templates.junctions;
+          const filteredJunctions = _.flatten(_.map(filteredNodes, "junctions"));
+          let filteredJunctionTemplates = templates.junctions;
 
           if (currentNode) {
-            var currentJunctions = _.partition(currentNode.junctions, function (junction) {
+            const currentJunctions = _.partition(currentNode.junctions, function (junction) {
               return _.isUndefined(junction.nodeNumber);
             });
 
@@ -859,16 +886,16 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       });
     };
 
-    var showLayer = function () {
+    const showLayer = function () {
       me.start();
       me.layerStarted(me.eventListener);
       me.toggleLayersVisibility(layers, true);
     };
 
-    var hideLayer = function () {
+    function hideLayer() {
       me.clearLayers(layers);
       me.toggleLayersVisibility(layers, false);
-    };
+    }
 
     me.addLayers(layers);
 

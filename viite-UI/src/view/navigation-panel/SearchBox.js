@@ -90,5 +90,3 @@ export function SearchBox(instructionsPopup, locationSearch) {
 
     this.element = groupDiv;
   }
-
-window.SearchBox = SearchBox;

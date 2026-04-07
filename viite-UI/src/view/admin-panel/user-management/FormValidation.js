@@ -1,7 +1,7 @@
 /**
  * FormValidation - Validates user management form fields and provides utility functions.
  */
-import { Toast } from '@components/Toast.js';
+import { showToast } from '@components/Toast.js';
 
 const COORD_LIMITS = {
     east: [50000, 750000],
@@ -56,14 +56,9 @@ export function validateUserFieldsAndToastErrors(fields, options = {}, prefix = 
 
     if (Object.keys(errors).length) {
         const errorMessage = Object.values(errors).join('; ');
-        Toast.show(prefix + errorMessage, { type: 'error' });
+        showToast(prefix + errorMessage, { type: 'error' });
         return { valid: false, errors };
     }
 
     return { valid: true, errors: {} };
 }
-
-// Backward compatibility exports
-window.UserManagement = window.UserManagement || {};
-window.UserManagement.FormValidation = { validateUserFields };
-window.UserManagement.FormUtils = { validateUserFieldsAndToastErrors };

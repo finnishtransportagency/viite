@@ -2,9 +2,9 @@
 import { eventbus } from '@utils/eventbus.js';
 
 export function Backend() {
-    var loadingProject;
+    let loadingProject;
     // var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
-    var gettingRoadLinks;
+    let gettingRoadLinks;
     moment.locale('fi');
 
     this.startLinkNetworkUpdate = _.throttle(function (data, success, failure) {
@@ -39,8 +39,8 @@ export function Backend() {
     
     
     this.getRoadLinks = createCallbackRequestor(function (params) {
-      var zoom = params.zoom;
-      var boundingBox = params.boundingBox;
+      const zoom = params.zoom;
+      const boundingBox = params.boundingBox;
       return {
         url: 'api/viite/roadaddress?zoom=' + zoom + '&bbox=' + boundingBox,
         dataType: 'json'
@@ -48,8 +48,8 @@ export function Backend() {
     });
 
     this.getRoadLinksOfWholeRoadPart = createCallbackRequestor(function (params) {
-      var roadNumber = params.roadNumber;
-      var roadPart = params.roadPartNumber;
+      const roadNumber = params.roadNumber;
+      const roadPart = params.roadPartNumber;
       return {
         url: 'api/viite/roadlinks/wholeroadpart/?roadnumber=' + roadNumber + '&roadpart=' + roadPart,
         dataType: 'json'
@@ -57,8 +57,8 @@ export function Backend() {
     });
 
     this.getNodesAndJunctions = _.throttle(function (params, callback) {
-      var zoom = params.zoom;
-      var boundingBox = params.boundingBox;
+      const zoom = params.zoom;
+      const boundingBox = params.boundingBox;
 
       return $.get('api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox, function (data) {
         return _.isFunction(callback) && callback(data);
@@ -80,9 +80,9 @@ export function Backend() {
     });
 
     this.getProjectLinks = createCallbackRequestor(function (params) {
-      var zoom = params.zoom;
-      var boundingBox = params.boundingBox;
-      var projectId = params.projectId;
+      const zoom = params.zoom;
+      const boundingBox = params.boundingBox;
+      const projectId = params.projectId;
       return {
         url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
       };
@@ -187,7 +187,7 @@ export function Backend() {
     });
 
     this.sendProjectChangesToViite = _.throttle(function (projectID, success, failure) {
-      var Json = {
+      const Json = {
         projectID: projectID
       };
       $.ajax({
@@ -330,7 +330,7 @@ export function Backend() {
     }, 1000);
 
     this.getStartupParametersWithCallback = function (callback) {
-      var url = 'api/viite/startupParameters';
+      const url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
     };
 
@@ -350,15 +350,15 @@ export function Backend() {
     };
 
     function createCallbackRequestor(getParameters) {
-      var requestor = latestResponseRequestor(getParameters);
+      const requestor = latestResponseRequestor(getParameters);
       return function (parameter, callback) {
         requestor(parameter).then(callback);
       };
     }
 
     function latestResponseRequestor(getParameters) {
-      var deferred;
-      var request;
+      let deferred;
+      let request;
 
       function doRequest() {
         if (request)
@@ -448,5 +448,3 @@ export function Backend() {
     }, 1000);
 
 }
-
-window.Backend = Backend;

@@ -78,5 +78,3 @@ export const GeometryUtils = {
   calculateMidpointOfLineString,
   geometryLength
 };
-
-window.GeometryUtils = GeometryUtils;

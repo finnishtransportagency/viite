@@ -13,5 +13,3 @@ export function numberInput(id, maxChars = null, isDisabled = false, value = '')
         onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)">
     `.trim();
 }
-
-window.numberInput = numberInput;

@@ -173,5 +173,3 @@ export function LinkInfo(selectedLinkProperty) {
         </div><footer></footer>`;
     };
 }
-
-window.LinkInfo = LinkInfo;

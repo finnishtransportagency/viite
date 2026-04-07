@@ -31,5 +31,3 @@ export function NodeMarker() {
     createNodeMarker: createNodeMarker
   };
 }
-
-window.NodeMarker = NodeMarker;

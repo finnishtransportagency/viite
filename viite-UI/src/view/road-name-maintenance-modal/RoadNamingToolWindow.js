@@ -99,7 +99,6 @@ export function RoadNamingToolWindow(roadNameCollection, options = {}) {
             id: input.id,
             minDate: originalStartDate,
             onChange: () => {
-              $(input).trigger('change');
               toggleSaveButton();
             }
           });

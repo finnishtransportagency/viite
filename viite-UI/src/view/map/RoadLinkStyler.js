@@ -477,5 +477,3 @@ export function RoadLinkStyler() {
       getUnderConstructionStyles: getUnderConstructionStyles
     };
 }
-
-window.RoadLinkStyler = RoadLinkStyler;

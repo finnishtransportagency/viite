@@ -202,5 +202,3 @@ export function TileMapSelector(container, applicationModel) {
       }
     });
 }
-
-window.TileMapSelector = TileMapSelector;

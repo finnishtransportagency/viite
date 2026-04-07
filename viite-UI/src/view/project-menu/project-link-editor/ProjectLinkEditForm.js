@@ -6,6 +6,8 @@
  * Key methods: bindEvents(), cancelChanges(), validateAndSave() for form interaction.
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { dropdown } from '@components/dropdowns/Dropdown.js';
+import { numberInput } from '@components/number-input/NumberInput.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { DevAddressTool } from './DevTool.js';
@@ -719,8 +721,8 @@ export function LinkEditForm(startupParameters) {
       });
 
       rootElement.on('input', '.form-control.small-input', function (event) {
-        var dropdown_0 = $('#dropDown_0');
-        var roadNameField = $('#roadName');
+        const dropdown_0 = $('#dropDown_0');
+        const roadNameField = $('#roadName');
         if (projectChangeTable) {
           checkInputs(projectChangeTable);
         }
@@ -891,5 +893,3 @@ export function LinkEditForm(startupParameters) {
       }
     };
 }
-
-window.LinkEditForm = LinkEditForm;

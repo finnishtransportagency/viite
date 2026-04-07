@@ -1,11 +1,18 @@
-// Panel that contains all the tools available for users with admin role
-export function AdminPanel(backend) {
+import { DynamicLinkNetworkContent as dynamicLinkNetworkContent } from './DynamicLinkNetworkContent.js';
+import { Main as UserManagementMain } from './user-management/Main.js';
+import { dateutil } from '@utils/DateUtils.js';
+import * as ViiteConstants from '@utils/ViiteConstants.js';
 
-        const dynamicLinkNetwork = window.dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
+// Panel that contains all the tools available for users with admin role
+export function AdminPanel(backend, options = {}) {
+
+        const { applicationApi, applicationModel } = options;
+
+        const dynamicLinkNetwork = dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
 
         const showAdminPanelWindow = function () {
             // Get singleton modal container
-            const modalContainer = Application.getModalContainer({
+            const modalContainer = applicationApi.getModalContainer({
                 className: 'admin-panel-modal'
             });
 
@@ -49,9 +56,8 @@ export function AdminPanel(backend) {
             dynamicLinkNetwork.bindEvents('.modal-container');
 
             // Initialize the new user management module
-            if (root.UserManagement && root.UserManagement.Main) {
-                root.UserManagement.Main.init('#userManagementPanelContainer');
-            }
+            
+            UserManagementMain.init('#userManagementPanelContainer', { applicationModel });
 
             bindEvents();
         };
@@ -93,5 +99,3 @@ export function AdminPanel(backend) {
             show: showAdminPanelWindow
         };
 }
-
-window.AdminPanel = AdminPanel;

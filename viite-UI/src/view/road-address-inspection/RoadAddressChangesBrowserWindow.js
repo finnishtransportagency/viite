@@ -511,5 +511,3 @@ export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm)
             }
         };
 }
-
-window.RoadAddressChangesBrowserWindow = RoadAddressChangesBrowserWindow;

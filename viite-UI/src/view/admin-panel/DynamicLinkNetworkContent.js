@@ -162,5 +162,3 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
             bindEvents: bindEvents
         };
 }
-
-window.dynamicLinkNetworkContent = DynamicLinkNetworkContent;

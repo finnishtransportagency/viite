@@ -39,9 +39,9 @@ export function LinkPropertyMarker() {
 
     function hex2Rgba(hex) {
       const hexa = hex.replace('#', '');
-      var colorR = parseInt(hexa.substring(0, hexa.length / 3), 16);
-      var colorG = parseInt(hexa.substring(hexa.length / 3, 2 * hexa.length / 3), 16);
-      var colorB = parseInt(hexa.substring(2 * hexa.length / 3, 3 * hexa.length / 3), 16);
+      const colorR = parseInt(hexa.substring(0, hexa.length / 3), 16);
+      const colorG = parseInt(hexa.substring(hexa.length / 3, 2 * hexa.length / 3), 16);
+      const colorB = parseInt(hexa.substring(2 * hexa.length / 3, 3 * hexa.length / 3), 16);
       return 'rgba(' + colorR + ',' + colorG + ',' + colorB + ',1)';
     }
 
@@ -81,5 +81,3 @@ export function LinkPropertyMarker() {
     createMarker: createMarker
   };
 }
-
-window.LinkPropertyMarker = LinkPropertyMarker;

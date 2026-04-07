@@ -62,4 +62,3 @@ export function ValidationUtils() {
     };
 }
 
-window.ValidationUtils = ValidationUtils;

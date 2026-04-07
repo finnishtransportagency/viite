@@ -8,12 +8,9 @@ eventbus.on('all', function (eventName, entity) {
   });
 
 eventbus.oncePromise = function (eventName) {
-  var eventReceived = $.Deferred();
+  const eventReceived = $.Deferred();
   eventbus.once(eventName, function () {
     eventReceived.resolve();
   });
   return eventReceived;
 };
-
-window.eventbus = eventbus;
-

@@ -6,6 +6,7 @@
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
+import { numberInput } from '@components/number-input/NumberInput.js';
 import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';

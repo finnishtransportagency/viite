@@ -45,6 +45,7 @@ import { ZoomBox } from '@view/map/markers/ZoomBox.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { Environment } from '@utils/EnvironmentUtils.js';
 
 window.Application = window.Application || {};
 const application = window.Application;
@@ -55,18 +56,20 @@ export function start(customBackend, withTileMaps) {
     backend.getStartupParametersWithCallback(function (startupParameters) {
       window.startupParameters = startupParameters; // Make globally accessible
       const tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
-      const roadCollection = new RoadCollection(backend);
-      const projectCollection = new ProjectCollection(backend, startupParameters);
+      const dirtyTrackedModels = [];
+      applicationModel = new ApplicationModel(dirtyTrackedModels);
+      window.applicationModel = applicationModel;
+      const roadCollection = new RoadCollection(backend, applicationModel);
+      const projectCollection = new ProjectCollection(backend, startupParameters, applicationModel);
       window.projectCollection = projectCollection;
       const roadNameCollection = new RoadNameCollection(backend);
-      const selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+      const selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection, applicationModel);
+      dirtyTrackedModels.push(selectedLinkProperty);
       const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
       window.selectedProjectLinkProperty = selectedProjectLinkProperty;
       const instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
-      const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-      applicationModel = new ApplicationModel([selectedLinkProperty]);
-      window.applicationModel = applicationModel;
-      const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel));
+      const projectChangeInfoModel = new ProjectChangeInfoModel(backend, applicationModel);
+      const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel), applicationModel, applicationModel);
       const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
       proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
       ol.proj.proj4.register(proj4);
@@ -187,7 +190,10 @@ export function start(customBackend, withTileMaps) {
     const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
     const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
     const roadNetworkErrorsList = new RoadNetworkErrorsList(backend);
-    const adminPanel = new AdminPanel(backend);
+    const adminPanel = new AdminPanel(backend, {
+      applicationApi: application,
+      applicationModel: applicationModel
+    });
     
     // Initialize node menu state router
     const nodesAndJunctionsModule = new NodeMenu(

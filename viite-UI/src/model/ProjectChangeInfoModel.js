@@ -8,19 +8,22 @@
  * - Backend integration for change history
  * - Warning message handling for changes
  */
-export function ProjectChangeInfoModel(backend) {
-    var addrMRange = [{
+import { eventbus } from '@utils/eventbus.js';
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+
+export function ProjectChangeInfoModel(backend, applicationModel) {
+    const addrMRange = [{
       start:0,
       end: 0
     }];
-    var roadInfoList = [{ // TODO refactor field order, this is dumb order.
+    const roadInfoList = [{ // TODO refactor field order, this is dumb order.
       endRoadPartNumber: 0,
       roadNumber: 0,
       addrMRange: addrMRange,
       startRoadPartNumber: 0,
       trackCode: 0
     }];
-    var changesInfo = [{
+    const changesInfo = [{
       changetype: 0,
       discontinuity: "jatkuva",
       administrativeClass: 9,
@@ -28,17 +31,17 @@ export function ProjectChangeInfoModel(backend) {
       target: roadInfoList,
       reversed: false
     }];
-    var changeTable = {
+    const changeTable = {
       id: 0,
       name: "templateproject",
       user: "templateuser",
       changeDate: "1980-01-28",
       changeInfoSeq: changesInfo
     };
-    var projectChanges = {changeTable: changeTable};
+    let projectChanges = {changeTable: changeTable};
 
     function loadChanges() {
-      var warningM = projectChanges.warningMessage;
+      const warningM = projectChanges.warningMessage;
       if (!_.isUndefined(warningM))
         new ConfirmPopup(warningM, { type: "alert" });
       if (!_.isUndefined(projectChanges) && projectChanges.discontinuity !== null) {
@@ -72,5 +75,3 @@ export function ProjectChangeInfoModel(backend) {
       sortChanges: sortChanges
     };
 }
-
-window.ProjectChangeInfoModel = ProjectChangeInfoModel;

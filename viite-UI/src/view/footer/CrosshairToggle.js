@@ -127,5 +127,3 @@ export const createCrosshairToggle = (parentElement, map, onFeatureClick = null)
     }
   }
 };
-
-window.createCrosshairToggle = createCrosshairToggle;

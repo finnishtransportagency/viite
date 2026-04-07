@@ -8,6 +8,10 @@
  * - Error handling for unknown addresses
  */
 /* eslint-disable new-cap */
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { GeometryUtils } from '@utils/GeometryUtils.js';
+import { LocationInputParser } from '@utils/LocationInputParser.js';
+
 export function LocationSearch(backend, applicationModel) {
     /**
      * Search by street address
@@ -147,5 +151,3 @@ export function LocationSearch(backend, applicationModel) {
       });
     };
 }
-
-window.LocationSearch = LocationSearch;
