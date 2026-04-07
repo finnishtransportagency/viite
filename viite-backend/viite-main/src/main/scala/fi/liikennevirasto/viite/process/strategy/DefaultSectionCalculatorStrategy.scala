@@ -6,6 +6,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.process.strategy.FirstRestSections.{getUpdatedContinuousRoadwaySections, lengthCompare}
+import fi.liikennevirasto.viite.util.SynchronizationUtils.maxDiffForAddressChange
 import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
@@ -363,9 +364,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
    */
   def validateAddresses(pls: Seq[ProjectLink]): Unit = {
     if (pls.size > 1 && pls.head.originalAddrMRange.start == 0) {  //TODO is this a place for .isRoadPartStart, or is this for undefined addresses?
-      println(s"VALIDATING PROJECT LINK ADDRESSES :::: ${pls.size}")
-      pls.foreach(p => println(s"linkId: ${p.linkId} addrMRange: ${p.addrMRange} originalAddrMRange: ${p.originalAddrMRange} status: ${p.status} track: ${p.track} originalTrack: ${p.originalTrack}"))
-      val maxDiffForChange = 2 // i.e. caused by average calculation
       val it = pls.sliding(2)
       while (it.hasNext) {
         it.next() match {
@@ -378,7 +376,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               logger.error(s"Address length negative. linkId: ${curr.linkId}")
               throw new RoadAddressException(NegativeLengthErrorMessage.format(curr.linkId))
             }
-            if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.length) - (curr.originalAddrMRange.length)) < maxDiffForChange)) {
+            if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track || curr.track == Track.Combined) && !(Math.abs((curr.addrMRange.length) - (curr.originalAddrMRange.length)) < maxDiffForAddressChange)) {
               // Discontinuity errors are checked here because without correct discontinuities set in place
               // the calculation result might be wrong, so the user is notified to fix discontinuities.
               // If the discontinuities are set correct and the calculation still has length mismatch,
@@ -390,7 +388,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
                 throw ViiteException(s"Tarkista jatkuvuuskoodit linkeiltä: $erroneousLinkIds")
               } else {
                 logger.error(s"Length mismatch. LinkId: ${curr.linkId} new: ${curr.addrMRange} (${curr.addrMRange.length}) original: ${curr.originalAddrMRange} (${curr.originalAddrMRange.length})")
-                throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForChange - 1))
+                throw new RoadAddressException(LengthMismatchErrorMessage.format(curr.linkId, maxDiffForAddressChange - 1))
               }
             }
             /* VIITE-2957
@@ -404,7 +402,7 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
               in length that was greater than 1 on one of the tracks.
             if (curr.status != RoadAddressChangeType.New && (curr.originalTrack == curr.track ||
               curr.track == Track.Combined) &&
-              !(Math.abs(curr.addrMRange.length - curr.originalAddrMRange.length) < maxDiffForChange)) {
+              !(Math.abs(curr.addrMRange.length - curr.originalAddrMRange.length) < maxDiffForAddressChange)) {
               logger.warn(s"Length mismatch. " +
                 s"Project id: ${curr.projectId} ${projectDAO.fetchById(projectId = curr.projectId).get.name} " +
                 s"New: ${curr.addrMRange} " +

@@ -37,7 +37,14 @@ object ProjectSectionMValueCalculator {
     val (unchanged, others) = projectLinks.partition(_.status == RoadAddressChangeType.Unchanged)
     val mapped = unchanged.groupBy(_.addrMRange.start)
     if (mapped.values.exists(_.size != 1)) {
-      throw new InvalidAddressDataException(s"Multiple unchanged links specified with overlapping address value ${mapped.values.filter(_.size != 1).mkString(", ")}")
+      val overlappingGroups = mapped.values.filter(_.size != 1)
+      val overlappingDetails = overlappingGroups.map { group =>
+        val linkDetails = group.map(link => 
+          s"ID:${link.id}(Start:${link.addrMRange.start}, End:${link.addrMRange.end}, Track:${link.track})"
+        ).mkString(", ")
+        s"Address ${group.head.addrMRange.start}: [${linkDetails}]"
+      }.mkString("; ")
+      throw new InvalidAddressDataException(s"Multiple unchanged links specified with overlapping address value. Overlapping groups: ${overlappingDetails}")
     }
     if (unchanged.nonEmpty && mapped.keySet.count(_ == 0L) != 1)
       throw new InvalidAddressDataException("No starting point (Address = 0) found for UnChanged links")

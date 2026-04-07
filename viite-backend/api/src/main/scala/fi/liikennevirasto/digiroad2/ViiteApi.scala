@@ -1301,6 +1301,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         val invalidUnchangedLinkErrors = PostGISDatabaseScalikeJDBC.runWithTransaction {
           val project = projectService.fetchProjectById(projectId).get
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
+          
           if (invalidUnchangedLinkErrors.isEmpty) {
             projectService.recalculateProjectLinks(projectId, project.modifiedBy)
           }

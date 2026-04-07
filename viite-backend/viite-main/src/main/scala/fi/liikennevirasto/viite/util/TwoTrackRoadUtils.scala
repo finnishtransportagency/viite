@@ -18,6 +18,28 @@ object TwoTrackRoadUtils {
 
   private val logger = LoggerFactory.getLogger(getClass)
 
+  /**
+    * Calculate the average of two address measures with rounding adjustment to prevent floating-point precision errors.
+    *
+    *  Track 1 (addrM1): |-----------(10)
+    *  Track 2 (addrM2): |-----------------(15)
+    *                                 ^
+    *                          Raw Avg: 12.5
+    *                                 | + 0.1 (Nudge)
+    *                          Result: 12.6 -> Round -> 13
+    *
+    *
+    * @param addrM1 First address measure
+    * @param addrM2 Second address measure
+    * @return The average of the two measures, rounded to the nearest long
+    */
+  def calculateAverageAddrM(addrM1: Long, addrM2: Long): Long = {
+    // Since Math.round rounds to the nearest whole number, adding small constant (for example 0.1) ensures that minor precision errors (especially
+    // due to floating-point calculations) do not cause unexpected results.
+    val erroneousRoundingPreventionCoefficient = 0.1
+    Math.round((0.5 * (addrM1 + addrM2)) + erroneousRoundingPreventionCoefficient)
+  }
+
   /** SplitPlsAtStatusChange searches iteratively link status changes and checks if other track
     * needs to split at the change point and makes splits to the other side projectlinks and creates
     * user defined calibration points.
@@ -585,3 +607,4 @@ object TwoTrackRoadUtils {
 //    }
 //  }
     }
+

@@ -10,7 +10,8 @@ import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.adjustTerminations
+import fi.liikennevirasto.viite.process.strategy.AdministrativeClassTwoTrackSynchronizer.{adjustAdministrativeClassChanges}
+import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.{adjustTerminations}
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -2084,7 +2085,12 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
           val (newLinks, notNewLinks) = projectLinksWithAdjustedCalibrationPoints.partition(_.status == RoadAddressChangeType.New)
           val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
-          val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
+          
+          // Administrative class synchronization needs full non-terminated road-part context
+          // so the neighboring unchanged links can be slid with changed boundaries.
+          val adjustedAdminClassNonTerminated = adjustAdministrativeClassChanges(adjustedNonTerminated)
+
+          val withoutTerminated = (adjustedAdminClassNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
           val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
 
           // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
