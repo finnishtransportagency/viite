@@ -1,6 +1,6 @@
 -- Add complementary data table to local data base - VIITE-2845.
 -- Structure resemble RoadLink table from KGV (Keskilinjavarasto).
-CREATE TABLE public.complementary_link_table (
+CREATE TABLE complementary_link_table (
                                            id varchar NULL,
                                            datasource int4 NULL,
                                            adminclass int4 NULL,
@@ -28,8 +28,8 @@ CREATE TABLE public.complementary_link_table (
                                            starttime timestamp NULL,
                                            versionstarttime timestamp NULL,
                                            sourcemodificationtime timestamp NULL,
-                                           geometry public.geometry NULL,
+                                           geometry geometry NULL,
                                            ajorata int4 NULL
 );
-CREATE INDEX complementary_data_geometry_i ON public.complementary_link_table USING gist (geometry);
-CREATE INDEX complementary_data_link_id_i ON public.complementary_link_table USING btree (id);
+CREATE INDEX complementary_data_geometry_i ON complementary_link_table USING gist (geometry);
+CREATE INDEX complementary_data_link_id_i ON complementary_link_table USING btree (id);
