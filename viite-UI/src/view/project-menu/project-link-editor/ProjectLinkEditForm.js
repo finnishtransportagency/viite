@@ -249,9 +249,9 @@ export function LinkEditForm(startupParameters) {
         if (isPartialReversed) {
           infoLabel = `<label class="form-group" style="color: white;">Osittain käännetty</label>`;
         } else if (selected[0].reversed) {
-          infoLabel = `<label class="form-group" style="color: white;"><span class="dingbats">&#9745;</span> Käännetty</label>`;
+          infoLabel = `<label class="form-group" style="color: white;"><span">&#9745;</span> Käännetty</label>`;
         } else {
-          infoLabel = `<label class="form-group" style="color: white;"><span class="dingbats">&#9744;</span> Käännetty</label>`;
+          infoLabel = `<label class="form-group" style="color: white;"><span>&#9744;</span> Käännetty</label>`;
         }
       }
 
