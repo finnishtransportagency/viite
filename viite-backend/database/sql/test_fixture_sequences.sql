@@ -1,5 +1,5 @@
 
-drop sequence ROADWAY_SEQ;
+drop sequence if exists ROADWAY_SEQ;
 create sequence ROADWAY_SEQ
   minvalue 1
   no maxvalue
@@ -8,7 +8,7 @@ create sequence ROADWAY_SEQ
   cache 100
   cycle;
 
-drop sequence LINEAR_LOCATION_SEQ;
+drop sequence if exists LINEAR_LOCATION_SEQ;
 create sequence LINEAR_LOCATION_SEQ
   minvalue 1
   no maxvalue
@@ -17,7 +17,7 @@ create sequence LINEAR_LOCATION_SEQ
   cache 100
   cycle;
 
-drop sequence viite_project_seq;
+drop sequence if exists viite_project_seq;
 create sequence viite_project_seq
   minvalue 1
   no maxvalue
@@ -26,7 +26,7 @@ create sequence viite_project_seq
   cache 100
   cycle;
 
-drop sequence project_link_seq;
+drop sequence if exists project_link_seq;
 create sequence project_link_seq
   minvalue 1
   no maxvalue
@@ -35,7 +35,7 @@ create sequence project_link_seq
   cache 100
   cycle;
 
-drop sequence project_link_name_seq;
+drop sequence if exists project_link_name_seq;
 create sequence project_link_name_seq
   minvalue 1
   no maxvalue
@@ -44,7 +44,7 @@ create sequence project_link_name_seq
   cache 100
   cycle;
 
-drop sequence PROJECT_CAL_POINT_ID_SEQ;
+drop sequence if exists PROJECT_CAL_POINT_ID_SEQ;
 create sequence PROJECT_CAL_POINT_ID_SEQ
   minvalue 1
   no maxvalue
@@ -53,7 +53,7 @@ create sequence PROJECT_CAL_POINT_ID_SEQ
   cache 100
   cycle;
 
-drop sequence viite_general_seq;
+drop sequence if exists viite_general_seq;
 create sequence viite_general_seq
   minvalue 1
   no maxvalue
@@ -62,7 +62,7 @@ create sequence viite_general_seq
   cache 100
   cycle;
 
-drop sequence ROADWAY_NUMBER_SEQ;
+drop sequence if exists ROADWAY_NUMBER_SEQ;
 create sequence ROADWAY_NUMBER_SEQ
   minvalue 1
   no maxvalue
@@ -71,7 +71,7 @@ create sequence ROADWAY_NUMBER_SEQ
   cache 100
   cycle;
 
-drop sequence ROAD_NETWORK_ERROR_SEQ;
+drop sequence if exists ROAD_NETWORK_ERROR_SEQ;
 create sequence ROAD_NETWORK_ERROR_SEQ
   minvalue 1
   no maxvalue
@@ -80,7 +80,7 @@ create sequence ROAD_NETWORK_ERROR_SEQ
   cache 100
   cycle;
 
-drop sequence ROADWAY_CHANGE_LINK;
+drop sequence if exists ROADWAY_CHANGE_LINK;
 create sequence ROADWAY_CHANGE_LINK
   minvalue 1
   no maxvalue
@@ -89,7 +89,7 @@ create sequence ROADWAY_CHANGE_LINK
   cache 100
   cycle;
 
-drop sequence PUBLISHED_ROAD_NETWORK_SEQ;
+drop sequence if exists PUBLISHED_ROAD_NETWORK_SEQ;
 create sequence PUBLISHED_ROAD_NETWORK_SEQ
   minvalue 1
   no maxvalue
@@ -98,7 +98,7 @@ create sequence PUBLISHED_ROAD_NETWORK_SEQ
   cache 100
   cycle;
 
-drop sequence ROADWAY_POINT_SEQ;
+drop sequence if exists ROADWAY_POINT_SEQ;
 create sequence ROADWAY_POINT_SEQ
   minvalue 1
   no maxvalue
@@ -107,7 +107,7 @@ create sequence ROADWAY_POINT_SEQ
   cache 100
   cycle;
 
-drop sequence CALIBRATION_POINT_SEQ;
+drop sequence if exists CALIBRATION_POINT_SEQ;
 create sequence CALIBRATION_POINT_SEQ
   minvalue 1
   no maxvalue
@@ -116,7 +116,7 @@ create sequence CALIBRATION_POINT_SEQ
   cache 100
   cycle;
 
-drop sequence NODE_SEQ;
+drop sequence if exists NODE_SEQ;
 create sequence NODE_SEQ
   minvalue 1
   no maxvalue
@@ -125,7 +125,7 @@ create sequence NODE_SEQ
   cache 100
   cycle;
 
-drop sequence NODE_NUMBER_SEQ;
+drop sequence if exists NODE_NUMBER_SEQ;
 create sequence NODE_NUMBER_SEQ
   minvalue 1
   no maxvalue
@@ -134,7 +134,7 @@ create sequence NODE_NUMBER_SEQ
   cache 100
   cycle;
 
-drop sequence NODE_POINT_SEQ;
+drop sequence if exists NODE_POINT_SEQ;
 create sequence NODE_POINT_SEQ
   minvalue 1
   no maxvalue
@@ -143,7 +143,7 @@ create sequence NODE_POINT_SEQ
   cache 100
   cycle;
 
-drop sequence JUNCTION_SEQ;
+drop sequence if exists JUNCTION_SEQ;
 create sequence JUNCTION_SEQ
   minvalue 1
   no maxvalue
@@ -152,7 +152,7 @@ create sequence JUNCTION_SEQ
   cache 100
   cycle;
 
-drop sequence JUNCTION_POINT_SEQ;
+drop sequence if exists JUNCTION_POINT_SEQ;
 create sequence JUNCTION_POINT_SEQ
   minvalue 1
   no maxvalue
@@ -161,7 +161,7 @@ create sequence JUNCTION_POINT_SEQ
   cache 100
   cycle;
 
-drop sequence ROAD_NAME_SEQ;
+drop sequence if exists ROAD_NAME_SEQ;
 create sequence ROAD_NAME_SEQ
   minvalue 1
   no maxvalue
@@ -170,7 +170,7 @@ create sequence ROAD_NAME_SEQ
   cache 100
   cycle;
 
-drop sequence SERVICE_USER_SEQ;
+drop sequence if exists SERVICE_USER_SEQ;
 create sequence SERVICE_USER_SEQ
   minvalue 1
   no maxvalue
