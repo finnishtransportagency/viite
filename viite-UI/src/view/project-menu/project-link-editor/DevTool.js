@@ -1,3 +1,6 @@
+import { dropdown } from '@components/dropdowns/Dropdown.js';
+import { numberInput } from '@components/number-input/NumberInput.js';
+
 /**
  * DevAddressTool component
  * Provides development tools for making direct edits to address data (calibration points, side codes, etc.)

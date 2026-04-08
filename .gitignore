@@ -21,3 +21,4 @@ WebContent/
 revision.properties
 bonecp.properties
 .github/
+.env

@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.{RoadwayAddressMapper, TrackSectionOrder}
 import fi.liikennevirasto.viite.process.TrackSectionOrder.findChainEndpoints
+import fi.liikennevirasto.viite.util.SynchronizationUtils
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.ArealRoadMaintainer.getEVKNumber
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, Discontinuity, RoadAddressChangeType, RoadPart, SideCode, Track}
@@ -714,6 +715,12 @@ class ProjectValidator {
     }
 
     def checkMinMaxTrackAdministrativeClasses(trackInterval: Seq[ProjectLink]): Option[Seq[ProjectLink]] = {
+        
+        // Allow small difference between tracks due to geometry mismatches, which is averaged during project link recalculation
+        val maxAllowedAddrMDiff = SynchronizationUtils.maxDiffForAddressChange
+        def exceedsAllowedDifference(leftValue: Long, rightValue: Long): Boolean =
+          Math.abs(leftValue - rightValue) > maxAllowedAddrMDiff
+
         val diffLinks = trackInterval.groupBy(_.administrativeClass).flatMap { projectLinksByAdministrativeClass: (AdministrativeClass, Seq[ProjectLink]) =>
           projectLinksByAdministrativeClass._2.partition(_.track == Track.LeftSide) match {
           case (left, right) if left.nonEmpty && right.nonEmpty =>
@@ -723,7 +730,11 @@ class ProjectValidator {
                   Seq(leftSection._2, rightSection._2).max,
                   Seq(leftSection._3, rightSection._3).min
                 )
-                if (leftSection != rightSection) {
+                val sectionsDifferMoreThanAllowed =
+                  exceedsAllowedDifference(leftSection._2, rightSection._2) ||
+                    exceedsAllowedDifference(leftSection._3, rightSection._3)
+
+                if (sectionsDifferMoreThanAllowed) {
                   val criticalLeftLinks  =  left.filterNot(link => sectionAddrMRange.contains(link.addrMRange)).filterNot(link => {right.map(_.addrMRange.start).contains(link.addrMRange.start) || right.map(_.addrMRange.end).contains(link.addrMRange.end)})
                   val criticalRightLinks = right.filterNot(link => sectionAddrMRange.contains(link.addrMRange)).filterNot(link => { left.map(_.addrMRange.start).contains(link.addrMRange.start) ||  left.map(_.addrMRange.end).contains(link.addrMRange.end)})
                   criticalLeftLinks ++ criticalRightLinks
@@ -1120,7 +1131,7 @@ class ProjectValidator {
         } else {
           val biggestPrevious = processed.head._2.maxBy(_.addrMRange.end)
           val lowestCurrent = unprocessed.head._2.minBy(_.addrMRange.start)
-          if (biggestPrevious.roadMaintainer.number != lowestCurrent.roadMaintainer.number) {
+          if (biggestPrevious.roadMaintainer.id != lowestCurrent.roadMaintainer.id) {
             val lastLinkDoesNotHaveChangeOfEvk = biggestPrevious.discontinuity != Discontinuity.ChangingEVKCode && biggestPrevious.roadPart.roadNumber == lowestCurrent.roadPart.roadNumber
             val roadNumbersAreDifferent = !(lowestCurrent.roadPart.isAfter(biggestPrevious.roadPart))
 
@@ -1633,7 +1644,7 @@ class ProjectValidator {
 
   private def alterMessage(validationError: ValidationError,
                            // elyBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
-                           evkBorderData: Option[Seq[Long]] = Option.empty[Seq[Long]],
+                           evkBorderData: Option[Seq[String]] = Option.empty[Seq[String]],
                            currentRoadPart: Option[RoadPart] = Option.empty[RoadPart],
                            nextRoadPart   : Option[RoadPart] = Option.empty[RoadPart],
                            discontinuity: Option[Seq[Discontinuity]] = Option.empty[Seq[Discontinuity]],

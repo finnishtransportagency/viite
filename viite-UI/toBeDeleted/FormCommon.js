@@ -150,6 +150,9 @@
       const link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
+      console.log("LINK :: .evk: ", link.evk);
+      console.log("LINK :: .evkCode: ", link.evkCode);
+      console.log("LINK :: .evks: ", link.evks);
       const administrativeClass = (link.administrativeClassId) ? link.administrativeClassId : AdministrativeClass.Empty.value;
       const projectEditable = project.statusCode === editableStatus;
       let trackCodeDropdown;

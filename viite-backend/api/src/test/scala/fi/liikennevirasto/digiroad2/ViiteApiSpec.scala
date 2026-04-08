@@ -44,7 +44,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   val mockViiteVkmClient: VKMClient = MockitoSugar.mock[VKMClient]
 
-  val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, -1, ArealRoadMaintainer.EVKKaakkoisSuomi)
+  val preFilledRoadName = PreFillInfo(1, 2, "roadName", RoadNameSource.RoadAddressSource, ArealRoadMaintainer.getEVK(0))
   
   // Retrieve a project ID that is either in state 1 (draft) or 0 (active)
   private val testProjectId = roadNameService.runWithReadOnlySession { 
@@ -93,7 +93,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
       status should equal(200)
       val links = read[Seq[Seq[Map[String, Any]]]](body)
       links should have size 2
-      links.head.head should have size 33 // Count of level 1 parameters
+      links.head.head should have size 32 // Count of level 1 parameters
     }
   }
 // TODO: Fix Tuntematon ylläpitäjätaho null
@@ -247,7 +247,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   test("Test PUT /roadlinks/roadaddress/project") {
     put("/roadlinks/roadaddress/project",
-      body = s"""{"id":$testProjectId,"status":1,"name":"ProjectOne to test","startDate":"11.10.2022","additionalInfo":"","reservedPartList":[],"formedPartList":[{"discontinuity":"Tien loppu","ely":1,"roadLength":3214,"roadNumber":77997,"roadPartId":0,"roadPartNumber":1,"startingLinkId":"6117675"}],"resolution":8}"""
+      body = s"""{"id":$testProjectId,"status":1,"name":"ProjectOne to test","startDate":"11.10.2022","additionalInfo":"","reservedPartList":[],"formedPartList":[{"discontinuity":"Tien loppu","ely":1,"roadMaintainer":1,"roadLength":3214,"roadNumber":77997,"roadPartId":0,"roadPartNumber":1,"startingLinkId":"6117675"}],"resolution":8}"""
     ) {
       status should equal(200)
       val response = parse(body).values.asInstanceOf[Map[String, Any]]

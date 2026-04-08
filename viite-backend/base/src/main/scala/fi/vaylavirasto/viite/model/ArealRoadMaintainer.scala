@@ -168,6 +168,10 @@ object ArealRoadMaintainer {
     if (ArealRoadMaintainer.isEVK(arm)) {arm.number.toLong} else { 0L }
   }
 
+  def getELYNumber(arm: ArealRoadMaintainer): Long = {
+    if (ArealRoadMaintainer.isELY(arm)) {arm.number.toLong} else { 0L }
+  }
+
   /** Getter for EVKs only. You may search for an EVK by its number.
    *
    * @param number The number of the EVK you wish to get.
@@ -175,7 +179,7 @@ object ArealRoadMaintainer {
    */
   def getEVK(number: Int): EVK = {
     EVKset.find(_.number == number).getOrElse(
-      throw ViiteException(s"Olematon EVK ($number)!")
+      throw ViiteException(s"Olematon Elinvoimakeskus ($number)!")
         // TODO Either:ify the throw?
     )
   }
@@ -198,7 +202,7 @@ object ArealRoadMaintainer {
    * @return The EVK asked, when found.
    */
   def getEVK(string: String): EVK = {
-    if (string == "EVK0") {
+   if (string == "EVK0") {
       EVKTEST
     }
     else {
@@ -206,7 +210,7 @@ object ArealRoadMaintainer {
       EVKset.find(  _.name == string).getOrElse(        // look for "Uusimaa"
         EVKset.find(_.shortName == string).getOrElse(   // look for "UUSI"
           // TODO Either:ify the throw?
-          throw ViiteException(s"Olematon EVK ('$string')!")   // found nothing resembling the string
+          throw ViiteException(s"Olematon Elinvoimakeskus ('$string')!")   // found nothing resembling the string
         )
       )
     )}
@@ -217,6 +221,7 @@ object ArealRoadMaintainer {
       throw ViiteException(s"Olematon elinvoimakeskuksen numero: $evkNumber")
     )
   }
+/*
 
   def getEVKCodeForDB(evkNumber: Int): String = {
     EVKset.find(_.number == evkNumber) match {
@@ -224,6 +229,7 @@ object ArealRoadMaintainer {
       case None => "EVK0"
     }
   }
+*/
 
   /** Getter for ELYs only. You may search for an ELY by its DBname, name, or shortName.
    *
@@ -239,6 +245,24 @@ object ArealRoadMaintainer {
         )
       )
     )
+  }
+
+  def mapUserAuthorizedELYsToELYs(authorizedElys: Set[Int]): Set[String] = {
+    println(s"Mapping user authorized ELY numbers to ELYs: $authorizedElys")
+
+    val result = authorizedElys.map(elyNumber => getELY(elyNumber).id)
+
+    println(s"RESULT : $result")
+    result
+  }
+
+  def mapUserAuthorizedEVKsToEVKs(authorizedEvks: Seq[Int]): Seq[String] = {
+    println(s"Mapping user authorized EVK numbers to EVKs: $authorizedEvks")
+
+    val result = authorizedEvks.map(evkNumber => getEVK(evkNumber).id)
+
+    println(s"RESULT : $result")
+    result
   }
 
   /** Existance checker for EVKs only.
@@ -262,6 +286,13 @@ object ArealRoadMaintainer {
     ELYset.find(_ == ely) match {
       case Some(_) => true
       case None    => false
+    }
+  }
+
+  def applyOptional(nameStringOpt: Option[String]): Option[ArealRoadMaintainer] = {
+    nameStringOpt match {
+      case Some(nameString) => Some(apply(nameString))
+      case None => None
     }
   }
 

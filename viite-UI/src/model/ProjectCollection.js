@@ -178,9 +178,11 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
         reservedPartList: _.map(_.filter(me.getReservedParts(), function (part) {
           return !_.isUndefined(part.currentLength, part.currentEly);
         }), function (part) {
+          console.log("WHAT DOES A PART HAVE ::: ");
+          console.log(part);
           return {
             discontinuity: (part.currentDiscontinuity),
-            ely: (part.currentEly),
+            evk: (part.currentEvk),
             roadLength: (part.currentLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
@@ -193,7 +195,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
         }), function (part) {
           return {
             discontinuity: (part.newDiscontinuity),
-            ely: (part.newEly),
+            evk: (part.newEvk),
             roadLength: (part.newLength),
             roadNumber: part.roadNumber,
             roadPartId: 0,
@@ -434,7 +436,6 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
-          ely: (part.newEly ? part.newEly : part.currentEly),
           evk: (part.newEvk ? part.newEvk : part.currentEvk)
         };
       });

@@ -14,11 +14,11 @@ import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrapp
 
 
 
-case class ConversionAddress(roadPart: RoadPart, trackCode: Long, discontinuity: Long, addrMRange: AddrMRange, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], ely: Long, administrativeClass: Long, terminated: Long, roadMaintainer: String, linkId: String, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
+case class ConversionAddress(roadPart: RoadPart, trackCode: Long, discontinuity: Long, addrMRange: AddrMRange, startM: Double, endM: Double, startDate: Option[DateTime], endDate: Option[DateTime], validFrom: Option[DateTime], expirationDate: Option[DateTime], administrativeClass: Long, terminated: Long, roadMaintainer: String, linkId: String, userId: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], roadwayNumber: Long, sideCode: SideCode, calibrationCode: CalibrationCode = CalibrationCode.No, directionFlag: Long = 0)
 
 class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) extends BaseDAO {
 
-  case class IncomingRoadway(roadwayNumber: Long, roadPart: RoadPart, trackCode: Long, addrMRange: AddrMRange, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, ely: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long, roadMaintainer: String)
+  case class IncomingRoadway(roadwayNumber: Long, roadPart: RoadPart, trackCode: Long, addrMRange: AddrMRange, reversed: Long, startDate: Option[DateTime], endDate: Option[DateTime], createdBy: String, administrativeClass: Long, validFrom: Option[DateTime], validTo: Option[DateTime], discontinuity: Long, terminated: Long, roadMaintainer: String)
 
   case class IncomingLinearLocation(roadwayNumber: Long, orderNumber: Long, linkId: String, startMeasure: Double, endMeasure: Double, sideCode: SideCode, linkGeomSource: LinkGeomSource, createdBy: String, x1: Option[Double], y1: Option[Double], x2: Option[Double], y2: Option[Double], validFrom: Option[DateTime], validTo: Option[DateTime])
 
@@ -165,7 +165,7 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
         val addrMRange = AddrMRange(minAddress.addrMRange.start, maxAddress.addrMRange.end)
         val roadAddress = IncomingRoadway(
           minAddress.roadwayNumber, minAddress.roadPart, minAddress.trackCode, addrMRange, reversed = 0, minAddress.startDate,
-          None, "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value, minAddress.roadMaintainer
+          None, "import", minAddress.administrativeClass, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value, minAddress.roadMaintainer
         )
         val roadwayParams = createRoadwayParams(roadAddress)
 
@@ -183,7 +183,7 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
       val addrRange = AddrMRange(minAddress.addrMRange.start, maxAddress.addrMRange.end)
       val roadAddress = IncomingRoadway(
         minAddress.roadwayNumber, minAddress.roadPart, minAddress.trackCode, addrRange, minAddress.directionFlag, minAddress.startDate, minAddress.endDate,
-        "import", minAddress.administrativeClass, minAddress.ely, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value, minAddress.roadMaintainer
+        "import", minAddress.administrativeClass, minAddress.validFrom, None, maxAddress.discontinuity, terminated = NoTermination.value, minAddress.roadMaintainer
       )
       createRoadwayParams(roadAddress)
     }
@@ -280,7 +280,6 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
              TO_CHAR(loppupvm,     'YYYY-MM-DD hh:mm:ss') AS loppupvm,
              TO_CHAR(muutospvm,    'YYYY-MM-DD hh:mm:ss') AS muutospvm,
              TO_CHAR(lakkautuspvm, 'YYYY-MM-DD hh:mm:ss') AS lakkautuspvm,
-             ely,
            CASE tietyyppi
              WHEN 1 THEN 1
              WHEN 2 THEN 1
@@ -315,7 +314,7 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
     val query =
       sql"""
            SELECT tie, aosa, ajr, jatkuu, aet, let, alku, loppu, TO_CHAR(alkupvm, 'YYYY-MM-DD hh:mm:ss') as alkupvm, TO_CHAR(loppupvm, 'YYYY-MM-DD hh:mm:ss') as loppupvm,
-           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm, null as lakkautuspvm, ely,
+           TO_CHAR(muutospvm, 'YYYY-MM-DD hh:mm:ss') as muutospvm, null as lakkautuspvm,
            CASE tietyyppi
              WHEN 1 THEN 1
              WHEN 2 THEN 1
@@ -351,7 +350,6 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
       roadway.endDate,
       roadway.createdBy,
       roadway.administrativeClass,
-      roadway.ely,
       roadway.roadMaintainer,
       roadway.validFrom,
       roadway.validTo,
@@ -364,9 +362,9 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
     val insertQuery =
       sql"""
         INSERT INTO roadway (id, roadway_number, road_number, road_part_number, track, start_addr_m,
-          end_addr_m, reversed, start_date, end_date, created_by, administrative_class, ely,
+          end_addr_m, reversed, start_date, end_date, created_by, administrative_class,
           road_maintainer, valid_from, valid_to, discontinuity, terminated)
-        VALUES (nextval('ROADWAY_SEQ'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (nextval('ROADWAY_SEQ'), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
     runBatchUpdateToDb(insertQuery, params)
@@ -375,7 +373,7 @@ class RoadAddressImporter(KGVClient: KgvRoadLink, importOptions: ImportOptions) 
   private def createIncomingRoadway(r: ConversionAddress, terminated: TerminationCode): IncomingRoadway = {
     IncomingRoadway(
       r.roadwayNumber, r.roadPart, r.trackCode, r.addrMRange, reversed = 0, r.startDate, r.endDate, "import",
-      r.administrativeClass, r.ely, r.validFrom, r.expirationDate, r.discontinuity, terminated = terminated.value, r.roadMaintainer
+      r.administrativeClass, r.validFrom, r.expirationDate, r.discontinuity, terminated = terminated.value, r.roadMaintainer
     )
   }
 
@@ -569,7 +567,6 @@ def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
         val endDate               = rs.jodaDateTimeOpt("loppupvm")
         val validFrom             = rs.jodaDateTimeOpt("muutospvm")
         val expirationDate        = rs.jodaDateTimeOpt("lakkautuspvm")
-        val ely                   = rs.long("ely")
         val administrativeClass   = rs.long("tietyyppi")
         val roadMaintainer        = rs.string("road_maintainer")
         val linkId                = rs.string("linkid")
@@ -605,7 +602,7 @@ def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
           val addrMRange = AddrMRange(startAddrM, endAddrM)
           new ConversionAddress(
             roadPart, trackCode, discontinuity, addrMRange, startM, endM, startDate, endDate,
-            validFrom, expirationDate, ely, administrativeClass, 0, roadMaintainer, linkId, userId, x1, y1,
+            validFrom, expirationDate, administrativeClass, 0, roadMaintainer, linkId, userId, x1, y1,
             x2, y2, roadwayNumber, SideCode.TowardsDigitizing,
             getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrMRange), directionFlag)
         } else {
@@ -613,7 +610,7 @@ def fetchChunkRoadwayNumbersFromConversionTable(): Seq[(Long, Long)] = {
           val addrMRange = AddrMRange(endAddrM, startAddrM)
           new ConversionAddress(
             roadPart, trackCode, discontinuity, addrMRange, startM, endM, startDate, endDate,
-            validFrom, expirationDate, ely, administrativeClass, 0, roadMaintainer, linkId, userId, x1, y1,
+            validFrom, expirationDate, administrativeClass, 0, roadMaintainer, linkId, userId, x1, y1,
             x2, y2, roadwayNumber, SideCode.AgainstDigitizing,
             getCalibrationCode(startCalibrationPoint, endCalibrationPoint, addrMRange), directionFlag
           )

@@ -37,13 +37,34 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => roadAddress.administrativeClass
     }
-    RoadAddressLink(roadAddress.id, roadAddress.linearLocationId, roadLink.linkId, geom, length,
-      roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, roadName,
-      municipalityCode, municipalityName, roadLink.modifiedAt, Some(modifiedBy),
-      roadAddress.roadPart, roadAddress.track.value,
-      roadAddress.ely, roadAddress.roadMaintainer, roadAddress.discontinuity.value, roadAddress.addrMRange,
-      roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""), roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""),
-      roadAddress.startMValue, roadAddress.endMValue, roadAddress.sideCode, roadAddress.startCalibrationPoint, roadAddress.calibrationPoints._2, roadAddress.roadwayNumber, sourceId = roadLink.sourceId)
+    RoadAddressLink(roadAddress.id,
+      roadAddress.linearLocationId,
+      roadLink.linkId,
+      geom,
+      length,
+      roadLink.administrativeClass,
+      roadLink.lifecycleStatus,
+      roadLink.linkSource,
+      administrativeClass,
+      roadName,
+      municipalityCode,
+      municipalityName,
+      roadLink.modifiedAt,
+      Some(modifiedBy),
+      roadAddress.roadPart,
+      roadAddress.track.value,
+      roadAddress.roadMaintainer,
+      roadAddress.discontinuity.value,
+      roadAddress.addrMRange,
+      roadAddress.startDate.map(finnishDateFormatter.print).getOrElse(""),
+      roadAddress.endDate.map(finnishDateFormatter.print).getOrElse(""),
+      roadAddress.startMValue,
+      roadAddress.endMValue,
+      roadAddress.sideCode,
+      roadAddress.startCalibrationPoint,
+      roadAddress.calibrationPoints._2,
+      roadAddress.roadwayNumber,
+      sourceId = roadLink.sourceId)
   }
 
   def build(roadAddress: RoadAddress): RoadAddressLink = {
@@ -67,7 +88,6 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       Some(modifiedBy),
       roadAddress.roadPart,
       roadAddress.track.value,
-      0,
       ArealRoadMaintainer.apply("EVK0"), //TODO: Make sure these hard coded municipality codes are actually what we want.
       roadAddress.discontinuity.value,
       roadAddress.addrMRange,
@@ -97,6 +117,34 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => unaddressedRoadLink.administrativeClass
     }
-    RoadAddressLink(0, 0, roadLink.linkId, geom, length, roadLink.administrativeClass, roadLink.lifecycleStatus, roadLink.linkSource, administrativeClass, None, municipalityCode, municipalityName, roadLink.modifiedAt, Some("kgv_modified"), RoadPart(0, 0), Track.Unknown.value, municipalityToViiteELYMapping.getOrElse(roadLink.municipalityCode, -1), ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK0")), Discontinuity.Continuous.value, AddrMRange(0, 0), "", "", 0.0, length, SideCode.Unknown, None, None, newGeometry = Some(roadLink.geometry), sourceId = roadLink.sourceId)
+    RoadAddressLink(
+      0,
+      0,
+      roadLink.linkId,
+      geom,
+      length,
+      roadLink.administrativeClass,
+      roadLink.lifecycleStatus,
+      roadLink.linkSource,
+      administrativeClass,
+      None,
+      municipalityCode,
+      municipalityName,
+      roadLink.modifiedAt,
+      Some("kgv_modified"),
+      RoadPart(0, 0),
+      Track.Unknown.value,
+      ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK11")), // TODO: THIS IS ONE POSSIBLE WHERE THE EVK0 BUG MIGHT ORIGINATE FROM
+      Discontinuity.Continuous.value,
+      AddrMRange(0, 0),
+      "",
+      "",
+      0.0,
+      length,
+      SideCode.Unknown,
+      None,
+      None,
+      newGeometry = Some(roadLink.geometry),
+      sourceId = roadLink.sourceId)
   }
 }

@@ -1,0 +1,58 @@
+version: '3'
+
+dotenv:
+  - .env
+set:
+  - u
+  - pipefail
+
+includes:
+  db:
+    taskfile: ./taskfiles/db-default.yml
+    dir: .
+
+  flyway:
+    taskfile: ./taskfiles/flyway.yml
+    dir: .
+
+  backup:
+    taskfile: ./taskfiles/db-backup.yml
+    dir: .
+
+  restore:
+    taskfile: ./taskfiles/db-restore.yml
+    dir: .
+
+tasks:
+  default:
+    desc: Commands available.
+    silent: true
+    cmds:
+      - |
+        cat <<'EOF'
+
+        -- COMMON -----------------------------------
+        * db:connect:                 Open SSM port-forward to DEFAULT DB (background via tmux)
+        * db:disconnect:              Stop DEFAULT SSM port-forward
+        * db:ping:                    Ping DEFAULT database and show connection info
+        * db:postgis:                 Ensure PostGIS extension exists (idempotent) on DEFAULT DB
+        * db:schemas:                 Create dev users + per-user schemas (idempotent) on DEFAULT DB
+
+        -- BACKUP -----------------------------------
+        * backup:backup:              Backup SOURCE (data-only)
+        * backup:connect-source:      Open SSM port-forward to SOURCE DB (background via tmux)
+        * backup:disconnect-source:   Stop SOURCE SSM tunnel
+
+        -- FLYWAY ------------------------------------
+        * flyway:history:             Show flyway_schema_history
+        * flyway:migrate:             Flyway migrate via DataFixture (uses tunnel unless FLYWAY_URL is set)
+        * flyway:repair:              Flyway repair via DataFixture (fix checksum metadata)
+        * flyway:tunnel:start:        Open SSM port-forward to RDS (dev) via tmux
+        * flyway:tunnel:stop:         Stop SSM tunnel (tmux)
+
+        -- RESTORE -----------------------------------
+        * restore:connect-target:     Open SSM port-forward to TARGET DB
+        * restore:disconnect-target:  Stop TARGET SSM port-forward
+        * restore:restore:            Restore latest dump to TARGET
+
+        EOF

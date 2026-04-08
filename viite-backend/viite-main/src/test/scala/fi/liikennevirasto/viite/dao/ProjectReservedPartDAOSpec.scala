@@ -51,12 +51,12 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
  }
 
  def dummyProjectLink(id: Long, projectId: Long, linkId: String, roadwayId: Long = 0, roadwayNumber: Long = roadwayNumber1, roadPart: RoadPart = RoadPart(roadNumber1, roadPartNumber1), addrMRange: AddrMRange, startMValue: Double, endMValue: Double, endDate: Option[DateTime] = None, calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (NoCP, NoCP), geometry: Seq[Point] = Seq(), status: RoadAddressChangeType, administrativeClass: AdministrativeClass, reversed: Boolean): ProjectLink =
-   ProjectLink(id, roadPart, Track.Combined, Discontinuity.Continuous, addrMRange, addrMRange, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId, 0, ArealRoadMaintainer.getEVK(0), reversed, connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = addrMRange.lengthOption)
+   ProjectLink(id, roadPart, Track.Combined, Discontinuity.Continuous, addrMRange, addrMRange, Some(DateTime.parse("1901-01-01")), endDate, Some("testUser"), linkId, startMValue, endMValue, SideCode.TowardsDigitizing, calibrationPointTypes, (NoCP, NoCP), geometry, projectId, status, administrativeClass, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geometry), roadwayId, linearLocationId,  ArealRoadMaintainer.getEVK(0), reversed, connectedLinkId = None, 631152000, roadwayNumber, roadAddressLength = addrMRange.lengthOption)
 
  private def dummyRoadways: Seq[Roadway] = {
    Seq(
-     Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100),reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination),
-     Roadway(NewIdValue, roadwayNumber2, RoadPart(roadNumber1, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100),reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+     Roadway(NewIdValue, roadwayNumber1, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100),reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination),
+     Roadway(NewIdValue, roadwayNumber2, RoadPart(roadNumber1, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100),reversed = false, DateTime.parse("2000-01-01"), None, "testUser", Some("Test Rd. 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
    )
  }
  private def dummyLinearLocations = Seq(
@@ -237,7 +237,7 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
      val id = Sequences.nextViiteProjectId
      val projectLinkId = Sequences.nextProjectLinkId
 
-     val reservedParts = Seq(ProjectReservedPart(id: Long, RoadPart(roadNumber1, roadPartNumber1), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(8L), newLength = None, newDiscontinuity = None))
+     val reservedParts = Seq(ProjectReservedPart(id: Long, RoadPart(roadNumber1, roadPartNumber1), Some(6L), Some(Discontinuity.apply("jatkuva")), Some(ArealRoadMaintainer.apply("EVK8")), newLength = None, newDiscontinuity = None))
      val rap = dummyRoadAddressProject(id, ProjectState.Incomplete, reservedParts, None)
      projectDAO.create(rap)
      projectReservedPartDAO.reserveRoadPart(id, RoadPart(roadNumber1, roadPartNumber1), "TestUser")
@@ -332,12 +332,12 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
        INSERT INTO project_link_history
          (id, project_id, track, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m,
          created_by, modified_by, created_date, modified_date, status, administrative_class, roadway_id, linear_location_id, connected_link_id,
-         ely, reversed, side, start_measure, end_measure, link_id, adjusted_timestamp, link_source,
+         reversed, side, start_measure, end_measure, link_id, adjusted_timestamp, link_source,
          geometry, original_start_addr_m, original_end_addr_m, roadway_number,
          start_calibration_point, end_calibration_point, orig_start_calibration_point, orig_end_calibration_point, road_maintainer)
        VALUES (11111111, $projectId, 0, 1, $roadNumber, $roadPartNumber, 0, 10,
          'Test', 'Test', to_date('01.01.2018','DD.MM.YYYY'), to_date('01.01.2018','DD.MM.YYYY'), 2, 3, 123456, 123458,
-         8, 0, null, 2, 0, 10, 99999, 1533576206000, 1,
+         8, null, 2, 0, 10, 99999, 1533576206000, 1,
          null, 0, 10, NULL,
          3, 3, 3, 3, 'EVK1')
      """)
@@ -401,16 +401,16 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
      val roadwayStartDate = DateTime.parse("2000-01-01")
 
      val intersectingRoadway = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val reservedRoadway1 = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber2, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val reservedRoadway2 = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber2 + 1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
 
      val outsideRoadway1 = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber2, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val outsideRoadway2 = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber1, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road, no junctions"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
 
      val connectedRoadways: Seq[Roadway] = Seq(intersectingRoadway, reservedRoadway1, reservedRoadway2)
      val notConnectedroadways: Seq[Roadway] = Seq(outsideRoadway1, outsideRoadway2)
@@ -470,15 +470,15 @@ class ProjectReservedPartDAOSpec extends AnyFunSuite with Matchers {
      val roadwayStartDate = DateTime.parse("2000-01-01")
 
      val newIntersectingRoadway = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber1, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val newIntersectingRoadway2 = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber1, roadPartNumber2), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 1"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val newReservedRoadway = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber2, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 2"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val newNotReservedRoadway = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber3, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 3"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
      val newReservedRoadway2 = Roadway(NewIdValue, NewIdValue, RoadPart(roadNumber4, roadPartNumber1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous,
-       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 4"), 1, ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
+       AddrMRange(0, 100),reversed = false, roadwayStartDate, None, "test", Some("Test road 4"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination)
 
 
      val connectedRoadways: Seq[Roadway] = Seq(newIntersectingRoadway, newIntersectingRoadway2, newReservedRoadway, newNotReservedRoadway, newReservedRoadway2)

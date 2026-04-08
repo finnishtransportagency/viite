@@ -97,34 +97,34 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
 
  val testData: Seq[ConversionAddress] = Seq(
    // Road addresses to be converted
-   //              ROAD PART TRACK DISCONT ADDRM START  END STARTM ENDM   STARTDATE             ENDDATE                VALIDFROM           ExpDate ELY ADCLASS TERMINATED LINKID         USER         X1                Y1                 X2                Y2                      RWNUMBER  SIDECODE        CALIBRATIONPOINT
+   //              ROAD PART TRACK DISCONT ADDRM START  END STARTM ENDM   STARTDATE             ENDDATE                VALIDFROM           ExpDate  ADCLASS TERMINATED LINKID         USER         X1                Y1                 X2                Y2                      RWNUMBER  SIDECODE        CALIBRATIONPOINT
    // Road part 25/22, start/end 694-756 current road address linkId1, rwNumber1
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(694, 756),  0,  62,   Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    0,      "EVK1", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber1, SideCode.Unknown, CalibrationCode.AtEnd),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(694, 756),  0,  62,   Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,         "EVK0", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber1, SideCode.Unknown, CalibrationCode.AtEnd),
    // Road part 25/22, start/end 694-756 historical road addresses
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(694, 756),  0,  62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None,  1,    1,    0,      "EVK1", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber1, SideCode.Unknown),
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(694, 756),  0,  62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None,  1,    1,    0,      "EVK1", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber1, SideCode.Unknown),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(694, 756),  0,  62,   Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None,  1,    1,   "EVK0", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber1, SideCode.Unknown),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(694, 756),  0,  62,   Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None,  1,    1,    "EVK0", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber1, SideCode.Unknown),
 
    // Road part 25/22, start/end 756-765 current road address, linkId1, rwNumber2
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(756, 765),  62,  71,  Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    0,      "EVK1", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown, CalibrationCode.AtBeginning),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(756, 765),  62,  71,  Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    "EVK0", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown, CalibrationCode.AtBeginning),
    // Road part 25/22, start/end 756-765 historical road addresses
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(756, 765),  62,  71,  Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None,  1,    1,    0,      "EVK1", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown),
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(756, 765),  62,  71,  Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None,  1,    1,    0,      "EVK1", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(756, 765),  62,  71,  Some(d("29.10.2008")), Some(d("29.02.2016")), Some(d("08.03.2016")), None,  1,    1,    "EVK0", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(756, 765),  62,  71,  Some(d("31.10.2006")), Some(d("28.10.2008")), Some(d("29.10.2008")), None,  1,    1,   "EVK0", linkId1,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown),
 
    // Road part 25/22, start/end 765-810 current road address, linkId2, rwNumber2
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(765, 810),  0,  45,   Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    0,      "EVK1", linkId2,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown, CalibrationCode.AtEnd),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(765, 810),  0,  45,   Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    "EVK0", linkId2,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown, CalibrationCode.AtEnd),
    // Road part 25/22, start/end 765-810 historical road addresses
-   ConversionAddress(roadPart1, 0,   5, AddrMRange(765, 810),  0,  45,   Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None,  1,    1,    0,      "EVK1", linkId2,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown),
+   ConversionAddress(roadPart1, 0,   5, AddrMRange(765, 810),  0,  45,   Some(d("15.12.2005")), Some(d("29.02.2016")), Some(d("08.03.2016")), None,  1,    1,    "EVK0", linkId2,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber2, SideCode.Unknown),
 
    // Road part 25/22, start/end 810-820 current road address, linkId3, rwNumber3, end of road
-   ConversionAddress(roadPart1, 0,   1, AddrMRange(810, 820),  0,  10,   Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    0,      "EVK1", linkId3,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber3, SideCode.Unknown, CalibrationCode.AtBoth),
+   ConversionAddress(roadPart1, 0,   1, AddrMRange(810, 820),  0,  10,   Some(d("01.03.2016")), None,                  Some(d("30.03.2016")), None,  1,    1,    "EVK0", linkId3,      testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber3, SideCode.Unknown, CalibrationCode.AtBoth),
 
    // Terminated roadAdresses
-   //                        ROADPART  TRACK DISCONT ADDRM   START   END  STARTM  ENDM           STARTDATE              ENDDATE                VALIDFROM     ExpDate ELY ADCLASS TERMINATED LINKID         USER         X1                Y1                 X2                Y2           RWNUMBER           SIDECODE        CALIBRATIONPOINT
-   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(0,     100), 200,   300,    Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1991")), None, 1,     3,       1,     "EVK0", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber4, SideCode.Unknown),
-   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(100,   200), 300,   400,    Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1991")), None, 1,     3,       1,     "EVK0", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber5, SideCode.Unknown),
+   //                        ROADPART  TRACK DISCONT ADDRM   START   END  STARTM  ENDM           STARTDATE              ENDDATE                VALIDFROM     ExpDate  ADCLASS TERMINATED LINKID         USER         X1                Y1                 X2                Y2           RWNUMBER           SIDECODE        CALIBRATIONPOINT
+   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(0,     100), 200,   300,    Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1991")), None, 1,     3,       "EVK1", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber4, SideCode.Unknown),
+   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(100,   200), 300,   400,    Some(d("01.03.1980")), Some(d("30.01.1991")), Some(d("30.01.1991")), None, 1,     3,       "EVK1", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber5, SideCode.Unknown),
    // Historical road addresses
-   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(0,     200), 0,     99,     Some(d("01.01.1980")), Some(d("28.02.1980")), Some(d("30.01.1990")), None, 1,     3,       1,     "EVK0", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber4, SideCode.Unknown),
-   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(100,   200), 100,   199,    Some(d("01.01.1980")), Some(d("28.02.1980")), Some(d("30.01.1990")), None, 1,     3,       1,     "EVK0", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber5, SideCode.Unknown)
+   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(0,     200), 0,     99,     Some(d("01.01.1980")), Some(d("28.02.1980")), Some(d("30.01.1990")), None, 1,     3,       "EVK1", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber4, SideCode.Unknown),
+   ConversionAddress(terminatedRoadPart, 1,   5,   AddrMRange(100,   200), 100,   199,    Some(d("01.01.1980")), Some(d("28.02.1980")), Some(d("30.01.1990")), None, 1,     3,       "EVK1", null,       testUser, Some(346769.646), Some(6688615.011), Some(346862.556), Some(6688687.082), roadwayNumber5, SideCode.Unknown)
  )
 
  val tableName: String = importOptions.conversionTable
@@ -257,7 +257,6 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
          loppupvm date,
          muutospvm date,
          lakkautuspvm date,
-         ely int4,
          tietyyppi int4,
          road_maintainer varchar(5),
          linkid varchar(100),
@@ -293,7 +292,6 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
        loppupvm date,
        muutospvm date,
        lakkautuspvm date,
-       ely int4,
        tietyyppi int4,
        road_maintainer varchar(5),
        linkid varchar(100),
@@ -315,7 +313,7 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
          sql"""
        INSERT INTO $table (
           id, tie, aosa, ajr, jatkuu, aet, let, alku, loppu,
-          alkupvm, loppupvm, muutospvm, lakkautuspvm, ely, tietyyppi, road_maintainer,
+          alkupvm, loppupvm, muutospvm, lakkautuspvm, tietyyppi, road_maintainer,
           linkid, kayttaja, alkux, alkuy, loppux, loppuy,
           ajorataid, kaannetty, alku_kalibrointipiste, loppu_kalibrointipiste
         )
@@ -333,9 +331,8 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
           ${address.endDate},
           ${address.validFrom},
           ${address.expirationDate},
-          ${address.ely},
           ${address.administrativeClass},
-          ${if (address.ely == 1) "EVK1" else if (address.ely == 8) "EVK8" else "EVK0"},
+          ${address.roadMaintainer},
           ${address.linkId},
           ${address.userId},
           ${address.x1},
@@ -351,7 +348,7 @@ class RoadAddressImporterSpec extends AnyFunSuite with Matchers with BaseDAO wit
      }
    }
  }
-
+//   ${if (address.ely == 1) "EVK1" else if (address.ely == 8) "EVK8" else "EVK0"},
 
  after { // Delete the conversion table as it is not used in other tests
    runWithTransaction {

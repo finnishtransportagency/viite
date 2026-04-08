@@ -1,7 +1,7 @@
 .menu-container-layout {
   display: flex;
   flex-direction: column;
-  height: auto;
+  height: 100%;
   align-self: stretch;
   box-sizing: border-box;
   z-index: 1010;
@@ -10,16 +10,7 @@
   width: 400px;
   min-height: 0;
   background-color: @gray-darker;
-  overflow: auto;
-
-  .menu-body {
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 12px;
-    box-sizing: border-box;
-  }
+  overflow: hidden;
 
   &.menu-container-layout {
     display: flex;
@@ -50,11 +41,13 @@
   }
 
   .menu-body {
-    flex: 1 1 auto;
+    flex: 1 1 0;
     min-height: 0;
-    overflow-y: auto;
+    overflow-y: scroll;
     overflow-x: hidden;
+    scrollbar-gutter: stable;
     padding: 12px;
+    box-sizing: border-box;
   }
 
   header {

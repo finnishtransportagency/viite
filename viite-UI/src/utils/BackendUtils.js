@@ -151,6 +151,8 @@ export function Backend() {
       }, 500);
 
     this.saveRoadAddressProject = _.throttle(function (data, success, failure) {
+      console.log("SAVING PROJECT WITH PAYLOAD :::: ");
+      console.log(data);
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -163,6 +165,8 @@ export function Backend() {
     }, 1000);
 
     this.createRoadAddressProject = _.throttle(function (data, success, failure) {
+      console.log("CREATED PROJECT WITH PAYLOAD :::: ");
+      console.log(data);
       $.ajax({
         contentType: "application/json",
         type: "POST",

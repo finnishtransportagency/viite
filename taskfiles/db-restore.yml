@@ -1,0 +1,152 @@
+version: "3"
+
+vars:
+  TARGET_TUNNEL_SESSION: db-tunnel-target
+
+tasks:
+  connect-target:
+    desc: "Connect to TARGET DB (direct) or open SSM port-forward (ssm)"
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        : "${DB_TARGET_ACCESS:?missing (ssm|direct)}"
+
+        case "$DB_TARGET_ACCESS" in
+          direct)
+            : "${DB_TARGET_RDS_HOST:?missing}"
+            : "${DB_TARGET_PORT:?missing}"
+            echo "Direct connection configured to $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
+            exit 0
+            ;;
+
+          ssm)
+            : "${DB_TARGET_RDS_HOST:?missing}"     # remote DB host (e.g., RDS endpoint)
+            : "${AWS_PROFILE:?missing}"
+            : "${AWS_REGION:?missing}"
+            : "${DB_TARGET_LOCAL_PORT:?missing}"   # local forwarded port
+            : "${DB_TARGET_SSM_TARGET:?missing}"   # EC2/managed instance id for SSM
+            DB_TARGET_PORT="${DB_TARGET_PORT:-5432}"  # remote DB port (default 5432)
+
+            # Refuse if host contains "prod"/"production" (case-insensitive)
+            host_lc="$(printf '%s' "$DB_TARGET_RDS_HOST" | tr '[:upper:]' '[:lower:]')"
+            if [[ "$host_lc" == *prod* ]] || [[ "$host_lc" == *production* ]]; then
+              echo "ERROR: Refusing to connect to production-like host: $DB_TARGET_RDS_HOST"
+              exit 1
+            fi
+
+            SESSION="{{.TARGET_TUNNEL_SESSION}}"
+
+            if ! tmux has-session -t "$SESSION" 2>/dev/null; then
+              tmux new-session -d -s "$SESSION" \
+                "aws ssm start-session \
+                  --region '$AWS_REGION' \
+                  --profile '$AWS_PROFILE' \
+                  --target '$DB_TARGET_SSM_TARGET' \
+                  --document-name AWS-StartPortForwardingSessionToRemoteHost \
+                  --parameters host='$DB_TARGET_RDS_HOST',portNumber='$DB_TARGET_PORT',localPortNumber='$DB_TARGET_LOCAL_PORT'"
+            fi
+
+            echo -n "Opening tunnel to $DB_TARGET_RDS_HOST:$DB_TARGET_PORT (via SSM target $DB_TARGET_SSM_TARGET) "
+            for i in {1..20}; do
+              if nc -z 127.0.0.1 "$DB_TARGET_LOCAL_PORT" 2>/dev/null; then
+                echo ""
+                echo "SSM tunnel ready: 127.0.0.1:$DB_TARGET_LOCAL_PORT -> $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
+                exit 0
+              fi
+              echo -n "."
+              sleep 0.5
+            done
+
+            echo ""
+            echo "ERROR: Tunnel did not open (SSM session likely failed)"
+            echo "Check logs: tmux attach -t $SESSION"
+            exit 1
+            ;;
+
+          *)
+            echo "ERROR: Invalid DB_TARGET_ACCESS='$DB_TARGET_ACCESS' (use ssm|direct)"
+            exit 1
+            ;;
+        esac
+
+  disconnect-target:
+    desc: "Stop TARGET SSM port-forward (no-op for direct)"
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        : "${DB_TARGET_ACCESS:?missing (ssm|direct)}"
+
+        if [ "$DB_TARGET_ACCESS" = "direct" ]; then
+          # Nothing to disconnect, but be explicit
+          if [ -n "${DB_TARGET_RDS_HOST:-}" ] && [ -n "${DB_TARGET_PORT:-}" ]; then
+            echo "Disconnected (direct): $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
+          else
+            echo "Disconnected (direct)"
+          fi
+          exit 0
+        fi
+
+        # ssm mode
+        host="${DB_TARGET_RDS_HOST:-unknown}"
+        port="${DB_TARGET_PORT:-5432}"
+        lport="${DB_TARGET_LOCAL_PORT:-unknown}"
+
+        if tmux has-session -t {{.TARGET_TUNNEL_SESSION}} 2>/dev/null; then
+          tmux kill-session -t {{.TARGET_TUNNEL_SESSION}} 2>/dev/null || true
+          echo "Disconnected (ssm): 127.0.0.1:$lport -> $host:$port"
+        else
+          echo "No active tunnel session to disconnect (ssm): 127.0.0.1:$lport -> $host:$port"
+        fi
+
+
+  restore:
+    desc: "Restore latest dump to TARGET"
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        : "${DB_TARGET_ACCESS:?missing (ssm|direct)}"
+        : "${DB_TARGET_NAME:?missing}"
+        : "${DB_TARGET_USER:?missing}"
+        : "${DB_TARGET_PASSWORD:?missing}"
+
+        if [ "$DB_TARGET_ACCESS" = "direct" ]; then
+          : "${DB_TARGET_RDS_HOST:?missing}"
+          : "${DB_TARGET_PORT:?missing}"
+          echo "Target (direct): $DB_TARGET_RDS_HOST:$DB_TARGET_PORT / db=$DB_TARGET_NAME"
+        else
+          : "${DB_TARGET_RDS_HOST:?missing}"
+          : "${DB_TARGET_LOCAL_PORT:?missing}"
+          echo "Target (ssm): 127.0.0.1:$DB_TARGET_LOCAL_PORT -> $DB_TARGET_RDS_HOST:${DB_TARGET_PORT:-5432} / db=$DB_TARGET_NAME"
+        fi
+
+        # --- Confirm (interactive), unless overridden for CI ---
+        if [ "${CONFIRM_RESTORE:-}" = "yes" ]; then
+          echo "Restore confirmed via CONFIRM_RESTORE=yes"
+        else
+          echo ""
+          echo "You are going to RESTORE database on:"
+          if [ "$DB_TARGET_ACCESS" = "direct" ]; then
+            echo "  HOST: $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
+          else
+            echo "  HOST: 127.0.0.1:$DB_TARGET_LOCAL_PORT (tunnel) -> $DB_TARGET_RDS_HOST:${DB_TARGET_PORT:-5432}"
+          fi
+          echo "  DB:   $DB_TARGET_NAME"
+          echo ""
+          read -r -p "Type 'yes' to continue: " answer
+          if [ "$answer" != "yes" ]; then
+            echo "Aborted."
+            exit 1
+          fi
+        fi
+
+        task restore:connect-target
+        cleanup() { task restore:disconnect-target || true; }
+        trap cleanup EXIT
+
+        ./db/admin/db_restore.sh --latest

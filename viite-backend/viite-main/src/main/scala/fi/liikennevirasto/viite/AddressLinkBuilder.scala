@@ -15,9 +15,10 @@ trait AddressLinkBuilder {
 
   /** Viite municipality to EVK code mapping */
   def municipalityToViiteEVKMapping: Map[Long, String] = {
-    runWithReadOnlySession {
+    val result = runWithReadOnlySession {
       MunicipalityDAO.getViiteMunicipalityToEvkMapping
     }
+    result
   }
 
   def municipalityNamesMapping: Map[Long, String] = {

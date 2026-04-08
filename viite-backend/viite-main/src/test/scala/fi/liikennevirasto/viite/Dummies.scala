@@ -11,11 +11,11 @@ import org.joda.time.DateTime
 object Dummies {
 
   def dummyRoadway(roadwayNumber: Long, roadPart: RoadPart, addrMRange: AddrMRange, startDate: DateTime, endDate: Option[DateTime], roadwayId: Long = 0L): Roadway = {
-    Roadway(roadwayId, roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, reversed = false, startDate, endDate, "user", None, 0L, ArealRoadMaintainer.apply("EVK1"), NoTermination)
+    Roadway(roadwayId, roadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, reversed = false, startDate, endDate, "user", None, ArealRoadMaintainer.apply("EVK1"), NoTermination)
   }
 
   def dummyRoadwayChangeSection(roadPart: Option[RoadPart], track: Option[Long], startAddressM: Option[Long], endAddressM: Option[Long], administrativeClass: Option[AdministrativeClass] = Some(AdministrativeClass.State), discontinuity: Option[Discontinuity], ely: Option[String] = Some("ELY8"), evk: Option[String] = Some("EVK8")): RoadwayChangeSection = {
-    RoadwayChangeSection(Some(roadPart.get.roadNumber), track, Some(roadPart.get.partNumber), Some(roadPart.get.partNumber), Some(AddrMRange(startAddressM.get, endAddressM.get)), administrativeClass, discontinuity, ely.map(id => ArealRoadMaintainer(id).number.toLong), evk.map(id => ArealRoadMaintainer(id)))
+    RoadwayChangeSection(Some(roadPart.get.roadNumber), track, Some(roadPart.get.partNumber), Some(roadPart.get.partNumber), Some(AddrMRange(startAddressM.get, endAddressM.get)), administrativeClass, discontinuity, evk.map(id => ArealRoadMaintainer(id)))
   }
 
   def dummyLinearLocationWithGeometry(id: Long, roadwayNumber: Long, orderNumber: Double, linkId: String, startMValue: Double, endMValue: Double, sideCode: SideCode = SideCode.TowardsDigitizing, geometry: Seq[Point] = Seq()): LinearLocation =
@@ -39,7 +39,7 @@ object Dummies {
     dummyRoadAddress(roadwayNumber, roadPart, addrMRange, startDate, endDate, linkId, startMValue, endMValue, linkGeomSource)
 
   def dummyRoadAddress(roadwayNumber: Long, roadPart: RoadPart, addrMRange: AddrMRange, startDate: Option[DateTime], endDate: Option[DateTime], linkId: String, startMValue: Double, endMValue: Double, linkGeomSource: LinkGeomSource, geometry: Seq[Point] = Seq()): RoadAddress = {
-    RoadAddress(0L, 0L, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), if (geometry.nonEmpty) geometry else Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, 0L, ArealRoadMaintainer.apply("EVK1"), NoTermination, roadwayNumber, None, None, None)
+    RoadAddress(0L, 0L, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, addrMRange, startDate, endDate, None, linkId, startMValue, endMValue, SideCode.TowardsDigitizing, 0L, (None, None), if (geometry.nonEmpty) geometry else Seq(Point(0.0, startMValue), Point(0.0, endMValue)), linkGeomSource, ArealRoadMaintainer.apply("EVK1"), NoTermination, roadwayNumber, None, None, None)
   }
 
   def dummyProjectLink(
@@ -83,7 +83,6 @@ object Dummies {
       geometryLength = 0, 
       roadwayId = 0, 
       linearLocationId = 0, 
-      ely = 8, 
       roadMaintainer = ArealRoadMaintainer.getEVK(8),
       reversed = false, 
       connectedLinkId = None,
