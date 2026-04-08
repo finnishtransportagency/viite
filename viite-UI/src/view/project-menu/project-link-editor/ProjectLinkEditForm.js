@@ -339,7 +339,7 @@ export function LinkEditForm(startupParameters) {
         className: 'form-select-small-control',
         defaultValue: value,
         options: [
-          { value: value, text: toShow },
+          { value: value, text: toShow, disabled: toShow === '--' },
           { value: '0', text: '0' },
           { value: '1', text: '1' },
           { value: '2', text: '2' }
@@ -720,7 +720,7 @@ export function LinkEditForm(startupParameters) {
         rootElement.find('.action-selected-field').prop('hidden', false);
       });
 
-      rootElement.on('input', '.form-control.small-input', function (event) {
+      rootElement.on('input', '.form-control.small-input, .number-input', function (event) {
         const dropdown_0 = $('#dropDown_0');
         const roadNameField = $('#roadName');
         if (projectChangeTable) {
