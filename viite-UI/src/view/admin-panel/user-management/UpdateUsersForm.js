@@ -4,7 +4,7 @@
 import { validateUserFieldsAndToastErrors } from './FormValidation.js';
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, getSelectedElinvoimakeskus } from './Dropdowns.js';
 import { showToast } from '@components/Toast.js';
-import { userManagementApi } from '@utils/user-management-backend/UserManagementApi.js';
+import { userManagementApi } from '@utils/UserManagementApi.js';
 
 const DEFAULT_COORDINATES = {
     zoom: 3,

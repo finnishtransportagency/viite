@@ -97,12 +97,12 @@ module.exports = function (grunt) {
     preprocess: {
       development: {
         files: {
-          './dist/index.html': './viite-UI/tmpl/index.html'
+          './dist/index.html': './viite-UI/index.html'
         }
       },
       production: {
         files: {
-          './dist/index.html': './viite-UI/tmpl/index.html'
+          './dist/index.html': './viite-UI/index.html'
         }
       }
     },

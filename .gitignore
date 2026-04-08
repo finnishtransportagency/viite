@@ -7,9 +7,7 @@ tags
 target/
 .DS_Store
 logs/
-viite-UI/index.html
 project/project/
-/viite.html
 package-lock.json
 digiroad2.boot.log
 /build/
