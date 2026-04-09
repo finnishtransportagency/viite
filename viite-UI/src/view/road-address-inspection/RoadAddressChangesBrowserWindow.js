@@ -11,6 +11,7 @@ import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
+import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 
 export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
     const { application: applicationApi, applicationModel } = options;
@@ -182,7 +183,7 @@ export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm,
                 arr[++arrPointer] = `   <tr>
                                             <td>${results[i].startDate}</td>
                                             <td>${results[i].oldEvk}</td>
-                                            <td>${results[i].oldEly}</td>
+                                            <td>${typeof results[i].oldEly === 'undefined' || results[i].oldEly === null ? '-' : results[i].oldEly}</td>
                                             <td>${results[i].oldRoadNumber}</td>
                                             <td>${results[i].oldTrack}</td>
                                             <td>${results[i].oldRoadPartNumber}</td>

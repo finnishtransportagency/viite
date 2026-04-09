@@ -1,3 +1,4 @@
+import { dateutil } from '@utils/DateUtils.js';
 import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 
 /**
@@ -28,7 +29,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
                   results[i].roadNumber,
                   results[i].track,
                   results[i].roadPartNumber,
@@ -68,7 +69,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
               <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].track}</td>
                                           <td>${results[i].roadPartNumber}</td>
@@ -91,7 +92,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
                   results[i].roadNumber,
                   results[i].roadPartNumber,
                   results[i].addrMRange.start,
@@ -127,7 +128,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
                                           <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrMRange.start}</td>
@@ -148,7 +149,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
                   results[i].roadNumber,
                   results[i].roadPartNumber,
                   results[i].addrM,
@@ -191,7 +192,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
                                           <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrM}</td>
@@ -285,7 +286,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
                   results[i].roadNumber,
                   results[i].roadName
               ];
@@ -314,7 +315,7 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] = `   <tr>
                                           <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadName}</td>
                                       </tr>`;
