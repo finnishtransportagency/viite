@@ -3,23 +3,23 @@
  * Coordinates map interactions, visible layers, cursor state, and crosshair tooling.
  * @param {Object} map - OpenLayers map instance
  * @param {Object} layers - Active map layers keyed by layer name
- * @param {Object} instructionsPopup - Popup used for user guidance messages
  * @param {Object} applicationModel - Application state manager
  */
 import { createCrosshairToggle } from '@view/footer/CrosshairToggle.js';
 import { eventbus } from '@utils/eventbus.js';
+import { showToast } from '@components/Toast.js';
 import { geometrycalculator } from '@utils/GeometryCalculations.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 
-export function MapView(map, layers, instructionsPopup, applicationModel) {
+export function MapView(map, layers, applicationModel) {
     let isInitialized = false;
     const centerMarkerLayer = new ol.source.Vector({});
     let enableCtrlModifier = false;
     const metaKeyCodes = ViiteEnumerations.MetaKeyCodes;
 
     const showAssetZoomDialog = function () {
-      instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
+      //showToast('Zoomaa lähemmäksi, jos haluat nähdä kohteita', { type: 'info' });
     };
 
     const minZoomForContent = function () {
@@ -103,7 +103,7 @@ export function MapView(map, layers, instructionsPopup, applicationModel) {
         map.getView().setCenter([position.lon, position.lat]);
         map.getView().setZoom(zoomLevel);
       } else {
-        instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
+        showToast('Koordinaatit eivät osu kartalle.', { type: 'warning' });
       }
     }, this);
 

@@ -1,13 +1,13 @@
 /**
  * SearchBox component
  * Provides location search functionality with address, road address, link ID, and coordinate search.
- * @param {Object} instructionsPopup - Instructions popup handler
  * @param {Object} locationSearch - Location search service
  * @returns {Object} Component with element property
  */
 import { eventbus } from '@utils/eventbus.js';
+import { showToast } from '@components/Toast.js';
 
-export function SearchBox(instructionsPopup, locationSearch) {
+export function SearchBox(locationSearch) {
     const tooltip = "Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'), \ntieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),\nlinkki-id:llä (esim. '06ad934c-5241-4055-9ae6-71d63190f6d7:1')\ntai koordinaateilla ('P, I', esim. '6673830, 388774')";
     const groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
     const coordinatesDiv = $('<div class="panel"></div>');
@@ -42,7 +42,7 @@ export function SearchBox(instructionsPopup, locationSearch) {
         const showDialog = function (message) {
           resultsSection.hide();
           clearButton.hide();
-          instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
+          showToast(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', { type: 'error' });
         };
 
         searchResults.html('Haku käynnissä…');

@@ -7,7 +7,6 @@ import { ApplicationModel } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { CoordinatesDisplay } from '@view/footer/CoordinatesDisplay.js';
-import { InstructionsPopup } from '@components/InstructionsPopup.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { LocationSearch } from '@model/LocationSearch.js';
 import { MainMenu } from '@view/MainMenu.js';
@@ -84,7 +83,6 @@ export function start() {
     dirtyTrackedModels.push(selectedLinkProperty);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     applicationModel.setSelectedProjectLinkProperty(selectedProjectLinkProperty);
-    const instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     const projectChangeInfoModel = new ProjectChangeInfoModel(backend, applicationModel);
     const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel), applicationModel, applicationModel);
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
@@ -114,7 +112,6 @@ export function start() {
     NavigationPanel.initialize(
       jQuery('#map-tools'),
       new SearchBox(
-        instructionsPopup,
         new LocationSearch(backend, applicationModel)
       ),
       linkGroups
@@ -313,7 +310,7 @@ const setupMap = function (backend, models, startupParameters, projectChangeTabl
   initializeMapPlugins(map, startupParameters);
   setupVersionInfo(backend);
 
-  new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')), applicationModel);
+  new MapView(map, layers, applicationModel);
 
   applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 

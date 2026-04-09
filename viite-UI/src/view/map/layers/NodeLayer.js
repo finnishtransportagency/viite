@@ -13,6 +13,7 @@
 import { eventbus } from '@utils/eventbus.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED } from '@utils/ViiteConstants.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Layer } from './Layer.js';
 import { JunctionMarker } from '../markers/JunctionMarker.js';
@@ -336,7 +337,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         return;
       }
 
-      if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
+      if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         eventbus.trigger('node:displayCoordinates', {
           x: evt.coordinate[0],
           y: evt.coordinate[1]
@@ -358,7 +359,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
 
       // Check if node was moved over 200m
-      if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < ViiteConstants.MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
+      if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED) {
         selectedNodesAndJunctions.setCoordinates(coordinates);
         selectedNodeStartingCoordinates = coordinates;
       } else {

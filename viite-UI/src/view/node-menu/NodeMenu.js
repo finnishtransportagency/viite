@@ -4,7 +4,7 @@
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DataTable } from '@node-menu/DataTable.js';
-import { InstructionsPopup } from '@components/InstructionsPopup.js';
+import { showToast } from '@components/Toast.js';
 import { MenuContainer } from '@components/MenuContainer.js';
 import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
@@ -217,7 +217,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
           eventbus.trigger('nodeSearchTool:refreshView', map);
         } else {
           searchMenu.setClearEnabled($bodyContainer, false);
-          new InstructionsPopup(jQuery('.digiroad2')).show('Ei tuloksia', 3000);
+          showToast('Ei tuloksia', { type: 'info' });
         }
       });
 
