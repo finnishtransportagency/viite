@@ -1,14 +1,12 @@
 import { DynamicLinkNetworkContent as dynamicLinkNetworkContent } from './DynamicLinkNetworkContent.js';
 import { Main as UserManagementMain } from './user-management/Main.js';
-import { dateutil } from '@utils/DateUtils.js';
-import * as ViiteConstants from '@utils/ViiteConstants.js';
 
 // Panel that contains all the tools available for users with admin role
 export function AdminPanel(backend, options = {}) {
 
         const { applicationApi, applicationModel } = options;
 
-        const dynamicLinkNetwork = dynamicLinkNetworkContent(backend, dateutil, ViiteConstants);
+        const dynamicLinkNetwork = dynamicLinkNetworkContent(backend);
 
         const showAdminPanelWindow = function () {
             // Get singleton modal container
@@ -16,16 +14,16 @@ export function AdminPanel(backend, options = {}) {
                 className: 'admin-panel-modal'
             });
 
-            const navBar = $(`
+            const navBar = `
                 <nav class="navbar">
                     <button class="tab-button active" data-tab="tab1">Dynaaminen tielinkkiverkko</button>
                     <button class="tab-button" data-tab="tab2">Käyttäjien hallinta</button>
                     <button class="tab-button" data-tab="tab3">Alkulataus</button>
                     <button class="tab-button" data-tab="tab4">Tieosoiteverkon virheet</button>
                 </nav>
-            `);
+            `;
 
-            const contentForTabs = $(`
+            const contentForTabs = `
                 <div class="content-area">
                     <div id="tab1" class="tab-content active">
                         ${dynamicLinkNetwork.getContent()}
@@ -40,7 +38,7 @@ export function AdminPanel(backend, options = {}) {
                         <p>TODO Tieosoiteverkon virheet listaus siirtyy tänne (ehkä?)</p>
                     </div>
                 </div>
-            `);
+            `;
 
             const contentWrapper = $('<div id="adminPanelWindowContent"></div>');
             contentWrapper.append(navBar);

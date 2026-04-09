@@ -1,6 +1,15 @@
-export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
-        let sourcePicker = '';
-        let targetPicker = '';
+import * as ViiteConstants from '@utils/ViiteConstants.js';
+import { dateutil } from '@utils/DateUtils.js';
+
+export function DynamicLinkNetworkContent(backend) {
+
+        // Helper function to convert DD.MM.YYYY to YYYY-MM-DD for HTML5 date input
+        const finnishDateToInputDate = function(finnishDate) {
+            if (!finnishDate || typeof finnishDate !== 'string') return '';
+            const parts = finnishDate.split('.');
+            if (parts.length !== 3) return '';
+            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        };
 
         function getContent() {
             return `
@@ -15,20 +24,20 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
                     </div>
                     <div class="dynamic-link-network-input-wrapper">
                         <div class="dynamic-link-network-input">
-                            <label>Nykytilanne</label>
-                            <input type="text" id="sourceDate" readonly>
+                            <label for="sourceDate">Nykytilanne</label>
+                            <input type="date" id="sourceDate" class="form-control" style="padding: 6px 8px; font-size: 14px;">
                         </div>
-                        <p style="font-size: 20px">&#8594</p>
+                        <p style="font-size: 20px; margin: 0 15px; display: flex; align-items: center;">&#8594</p>
                         <div class="dynamic-link-network-input">
-                            <label>Tavoitepäivämäärä</label>
-                            <input type="text" id="targetDate" readonly>
+                            <label for="targetDate">Tavoitepäivämäärä</label>
+                            <input type="date" id="targetDate" class="form-control" style="padding: 6px 8px; font-size: 14px;">
                         </div>
                     </div>
                     <div class="dynamic-link-network-input-wrapper">
                         <input type="checkbox" id="processPerDay">
                         <label for="processPerDay">Päivä kerrallaan</label>
                     </div>
-                    <button id="updateLinkNetwork" class="btn btn-primary" style="max-height: 30px; margin: 10px">
+                    <button id="updateLinkNetwork" class="btn-primary" style="max-height: 30px; margin: 10px">
                         Päivitä tielinkkiverkko
                     </button>
                 </div>
@@ -38,44 +47,39 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
         function addDatePickersToInputFields() {
             backend.getRoadLinkDate(function (roadLinkDate) {
                 const minimumDateObject = dateutil.parseCustomDateString(roadLinkDate.result);
+                const minimumDateFinnish = dateutil.parseDateToString(minimumDateObject);
+                const minimumDateInput = finnishDateToInputDate(minimumDateFinnish);
 
-                if (sourcePicker) {
-                    sourcePicker.destroy();
-                    sourcePicker = '';
-                }
-                if (targetPicker) {
-                    targetPicker.destroy();
-                    targetPicker = '';
-                }
-
-                sourcePicker = dateutil.addSingleDatePicker($('#sourceDate'), { defaultDate: minimumDateObject, setDefaultDate: true });
-                targetPicker = dateutil.addSingleDatePicker($('#targetDate'));
-                targetPicker.gotoDate(minimumDateObject);
+                $('#sourceDate').val(minimumDateInput);
             });
         }
 
         function willPassValidations(dateString) {
-            if (dateutil.isFinnishDateString(dateString.trim())) {
-                const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
-                if (dateutil.isValidDate(dateObject)) {
-                    if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
-                        setInfoText("");
-                        return true;
-                    } else {
-                        setInfoText("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
-                        return false;
-                    }
-                } else {
-                    setInfoText("Tarkista päivämäärä!");
-                    return false;
-                }
-            } else {
-                setInfoText("Päivämäärän tulee olla muodossa pp.kk.vvvv");
+            if (!dateString) return false;
+            // dateString is in YYYY-MM-DD format from HTML5 date input
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return false;
+            
+            const year = parseInt(parts[0]);
+            const month = parseInt(parts[1]);
+            const day = parseInt(parts[2]);
+            
+            if (month < 1 || month > 12 || day < 1 || day > 31) {
+                setInfoText("Tarkista päivämäärä!");
                 return false;
             }
+            
+            if (year < ViiteConstants.MIN_YEAR_INPUT || year > ViiteConstants.MAX_YEAR_INPUT) {
+                setInfoText("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+                return false;
+            }
+            
+            setInfoText("");
+            return true;
         }
 
         function reasonableDates(sourceDateObject, targetDateObject) {
+            // Both dates are already Date objects
             if (sourceDateObject >= targetDateObject) {
                 setInfoText("Nykytilanteen tulee olla ennen tavoitepäivämäärää!");
                 return false;
@@ -90,8 +94,9 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
         }
 
         function countDaysBetweenTwoDates(date1Str, date2Str) {
-            const date1 = dateutil.parseDate(date1Str);
-            const date2 = dateutil.parseDate(date2Str);
+            // Input strings are in YYYY-MM-DD format from date inputs
+            const date1 = new Date(date1Str);
+            const date2 = new Date(date2Str);
             const msPerDay = 1000 * 60 * 60 * 24;
             const diffTime = date2 - date1;
             return Math.round(diffTime / msPerDay);
@@ -100,6 +105,7 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
         function buildInfoText() {
             const sourceDate = document.getElementById('sourceDate').value;
             const targetDate = document.getElementById('targetDate').value;
+            if (!sourceDate || !targetDate) return '';
             const daysBetween = countDaysBetweenTwoDates(sourceDate, targetDate);
             return "Olet päivittämässä linkkiverkkoa " + daysBetween + " päivää " + (daysBetween > 0 ? "eteenpäin." : "taaksepäin. Korjaa päivämäärät!");
         }
@@ -115,17 +121,17 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
         }
 
         function startRoadLinkNetworkUpdate() {
-            const sourceDateElem = document.getElementById('sourceDate');
-            const targetDateElem = document.getElementById('targetDate');
-            const sourceDateString = sourceDateElem.value;
-            const targetDateString = targetDateElem.value;
+            const sourceDateString = $('#sourceDate').val() || '';
+            const targetDateString = $('#targetDate').val() || '';
 
-            const sourceDateObject = moment(sourceDateString, "DD-MM-YYYY").toDate();
-            const targetDateObject = moment(targetDateString, "DD-MM-YYYY").toDate();
+            if (!willPassValidations(sourceDateString) || !willPassValidations(targetDateString)) {
+                return;
+            }
 
-            if (!willPassValidations(sourceDateString) ||
-                !willPassValidations(targetDateString) ||
-                !reasonableDates(sourceDateObject, targetDateObject)) {
+            const sourceDateObject = new Date(sourceDateString);
+            const targetDateObject = new Date(targetDateString);
+
+            if (!reasonableDates(sourceDateObject, targetDateObject)) {
                 return;
             }
 
@@ -147,11 +153,7 @@ export function DynamicLinkNetworkContent(backend, dateutil, ViiteConstants) {
                 startRoadLinkNetworkUpdate();
             });
 
-            $container.on('change', '#targetDate', function () {
-                if (dateFieldsFilled()) notifyUserWithDateChangeInfo();
-            });
-
-            $container.on('change', '#sourceDate', function () {
+            $container.on('change', '#targetDate, #sourceDate', function () {
                 if (dateFieldsFilled()) notifyUserWithDateChangeInfo();
             });
         }
