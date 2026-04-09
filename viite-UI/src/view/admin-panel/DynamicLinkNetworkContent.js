@@ -1,6 +1,7 @@
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { dateutil } from '@utils/DateUtils.js';
 
+// UI elements responsible for triggering and configuring dynamic link network update process
 export function DynamicLinkNetworkContent(backend) {
 
         // Helper function to convert DD.MM.YYYY to YYYY-MM-DD for HTML5 date input
@@ -15,29 +16,29 @@ export function DynamicLinkNetworkContent(backend) {
             return `
                 <div class="dynamic-link-network-content-wrapper">
                     <div>
-                        <p style="padding: 10px; font-size: 14px">
+                        <p class="dynamic-link-network-description">
                             Valitse päivämäärät päivittääksesi tielinkkiverkkoa
                         </p>
-                        <p id="dynamicLinkNetworkInfo" style="padding: 10px; font-size: 14px">
-                            <span style="visibility: hidden;">Placeholder Text</span>
+                        <p id="dynamicLinkNetworkInfo" class="dynamic-link-network-info">
+                            <span class="dynamic-link-network-info-placeholder">Placeholder Text</span>
                         </p>
                     </div>
                     <div class="dynamic-link-network-input-wrapper">
                         <div class="dynamic-link-network-input">
                             <label for="sourceDate">Nykytilanne</label>
-                            <input type="date" id="sourceDate" class="form-control" style="padding: 6px 8px; font-size: 14px;">
+                            <input type="date" id="sourceDate" class="form-control dynamic-link-network-date-input">
                         </div>
-                        <p style="font-size: 20px; margin: 0 15px; display: flex; align-items: center;">&#8594</p>
+                        <p class="dynamic-link-network-arrow">&#8594</p>
                         <div class="dynamic-link-network-input">
                             <label for="targetDate">Tavoitepäivämäärä</label>
-                            <input type="date" id="targetDate" class="form-control" style="padding: 6px 8px; font-size: 14px;">
+                            <input type="date" id="targetDate" class="form-control dynamic-link-network-date-input">
                         </div>
                     </div>
                     <div class="dynamic-link-network-input-wrapper">
                         <input type="checkbox" id="processPerDay">
                         <label for="processPerDay">Päivä kerrallaan</label>
                     </div>
-                    <button id="updateLinkNetwork" class="btn-primary" style="max-height: 30px; margin: 10px">
+                    <button id="updateLinkNetwork" class="btn-primary update-link-network-button">
                         Päivitä tielinkkiverkko
                     </button>
                 </div>
