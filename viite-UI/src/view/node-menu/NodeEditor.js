@@ -10,10 +10,11 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParamete
     const nodeEditingDisabledAttribute = _.includes(startupParameters.roles, 'viite') ? '' : 'disabled';
     const userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
     const tableUtils = NodeTableUtils;
-  const ConfirmPopup = dependencies.ConfirmPopup;
-  const dateutil = dependencies.dateutil;
-  const moment = dependencies.moment;
-  const eventbus = dependencies.eventbus;
+    const ConfirmPopup = dependencies.ConfirmPopup;
+    const applicationModel = dependencies.applicationModel;
+    const dateutil = dependencies.dateutil;
+    const moment = dependencies.moment;
+    const eventbus = dependencies.eventbus;
 
     let picker;
     let editorExitHandler = _.noop;

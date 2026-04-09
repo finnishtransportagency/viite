@@ -258,7 +258,6 @@ export function ApplicationModel(models) {
       isDirty: isDirty,
       canZoomOut: canZoomOut,
       canZoomOutEditMode: canZoomOutEditMode,
-      assetDragDelay: 100,
       getCurrentLocation: getCurrentLocation,
       setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,

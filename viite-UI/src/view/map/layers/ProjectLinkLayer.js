@@ -5,6 +5,7 @@
  * @param {Object} map - OpenLayers map instance
  * @param {Object} projectCollection - Project collection manager
  * @param {Object} selectedProjectLinkProperty - Selected project link property manager
+ * @param {Object} applicationModel - Application state manager
  * @returns {Object} Layer with redraw method
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -16,8 +17,7 @@ import { Layer } from './Layer.js';
 import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 
-export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
-  const applicationModel = window.applicationModel;
+export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty, applicationModel) {
     const layerName = 'roadAddressProject';
     Layer.call(this, map);
     const me = this;

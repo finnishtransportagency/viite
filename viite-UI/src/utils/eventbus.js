@@ -1,11 +1,4 @@
-/* eslint-disable new-cap */
 export const eventbus = Backbone.Events;
-
-eventbus.on('all', function (eventName, entity) {
-    if (window.DR2_LOGGING && eventName !== 'map:mouseMoved') {
-      console.log(eventName, entity);
-    }
-  });
 
 eventbus.oncePromise = function (eventName) {
   const eventReceived = $.Deferred();

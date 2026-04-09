@@ -69,6 +69,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
     });
     const nodeEditor = new NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, getBodyContainer, {
       ConfirmPopup: ConfirmPopup,
+      applicationModel: applicationModel,
       dateutil: dependencies.dateutil,
       moment: dependencies.moment,
       ViiteEnumerations: ViiteEnumerations,

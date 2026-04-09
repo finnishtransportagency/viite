@@ -2,13 +2,13 @@
  * RoadLinkBox component
  * Displays road link legend and tool selection panel for road address link properties.
  * @param {Object} selectedProjectLinkProperty - Selected project link property manager
+ * @param {Object} applicationModel - Application state manager
  * @returns {Object} Component with element, title, and visibility control methods
  */
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 
-export function RoadLinkBox(selectedProjectLinkProperty) {
-  const applicationModel = window.applicationModel;
+export function RoadLinkBox(selectedProjectLinkProperty, applicationModel) {
   const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const className = 'road-link';
     const title = 'Selite';

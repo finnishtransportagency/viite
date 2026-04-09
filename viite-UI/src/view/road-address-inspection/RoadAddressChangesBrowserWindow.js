@@ -1,18 +1,25 @@
-// Allows users to search road address change history data and export it as CSV using a few filter parameters
+/**
+ * RoadAddressChangesBrowserWindow component
+ * Allows users to search road address change history data and export it as CSV.
+ * @param {Object} backend - Backend API wrapper
+ * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
+ * @param {Object} options - Runtime dependencies for modal and application state access
+ * @param {Object} options.application - Application API used to access the modal container
+ * @param {Object} options.applicationModel - Application state manager
+ */
 import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 
-export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm) {
-    const Application = window.Application;
-    const applicationModel = window.applicationModel;
+export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
+    const { application: applicationApi, applicationModel } = options;
         let searchParams = {};
         let elyEvkSelector;
         const me = this;
 
         // Initialize ModalContainer with configuration
-        const modal = Application.getModalContainer({
+        const modal = applicationApi.getModalContainer({
             helpUrl: 'manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu',
             helpTitle: 'Avaa käyttöohje'
         });

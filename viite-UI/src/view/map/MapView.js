@@ -1,11 +1,18 @@
+/**
+ * MapView component
+ * Coordinates map interactions, visible layers, cursor state, and crosshair tooling.
+ * @param {Object} map - OpenLayers map instance
+ * @param {Object} layers - Active map layers keyed by layer name
+ * @param {Object} instructionsPopup - Popup used for user guidance messages
+ * @param {Object} applicationModel - Application state manager
+ */
 import { createCrosshairToggle } from '@view/footer/CrosshairToggle.js';
 import { eventbus } from '@utils/eventbus.js';
 import { geometrycalculator } from '@utils/GeometryCalculations.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 
-export function MapView(map, layers, instructionsPopup) {
-  const applicationModel = window.applicationModel;
+export function MapView(map, layers, instructionsPopup, applicationModel) {
     let isInitialized = false;
     const centerMarkerLayer = new ol.source.Vector({});
     let enableCtrlModifier = false;

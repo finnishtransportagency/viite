@@ -105,7 +105,7 @@ ViiteEnumerations.Track = {
 ViiteEnumerations.NodesAndJunctionsZIndex = {
     DirectionMarker: {value: 140},
     NodePointTemplate: {value: 160, selected: 165},
-    NodeMarker: {value: 170, selected: 175},
+    NodeMarker: {value: 200, selected: 205},
     JunctionTemplate: {value: 180, selected: 185},
     JunctionMarker: {value: 190, selected: 195}
   };

@@ -47,8 +47,8 @@ export function ProjectDetailsForm(callbacks = {}) {
 
       return `
           <tr class="form-reserved-roads-list road-table-row">
-            <td class="road-table-cell-center">${line.roadNumber || ''}</td>
-            <td class="road-table-cell-center">${line.roadPartNumber || ''}</td>
+            <td class="road-table-cell-center road-table-cell-no-wrap">${line.roadNumber || ''}</td>
+            <td class="road-table-cell-center road-table-cell-no-wrap">${line.roadPartNumber || ''}</td>
             <td class="road-table-cell-center">${lengthVal || ''}</td>
             <td class="road-table-cell-center">${line[props.disc] || ''}</td>
             <td class="road-table-cell-center">${line[props.evk] || ''}</td>
@@ -74,9 +74,9 @@ export function ProjectDetailsForm(callbacks = {}) {
             </colgroup>
             <thead class="road-table-header">
               <tr class="road-table-row">
-                <th class="road-table-cell-center">TIE</th>
-                <th class="road-table-cell-center">OSA</th>
-                <th class="road-table-cell-center">PITUUS</th>
+                <th class="road-table-cell-center road-table-cell-no-wrap">TIE</th>
+                <th class="road-table-cell-center road-table-cell-no-wrap">OSA</th>
+                <th class="road-table-cell-center road-table-cell-no-wrap">PITUUS</th>
                 <th class="road-table-cell-center">JATKUU</th>
                 <th class="road-table-cell-center">ELINVOIMAKESKUS</th>
                 <th class="road-table-cell"></th> 

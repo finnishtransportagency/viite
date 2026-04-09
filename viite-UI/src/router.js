@@ -6,7 +6,7 @@
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 
-export function URLRouter(map, backend, models) {
+export function URLRouter(map, backend, models, applicationModel) {
   const Router = Backbone.Router.extend({
       initialize: function () {
 

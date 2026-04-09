@@ -23,9 +23,8 @@ import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
 export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
   Layer.call(this, map);
 
-    window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
-
     const me = this;
+    let isDraggingNode = false;
     let userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
     const directionMarkerVector = new ol.source.Vector({});
     const dblVector = function () {
@@ -38,7 +37,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       suppressOverlayUntilTs = Date.now() + ms;
     };
     const isOverlaySuppressed = () => Date.now() < suppressOverlayUntilTs;
-    const isNodeDragged = () => Boolean(window.ViiteState && window.ViiteState.isTranslatingNode); // Avoid dragging bugs and hide tooltip
+    const isNodeDragged = () => isDraggingNode;
 
     const nodeMarkerVector = dblVector();
     const junctionMarkerVector = dblVector();
@@ -303,7 +302,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
      * Save initial node position for comparison purposes
      */
     nodeTranslate.on('translatestart', function (evt) {
-      window.ViiteState.isTranslatingNode = true;
+      isDraggingNode = true;
       const feature = evt.features && evt.features.item(0);
       const geometry = feature && feature.getGeometry && feature.getGeometry();
       const geometryCoordinates = geometry && geometry.getCoordinates && geometry.getCoordinates();
@@ -346,7 +345,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     });
 
     nodeTranslate.on('translateend', function (evt) {
-      window.ViiteState.isTranslatingNode = false;
+      isDraggingNode = false;
       const geometry = evt.features.item(0).getGeometry();
       let coordinates = geometry.getCoordinates();
       coordinates = { x: coordinates[0], y: coordinates[1] }; // Format coordinates correctly

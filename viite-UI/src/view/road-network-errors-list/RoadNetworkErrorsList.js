@@ -1,10 +1,19 @@
-export function RoadNetworkErrorsList(backend) {
+/**
+ * RoadNetworkErrorsList component
+ * Displays road network validation errors in a modal window.
+ * @param {Object} backend - Backend API wrapper
+ * @param {Object} options - Runtime dependencies for modal and application state access
+ * @param {Object} options.application - Application API used to access the modal container
+ * @param {Object} options.applicationModel - Application state manager
+ */
+export function RoadNetworkErrorsList(backend, options = {}) {
+        const { application: applicationApi, applicationModel } = options;
 
         let modalContainer;
 
         const showRoadNetworkErrorsListWindow = function () {
 
-            modalContainer = Application.getModalContainer();
+            modalContainer = applicationApi.getModalContainer();
 
             modalContainer.open({
                 title: 'Tieverkon virheet',

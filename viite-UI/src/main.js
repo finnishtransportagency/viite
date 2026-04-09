@@ -51,6 +51,12 @@ window.Application = window.Application || {};
 const application = window.Application;
 let applicationModel;
 
+/**
+ * Initializes the application. Accepts optional arguments to support:
+ * - Dependency injection for testing (customBackend: mock Backend)
+ * - Controlling tile map loading (withTileMaps: boolean toggle)
+ * Called with undefined during normal startup; arguments used for restarts or testing.
+ */
 export function start(customBackend, withTileMaps) {
   const backend = customBackend || new Backend();
   backend.getStartupParametersWithCallback(function (startupParameters) {
@@ -58,7 +64,6 @@ export function start(customBackend, withTileMaps) {
     const tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     const dirtyTrackedModels = [];
     applicationModel = new ApplicationModel(dirtyTrackedModels);
-    window.applicationModel = applicationModel;
     const roadCollection = new RoadCollection(backend, applicationModel);
     const projectCollection = new ProjectCollection(backend, startupParameters, applicationModel);
     window.projectCollection = projectCollection;
@@ -85,7 +90,7 @@ export function start(customBackend, withTileMaps) {
     const projectMenuRef = { current: null };
 
     bindEvents();
-    const linkGroups = groupLinks(selectedProjectLinkProperty);
+    const linkGroups = groupLinks(selectedProjectLinkProperty, applicationModel);
 
     const projectList = new ProjectList(projectCollection, {
       applicationApi: application,
@@ -113,7 +118,7 @@ application.start = start;
 const startApplication = function (backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectList, projectMenuRef) {
   setupProjections();
   const map = setupMap(backend, models, withTileMaps, startupParameters, projectChangeTable, roadNameCollection, projectList, projectMenuRef);
-  new URLRouter(map, backend, models);
+  new URLRouter(map, backend, models, applicationModel);
   eventbus.trigger('application:initialized');
 };
 
@@ -163,8 +168,8 @@ const createOpenLayersMap = function (startupParameters, layers) {
 };
 
 const setupMapLayers = function (map, models) {
-  const roadLayer = new RoadLayer(map, models.roadCollection, models.selectedLinkProperty, models.nodeCollection);
-  const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
+  const roadLayer = new RoadLayer(map, applicationModel);
+  const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, applicationModel);
   window.projectLinkLayer = projectLinkLayer;
   const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, applicationModel);
   const nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, applicationModel);
@@ -182,9 +187,9 @@ const initializeUIComponents = function (backend, models, map, startupParameters
     applicationApi: application
   });
   const roadAddressBrowserForm = new RoadAddressBrowserForm();
-  const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm);
-  const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm);
-  const roadNetworkErrorsList = new RoadNetworkErrorsList(backend);
+  const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm, { application, applicationModel });
+  const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, { application, applicationModel });
+  const roadNetworkErrorsList = new RoadNetworkErrorsList(backend, { application, applicationModel });
   const adminPanel = new AdminPanel(backend, {
     applicationApi: application,
     applicationModel: applicationModel
@@ -293,7 +298,7 @@ const setupMap = function (backend, models, withTileMaps, startupParameters, pro
   initializeMapPlugins(map, startupParameters);
   setupVersionInfo(backend);
 
-  new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
+  new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')), applicationModel);
 
   applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 
@@ -304,8 +309,8 @@ const setupProjections = function () {
   proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
 };
 
-function groupLinks(selectedProjectLinkProperty) {
-  const roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty);
+function groupLinks(selectedProjectLinkProperty, appModel) {
+  const roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty, appModel);
   return [
     [roadLinkBox]
   ];
@@ -318,10 +323,6 @@ application.restart = function (backend, withTileMaps) {
 const bindEvents = function () {
   eventbus.on('linkProperties:available', function () {
     jQuery('.spinner-overlay').remove();
-  });
-
-  eventbus.on('confirm:show', function () {
-    new Confirm();
   });
 };
 

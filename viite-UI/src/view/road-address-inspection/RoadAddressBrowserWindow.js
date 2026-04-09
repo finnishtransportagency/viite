@@ -1,12 +1,22 @@
 import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 
-export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm) {
+/**
+ * RoadAddressBrowserWindow component
+ * Displays a modal for searching, viewing, and exporting road address data.
+ * @param {Object} backend - Backend API wrapper
+ * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
+ * @param {Object} options - Runtime dependencies for modal and application state access
+ * @param {Object} options.application - Application API used to access the modal container
+ * @param {Object} options.applicationModel - Application state manager
+ */
+export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
       const me = this;
+        const { application: applicationApi, applicationModel } = options;
       let searchParams = {};
       let searchResults = [];
 
       // Initialize ModalContainer with configuration
-      const modal = Application.getModalContainer({
+    const modal = applicationApi.getModalContainer({
           helpUrl: 'manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu',
           helpTitle: 'Avaa käyttöohje'
       });

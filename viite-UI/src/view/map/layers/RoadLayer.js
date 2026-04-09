@@ -2,6 +2,7 @@
  * RoadLayer component
  * Manages the vector layer for displaying road links and handling road address information overlays.
  * @param {Object} map - OpenLayers map instance
+ * @param {Object} applicationModel - Application state manager
  * @returns {Object} Layer with refresh and clear methods
  */
 import { eventbus } from '@utils/eventbus.js';
@@ -10,12 +11,8 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
 
-export function RoadLayer(map) {
+export function RoadLayer(map, applicationModel) {
   Layer.call(this, map);
-    const applicationModel = window.applicationModel;
-
-    window.ViiteState = window.ViiteState || {}; // Global variable for trackin state like node translation
-
     const me = this;
     const roadLinkStyler = new RoadLinkStyler();
 
@@ -113,7 +110,7 @@ export function RoadLayer(map) {
       return administrativeClass;
     }
 
-    //Listen pointerMove and get pixel for displaying roadAddress feature info
+    // Listen pointerMove and get pixel for displaying roadAddress feature info
     me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
       displayRoadAddressInfo(event, pixel);
     });
@@ -140,8 +137,6 @@ export function RoadLayer(map) {
             eventbus.trigger('roadAddressProject:fetch');
             break;
           case 'node':
-            // Don't fetch nodes if one is currently being moved (translated)
-            if (window.ViiteState && window.ViiteState.isTranslatingNode) break;
             eventbus.trigger('nodeLayer:fetch');
             break;
           default:
