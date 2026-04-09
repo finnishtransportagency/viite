@@ -293,19 +293,32 @@ class NodeDAO extends BaseDAO {
 
   def fetchAllByDateRange(sinceDate: DateTime, untilDate: Option[DateTime]): Seq[Node] = {
     time(logger, "Fetch nodes by date range") {
-      val untilString = if (untilDate.nonEmpty) s"AND published_time <= to_timestamp(${new Timestamp(untilDate.get.getMillis)}, YYYY-MM-DD HH24:MI:SS.FF)" else s""
       val query =
-        sql"""
-         $selectAllFromNodeQuery
-         WHERE node_number IN (
-              SELECT node_number
-              FROM node NC
-              WHERE published_time IS NOT NULL
-                AND published_time >= to_timestamp(${new Timestamp(sinceDate.getMillis)}, YYYY-MM-DD HH24:MI:SS.FF)
-                $untilString
-                )
-         AND valid_to IS NULL
-       """
+        untilDate match {
+          case Some(until) =>
+            sql"""
+        $selectAllFromNodeQuery
+        WHERE node_number IN (
+          SELECT node_number
+          FROM node nc
+          WHERE published_time IS NOT NULL
+            AND published_time >= ${new Timestamp(sinceDate.getMillis)}
+            AND published_time <= ${new Timestamp(until.getMillis)}
+        )
+        AND valid_to IS NULL
+      """
+          case None =>
+            sql"""
+        $selectAllFromNodeQuery
+        WHERE node_number IN (
+          SELECT node_number
+          FROM node nc
+          WHERE published_time IS NOT NULL
+            AND published_time >= ${new Timestamp(sinceDate.getMillis)}
+        )
+        AND valid_to IS NULL
+      """
+        }
       queryList(query)
     }
   }
