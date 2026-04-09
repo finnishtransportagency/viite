@@ -31,6 +31,14 @@ export function ApplicationModel(models) {
     let selectionType = ViiteEnumerations.SelectionType.All;
     let sessionUsername = '';
     let sessionUserRoles = '';
+    const appContext = {
+      startupParameters: undefined,
+      projectCollection: undefined,
+      selectedProjectLinkProperty: undefined,
+      projectLinkLayer: undefined,
+      mainMenu: undefined,
+      projectMenu: undefined
+    };
 
     const getSelectionType = function () {
       return selectionType;
@@ -178,6 +186,54 @@ export function ApplicationModel(models) {
       return sessionUserRoles;
     };
 
+    const setStartupParameters = function (startupParameters) {
+      appContext.startupParameters = startupParameters;
+    };
+
+    const getStartupParameters = function () {
+      return appContext.startupParameters;
+    };
+
+    const setProjectCollection = function (projectCollection) {
+      appContext.projectCollection = projectCollection;
+    };
+
+    const getProjectCollection = function () {
+      return appContext.projectCollection;
+    };
+
+    const setSelectedProjectLinkProperty = function (selectedProjectLinkProperty) {
+      appContext.selectedProjectLinkProperty = selectedProjectLinkProperty;
+    };
+
+    const getSelectedProjectLinkProperty = function () {
+      return appContext.selectedProjectLinkProperty;
+    };
+
+    const setProjectLinkLayer = function (projectLinkLayer) {
+      appContext.projectLinkLayer = projectLinkLayer;
+    };
+
+    const getProjectLinkLayer = function () {
+      return appContext.projectLinkLayer;
+    };
+
+    const setMainMenu = function (mainMenu) {
+      appContext.mainMenu = mainMenu;
+    };
+
+    const getMainMenu = function () {
+      return appContext.mainMenu;
+    };
+
+    const setProjectMenu = function (projectMenu) {
+      appContext.projectMenu = projectMenu;
+    };
+
+    const getProjectMenu = function () {
+      return appContext.projectMenu;
+    };
+
     const selectLayer = function (layer, toggleStart, noSave) {
       const tool = layer === 'node' ? ViiteEnumerations.Tool.Unknown.value : ViiteEnumerations.Tool.Default.value;
       setSelectedTool(tool);
@@ -264,6 +320,18 @@ export function ApplicationModel(models) {
       selectionTypeIs: selectionTypeIs,
       getSessionUsername: getSessionUsername,
       getSessionUserRoles: getSessionUserRoles,
+      setStartupParameters: setStartupParameters,
+      getStartupParameters: getStartupParameters,
+      setProjectCollection: setProjectCollection,
+      getProjectCollection: getProjectCollection,
+      setSelectedProjectLinkProperty: setSelectedProjectLinkProperty,
+      getSelectedProjectLinkProperty: getSelectedProjectLinkProperty,
+      setProjectLinkLayer: setProjectLinkLayer,
+      getProjectLinkLayer: getProjectLinkLayer,
+      setMainMenu: setMainMenu,
+      getMainMenu: getMainMenu,
+      setProjectMenu: setProjectMenu,
+      getProjectMenu: getProjectMenu,
       specialSelectionTypes: specialSelectionTypes
     };
 }
