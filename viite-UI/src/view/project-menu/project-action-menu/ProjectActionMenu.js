@@ -268,7 +268,6 @@ export function ProjectActionMenu(options) {
       if (typeof closeProjectMenu === 'function') {
         closeProjectMenu({ noSave: Boolean(noSave) });
       } else if (mainMenu && typeof mainMenu.setState === 'function') {
-        applicationModel.setOpenProject(false);
         activeEventbus.trigger('roadAddressProject:deselectFeaturesSelected');
         activeEventbus.trigger('roadAddressProject:deactivateAllSelections');
         activeEventbus.trigger('roadAddressProject:clearOnClose');

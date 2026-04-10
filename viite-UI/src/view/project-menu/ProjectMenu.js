@@ -70,7 +70,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       eventbus.trigger('roadAddressProject:clearOnClose');
       clearSelectedProjectLinks();
       eventbus.trigger('layer:selected', 'linkProperty', null, true);
-      applicationModel.setOpenProject(false);
       applicationModel.selectLayer('linkProperty', true, noSave);
     };
 
@@ -381,7 +380,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
       applicationModel.setProjectButton(true);
       applicationModel.setProjectFeature(project.data.id);
-      applicationModel.setOpenProject(true);
 
       if (!_.isUndefined(project.data)) {
         eventbus.trigger('linkProperties:selectedProject', result.linkId, project.data);

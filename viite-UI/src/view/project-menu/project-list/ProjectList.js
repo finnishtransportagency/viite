@@ -164,7 +164,6 @@ export function ProjectList(projectCollection, options = {}) {
     const handleCreateNew = () => {
       clearInterval(pollProjects);
       modalContainer.close();
-      applicationModel.setOpenProject(true);
       projectCollection.clearRoadAddressProjects();
       const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
       const projectMenu = ensureProjectMenu();

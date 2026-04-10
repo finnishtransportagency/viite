@@ -20,8 +20,6 @@ export function ApplicationModel() {
     let selectedLayer;
     let selectedTool = ViiteEnumerations.Tool.Unknown.value;
     let centerLonLat;
-    let activeButtons = false;
-    let openProject = false;
     let projectButton = false;
     let projectFeature;
     let selectionType = ViiteEnumerations.SelectionType.All;
@@ -50,13 +48,6 @@ export function ApplicationModel() {
         return false;
     };
 
-    const setActiveButtons = function (newState) {
-      if (activeButtons !== newState) {
-        activeButtons = newState;
-        eventbus.trigger('application:activeButtons', newState);
-      }
-    };
-
     const setProjectFeature = function (featureLinkID) {
       projectFeature = featureLinkID;
     };
@@ -64,12 +55,6 @@ export function ApplicationModel() {
     const setProjectButton = function (newState) {
       if (projectButton !== newState) {
         projectButton = newState;
-      }
-    };
-
-    const setOpenProject = function (newState) {
-      if (openProject !== newState) {
-        openProject = newState;
       }
     };
 
@@ -110,16 +95,8 @@ export function ApplicationModel() {
       };
     };
 
-    const isProjectOpen = function () {
-      return openProject;
-    };
-
     const isProjectButton = function () {
       return projectButton;
-    };
-
-    const isActiveButtons = function () {
-      return activeButtons;
     };
 
     const getSelectedTool = function () {
@@ -208,14 +185,10 @@ export function ApplicationModel() {
       toggleRoadVisibility: toggleRoadVisibility,
       selectLayer: selectLayer,
       getSelectedLayer: getSelectedLayer,
-      setActiveButtons: setActiveButtons,
       setProjectButton: setProjectButton,
       setProjectFeature: setProjectFeature,
-      setOpenProject: setOpenProject,
       getProjectFeature: getProjectFeature,
-      isActiveButtons: isActiveButtons,
       isProjectButton: isProjectButton,
-      isProjectOpen: isProjectOpen,
       getCurrentLocation: getCurrentLocation,
       setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,

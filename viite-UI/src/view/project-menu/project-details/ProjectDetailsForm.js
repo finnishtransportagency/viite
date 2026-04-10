@@ -450,7 +450,6 @@ export function ProjectDetailsForm(callbacks = {}) {
               projectData.name = $('#nimi').val();
               projectData.startDate = $('#projectStartDate').val();
               projectData.additionalInfo = $('#lisatiedot').val();
-              applicationModel.setOpenProject(false);
 
               const formData = [
                 { value: projectData.name },
