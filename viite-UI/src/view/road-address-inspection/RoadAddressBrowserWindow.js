@@ -4,18 +4,19 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
+import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
 
 /**
  * RoadAddressBrowserWindow component
  * Displays a modal for searching, viewing, and exporting road address data.
  * @param {Object} backend - Backend API wrapper
- * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
  */
-export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm) {
+export function RoadAddressBrowserWindow(backend) {
       const me = this;
       let searchParams = {};
       let searchResults = [];
       let modal = null;
+    const roadAddressBrowserForm = new RoadAddressBrowserForm();
 
       const createModal = () => new ModalContainer({
           helpUrl: 'manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu',

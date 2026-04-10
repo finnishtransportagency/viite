@@ -2,8 +2,6 @@
  * RoadAddressChangesBrowserWindow component
  * Allows users to search road address change history data and export it as CSV.
  * @param {Object} backend - Backend API wrapper
- * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
- * @param {Object} options - Runtime dependencies for modal lifecycle hooks
  */
 import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
@@ -12,12 +10,14 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { EnumerationUtils } from '@utils/EnumerationUtils.js';
+import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
 
-export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
+export function RoadAddressChangesBrowserWindow(backend) {
         let searchParams = {};
         let elyEvkSelector;
         let modal = null;
         const me = this;
+    const roadAddressBrowserForm = new RoadAddressBrowserForm();
 
         const createModal = () => new ModalContainer({
             helpUrl: 'manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu',

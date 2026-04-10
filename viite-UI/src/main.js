@@ -2,7 +2,6 @@
  * Main application entry point and initialization module for Viite UI.
  * Handles application startup, map setup, layer management, and component initialization.
  */
-import { AdminPanel } from '@view/admin-panel/AdminPanel.js';
 import { ApplicationModel } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -15,19 +14,13 @@ import { MapView } from '@view/map/MapView.js';
 import { NavigationPanel } from '@view/navigation-panel/NavigationPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';
-import { NodeMenu } from '@node-menu/NodeMenu.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
 import { ProjectCollection } from '@model/ProjectCollection.js';
 import { ProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
-import { RoadAddressBrowserForm } from '@view/road-address-inspection/RoadAddressBrowserForm.js';
-import { RoadAddressBrowserWindow } from '@view/road-address-inspection/RoadAddressBrowserWindow.js';
-import { RoadAddressChangesBrowserWindow } from '@view/road-address-inspection/RoadAddressChangesBrowserWindow.js';
 import { RoadCollection } from '@model/RoadCollection.js';
 import { RoadLayer } from '@view/map/layers/RoadLayer.js';
 import { RoadLinkBox } from '@view/navigation-panel/RoadLinkBox.js';
 import { RoadNameCollection } from '@model/RoadNameCollection.js';
-import { RoadNamingToolWindow } from '@view/road-name-maintenance-modal/RoadNamingToolWindow.js';
-import { RoadNetworkErrorsList } from '@view/road-network-errors-list/RoadNetworkErrorsList.js';
 import { ScaleBar } from '@view/map/markers/ScaleBar.js';
 import { SearchBox } from '@view/navigation-panel/SearchBox.js';
 import { SelectedLinkProperty } from '@model/SelectedLinkProperty.js';
@@ -36,7 +29,6 @@ import { SelectedProjectLink } from '@model/SelectedProjectLink.js';
 import { TileMapCollection } from '@model/TileMapCollection.js';
 import { URLRouter } from './router.js';
 import { ZoomBox } from '@view/map/markers/ZoomBox.js';
-import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
@@ -154,50 +146,6 @@ const setupMapLayers = function (map, models) {
   };
 };
 
-const initializeUIComponents = function (backend, models, map, startupParameters, roadNameCollection) {
-  const roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
-  const roadAddressBrowserForm = new RoadAddressBrowserForm();
-  const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm, { applicationModel });
-  const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, { applicationModel });
-  const roadNetworkErrorsList = new RoadNetworkErrorsList(backend, { applicationModel });
-  const adminPanel = new AdminPanel(backend, {
-    applicationModel: applicationModel
-  });
-
-  const nodesAndJunctionsModule = new NodeMenu(
-    map,
-    models.nodeCollection,
-    backend,
-    models.selectedNodesAndJunctions,
-    models.roadCollection,
-    startupParameters,
-    {
-      applicationModel: applicationModel,
-      dateutil: dateutil,
-      moment: moment,
-      navigateToHash: function (hashValue) {
-        location.hash = hashValue;
-      }
-    }
-  );
-  nodesAndJunctionsModule.initialize();
-
-  const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, {
-    applicationModel: applicationModel,
-    eventbus: eventbus,
-    projectCollection: models.projectCollection,
-    map: map,
-    backend: backend,
-    selectedProjectLinkProperty: models.selectedProjectLinkProperty,
-    projectLinkLayer: models.projectLinkLayer,
-    projectChangeInfoModel: models.projectChangeInfoModel,
-    startupParameters: startupParameters
-  });
-  applicationModel.setMainMenu(mainMenu);
-
-  return { mainMenu };
-};
-
 const initializeMapPlugins = function (map, startupParameters) {
   const mapPluginsContainer = jQuery('#map-plugins');
   new ScaleBar(map, mapPluginsContainer);
@@ -236,7 +184,20 @@ const setupMap = function (backend, models, startupParameters, roadNameCollectio
 
   const layers = setupMapLayers(map, models);
   models.projectLinkLayer = layers.roadAddressProject;
-  initializeUIComponents(backend, models, map, startupParameters, roadNameCollection);
+  const mainMenu = new MainMenu({
+    selectedLinkProperty: models.selectedLinkProperty,
+    applicationModel: applicationModel,
+    eventbus: eventbus,
+    projectCollection: models.projectCollection,
+    map: map,
+    backend: backend,
+    selectedProjectLinkProperty: models.selectedProjectLinkProperty,
+    projectLinkLayer: models.projectLinkLayer,
+    projectChangeInfoModel: models.projectChangeInfoModel,
+    roadNameCollection: roadNameCollection,
+    models: models
+  });
+  applicationModel.setMainMenu(mainMenu);
   initializeMapPlugins(map, startupParameters);
   setupVersionInfo(backend);
 
