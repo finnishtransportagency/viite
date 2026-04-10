@@ -45,7 +45,6 @@ export function start() {
     const roadNameCollection = new RoadNameCollection(backend);
     const selectedLinkProperty = new SelectedLinkProperty(roadCollection, applicationModel);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
-    applicationModel.setSelectedProjectLinkProperty(selectedProjectLinkProperty);
     const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel));
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
@@ -125,7 +124,6 @@ const createOpenLayersMap = function (startupParameters, layers) {
 const setupMapLayers = function (map, models) {
   const roadLayer = new RoadLayer(map, applicationModel);
   const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, applicationModel);
-  applicationModel.setProjectLinkLayer(projectLinkLayer);
   const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, applicationModel);
   const nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, applicationModel);
 
@@ -189,7 +187,6 @@ const setupMap = function (backend, models, startupParameters, roadNameCollectio
     roadNameCollection: roadNameCollection,
     models: models
   });
-  applicationModel.setMainMenu(mainMenu);
   initializeMapPlugins(map, startupParameters);
   setupHeaderInfo(backend, startupParameters);
 

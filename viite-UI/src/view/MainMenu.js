@@ -118,8 +118,31 @@ export function MainMenu(options = {}) {
             onClose: () => setState('main')
           });
           break;
-        case 'project':  /* Handled by ProjectList */ break;
-        case 'node':     /* Handled by NodesAndJunctions component */ break;
+        case 'project':
+          if (applicationModel.isProjectOpen()) {
+            new ConfirmPopup('Projektin muokkaus on kesken...', { type: 'alert' });
+          } else {
+            showProjectList();
+          }
+          break;
+        case 'nameTool':
+          roadNamingTool.show();
+          break;
+        case 'node':
+          nodeMenu.show();
+          break;
+        case 'roadAddressBrowser':
+          roadAddressBrowser.show();
+          break;
+        case 'roadAddressChangesBrowser':
+          roadAddressChangesBrowser.show();
+          break;
+        case 'roadNetworkErrors':
+          roadNetworkErrorsList.show();
+          break;
+        case 'adminPanel':
+          adminPanel.show();
+          break;
         default:
           renderBody(renderMainMenuBody());
           bindMenuActions();
@@ -150,49 +173,24 @@ export function MainMenu(options = {}) {
     };
 
     const bindMenuActions = () => {
+      const buttonToState = {
+        formProjectButton: 'project',
+        formNameToolButton: 'nameTool',
+        formNodesAndJunctionsButton: 'node',
+        formRoadAddressBrowserButton: 'roadAddressBrowser',
+        formRoadAddressChangesBrowserButton: 'roadAddressChangesBrowser',
+        formRoadNetworkErrorsListButton: 'roadNetworkErrors',
+        formAdminPanelButton: 'adminPanel'
+      };
+
       rootElement.off('click.mainMenu', 'button');
       
       rootElement.on('click.mainMenu', 'button', (e) => {
         e.preventDefault();
         const buttonId = e.currentTarget.id;
-        let projectOpen;
-
-        switch (buttonId) {
-          case 'formProjectButton':
-            projectOpen = applicationModel.isProjectOpen();
-            if (projectOpen) {
-              new ConfirmPopup("Projektin muokkaus on kesken...", { type: "alert" });
-            } else {
-              showProjectList();
-            }
-            break;
-
-          case 'formNameToolButton':
-            roadNamingTool.show();
-            break;
-
-          case 'formNodesAndJunctionsButton':
-            nodeMenu.show();
-            break;
-
-          case 'formRoadAddressBrowserButton':
-            roadAddressBrowser.show();
-            break;
-
-          case 'formRoadAddressChangesBrowserButton':
-            roadAddressChangesBrowser.show();
-            break;
-
-          case 'formRoadNetworkErrorsListButton':
-            roadNetworkErrorsList.show();
-            break;
-
-          case 'formAdminPanelButton':
-            adminPanel.show();
-            break;
-          
-          default:
-            break;
+        const nextState = buttonToState[buttonId];
+        if (nextState) {
+          setState(nextState);
         }
       });
     };

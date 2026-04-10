@@ -1,6 +1,5 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { zoomlevels } from '@utils/ZoomLevels.js';
 
 /**
  * ApplicationModel - Central application state management
@@ -17,12 +16,10 @@ export function ApplicationModel() {
       level: undefined
     };
     const specialSelectionTypes = [ViiteEnumerations.SelectionType.Unknown.value];
-    const minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
 
     let selectedLayer;
     let selectedTool = ViiteEnumerations.Tool.Unknown.value;
     let centerLonLat;
-    let readOnly = true;
     let activeButtons = false;
     let openProject = false;
     let projectButton = false;
@@ -51,15 +48,6 @@ export function ApplicationModel() {
         return selectionType.value === type.value;
       else
         return false;
-    };
-
-    const setReadOnly = function (newState) {
-      if (readOnly !== newState) {
-        readOnly = newState;
-        setActiveButtons(false);
-        setSelectedTool(ViiteEnumerations.Tool.Default.value);
-        eventbus.trigger('application:readOnly', newState);
-      }
     };
 
     const setActiveButtons = function (newState) {
@@ -122,10 +110,6 @@ export function ApplicationModel() {
       };
     };
 
-    const canZoomOutEditMode = function () {
-      return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
-    };
-
     const isProjectOpen = function () {
       return openProject;
     };
@@ -154,10 +138,6 @@ export function ApplicationModel() {
       return projectFeature;
     };
 
-    const isReadOnly = function () {
-      return readOnly;
-    };
-
     const getCurrentLocation = function () {
       return centerLonLat;
     };
@@ -184,30 +164,6 @@ export function ApplicationModel() {
 
     const getProjectCollection = function () {
       return appContext.projectCollection;
-    };
-
-    const setSelectedProjectLinkProperty = function (selectedProjectLinkProperty) {
-      appContext.selectedProjectLinkProperty = selectedProjectLinkProperty;
-    };
-
-    const getSelectedProjectLinkProperty = function () {
-      return appContext.selectedProjectLinkProperty;
-    };
-
-    const setProjectLinkLayer = function (projectLinkLayer) {
-      appContext.projectLinkLayer = projectLinkLayer;
-    };
-
-    const getProjectLinkLayer = function () {
-      return appContext.projectLinkLayer;
-    };
-
-    const setMainMenu = function (mainMenu) {
-      appContext.mainMenu = mainMenu;
-    };
-
-    const getMainMenu = function () {
-      return appContext.mainMenu;
     };
 
     const selectLayer = function (layer, toggleStart, noSave) {
@@ -252,17 +208,14 @@ export function ApplicationModel() {
       toggleRoadVisibility: toggleRoadVisibility,
       selectLayer: selectLayer,
       getSelectedLayer: getSelectedLayer,
-      setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
       setProjectButton: setProjectButton,
       setProjectFeature: setProjectFeature,
       setOpenProject: setOpenProject,
       getProjectFeature: getProjectFeature,
-      isReadOnly: isReadOnly,
       isActiveButtons: isActiveButtons,
       isProjectButton: isProjectButton,
       isProjectOpen: isProjectOpen,
-      canZoomOutEditMode: canZoomOutEditMode,
       getCurrentLocation: getCurrentLocation,
       setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,
@@ -273,12 +226,6 @@ export function ApplicationModel() {
       getStartupParameters: getStartupParameters,
       setProjectCollection: setProjectCollection,
       getProjectCollection: getProjectCollection,
-      setSelectedProjectLinkProperty: setSelectedProjectLinkProperty,
-      getSelectedProjectLinkProperty: getSelectedProjectLinkProperty,
-      setProjectLinkLayer: setProjectLinkLayer,
-      getProjectLinkLayer: getProjectLinkLayer,
-      setMainMenu: setMainMenu,
-      getMainMenu: getMainMenu,
       specialSelectionTypes: specialSelectionTypes
     };
 }

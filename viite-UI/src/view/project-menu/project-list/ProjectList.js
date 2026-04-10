@@ -171,7 +171,7 @@ export function ProjectList(projectCollection, options = {}) {
       if (projectMenu && _.isFunction(projectMenu.showProjectDetails)) {
         projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
       }
-      if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
+      $('.edit-mode-btn:visible').click();
     };
 
     const fetchProjects = () => {
@@ -183,7 +183,7 @@ export function ProjectList(projectCollection, options = {}) {
       projectCollection.getProjectsWithLinksById(projectId).then(result => {
         hide();
         eventbus.trigger('roadAddress:openProject', result);
-        if (applicationModel.isReadOnly()) $('.edit-mode-btn:visible').click();
+        $('.edit-mode-btn:visible').click();
       });
     };
 

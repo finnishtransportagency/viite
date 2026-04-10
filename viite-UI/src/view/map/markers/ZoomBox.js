@@ -2,11 +2,10 @@
  * ZoomBox - Renders an OpenLayers zoom control on the map.
  * @param {Object} map - OpenLayers map instance
  * @param {Object} container - jQuery container for the rendered control
- * @param {Object} appModel - Application state manager
  */
 import { zoomlevels } from '@utils/ZoomLevels.js';
 
-export function ZoomBox(map, container, appModel) {
+export function ZoomBox(map, container) {
 
   const element = `
     <div class="zoombar" data-position="2">
@@ -23,12 +22,10 @@ export function ZoomBox(map, container, appModel) {
     });
   });
   container.find('.minus').click(function () {
-    if (appModel.canZoomOutEditMode()) {
       const zoom = zoomlevels.getViewZoom(map);
       map.getView().animate({
         zoom: zoom - 1,
         duration: 150
       });
-    }
   });
 }

@@ -176,10 +176,9 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       selectSingleClick.getFeatures().clear();
       const ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
 
-      if (applicationModel.isReadOnly()) {
-        selectDoubleClick.getFeatures().clear();
-      }
-      //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
+      selectDoubleClick.getFeatures().clear();
+
+      // Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
         const selectedF = getSelectedF(ctrlPressed, event);
         if (roadLayer.layer.getOpacity() === 1) {
@@ -687,7 +686,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     me.eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function () {
       setGeneralOpacity(1);
       reservedRoadLayer.getSource().clear();
-      applicationModel.setReadOnly(true);
     });
 
     function showLayer() {
