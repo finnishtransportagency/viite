@@ -35,8 +35,7 @@ export function ApplicationModel() {
       projectCollection: undefined,
       selectedProjectLinkProperty: undefined,
       projectLinkLayer: undefined,
-      mainMenu: undefined,
-      projectMenu: undefined
+      mainMenu: undefined
     };
 
     const getSelectionType = function () {
@@ -211,14 +210,6 @@ export function ApplicationModel() {
       return appContext.mainMenu;
     };
 
-    const setProjectMenu = function (projectMenu) {
-      appContext.projectMenu = projectMenu;
-    };
-
-    const getProjectMenu = function () {
-      return appContext.projectMenu;
-    };
-
     const selectLayer = function (layer, toggleStart, noSave) {
       const tool = layer === 'node' ? ViiteEnumerations.Tool.Unknown.value : ViiteEnumerations.Tool.Default.value;
       setSelectedTool(tool);
@@ -288,8 +279,6 @@ export function ApplicationModel() {
       getProjectLinkLayer: getProjectLinkLayer,
       setMainMenu: setMainMenu,
       getMainMenu: getMainMenu,
-      setProjectMenu: setProjectMenu,
-      getProjectMenu: getProjectMenu,
       specialSelectionTypes: specialSelectionTypes
     };
 }

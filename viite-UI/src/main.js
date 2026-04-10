@@ -71,8 +71,6 @@ export function start() {
       nodeCollection: nodeCollection,
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
-    const projectMenuRef = { current: null };
-
     bindEvents();
     const linkGroups = groupLinks(selectedProjectLinkProperty, applicationModel);
 
@@ -85,13 +83,13 @@ export function start() {
     );
 
     backend.getUserRoles();
-    startApplication(backend, models, startupParameters, roadNameCollection, projectMenuRef);
+    startApplication(backend, models, startupParameters, roadNameCollection);
   });
 }
 
-const startApplication = function (backend, models, startupParameters, roadNameCollection, projectMenuRef) {
+const startApplication = function (backend, models, startupParameters, roadNameCollection) {
   setupProjections();
-  const map = setupMap(backend, models, startupParameters, roadNameCollection, projectMenuRef);
+  const map = setupMap(backend, models, startupParameters, roadNameCollection);
   new URLRouter(map, backend, models, applicationModel);
   eventbus.trigger('application:initialized');
 };
@@ -156,7 +154,7 @@ const setupMapLayers = function (map, models) {
   };
 };
 
-const initializeUIComponents = function (backend, models, map, startupParameters, roadNameCollection, projectMenuRef) {
+const initializeUIComponents = function (backend, models, map, startupParameters, roadNameCollection) {
   const roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
   const roadAddressBrowserForm = new RoadAddressBrowserForm();
   const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm, { applicationModel });
@@ -188,11 +186,6 @@ const initializeUIComponents = function (backend, models, map, startupParameters
     applicationModel: applicationModel,
     eventbus: eventbus,
     projectCollection: models.projectCollection,
-    projectMenu: () => projectMenuRef.current,
-    onProjectMenuCreated: (projectMenu) => {
-      projectMenuRef.current = projectMenu;
-      applicationModel.setProjectMenu(projectMenu);
-    },
     map: map,
     backend: backend,
     selectedProjectLinkProperty: models.selectedProjectLinkProperty,
@@ -237,13 +230,13 @@ const setupVersionInfo = function (backend) {
   }
 };
 
-const setupMap = function (backend, models, startupParameters, roadNameCollection, projectMenuRef) {
+const setupMap = function (backend, models, startupParameters, roadNameCollection) {
   const tileMaps = new TileMapCollection();
   const map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
   const layers = setupMapLayers(map, models);
   models.projectLinkLayer = layers.roadAddressProject;
-  initializeUIComponents(backend, models, map, startupParameters, roadNameCollection, projectMenuRef);
+  initializeUIComponents(backend, models, map, startupParameters, roadNameCollection);
   initializeMapPlugins(map, startupParameters);
   setupVersionInfo(backend);
 

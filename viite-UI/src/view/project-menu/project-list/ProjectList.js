@@ -45,20 +45,7 @@ export function ProjectList(projectCollection, options = {}) {
       startupParameters: options.startupParameters
     });
 
-    if (_.isFunction(options.onProjectMenuCreated)) {
-      options.onProjectMenuCreated(projectMenuInstance);
-    }
-
     return projectMenuInstance;
-  };
-  const resolveProjectMenu = function () {
-    if (projectMenuInstance) {
-      return projectMenuInstance;
-    }
-    if (_.isFunction(options.projectMenu)) {
-      return options.projectMenu();
-    }
-    return options.projectMenu;
   };
     const projectStatus = ViiteEnumerations.ProjectStatus;
 
@@ -180,8 +167,7 @@ export function ProjectList(projectCollection, options = {}) {
       applicationModel.setOpenProject(true);
       projectCollection.clearRoadAddressProjects();
       const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
-      ensureProjectMenu();
-      const projectMenu = resolveProjectMenu();
+      const projectMenu = ensureProjectMenu();
       if (projectMenu && _.isFunction(projectMenu.showProjectDetails)) {
         projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
       }
