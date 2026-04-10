@@ -7,6 +7,7 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { LinkEditForm } from './project-link-editor/ProjectLinkEditForm.js';
 import { MenuContainer } from '@components/MenuContainer.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/Toast.js';
@@ -311,7 +312,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         changeTableOpen: false
       });
 
-      applicationModel.removeSpinner();
+      Spinner.hide();
       updateUI(States.ROAD_ADDRESSING, project.data, false);
     });
 
@@ -323,7 +324,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         500: 'Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.'
       };
 
-      applicationModel.removeSpinner();
+      Spinner.hide();
       new ConfirmPopup(errorMessages[errorCode] ||
         'Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.', {
         type: 'alert',
@@ -386,7 +387,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         eventbus.trigger('linkProperties:selectedProject', result.linkId, project.data);
         eventbus.trigger('roadAddressProject:deactivateAllSelections');
       }
-      applicationModel.removeSpinner();
+      Spinner.hide();
     });
 
     return {

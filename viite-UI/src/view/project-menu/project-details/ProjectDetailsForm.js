@@ -7,6 +7,7 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { numberInput } from '@components/number-input/NumberInput.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
@@ -314,7 +315,7 @@ export function ProjectDetailsForm(callbacks = {}) {
         eventbus.off('roadAddress:projectValidationFailed', projectValidationFailedHandler);
       }
       projectValidationFailedHandler = function(errorMessage) {
-        applicationModel.removeSpinner();
+        Spinner.hide();
         console.error(errorMessage);
         new ConfirmPopup(errorMessage || 'Projektin tallennus epäonnistui.', {
           type: 'alert',
@@ -327,7 +328,7 @@ export function ProjectDetailsForm(callbacks = {}) {
         eventbus.off('roadAddress:projectFailed', projectFailedHandler);
       }
       projectFailedHandler = function(error) {
-        applicationModel.removeSpinner();
+        Spinner.hide();
         new ConfirmPopup(getBackendErrorMessage(error, 'Projektin tallennus epäonnistui.'), {
           type: 'alert',
           okButtonLbl: 'OK'
@@ -377,7 +378,7 @@ export function ProjectDetailsForm(callbacks = {}) {
           return;
         }
 
-        applicationModel.addSpinner();
+        Spinner.show();
 
         const formData = [
           { value: projectData.name }, 
@@ -386,7 +387,7 @@ export function ProjectDetailsForm(callbacks = {}) {
         ];
 
         eventbus.once('roadAddress:projectSaved', function(result) {
-          applicationModel.removeSpinner();
+          Spinner.hide();
 
           // Wait before refreshing the map to ensure the layer is selected
           setTimeout(function() {
@@ -457,10 +458,8 @@ export function ProjectDetailsForm(callbacks = {}) {
                 { value: projectData.additionalInfo }
               ];
 
-              //applicationModel.addSpinner();
-
               eventbus.once('roadAddress:projectSaved', function(result) {
-                applicationModel.removeSpinner();
+                Spinner.hide();
                 if (result && result.success) {
                   markAsSaved();
 

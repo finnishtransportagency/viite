@@ -1,4 +1,5 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { events } from '@utils/EventUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
@@ -13,7 +14,7 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
  * - Backend integration for node operations
  * - Node point and junction template handling
  */
-export function NodeCollection(backend, locationSearch, applicationModel) {
+export function NodeCollection(backend, locationSearch) {
     const me = this;
     let nodes = [];
     let nodesWithAttributes = [];
@@ -56,7 +57,7 @@ export function NodeCollection(backend, locationSearch, applicationModel) {
           me.setNodesWithAttributes(searchResult);
           eventbus.trigger('nodeSearchTool:fetched', searchResult.length);
         } else {
-          applicationModel.removeSpinner();
+          Spinner.hide();
           new ConfirmPopup(result.errorMessage, { type: "alert" });
         }
       });
@@ -89,7 +90,7 @@ export function NodeCollection(backend, locationSearch, applicationModel) {
     this.moveToLocation = async function (template) {
       if (!template) return;
 
-      applicationModel.addSpinner('moveToLocation');
+      Spinner.show('moveToLocation');
 
       try {
         // Search for location based on road address information
@@ -156,7 +157,7 @@ export function NodeCollection(backend, locationSearch, applicationModel) {
         console.error('Error in moveToLocation:', error);
       } finally {
         // Ensure spinner is always removed
-        applicationModel.removeSpinner('moveToLocation');
+        Spinner.hide('moveToLocation');
       }
     };
 
@@ -180,11 +181,11 @@ export function NodeCollection(backend, locationSearch, applicationModel) {
       };
 
       if (!_.isUndefined(node)) {
-        applicationModel.addSpinner(saving);
+        Spinner.show(saving);
         if (node.id) {
           backend.updateNodeInfo(node, function (result) {
             if (result.success) {
-              applicationModel.removeSpinner(saving);
+              Spinner.hide(saving);
               eventbus.trigger('node:saveSuccess');
             } else {
               fail(result);
@@ -193,7 +194,7 @@ export function NodeCollection(backend, locationSearch, applicationModel) {
         } else {
           backend.createNodeInfo(node, function (result) {
             if (result.success) {
-              applicationModel.removeSpinner(saving);
+              Spinner.hide(saving);
               eventbus.trigger('node:saveSuccess');
             } else {
               fail(result);

@@ -2,14 +2,11 @@
  * RoadNetworkErrorsList component
  * Displays road network validation errors in a modal window.
  * @param {Object} backend - Backend API wrapper
- * @param {Object} options - Runtime dependencies for modal and application state access
- * @param {Object} options.applicationModel - Application state manager
  */
+import { Spinner } from '@components/spinner/Spinner.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 
-export function RoadNetworkErrorsList(backend, options = {}) {
-    const { applicationModel } = options;
-
+export function RoadNetworkErrorsList(backend) {
         let modalContainer;
 
         const showRoadNetworkErrorsListWindow = function () {
@@ -22,7 +19,7 @@ export function RoadNetworkErrorsList(backend, options = {}) {
             });
 
             backend.getRoadNetworkErrors(function(result) {
-                applicationModel.removeSpinner();
+                Spinner.hide();
                 const contentWrapper = $('<div style="padding: 20px"></div>');
                 
                 if (result.success === true) {

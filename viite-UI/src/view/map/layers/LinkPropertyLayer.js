@@ -12,6 +12,7 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
 import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
@@ -268,7 +269,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
           selectedLinkProperty.close();
           setGeneralOpacity(0.2);
           if (selection.roadNumber !== 0) {
-            applicationModel.addSpinner();
+            Spinner.show();
             // set the clicked linear location id so we know what road link group to update after fetching road links in backend
             roadCollection.setClickedLinearLocationId(selection.linearLocationId);
             // gets all the road links from backend and starts a cycle that updates road link group in RoadCollection.js
@@ -284,7 +285,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
 
     // listens to the event when the road link group is updated (with whole road part) and then continues the process normally with the updated road link groups
     eventbus.listenTo(eventbus,'roadCollection:wholeRoadPartFetched', function (selection) {
-      applicationModel.removeSpinner();
+      Spinner.hide();
       const features = getAllFeatures();
       selectedLinkProperty.open(selection, true, features);
     });

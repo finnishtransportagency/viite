@@ -6,6 +6,7 @@ import { AdminPanel } from '@view/admin-panel/AdminPanel.js';
 import { ApplicationModel } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { LocationSearch } from '@model/LocationSearch.js';
@@ -46,19 +47,17 @@ let applicationModel;
 export function start() {
   const backend = new Backend();
   backend.getStartupParametersWithCallback(function (startupParameters) {
-    const dirtyTrackedModels = [];
-    applicationModel = new ApplicationModel(dirtyTrackedModels);
+    applicationModel = new ApplicationModel();
     applicationModel.setStartupParameters(startupParameters);
     const roadCollection = new RoadCollection(backend, applicationModel);
     const projectCollection = new ProjectCollection(backend, startupParameters, applicationModel);
     applicationModel.setProjectCollection(projectCollection);
     const roadNameCollection = new RoadNameCollection(backend);
     const selectedLinkProperty = new SelectedLinkProperty(roadCollection, applicationModel);
-    dirtyTrackedModels.push(selectedLinkProperty);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     applicationModel.setSelectedProjectLinkProperty(selectedProjectLinkProperty);
     const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-    const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel), applicationModel, applicationModel);
+    const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel));
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
     ol.proj.proj4.register(proj4);
@@ -97,10 +96,9 @@ const startApplication = function (backend, models, startupParameters, roadNameC
   eventbus.trigger('application:initialized');
 };
 
-
 $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
   if (jqxhr.getAllResponseHeaders()) {
-    applicationModel.removeSpinner();
+    Spinner.clear();
     console.log(`Request '${settings.url}' failed: ${thrownError}`);
   }
 });
@@ -269,7 +267,7 @@ function groupLinks(selectedProjectLinkProperty, appModel) {
 
 const bindEvents = function () {
   eventbus.on('linkProperties:available', function () {
-    jQuery('.spinner-overlay').remove();
+    Spinner.clear();
   });
 };
 

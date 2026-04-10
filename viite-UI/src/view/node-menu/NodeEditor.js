@@ -1,4 +1,5 @@
 import { DatePicker } from '@components/date-picker/DatePicker.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { NodeTableUtils } from '@node-menu/DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
@@ -722,7 +723,7 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParamete
       });
 
       subscribeEventbus('node:saveFailed', function (errorMessage, spinnerEvent) {
-        applicationModel.removeSpinner(spinnerEvent);
+        Spinner.hide(spinnerEvent);
         new ConfirmPopup(errorMessage, { type: 'alert' });
       });
     };

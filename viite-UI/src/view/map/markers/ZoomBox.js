@@ -23,14 +23,12 @@ export function ZoomBox(map, container, appModel) {
     });
   });
   container.find('.minus').click(function () {
-    if (appModel.canZoomOut() && appModel.canZoomOutEditMode()) {
+    if (appModel.canZoomOutEditMode()) {
       const zoom = zoomlevels.getViewZoom(map);
       map.getView().animate({
         zoom: zoom - 1,
         duration: 150
       });
-    } else {
-      new Confirm();
     }
   });
 }

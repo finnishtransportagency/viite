@@ -8,6 +8,7 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
 
@@ -123,7 +124,7 @@ export function RoadLayer(map, applicationModel) {
       if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
         roadLayer.getSource().clear();
         eventbus.trigger('map:clearLayers');
-        applicationModel.removeSpinner();
+        Spinner.hide();
       } else {
         /*
          This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');

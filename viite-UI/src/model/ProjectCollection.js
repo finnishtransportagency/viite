@@ -11,6 +11,7 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 
 export function ProjectCollection(backend, startupParameters, applicationModel) {
@@ -102,7 +103,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
         publishableProject = isPublishable;
 
         eventbus.trigger('roadAddressProject:fetched');
-        applicationModel.removeSpinner();
+        Spinner.hide();
       });
     };
 
@@ -230,7 +231,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
 
     this.revertChangesRoadlink = function (links) {
       if (!_.isEmpty(links)) {
-        applicationModel.addSpinner();
+        Spinner.show();
         const coordinates = applicationModel.getUserGeoLocation();
         const data = {
           'projectId': currentProject.project.id,
@@ -253,7 +254,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
               eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);
             }
             new ConfirmPopup(response.errorMessage, { type: "alert" });
-            applicationModel.removeSpinner();
+            Spinner.hide();
           }
         });
       }
@@ -262,7 +263,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
     const createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
         if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
-          applicationModel.addSpinner();
+          Spinner.show();
           resetEditedDistance();
           const ids = dataJson.ids;
           if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
@@ -278,7 +279,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
                 }
               } else {
                 new ConfirmPopup(successObject.errorMessage, { type: "alert" });
-                applicationModel.removeSpinner();
+                Spinner.hide();
               }
             });
           } else {
@@ -290,7 +291,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               } else {
                 new ConfirmPopup(successObject.errorMessage, { type: "alert" });
-                applicationModel.removeSpinner();
+                Spinner.hide();
               }
             });
           }
@@ -408,7 +409,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
       };
       if (dataJson.trackCode === Track.Unknown.value) {
         new ConfirmPopup("Tarkista ajoratakoodi", { type: "alert" });
-        applicationModel.removeSpinner();
+        Spinner.hide();
       }
 
       const changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
@@ -423,7 +424,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
             createOrUpdate(dataJson);
           },
           closeCallback: function () {
-            applicationModel.removeSpinner();
+            Spinner.hide();
           }
         });
       } else {
@@ -485,7 +486,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
     };
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks) {
-      applicationModel.addSpinner();
+      Spinner.show();
       const links = _.filter(selectedLinks, function (link) {
         return link.status !== RoadAddressChangeType.Terminated.value;
       });
@@ -504,7 +505,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
           eventbus.trigger('changeProjectDirection:clicked');
         } else {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
-          applicationModel.removeSpinner();
+          Spinner.hide();
         }
       });
     };
@@ -708,7 +709,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
         } else {
           new ConfirmPopup(errorObject.statusText.toString(), { type: "alert" });
         }
-        applicationModel.removeSpinner();
+        Spinner.hide();
         console.error("Error at deleting rotatingId: " + errorObject);
       });
     };

@@ -3,18 +3,16 @@ import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 
 /**
  * RoadAddressBrowserWindow component
  * Displays a modal for searching, viewing, and exporting road address data.
  * @param {Object} backend - Backend API wrapper
  * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
- * @param {Object} options - Runtime dependencies for modal and application state access
- * @param {Object} options.applicationModel - Application state manager
  */
-export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
+export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm) {
       const me = this;
-      const { applicationModel } = options;
       let searchParams = {};
       let searchResults = [];
       let modal = null;
@@ -575,10 +573,10 @@ export function RoadAddressBrowserWindow(backend, roadAddressBrowserForm, option
       }
 
       function fetchByTargetValue(params) {
-          applicationModel.addSpinner();
+          Spinner.show();
           backend.getDataForRoadAddressBrowser(params, function(result) {
               if (result.success) {
-                  applicationModel.removeSpinner();
+                  Spinner.hide();
                   me.setSearchParams(params);
                   me.setSearchResults(result.results);
                   if (result.results.length > 0) {

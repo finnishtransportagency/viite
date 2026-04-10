@@ -3,18 +3,17 @@
  * Allows users to search road address change history data and export it as CSV.
  * @param {Object} backend - Backend API wrapper
  * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
- * @param {Object} options - Runtime dependencies for modal and application state access
- * @param {Object} options.applicationModel - Application state manager
+ * @param {Object} options - Runtime dependencies for modal lifecycle hooks
  */
 import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 
 export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
-    const { applicationModel } = options;
         let searchParams = {};
         let elyEvkSelector;
         let modal = null;
@@ -379,10 +378,10 @@ export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm,
         }
 
         function fetchRoadAddressChanges(params) {
-            applicationModel.addSpinner();
+            Spinner.show();
             backend.getDataForRoadAddressChangesBrowser(params, function(result) {
                 if (result.success) {
-                    applicationModel.removeSpinner();
+                    Spinner.hide();
                     me.setSearchParams(params);
                     showData(result.changeInfos, createResultTable(result.changeInfos));
                 } else

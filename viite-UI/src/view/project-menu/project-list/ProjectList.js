@@ -3,6 +3,7 @@
 import { checkbox } from '@components/checkbox/Checkbox.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectActionMenu } from '@view/project-menu/project-action-menu/ProjectActionMenu.js';
 import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
@@ -192,7 +193,7 @@ export function ProjectList(projectCollection, options = {}) {
     };
 
     const openProjectSteps = (projectId) => {
-      applicationModel.addSpinner();
+      Spinner.show();
       projectCollection.getProjectsWithLinksById(projectId).then(result => {
         hide();
         eventbus.trigger('roadAddress:openProject', result);

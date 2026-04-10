@@ -116,7 +116,6 @@ export function MapView(map, layers, applicationModel) {
         layerToBeHidden.hide(map);
       }
       if (applicationModel.getRoadVisibility()) layerToBeShown.show(map);
-      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
       enableCtrlModifier = (layer === 'roadAddressProject' || layer === 'linkProperty');
     }, this);
 

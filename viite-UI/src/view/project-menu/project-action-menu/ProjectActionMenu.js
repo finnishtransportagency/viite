@@ -6,6 +6,7 @@
  * Provides refresh() for selective DOM updates and updateState() for external state management.
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
@@ -279,7 +280,7 @@ export function ProjectActionMenu(options) {
     const handleRecalculateClick = function () {
       $('#information-content').empty();
       const currentProject = projectCollection.getCurrentProject();
-      applicationModel.addSpinner();
+      Spinner.show();
       $('.validation-warning').remove();
 
       backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
@@ -301,7 +302,7 @@ export function ProjectActionMenu(options) {
             type: 'alert',
             okButtonLbl: 'OK'
           });
-          applicationModel.removeSpinner();
+          Spinner.hide();
         }
       });
     };
@@ -328,11 +329,11 @@ export function ProjectActionMenu(options) {
         return;
       }
 
-      applicationModel.addSpinner();
+      Spinner.show();
       $('.validation-warning').remove();
 
       backend.validateProject(currentProject.project.id, function (response) {
-        applicationModel.removeSpinner();
+        Spinner.hide();
         
         if (response.success) {
           const hasErrors = response.validationErrors && Object.keys(response.validationErrors).length > 0;

@@ -12,7 +12,7 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
  * - Project state and user session
  * - Selection types and special configurations
  */
-export function ApplicationModel(models) {
+export function ApplicationModel() {
     const zoom = {
       level: undefined
     };
@@ -22,7 +22,6 @@ export function ApplicationModel(models) {
     let selectedLayer;
     let selectedTool = ViiteEnumerations.Tool.Unknown.value;
     let centerLonLat;
-    let minDirtyZoomLevel = zoomlevels.minZoomForRoadLinks;
     let readOnly = true;
     let activeButtons = false;
     let openProject = false;
@@ -87,12 +86,6 @@ export function ApplicationModel(models) {
       }
     };
 
-    const isDirty = function () {
-      return _.some(models, function (model) {
-        return model.isDirty();
-      });
-    };
-
     const setZoomLevel = function (level) {
       zoom.level = Math.round(level);
     };
@@ -134,10 +127,6 @@ export function ApplicationModel(models) {
       return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) || (!readOnly && !activeButtons) || (readOnly);
     };
 
-    const canZoomOut = function () {
-      return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
-    };
-
     const isProjectOpen = function () {
       return openProject;
     };
@@ -156,10 +145,6 @@ export function ApplicationModel(models) {
 
     const getRoadVisibility = function () {
       return roadsVisibility;
-    };
-
-    const setMinDirtyZoomLevel = function (level) {
-      minDirtyZoomLevel = level;
     };
 
     const getSelectedLayer = function () {
@@ -246,28 +231,6 @@ export function ApplicationModel(models) {
       }
     };
 
-    const addSpinner = function() {
-      // Prevent duplicate spinners
-      if ($('.spinner-overlay').length) return;
-
-      const $spinnerOverlay = $('<div></div>')
-          .addClass('spinner-overlay modal-overlay')
-          .append($('<div></div>').addClass('spinner'));
-
-        $('body').append($spinnerOverlay);
-
-      // Auto-remove after 8 seconds
-      setTimeout(() => {
-        if ($spinnerOverlay.is(':visible')) {
-          removeSpinner();
-        }
-      }, 8000);
-    };
-
-    const removeSpinner = function() {
-      $('.spinner-overlay').remove();
-    };
-
     eventbus.on("userData:fetched", function (userData) {
       sessionUsername = userData.userName;
       sessionUserRoles = userData.roles;
@@ -296,7 +259,6 @@ export function ApplicationModel(models) {
       setZoomLevel: setZoomLevel,
       getRoadVisibility: getRoadVisibility,
       toggleRoadVisibility: toggleRoadVisibility,
-      setMinDirtyZoomLevel: setMinDirtyZoomLevel,
       selectLayer: selectLayer,
       getSelectedLayer: getSelectedLayer,
       setReadOnly: setReadOnly,
@@ -305,14 +267,10 @@ export function ApplicationModel(models) {
       setProjectFeature: setProjectFeature,
       setOpenProject: setOpenProject,
       getProjectFeature: getProjectFeature,
-      addSpinner: addSpinner,
-      removeSpinner: removeSpinner,
       isReadOnly: isReadOnly,
       isActiveButtons: isActiveButtons,
       isProjectButton: isProjectButton,
       isProjectOpen: isProjectOpen,
-      isDirty: isDirty,
-      canZoomOut: canZoomOut,
       canZoomOutEditMode: canZoomOutEditMode,
       getCurrentLocation: getCurrentLocation,
       setSelectionType: setSelectionType,

@@ -6,6 +6,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DataTable } from '@node-menu/DataTable.js';
 import { showToast } from '@components/Toast.js';
 import { MenuContainer } from '@components/MenuContainer.js';
+import { Spinner } from '@components/spinner/Spinner.js';
 import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
 import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
@@ -90,12 +91,12 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
 
       searchMenu.bindEvents($bodyContainer, {
         onSearch: function (data) {
-          applicationModel.addSpinner();
+          Spinner.show();
           searchMenu.setClearEnabled($bodyContainer, false);
           nodeCollection.getNodesByRoadAttributes(data);
         },
         onClear: function () {
-          applicationModel.addSpinner();
+          Spinner.show();
           searchMenu.setClearEnabled($bodyContainer, false);
           fetchUntreatedTemplates();
         },
@@ -122,7 +123,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
       });
 
       applicationModel.selectLayer('node');
-      applicationModel.addSpinner();
+      Spinner.show();
       fetchUntreatedTemplates();
     };
 
@@ -198,7 +199,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
           const $bodyContainer = getBodyContainer();
           $bodyContainer.find('#untreated-nodes-junctions-content').html(searchMenu.renderUntreatedTemplates(nodePointTemplates, junctionTemplates));
         }
-        applicationModel.removeSpinner();
+        Spinner.hide();
       });
     };
 
@@ -209,7 +210,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
         }
 
         const $bodyContainer = getBodyContainer();
-        applicationModel.removeSpinner();
+        Spinner.hide();
         if (hasResults) {
           $bodyContainer.find('#node-search-results-content').html(searchMenu.renderSearchResults(nodeCollection.getNodesWithAttributes()));
           $bodyContainer.find('#untreated-nodes-junctions-content').empty();
