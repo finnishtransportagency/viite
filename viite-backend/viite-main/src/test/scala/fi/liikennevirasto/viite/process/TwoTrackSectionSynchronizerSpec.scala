@@ -6,6 +6,8 @@ import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model._
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
+
 
 class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
 
@@ -202,6 +204,9 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
       * ~~~~~~~~=>~~~~~~=>------->
       * 0       25      45       62
       */
+
+    runWithRollback {
+         // Test that originalAddrMRange is also updated to reflect the synchronized state, ensuring that subsequent synchronizations have correct reference values
     val links = Seq(
       buildTestLink(60, Track.RightSide, (0, 15), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
       buildTestLink(61, Track.RightSide, (15, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
@@ -227,7 +232,7 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
     result.find(_.id == 64).get.originalAddrMRange should be(AddrMRange(45, 60))
     result.find(_.id == 65).get.addrMRange should be(AddrMRange(45, 62))
     result.find(_.id == 65).get.originalAddrMRange should be(AddrMRange(45, 62))
-  }
+  } }
 
   test("Case 7 - Administrative Class Change: Synchronize road part middle with minor discontinuity") {
     /**
@@ -288,38 +293,43 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
 
   test("Case 8 - Administrative Class Change: Synchronize road part end with 1 link on track 1 and 2 links on track 2") {
     /**
-      * Before: (145, 135) -> Avg 140
-      * 100        145   160
-      * ---------->~~~~~~~>
-      * -------->~~~~~~~~~~>
-      * 100     135      160
-      *
-      * After:
-      * 100       140    160
-      * ---------->~~~~~~~~~~>
-      * ---------->~~~~~~~~~~>
-      * 100       140     160
-      */
-    val links = Seq(
-      buildTestLink(80, Track.RightSide, (100, 145), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(81, Track.RightSide, (145, 160), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(82, Track.LeftSide, (100, 135), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(83, Track.LeftSide, (135, 160), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality)
-    )
+     * Before: (145, 135) -> Avg 140
+     * 100        145   160
+     * ---------->~~~~~~~>
+     * -------->~~~~~~~~~~>
+     * 100     135      160
+     *
+     * After:
+     * 100       140    160
+     * ---------->~~~~~~~~~~>
+     * ---------->~~~~~~~~~~>
+     * 100       140     160
+     */
 
-    val result = AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges(links)
+    runWithRollback {
 
-    result.find(_.id == 80).get.addrMRange should be(AddrMRange(100, 140))
-    result.find(_.id == 80).get.originalAddrMRange should be(AddrMRange(100, 140))
 
-    result.find(_.id == 81).get.addrMRange should be(AddrMRange(140, 160))
-    result.find(_.id == 81).get.originalAddrMRange should be(AddrMRange(140, 160))
+      val links = Seq(
+        buildTestLink(80, Track.RightSide, (100, 145), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+        buildTestLink(81, Track.RightSide, (145, 160), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+        buildTestLink(82, Track.LeftSide, (100, 135), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+        buildTestLink(83, Track.LeftSide, (135, 160), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality)
+      )
 
-    result.find(_.id == 82).get.addrMRange should be(AddrMRange(100, 140))
-    result.find(_.id == 82).get.originalAddrMRange should be(AddrMRange(100, 140))
+      val result = AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges(links)
 
-    result.find(_.id == 83).get.addrMRange should be(AddrMRange(140, 160))
-    result.find(_.id == 83).get.originalAddrMRange should be(AddrMRange(140, 160))
+      result.find(_.id == 80).get.addrMRange should be(AddrMRange(100, 140))
+      result.find(_.id == 80).get.originalAddrMRange should be(AddrMRange(100, 140))
+
+      result.find(_.id == 81).get.addrMRange should be(AddrMRange(140, 160))
+      result.find(_.id == 81).get.originalAddrMRange should be(AddrMRange(140, 160))
+
+      result.find(_.id == 82).get.addrMRange should be(AddrMRange(100, 140))
+      result.find(_.id == 82).get.originalAddrMRange should be(AddrMRange(100, 140))
+
+      result.find(_.id == 83).get.addrMRange should be(AddrMRange(140, 160))
+      result.find(_.id == 83).get.originalAddrMRange should be(AddrMRange(140, 160))
+    }
   }
 
   test("Case 9 - Administrative Class Change: Uneven link counts across tracks") {
