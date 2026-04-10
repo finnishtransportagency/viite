@@ -26,7 +26,7 @@
     "backbone": "1.6.0",
     "interactjs": "1.10.27",
     "jquery": "3.7.1",
-    "lodash": "4.17.23",
+    "lodash": "4.18.1",
     "moment": "2.30.1",
     "ol": "9.2.4",
     "pikaday": "1.8.2",
