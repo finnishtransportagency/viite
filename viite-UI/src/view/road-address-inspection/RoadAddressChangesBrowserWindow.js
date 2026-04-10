@@ -4,25 +4,30 @@
  * @param {Object} backend - Backend API wrapper
  * @param {Object} roadAddressBrowserForm - Form builder and validator for search fields
  * @param {Object} options - Runtime dependencies for modal and application state access
- * @param {Object} options.application - Application API used to access the modal container
  * @param {Object} options.applicationModel - Application state manager
  */
 import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
+import { ModalContainer } from '@components/modals/ModalContainer.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 
 export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, options = {}) {
-    const { application: applicationApi, applicationModel } = options;
+    const { applicationModel } = options;
         let searchParams = {};
         let elyEvkSelector;
+        let modal = null;
         const me = this;
 
-        // Initialize ModalContainer with configuration
-        const modal = applicationApi.getModalContainer({
+        const createModal = () => new ModalContainer({
             helpUrl: 'manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu',
-            helpTitle: 'Avaa käyttöohje'
+            helpTitle: 'Avaa käyttöohje',
+            onClose: () => {
+                $(document).off('keydown.roadAddressChangesBrowser');
+                modal = null;
+                elyEvkSelector = null;
+            }
         });
 
         // ========== Validation helpers (extracted) ==========
@@ -399,7 +404,7 @@ export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm,
           $(document).off('keydown' + eventNs).on('keydown' + eventNs, function(e) {
 
               // ModalContainer does not expose isVisible(); skip when modal is detached from DOM.
-              if (!modal.getContent().closest('body').length) {
+              if (!modal || !modal.getContent().closest('body').length) {
                   return;
               }
 
@@ -503,12 +508,12 @@ export function RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm,
 
         return {
             show: () => {
+                modal = createModal();
                 modal.open({
                     title: 'Tieosoitemuutosten katselu',
                     content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm()
                 });
 
-                // Modal container is a singleton, so bind handlers explicitly on each open.
                 if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
                     insertElyEvkSelector();
                 }

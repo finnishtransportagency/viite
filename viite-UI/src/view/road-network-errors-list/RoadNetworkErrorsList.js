@@ -3,17 +3,18 @@
  * Displays road network validation errors in a modal window.
  * @param {Object} backend - Backend API wrapper
  * @param {Object} options - Runtime dependencies for modal and application state access
- * @param {Object} options.application - Application API used to access the modal container
  * @param {Object} options.applicationModel - Application state manager
  */
+import { ModalContainer } from '@components/modals/ModalContainer.js';
+
 export function RoadNetworkErrorsList(backend, options = {}) {
-        const { application: applicationApi, applicationModel } = options;
+    const { applicationModel } = options;
 
         let modalContainer;
 
         const showRoadNetworkErrorsListWindow = function () {
 
-            modalContainer = applicationApi.getModalContainer();
+            modalContainer = new ModalContainer({});
 
             modalContainer.open({
                 title: 'Tieverkon virheet',
@@ -60,7 +61,8 @@ export function RoadNetworkErrorsList(backend, options = {}) {
 
         const hideRoadNetworkErrorsListWindow = function () {
             if (modalContainer) {
-                modalContainer.hide();
+                modalContainer.close();
+                modalContainer = null;
             }
         };
 

@@ -19,7 +19,6 @@ export function MainMenu(selectedLinkProperty, roadNamingTool, roadAddressBrowse
 
   const showProjectList = () => {
     const projectList = new ProjectList(projectCollection, {
-      applicationApi: options.applicationApi,
       applicationModel: applicationModel,
       projectMenu: options.projectMenu,
       onProjectMenuCreated: options.onProjectMenuCreated,

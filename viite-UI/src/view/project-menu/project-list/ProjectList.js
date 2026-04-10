@@ -2,6 +2,7 @@
 // Polls for project state updates every 30 seconds.
 import { checkbox } from '@components/checkbox/Checkbox.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { ProjectActionMenu } from '@view/project-menu/project-action-menu/ProjectActionMenu.js';
 import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
@@ -10,7 +11,6 @@ import { eventbus } from '@utils/eventbus.js';
 import { eventutil } from '@utils/EventUtils.js';
 
 export function ProjectList(projectCollection, options = {}) {
-  const applicationApi = options.applicationApi;
   const applicationModel = options.applicationModel;
   let projectMenuInstance = null;
 
@@ -293,7 +293,7 @@ export function ProjectList(projectCollection, options = {}) {
       $container = $('<div id="project-list-root"></div>');
       bindEvents();
       render();
-      modalContainer = applicationApi.getModalContainer({ onClose: hide });
+      modalContainer = new ModalContainer({ onClose: hide });
       modalContainer.open({ title: 'Tieosoiteprojektit', content: $container });
       fetchProjects();
       pollProjects = setInterval(() => projectCollection.getProjectStates(state.projects.map(p => p.id)), 30000);

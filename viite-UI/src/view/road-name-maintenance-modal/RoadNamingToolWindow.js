@@ -1,20 +1,12 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { eventbus } from '@utils/eventbus.js';
 
-export function RoadNamingToolWindow(roadNameCollection, options = {}) {
-  const applicationApi = options.applicationApi;
-
+export function RoadNamingToolWindow(roadNameCollection) {
     const newId = -1000;
     const defaultDateFormat = 'DD.MM.YYYY';
-    
-    // Get the shared modal instance via the singleton getter
-    const modal = applicationApi.getModalContainer({
-      onClose: () => {
-        $('.roadList-item').remove(); 
-        roadNameCollection.clear();
-      }
-    });
+    let modal = null;
 
     // Generate the base HTML content for the naming tool
     const createNamingToolContent = () => {
@@ -267,6 +259,14 @@ export function RoadNamingToolWindow(roadNameCollection, options = {}) {
     }
 
     function showRoadNamingToolWindow() {
+      modal = new ModalContainer({
+        onClose: () => {
+          $('.roadList-item').remove();
+          roadNameCollection.clear();
+          modal = null;
+        }
+      });
+
       modal.open({
         title: 'Tienimi',
         content: createNamingToolContent()

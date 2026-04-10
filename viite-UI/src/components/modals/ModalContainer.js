@@ -1,15 +1,11 @@
 /**
  * @example
- * // Basic usage (singleton pattern is used to make event binding simpler)
+ * // Basic usage
  * const modal = new ModalContainer({
  *     helpUrl: 'manual.html#section',
  *     onClose: () => console.log('closed')
  * });
- * 
- * const adminModal = Application.getModalContainer({
- *     className: 'admin-panel-modal'
- * });
- * adminModal.open({
+ * modal.open({
  *     title: 'Admin Paneeli',
  *     content: '<p>Content here</p>'
  * });

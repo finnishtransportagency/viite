@@ -1,16 +1,16 @@
 import { DynamicLinkNetworkContent as dynamicLinkNetworkContent } from './DynamicLinkNetworkContent.js';
+import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Main as UserManagementMain } from './user-management/Main.js';
 
 // Panel that contains all the tools available for users with admin role
 export function AdminPanel(backend, options = {}) {
 
-        const { applicationApi, applicationModel } = options;
+    const { applicationModel } = options;
 
         const dynamicLinkNetwork = dynamicLinkNetworkContent(backend);
 
         const showAdminPanelWindow = function () {
-            // Get singleton modal container
-            const modalContainer = applicationApi.getModalContainer({
+            const modalContainer = new ModalContainer({
                 className: 'admin-panel-modal'
             });
 

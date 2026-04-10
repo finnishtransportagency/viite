@@ -11,7 +11,6 @@ import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { LocationSearch } from '@model/LocationSearch.js';
 import { MainMenu } from '@view/MainMenu.js';
 import { MapView } from '@view/map/MapView.js';
-import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { NavigationPanel } from '@view/navigation-panel/NavigationPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';
@@ -98,10 +97,6 @@ const startApplication = function (backend, models, startupParameters, roadNameC
   eventbus.trigger('application:initialized');
 };
 
-export const application = {
-  start,
-  getModalContainer
-};
 
 $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
   if (jqxhr.getAllResponseHeaders()) {
@@ -164,15 +159,12 @@ const setupMapLayers = function (map, models) {
 };
 
 const initializeUIComponents = function (backend, models, map, startupParameters, roadNameCollection, projectMenuRef) {
-  const roadNamingTool = new RoadNamingToolWindow(roadNameCollection, {
-    applicationApi: application
-  });
+  const roadNamingTool = new RoadNamingToolWindow(roadNameCollection);
   const roadAddressBrowserForm = new RoadAddressBrowserForm();
-  const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm, { application, applicationModel });
-  const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, { application, applicationModel });
-  const roadNetworkErrorsList = new RoadNetworkErrorsList(backend, { application, applicationModel });
+  const roadAddressBrowser = new RoadAddressBrowserWindow(backend, roadAddressBrowserForm, { applicationModel });
+  const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(backend, roadAddressBrowserForm, { applicationModel });
+  const roadNetworkErrorsList = new RoadNetworkErrorsList(backend, { applicationModel });
   const adminPanel = new AdminPanel(backend, {
-    applicationApi: application,
     applicationModel: applicationModel
   });
 
@@ -195,7 +187,6 @@ const initializeUIComponents = function (backend, models, map, startupParameters
   nodesAndJunctionsModule.initialize();
 
   const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, {
-    applicationApi: application,
     applicationModel: applicationModel,
     eventbus: eventbus,
     projectCollection: models.projectCollection,
@@ -281,15 +272,6 @@ const bindEvents = function () {
     jQuery('.spinner-overlay').remove();
   });
 };
-
-let modalContainerSingleton = null;
-
-export function getModalContainer(config) {
-  if (!modalContainerSingleton) {
-    modalContainerSingleton = new ModalContainer(config);
-  }
-  return modalContainerSingleton;
-}
 
 $(function () {
   start();
