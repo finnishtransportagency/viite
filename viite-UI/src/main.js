@@ -19,10 +19,8 @@ import { ProjectCollection } from '@model/ProjectCollection.js';
 import { ProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { RoadCollection } from '@model/RoadCollection.js';
 import { RoadLayer } from '@view/map/layers/RoadLayer.js';
-import { RoadLinkBox } from '@view/navigation-panel/RoadLinkBox.js';
 import { RoadNameCollection } from '@model/RoadNameCollection.js';
 import { ScaleBar } from '@view/map/markers/ScaleBar.js';
-import { SearchBox } from '@view/navigation-panel/SearchBox.js';
 import { SelectedLinkProperty } from '@model/SelectedLinkProperty.js';
 import { SelectedNodesAndJunctions } from '@model/SelectedNodesAndJunctions.js';
 import { SelectedProjectLink } from '@model/SelectedProjectLink.js';
@@ -64,32 +62,25 @@ export function start() {
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
     bindEvents();
-    const linkGroups = groupLinks(selectedProjectLinkProperty, applicationModel);
-
-    NavigationPanel.initialize(
-      jQuery('#map-tools'),
-      new SearchBox(
-        new LocationSearch(backend, applicationModel)
-      ),
-      linkGroups
-    );
+    new NavigationPanel({
+      container: jQuery('#map-tools'),
+      backend: backend,
+      applicationModel: applicationModel
+    });
 
     backend.getUserRoles();
-    startApplication(backend, models, startupParameters, roadNameCollection);
+    setupProjections();
+    const map = setupMap(backend, models, startupParameters, roadNameCollection);
+    new URLRouter(map, backend, models, applicationModel);
+    eventbus.trigger('application:initialized');
   });
 }
 
-const startApplication = function (backend, models, startupParameters, roadNameCollection) {
-  setupProjections();
-  const map = setupMap(backend, models, startupParameters, roadNameCollection);
-  new URLRouter(map, backend, models, applicationModel);
-  eventbus.trigger('application:initialized');
-};
-
+// Global AJAX error handler to catch and log any AJAX errors across the application
 $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
   if (jqxhr.getAllResponseHeaders()) {
     Spinner.clear();
-    console.log(`Request '${settings.url}' failed: ${thrownError}`);
+    console.error(`Request '${settings.url}' failed: ${thrownError}`);
   }
 });
 
@@ -146,20 +137,21 @@ const setupMapLayers = function (map, models) {
   };
 };
 
-const initializeMapPlugins = function (map, startupParameters) {
+const initializeMapPlugins = function (map) {
   const mapPluginsContainer = jQuery('#map-plugins');
   new ScaleBar(map, mapPluginsContainer);
   new ZoomBox(map, mapPluginsContainer, applicationModel);
   new Footer(map, mapPluginsContainer, applicationModel);
+};
+
+const setupHeaderInfo = function (backend, startupParameters) {
 
   const toolTip = `<i class="fas fa-info-circle" title="Versio: ${startupParameters.deploy_date}"></i>\n`;
 
-  const pictureTooltip = jQuery('#pictureTooltip');
-  pictureTooltip.empty();
-  pictureTooltip.append(toolTip);
-};
+  const headerTooltip = jQuery('#headerTooltip');
+  headerTooltip.empty();
+  headerTooltip.append(toolTip);
 
-const setupVersionInfo = function (backend) {
   backend.getRoadLinkDate(function (versionData) {
     getRoadLinkDateInfo(versionData);
   });
@@ -199,7 +191,7 @@ const setupMap = function (backend, models, startupParameters, roadNameCollectio
   });
   applicationModel.setMainMenu(mainMenu);
   initializeMapPlugins(map, startupParameters);
-  setupVersionInfo(backend);
+  setupHeaderInfo(backend, startupParameters);
 
   new MapView(map, layers, applicationModel);
 
@@ -211,13 +203,6 @@ const setupMap = function (backend, models, startupParameters, roadNameCollectio
 const setupProjections = function () {
   proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
 };
-
-function groupLinks(selectedProjectLinkProperty, appModel) {
-  const roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty, appModel);
-  return [
-    [roadLinkBox]
-  ];
-}
 
 const bindEvents = function () {
   eventbus.on('linkProperties:available', function () {

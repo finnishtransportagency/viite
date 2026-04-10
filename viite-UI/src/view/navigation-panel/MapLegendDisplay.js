@@ -1,14 +1,13 @@
 /**
- * RoadLinkBox component
+ * MapLegendDisplay component
  * Displays road link legend and tool selection panel for road address link properties.
- * @param {Object} selectedProjectLinkProperty - Selected project link property manager
  * @param {Object} applicationModel - Application state manager
  * @returns {Object} Component with element, title, and visibility control methods
  */
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 
-export function RoadLinkBox(selectedProjectLinkProperty, applicationModel) {
+export function MapLegendDisplay(applicationModel) {
   const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const className = 'road-link';
     const title = 'Selite';
@@ -21,39 +20,36 @@ export function RoadLinkBox(selectedProjectLinkProperty, applicationModel) {
 
     const roadClassLegend = $('<div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>');
 
-    const calibrationPointPicture = $(`
+    const calibrationPointPicture = `
       <div class="legend-entry">
           <div class="label">Kalibrointipiste</div>
           <div class="calibration-point-image"></div>
-          </div>`);
+      </div>`;
 
-    const roadPartStartPointPicture = $(`
+    const roadPartStartPointPicture = `
       <div class="legend-entry">
           <div class="label">Tieosan alku</div>
           <div class="calibration-point-image"></div>
-          </div>`);
+      </div>`;
 
-    const junctionPicture = $(
-      `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+    const junctionPicture = `
+      <div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
         <object type="image/svg+xml" data="images/junction.svg" style="margin-right: 5px; margin-top: 5px">
         </object>
         <div class="label">Liittymä</div>
-      </div>`
-    );
+      </div>`;
 
-    const junctionTemplatePicture = $(
-      `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+    const junctionTemplatePicture = `
+      <div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
         <object type="image/svg+xml" data="images/junction-template.svg" style="margin-right: 5px; margin-top: 5px"></object>
         <div class="label">Liittymäaihio</div>
-      </div>`
-    );
+      </div>`;
 
-    const nodeTemplatePicture = $(
-      `<div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
+    const nodeTemplatePicture = `
+      <div class="legend-entry" style="min-width: 100%;display: inline-flex;justify-content: left;align-items: center;">
         <object type="image/svg+xml" data="images/node-point-template.svg" style="margin-right: 5px; margin-top: 5px"></object>
         <div class="label">Solmukohta-aihio</div>
-      </div>`
-    );
+      </div>`;
 
     const roadClasses = [
       [1, 'Valtatie (1-39)'],
@@ -185,9 +181,7 @@ export function RoadLinkBox(selectedProjectLinkProperty, applicationModel) {
     const Tool = function (toolName, icon, description) {
       const classNameForTool = toolName.toLowerCase();
       const toolElement = $('<div class="action"></div>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function () {
-        executeOrShowConfirmDialog(function () {
-          applicationModel.setSelectedTool(toolName);
-        });
+        selectTool();
       });
 
       const deactivate = function () {
@@ -197,12 +191,8 @@ export function RoadLinkBox(selectedProjectLinkProperty, applicationModel) {
         toolElement.addClass('active');
       };
 
-      const executeOrShowConfirmDialog = function (f) {
-        if (selectedProjectLinkProperty.isDirty()) {
-          new Confirm();
-        } else {
-          f();
-        }
+      const selectTool = function () {
+        applicationModel.setSelectedTool(toolName);
       };
 
       return {
