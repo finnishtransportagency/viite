@@ -23,9 +23,29 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const applicationModel = options.applicationModel;
     const mainMenu = options.mainMenu;
     const eventbus = eventBus;
+    const selectedProjectLinkProperty = options.selectedProjectLinkProperty;
     let menu = null;
 
-    const closeProjectMenu = () => {
+    const clearSelectedProjectLinks = () => {
+      if (!selectedProjectLinkProperty) {
+        return;
+      }
+
+      if (_.isFunction(selectedProjectLinkProperty.cleanIds)) {
+        selectedProjectLinkProperty.cleanIds();
+      }
+      if (_.isFunction(selectedProjectLinkProperty.clean)) {
+        selectedProjectLinkProperty.clean();
+      }
+      if (_.isFunction(selectedProjectLinkProperty.setDirty)) {
+        selectedProjectLinkProperty.setDirty(false);
+      }
+      if (_.isFunction(selectedProjectLinkProperty.clearFeaturesToKeep)) {
+        selectedProjectLinkProperty.clearFeaturesToKeep();
+      }
+    };
+
+    const closeProjectMenu = ({ noSave = false } = {}) => {
       
       // Reset component state
       currentState = States.CONFIGURATION;
@@ -44,9 +64,13 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       if (mainMenu && typeof mainMenu.setState === 'function') {
         mainMenu.setState('main');
       }
+      eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
+      eventbus.trigger('roadAddressProject:deactivateAllSelections');
+      eventbus.trigger('roadAddressProject:clearOnClose');
+      clearSelectedProjectLinks();
       eventbus.trigger('layer:selected', 'linkProperty', null, true);
       applicationModel.setOpenProject(false);
-      applicationModel.selectLayer('linkProperty');
+      applicationModel.selectLayer('linkProperty', true, noSave);
     };
 
     const ensureMenu = () => {
@@ -323,7 +347,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       showToast('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
       closeProjectMenu();
       eventbus.trigger('layer:enableButtons', false);
-      eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
       eventbus.trigger('roadLinks:refreshView');
     });
 

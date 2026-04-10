@@ -2,6 +2,8 @@
 // Polls for project state updates every 30 seconds.
 import { checkbox } from '@components/checkbox/Checkbox.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ProjectActionMenu } from '@view/project-menu/project-action-menu/ProjectActionMenu.js';
+import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
@@ -10,7 +12,48 @@ import { eventutil } from '@utils/EventUtils.js';
 export function ProjectList(projectCollection, options = {}) {
   const applicationApi = options.applicationApi;
   const applicationModel = options.applicationModel;
+  let projectMenuInstance = null;
+
+  const ensureProjectMenu = () => {
+    if (projectMenuInstance) {
+      return projectMenuInstance;
+    }
+
+    const actionMenu = new ProjectActionMenu({
+      projectCollection: projectCollection,
+      map: options.map,
+      eventbus: options.eventbus || eventbus,
+      applicationModel: applicationModel,
+      backend: options.backend,
+      projectChangeInfoModel: options.projectChangeInfoModel,
+      startupParameters: options.startupParameters,
+      mainMenu: options.mainMenu
+    });
+
+    projectMenuInstance = new ProjectMenu('#menu-container', options.eventbus || eventbus, {
+      projectMenu: actionMenu,
+      projectCollection: projectCollection,
+      projectLinkLayer: options.projectLinkLayer,
+      selectedProjectLinkProperty: options.selectedProjectLinkProperty,
+      mainMenu: options.mainMenu,
+      applicationModel: applicationModel,
+      map: options.map,
+      backend: options.backend,
+      projectChangeTable: actionMenu.getProjectChangeTable(),
+      projectChangeInfoModel: options.projectChangeInfoModel,
+      startupParameters: options.startupParameters
+    });
+
+    if (_.isFunction(options.onProjectMenuCreated)) {
+      options.onProjectMenuCreated(projectMenuInstance);
+    }
+
+    return projectMenuInstance;
+  };
   const resolveProjectMenu = function () {
+    if (projectMenuInstance) {
+      return projectMenuInstance;
+    }
     if (_.isFunction(options.projectMenu)) {
       return options.projectMenu();
     }
@@ -109,6 +152,7 @@ export function ProjectList(projectCollection, options = {}) {
       const status = parseInt($el.data('status'));
       const proceed = () => {
         clearInterval(pollProjects);
+        ensureProjectMenu();
         if (status === projectStatus.ErrorInViite.value) {
           projectCollection.reOpenProjectById(id);
           eventbus.once("roadAddressProject:reOpenedProject", () => openProjectSteps(id));
@@ -135,6 +179,7 @@ export function ProjectList(projectCollection, options = {}) {
       applicationModel.setOpenProject(true);
       projectCollection.clearRoadAddressProjects();
       const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
+      ensureProjectMenu();
       const projectMenu = resolveProjectMenu();
       if (projectMenu && _.isFunction(projectMenu.showProjectDetails)) {
         projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
@@ -244,6 +289,7 @@ export function ProjectList(projectCollection, options = {}) {
       state.filterBox.visible = false;
       state.loading = true;
       state.onlyActive = true;
+      ensureProjectMenu();
       $container = $('<div id="project-list-root"></div>');
       bindEvents();
       render();

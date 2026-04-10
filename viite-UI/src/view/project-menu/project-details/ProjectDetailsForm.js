@@ -481,9 +481,6 @@ export function ProjectDetailsForm(callbacks = {}) {
                     returnToActions(latestProject);
                   } else {
                     callbacks.closeProjectMenu();
-                    if (mainMenu && typeof mainMenu.setState === 'function') {
-                      mainMenu.setState('main');
-                    }
                   }
                 } else {
                   new ConfirmPopup(getBackendErrorMessage(result, 'Projektin tallennus epäonnistui.'), {
@@ -510,9 +507,6 @@ export function ProjectDetailsForm(callbacks = {}) {
               // Close without saving - reset layer to default
               applicationModel.selectLayer('linkProperty', true, false);
               callbacks.closeProjectMenu();
-              if (mainMenu && typeof mainMenu.setState === 'function') {
-                mainMenu.setState('main');
-              }
             }
           });
         } else {
@@ -525,9 +519,6 @@ export function ProjectDetailsForm(callbacks = {}) {
           // No unsaved changes, close directly - reset layer to default
           applicationModel.selectLayer('linkProperty', true, false);
           callbacks.closeProjectMenu();
-          if (mainMenu && typeof mainMenu.setState === 'function') {
-            mainMenu.setState('main');
-          }
         }
       });
 

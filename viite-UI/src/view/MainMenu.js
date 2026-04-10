@@ -15,12 +15,22 @@ export function MainMenu(selectedLinkProperty, roadNamingTool, roadAddressBrowse
   const activeEventbus = options.eventbus || eventbus;
   const projectCollection = options.projectCollection;
   let menu = null;
+  const mainMenuApi = { setState: () => undefined };
 
   const showProjectList = () => {
     const projectList = new ProjectList(projectCollection, {
       applicationApi: options.applicationApi,
       applicationModel: applicationModel,
-      projectMenu: options.projectMenu
+      projectMenu: options.projectMenu,
+      onProjectMenuCreated: options.onProjectMenuCreated,
+      map: options.map,
+      backend: options.backend,
+      eventbus: activeEventbus,
+      mainMenu: mainMenuApi,
+      selectedProjectLinkProperty: options.selectedProjectLinkProperty,
+      projectLinkLayer: options.projectLinkLayer,
+      projectChangeInfoModel: options.projectChangeInfoModel,
+      startupParameters: options.startupParameters
     });
     projectList.show();
   };
@@ -147,6 +157,7 @@ export function MainMenu(selectedLinkProperty, roadNamingTool, roadAddressBrowse
 
   bindEvents();
   setState('main');
+  mainMenuApi.setState = setState;
   
   return {
     setState

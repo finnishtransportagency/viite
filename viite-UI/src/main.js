@@ -16,11 +16,9 @@ import { NavigationPanel } from '@view/navigation-panel/NavigationPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';
 import { NodeMenu } from '@node-menu/NodeMenu.js';
-import { ProjectActionMenu } from '@view/project-menu/project-action-menu/ProjectActionMenu.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
 import { ProjectCollection } from '@model/ProjectCollection.js';
 import { ProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
-import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { RoadAddressBrowserForm } from '@view/road-address-inspection/RoadAddressBrowserForm.js';
 import { RoadAddressBrowserWindow } from '@view/road-address-inspection/RoadAddressBrowserWindow.js';
 import { RoadAddressChangesBrowserWindow } from '@view/road-address-inspection/RoadAddressChangesBrowserWindow.js';
@@ -201,41 +199,21 @@ const initializeUIComponents = function (backend, models, map, startupParameters
     applicationModel: applicationModel,
     eventbus: eventbus,
     projectCollection: models.projectCollection,
-    projectMenu: () => projectMenuRef.current
+    projectMenu: () => projectMenuRef.current,
+    onProjectMenuCreated: (projectMenu) => {
+      projectMenuRef.current = projectMenu;
+      applicationModel.setProjectMenu(projectMenu);
+    },
+    map: map,
+    backend: backend,
+    selectedProjectLinkProperty: models.selectedProjectLinkProperty,
+    projectLinkLayer: models.projectLinkLayer,
+    projectChangeInfoModel: models.projectChangeInfoModel,
+    startupParameters: startupParameters
   });
   applicationModel.setMainMenu(mainMenu);
 
   return { mainMenu };
-};
-
-const setupProjectMenus = function (models, map, backend, startupParameters, mainMenu, projectLinkLayer) {
-  const projectActionMenu = new ProjectActionMenu({
-    projectCollection: models.projectCollection,
-    map: map,
-    eventbus: eventbus,
-    applicationModel: applicationModel,
-    backend: backend,
-    projectChangeInfoModel: models.projectChangeInfoModel,
-    startupParameters: startupParameters
-  });
-
-  const projectMenu = new ProjectMenu('#menu-container', eventbus, {
-    projectMenu: projectActionMenu,
-    projectCollection: models.projectCollection,
-    projectLinkLayer: projectLinkLayer,
-    selectedProjectLinkProperty: models.selectedProjectLinkProperty,
-    mainMenu: mainMenu,
-    applicationModel,
-    map: map,
-    backend: backend,
-    projectChangeTable: projectActionMenu.getProjectChangeTable(),
-    projectChangeInfoModel: models.projectChangeInfoModel,
-    startupParameters: startupParameters
-  });
-
-  applicationModel.setProjectMenu(projectMenu);
-
-  return { projectActionMenu, projectMenu };
 };
 
 const initializeMapPlugins = function (map, startupParameters) {
@@ -275,12 +253,8 @@ const setupMap = function (backend, models, startupParameters, roadNameCollectio
   const map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
   const layers = setupMapLayers(map, models);
-  const uiComponents = initializeUIComponents(backend, models, map, startupParameters, roadNameCollection, projectMenuRef);
-
-  const projectMenus = setupProjectMenus(models, map, backend, startupParameters, uiComponents.mainMenu, layers.roadAddressProject);
-  if (projectMenuRef) {
-    projectMenuRef.current = projectMenus.projectMenu;
-  }
+  models.projectLinkLayer = layers.roadAddressProject;
+  initializeUIComponents(backend, models, map, startupParameters, roadNameCollection, projectMenuRef);
   initializeMapPlugins(map, startupParameters);
   setupVersionInfo(backend);
 

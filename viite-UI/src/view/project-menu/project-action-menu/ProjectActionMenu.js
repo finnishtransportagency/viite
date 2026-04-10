@@ -173,7 +173,7 @@ export function ProjectActionMenu(options) {
       return false;
     };
 
-const getProjectErrors = function (projectErrors, links) {
+    const getProjectErrors = function (projectErrors, links) {
       let buttonIndex = 0;
       let errorIndex = 0;
       let errorLines = '';
@@ -258,21 +258,20 @@ const getProjectErrors = function (projectErrors, links) {
     // EVENT HANDLERS
     // ==========================================
 
-    const closeProjectMode = (changeLayerMode, noSave) => {
+    const closeProjectMode = (_changeLayerMode, noSave) => {
       activeEventbus.trigger('roadAddressProject:startAllInteractions');
       activeEventbus.trigger('projectChangeTable:hide');
-      applicationModel.setOpenProject(false);
-
       projectCollection.clearRoadAddressProjects();
       activeEventbus.trigger('layer:enableButtons', false);
+
       if (typeof closeProjectMenu === 'function') {
-        closeProjectMenu();
+        closeProjectMenu({ noSave: Boolean(noSave) });
       } else if (mainMenu && typeof mainMenu.setState === 'function') {
-          mainMenu.setState('main');
-        }
-      
-      if (changeLayerMode) {
+        applicationModel.setOpenProject(false);
+        activeEventbus.trigger('roadAddressProject:deselectFeaturesSelected');
+        activeEventbus.trigger('roadAddressProject:deactivateAllSelections');
         activeEventbus.trigger('roadAddressProject:clearOnClose');
+        mainMenu.setState('main');
         applicationModel.selectLayer('linkProperty', true, noSave);
       }
     };
