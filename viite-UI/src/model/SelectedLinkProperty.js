@@ -25,13 +25,11 @@ export function SelectedLinkProperty(roadCollection, applicationModel) {
         _.each(current, function (selected) {
           selected.unselect();
         });
-        applicationModel.setActiveButtons(false);
         setCurrent([]);
         dirty = false;
         featuresToKeep = [];
         eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
-        applicationModel.setActiveButtons(false);
       }
     };
 

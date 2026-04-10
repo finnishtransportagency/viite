@@ -48,8 +48,6 @@ export function start() {
     const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel));
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
-    proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
-    ol.proj.proj4.register(proj4);
 
     const models = {
       roadCollection: roadCollection,
@@ -69,7 +67,7 @@ export function start() {
 
     backend.getUserRoles();
     setupProjections();
-    const map = setupMap(backend, models, startupParameters, roadNameCollection);
+    const map = initializeApplicationMap(backend, models, startupParameters, roadNameCollection);
     new URLRouter(map, backend, models, applicationModel);
     eventbus.trigger('application:initialized');
   });
@@ -142,10 +140,25 @@ const initializeMapPlugins = function (map) {
   new Footer(map, mapPluginsContainer, applicationModel);
 };
 
+const initializeMainMenu = function (backend, map, models, roadNameCollection) {
+  new MainMenu({
+    selectedLinkProperty: models.selectedLinkProperty,
+    applicationModel: applicationModel,
+    eventbus: eventbus,
+    projectCollection: models.projectCollection,
+    map: map,
+    backend: backend,
+    selectedProjectLinkProperty: models.selectedProjectLinkProperty,
+    projectLinkLayer: models.projectLinkLayer,
+    projectChangeInfoModel: models.projectChangeInfoModel,
+    roadNameCollection: roadNameCollection,
+    models: models
+  });
+};
+
 const setupHeaderInfo = function (backend, startupParameters) {
 
   const toolTip = `<i class="fas fa-info-circle" title="Versio: ${startupParameters.deploy_date}"></i>\n`;
-
   const headerTooltip = jQuery('#headerTooltip');
   headerTooltip.empty();
   headerTooltip.append(toolTip);
@@ -168,26 +181,26 @@ const setupHeaderInfo = function (backend, startupParameters) {
   }
 };
 
-const setupMap = function (backend, models, startupParameters, roadNameCollection) {
+const createMapAndLayers = function (models, startupParameters) {
   const tileMaps = new TileMapCollection();
   const map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
   const layers = setupMapLayers(map, models);
   models.projectLinkLayer = layers.roadAddressProject;
-  const mainMenu = new MainMenu({
-    selectedLinkProperty: models.selectedLinkProperty,
-    applicationModel: applicationModel,
-    eventbus: eventbus,
-    projectCollection: models.projectCollection,
+
+  return {
     map: map,
-    backend: backend,
-    selectedProjectLinkProperty: models.selectedProjectLinkProperty,
-    projectLinkLayer: models.projectLinkLayer,
-    projectChangeInfoModel: models.projectChangeInfoModel,
-    roadNameCollection: roadNameCollection,
-    models: models
-  });
-  initializeMapPlugins(map, startupParameters);
+    layers: layers
+  };
+};
+
+const initializeApplicationMap = function (backend, models, startupParameters, roadNameCollection) {
+  const mapSetup = createMapAndLayers(models, startupParameters);
+  const map = mapSetup.map;
+  const layers = mapSetup.layers;
+
+  initializeMainMenu(backend, map, models, roadNameCollection);
+  initializeMapPlugins(map);
   setupHeaderInfo(backend, startupParameters);
 
   new MapView(map, layers, applicationModel);
@@ -199,6 +212,7 @@ const setupMap = function (backend, models, startupParameters, roadNameCollectio
 
 const setupProjections = function () {
   proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
+  ol.proj.proj4.register(proj4);
 };
 
 const bindEvents = function () {

@@ -119,11 +119,7 @@ export function MainMenu(options = {}) {
           });
           break;
         case 'project':
-          if (applicationModel.isProjectOpen()) {
-            new ConfirmPopup('Projektin muokkaus on kesken...', { type: 'alert' });
-          } else {
             showProjectList();
-          }
           break;
         case 'nameTool':
           roadNamingTool.show();
@@ -205,7 +201,7 @@ export function MainMenu(options = {}) {
 
       // Close link properties menu when map is clicked that doesn't have a link
       activeEventbus.on('linkProperties:unselected', () => {
-        if (!applicationModel.isProjectOpen()) setState('main');
+        setState('main');
       });
       
       // Close nodes and junctions menu and return to main menu

@@ -82,7 +82,6 @@ export function RoadCollection(backend, applicationModel) {
       return _.flatten(roadLinkGroups);
     };
 
-
     const getSelectedRoadLinkModels = function () {
       return selectedRoadLinkModels;
     };
