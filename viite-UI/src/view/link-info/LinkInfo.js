@@ -138,7 +138,6 @@ export function LinkInfo(selectedLinkProperty) {
       const isSamePart = isSameRoad && roadPartNumbers.length === 1;
 
       return `
-        <header class="link-info-header"><span>Tieosoitteen ominaisuustiedot</span></header>
         <div class="wrapper read-only link-info-wrapper">
           <div class="form form-horizontal form-dark link-info-content">
             <div class="metadata-container">
@@ -170,6 +169,6 @@ export function LinkInfo(selectedLinkProperty) {
                 ${isSamePart ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '')}
             </div>
           </div>
-        </div><footer></footer>`;
+        </div>`;
     };
 }

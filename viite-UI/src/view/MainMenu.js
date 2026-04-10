@@ -93,9 +93,13 @@ export function MainMenu(options = {}) {
       return new MenuContainer(rootElement);
   };
 
-    const renderBody = (html) => {
+    const renderBody = (html, config = {}) => {
+      const header = config.header || '';
+      const onClose = config.onClose || null;
       menu = createMenuContainer();
       if (menu) {
+        menu.setHeader(header);
+        menu.setOnClose(onClose);
         menu.setBody(html);
       } else {
         rootElement.html(html);
@@ -109,7 +113,10 @@ export function MainMenu(options = {}) {
           bindMenuActions();
           break;
         case 'linkInfo':
-          renderBody(linkInfo.render(data));
+          renderBody(linkInfo.render(data), {
+            header: 'Tieosoitteen ominaisuustiedot',
+            onClose: () => setState('main')
+          });
           break;
         case 'project':  /* Handled by ProjectList */ break;
         case 'node':     /* Handled by NodesAndJunctions component */ break;
