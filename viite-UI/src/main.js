@@ -18,10 +18,8 @@ import { NodeLayer } from '@view/map/layers/NodeLayer.js';
 import { NodeMenu } from '@node-menu/NodeMenu.js';
 import { ProjectActionMenu } from '@view/project-menu/project-action-menu/ProjectActionMenu.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
-import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { ProjectCollection } from '@model/ProjectCollection.js';
 import { ProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
-import { ProjectList } from '@view/project-menu/project-list/ProjectList.js';
 import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { RoadAddressBrowserForm } from '@view/road-address-inspection/RoadAddressBrowserForm.js';
 import { RoadAddressBrowserWindow } from '@view/road-address-inspection/RoadAddressBrowserWindow.js';
@@ -62,7 +60,7 @@ export function start() {
     dirtyTrackedModels.push(selectedLinkProperty);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     applicationModel.setSelectedProjectLinkProperty(selectedProjectLinkProperty);
-    const projectChangeInfoModel = new ProjectChangeInfoModel(backend, applicationModel);
+    const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
     const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel), applicationModel, applicationModel);
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
@@ -71,6 +69,7 @@ export function start() {
     const models = {
       roadCollection: roadCollection,
       projectCollection: projectCollection,
+      projectChangeInfoModel: projectChangeInfoModel,
       selectedLinkProperty: selectedLinkProperty,
       selectedProjectLinkProperty: selectedProjectLinkProperty,
       nodeCollection: nodeCollection,
@@ -81,13 +80,6 @@ export function start() {
     bindEvents();
     const linkGroups = groupLinks(selectedProjectLinkProperty, applicationModel);
 
-    const projectList = new ProjectList(projectCollection, {
-      applicationApi: application,
-      applicationModel: applicationModel,
-      projectMenu: () => projectMenuRef.current
-    });
-    const projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
-
     NavigationPanel.initialize(
       jQuery('#map-tools'),
       new SearchBox(
@@ -97,13 +89,13 @@ export function start() {
     );
 
     backend.getUserRoles();
-    startApplication(backend, models, startupParameters, projectChangeTable, roadNameCollection, projectList, projectMenuRef);
+    startApplication(backend, models, startupParameters, roadNameCollection, projectMenuRef);
   });
 }
 
-const startApplication = function (backend, models, startupParameters, projectChangeTable, roadNameCollection, projectList, projectMenuRef) {
+const startApplication = function (backend, models, startupParameters, roadNameCollection, projectMenuRef) {
   setupProjections();
-  const map = setupMap(backend, models, startupParameters, projectChangeTable, roadNameCollection, projectList, projectMenuRef);
+  const map = setupMap(backend, models, startupParameters, roadNameCollection, projectMenuRef);
   new URLRouter(map, backend, models, applicationModel);
   eventbus.trigger('application:initialized');
 };
@@ -173,7 +165,7 @@ const setupMapLayers = function (map, models) {
   };
 };
 
-const initializeUIComponents = function (backend, models, map, startupParameters, projectChangeTable, roadNameCollection, projectList) {
+const initializeUIComponents = function (backend, models, map, startupParameters, roadNameCollection, projectMenuRef) {
   const roadNamingTool = new RoadNamingToolWindow(roadNameCollection, {
     applicationApi: application
   });
@@ -204,23 +196,26 @@ const initializeUIComponents = function (backend, models, map, startupParameters
   );
   nodesAndJunctionsModule.initialize();
 
-  const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, {
+  const mainMenu = new MainMenu(models.selectedLinkProperty, roadNamingTool, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, {
+    applicationApi: application,
     applicationModel: applicationModel,
-    eventbus: eventbus
+    eventbus: eventbus,
+    projectCollection: models.projectCollection,
+    projectMenu: () => projectMenuRef.current
   });
   applicationModel.setMainMenu(mainMenu);
 
   return { mainMenu };
 };
 
-const setupProjectMenus = function (models, map, backend, projectChangeTable, startupParameters, mainMenu, projectLinkLayer) {
+const setupProjectMenus = function (models, map, backend, startupParameters, mainMenu, projectLinkLayer) {
   const projectActionMenu = new ProjectActionMenu({
     projectCollection: models.projectCollection,
     map: map,
     eventbus: eventbus,
     applicationModel: applicationModel,
     backend: backend,
-    projectChangeTable: projectChangeTable,
+    projectChangeInfoModel: models.projectChangeInfoModel,
     startupParameters: startupParameters
   });
 
@@ -233,7 +228,8 @@ const setupProjectMenus = function (models, map, backend, projectChangeTable, st
     applicationModel,
     map: map,
     backend: backend,
-    projectChangeTable: projectChangeTable,
+    projectChangeTable: projectActionMenu.getProjectChangeTable(),
+    projectChangeInfoModel: models.projectChangeInfoModel,
     startupParameters: startupParameters
   });
 
@@ -274,14 +270,14 @@ const setupVersionInfo = function (backend) {
   }
 };
 
-const setupMap = function (backend, models, startupParameters, projectChangeTable, roadNameCollection, projectList, projectMenuRef) {
+const setupMap = function (backend, models, startupParameters, roadNameCollection, projectMenuRef) {
   const tileMaps = new TileMapCollection();
   const map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
   const layers = setupMapLayers(map, models);
-  const uiComponents = initializeUIComponents(backend, models, map, startupParameters, projectChangeTable, roadNameCollection, projectList);
+  const uiComponents = initializeUIComponents(backend, models, map, startupParameters, roadNameCollection, projectMenuRef);
 
-  const projectMenus = setupProjectMenus(models, map, backend, projectChangeTable, startupParameters, uiComponents.mainMenu, layers.roadAddressProject);
+  const projectMenus = setupProjectMenus(models, map, backend, startupParameters, uiComponents.mainMenu, layers.roadAddressProject);
   if (projectMenuRef) {
     projectMenuRef.current = projectMenus.projectMenu;
   }

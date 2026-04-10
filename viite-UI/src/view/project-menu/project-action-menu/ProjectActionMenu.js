@@ -6,9 +6,25 @@
  * Provides refresh() for selective DOM updates and updateState() for external state management.
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+
+const changeTableByProjectCollection = new WeakMap();
+
+function getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection) {
+  if (!projectChangeInfoModel || !projectCollection) {
+    return null;
+  }
+
+  let changeTable = changeTableByProjectCollection.get(projectCollection);
+  if (!changeTable) {
+    changeTable = new ProjectChangeTable(projectChangeInfoModel, projectCollection);
+    changeTableByProjectCollection.set(projectCollection, changeTable);
+  }
+  return changeTable;
+}
 
 export function ProjectActionMenu(options) {
     const {
@@ -17,7 +33,7 @@ export function ProjectActionMenu(options) {
       eventbus: injectedEventbus,
       applicationModel,
       backend,
-      projectChangeTable,
+      projectChangeInfoModel,
       container = '#menu-container',
       closeProjectMenu,
       initialState = {},
@@ -26,6 +42,7 @@ export function ProjectActionMenu(options) {
     const mainMenu = options.mainMenu;
     const startupParameters = options.startupParameters;
     const activeEventbus = injectedEventbus || eventbus;
+    const projectChangeTable = getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection);
 
     const state = Object.assign({
       hasErrors: false,
@@ -415,6 +432,7 @@ const getProjectErrors = function (projectErrors, links) {
       renderContent,
       renderFooter,
       bindEvents,
-      updateState 
+      updateState,
+      getProjectChangeTable: () => projectChangeTable
     };
 }

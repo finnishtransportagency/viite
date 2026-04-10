@@ -11,7 +11,7 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
-export function ProjectChangeInfoModel(backend, applicationModel) {
+export function ProjectChangeInfoModel(backend) {
     const addrMRange = [{
       start:0,
       end: 0
@@ -50,12 +50,10 @@ export function ProjectChangeInfoModel(backend, applicationModel) {
     }
 
     function getChanges(projectID, sortFn) {
-      applicationModel.addSpinner();
       backend.getChangeTable(projectID, function (changeData) {
         roadChangeAPIResultParser(changeData);
         sortFn();
         loadChanges();
-        applicationModel.removeSpinner();
       });
     }
 

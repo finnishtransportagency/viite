@@ -1,6 +1,4 @@
-/**
- * UserManagementApi - Communicates with backend user management routes
- */
+// Provides API functions for user management operations such as fetching, adding, deleting, and updating users.
 export const userManagementApi = {
     getAllUsers: function(callback) {
         $.get('api/viite/users', function(data) {

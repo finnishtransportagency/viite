@@ -5,14 +5,25 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { LinkInfo } from './link-info/LinkInfo.js';
 import { MenuContainer } from '@components/MenuContainer.js';
+import { ProjectList } from '@view/project-menu/project-list/ProjectList.js';
 import { eventbus } from '@utils/eventbus.js';
 
-export function MainMenu(selectedLinkProperty, roadNamingTool, projectList, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, options = {}) {
+export function MainMenu(selectedLinkProperty, roadNamingTool, roadAddressBrowser, roadAddressChangesBrowser, startupParameters, roadNetworkErrorsList, adminPanel, nodesAndJunctionsModule, options = {}) {
   const rootElement = $('#menu-container');
   const linkInfo = new LinkInfo(selectedLinkProperty);
   const applicationModel = options.applicationModel;
   const activeEventbus = options.eventbus || eventbus;
+  const projectCollection = options.projectCollection;
   let menu = null;
+
+  const showProjectList = () => {
+    const projectList = new ProjectList(projectCollection, {
+      applicationApi: options.applicationApi,
+      applicationModel: applicationModel,
+      projectMenu: options.projectMenu
+    });
+    projectList.show();
+  };
 
   const createMenuContainer = () => {
     if (!MenuContainer) {
@@ -80,7 +91,7 @@ export function MainMenu(selectedLinkProperty, roadNamingTool, projectList, road
             if (projectOpen) {
               new ConfirmPopup("Projektin muokkaus on kesken...", { type: "alert" });
             } else {
-              projectList.show();
+              showProjectList();
             }
             break;
 
