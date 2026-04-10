@@ -12,7 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 
-export function SelectedLinkProperty(backend, roadCollection, applicationModel) {
+export function SelectedLinkProperty(roadCollection, applicationModel) {
     let current = [];
     let dirty = false;
     let featuresToKeep = [];

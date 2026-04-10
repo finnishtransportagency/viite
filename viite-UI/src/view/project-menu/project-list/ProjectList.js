@@ -1,5 +1,6 @@
 // Displays road address projects in a table format, allowing sorting, filtering and opening projects.
 // Polls for project state updates every 30 seconds.
+import { checkbox } from '@components/checkbox/Checkbox.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
@@ -202,7 +203,11 @@ export function ProjectList(projectCollection, options = {}) {
             </table>
           </div>
           <div class="content-footer">
-            <label><input type="checkbox" id="OldAcceptedProjectsVisibleCheckbox" ${!state.onlyActive ? 'checked' : ''}><span>Näytä kaikki tieverkolle päivitetyt projektit</span></label>
+            ${checkbox({
+              id: 'OldAcceptedProjectsVisibleCheckbox',
+              label: 'Näytä kaikki tieverkolle päivitetyt projektit',
+              checked: !state.onlyActive
+            })}
             <i id="sync" class="fas refresh-button fa-sync-alt ${state.loading ? 'btn-spin' : ''}" title="Päivitä lista"></i>
           </div>
         </div>`;

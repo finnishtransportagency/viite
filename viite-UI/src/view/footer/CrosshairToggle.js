@@ -11,6 +11,8 @@
  * Capture data of the clicked feature:
  * const data = await page.evaluate(() => window.crosshair.click());
  */
+import { checkbox } from '@components/checkbox/Checkbox.js';
+
 export const createCrosshairToggle = (parentElement, map, onFeatureClick = null) => {
   const crosshairSelector = '.crosshair';
 
@@ -107,7 +109,11 @@ export const createCrosshairToggle = (parentElement, map, onFeatureClick = null)
   function createUI() {
     const $element = $(`
       <div class="crosshair-wrapper">
-        <label><input type="checkbox" name="crosshair" checked="true"/><span>Kohdistin</span></label>
+        ${checkbox({
+          name: 'crosshair',
+          label: 'Kohdistin',
+          checked: true
+        })}
       </div>
     `);
     $element.find('input').on('change', (e) => $(crosshairSelector).toggle(e.target.checked));

@@ -1,6 +1,23 @@
+import { checkbox } from '@components/checkbox/Checkbox.js';
 import { eventbus } from '@utils/eventbus.js';
 
 export function TileMapSelector(container, applicationModel) {
+    const renderLayerOptionCheckbox = (wrapperClassName, id, label, checked = false) => `
+      <div class="${wrapperClassName}">
+        ${checkbox({
+          id,
+          label,
+          checked
+        })}
+      </div>
+    `;
+
+    const renderDropdownCheckbox = (value, label) => checkbox({
+      id: `dropdown-${value}`,
+      label,
+      value
+    });
+
     const element = `
       <div class="tile-map-selector">
         <ul>
@@ -10,60 +27,21 @@ export function TileMapSelector(container, applicationModel) {
           <li data-layerid="none" title="Piilota kartta">Piilota kartta</li>
         </ul>
 
-        <div class="property-boundaries-visible-wrapper">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" id="propertyBoundariesVisibleCheckbox">
-              Näytä kiinteistörajat
-            </label>
-          </div>
-        </div>
-
-        <div class="noroadaddress-visible-wrapper">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" id="unAddressedRoadsVisibleCheckbox" checked>
-              Näytä tieosoitteettomat-linkit
-            </label>
-          </div>
-        </div>
-
-        <div class="underconstruction-visible-wrapper">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" id="underConstructionVisibleCheckbox" checked>
-              Näytä rakenteilla-linkit
-            </label>
-          </div>
-        </div>
-
-        <div class="roads-visible-wrapper">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" id="roadsVisibleCheckbox" checked>
-              Näytä tieosoiteverkko
-            </label>
-          </div>
-        </div>
-
-        <div class="roads-visible-wrapper">
-          <div class="checkbox">
-            <label>
-              <input type="checkbox" id="regionalBordersVisibleCheckbox">
-              Näytä maakuntarajat
-            </label>
-          </div>
-        </div>
+        ${renderLayerOptionCheckbox('property-boundaries-visible-wrapper', 'propertyBoundariesVisibleCheckbox', 'Näytä kiinteistörajat')}
+        ${renderLayerOptionCheckbox('noroadaddress-visible-wrapper', 'unAddressedRoadsVisibleCheckbox', 'Näytä tieosoitteettomat-linkit', true)}
+        ${renderLayerOptionCheckbox('underconstruction-visible-wrapper', 'underConstructionVisibleCheckbox', 'Näytä rakenteilla-linkit', true)}
+        ${renderLayerOptionCheckbox('roads-visible-wrapper', 'roadsVisibleCheckbox', 'Näytä tieosoiteverkko', true)}
+        ${renderLayerOptionCheckbox('roads-visible-wrapper', 'regionalBordersVisibleCheckbox', 'Näytä maakuntarajat')}
 
         <!-- Dropdown version for small screens -->
         <div class="checkbox-dropdown-wrapper">
           <button class="dropdown-toggle" aria-expanded="false">Valitse karttavaihtoehdot</button>
           <div class="checkbox-dropdown">
-            <label><input type="checkbox" value="propertyBoundariesVisible"  id="dropdown-propertyBoundariesVisible"> Näytä kiinteistörajat</label><br>
-            <label><input type="checkbox" value="unAddressedRoadsVisible" id="dropdown-unAddressedRoadsVisible"> Näytä tieosoitteettomat-linkit</label><br>
-            <label><input type="checkbox" value="underConstructionVisible" id="dropdown-underConstructionVisible"> Näytä rakenteilla-linkit</label><br>
-            <label><input type="checkbox" value="roadsVisible" id="dropdown-roadsVisible"> Näytä tieosoiteverkko</label><br>
-            <label><input type="checkbox" value="regionalBordersVisible" id="dropdown-regionalBordersVisible"> Näytä maakuntarajat</label>
+            ${renderDropdownCheckbox('propertyBoundariesVisible', 'Näytä kiinteistörajat')}
+            ${renderDropdownCheckbox('unAddressedRoadsVisible', 'Näytä tieosoitteettomat-linkit')}
+            ${renderDropdownCheckbox('underConstructionVisible', 'Näytä rakenteilla-linkit')}
+            ${renderDropdownCheckbox('roadsVisible', 'Näytä tieosoiteverkko')}
+            ${renderDropdownCheckbox('regionalBordersVisible', 'Näytä maakuntarajat')}
           </div>
         </div>
       </div>

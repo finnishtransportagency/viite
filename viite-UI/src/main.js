@@ -79,7 +79,7 @@ export function start() {
     const projectCollection = new ProjectCollection(backend, startupParameters, applicationModel);
     applicationModel.setProjectCollection(projectCollection);
     const roadNameCollection = new RoadNameCollection(backend);
-    const selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection, applicationModel);
+    const selectedLinkProperty = new SelectedLinkProperty(roadCollection, applicationModel);
     dirtyTrackedModels.push(selectedLinkProperty);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     applicationModel.setSelectedProjectLinkProperty(selectedProjectLinkProperty);
