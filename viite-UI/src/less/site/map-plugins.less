@@ -10,6 +10,14 @@
     background-color: @gray-lighter;
 }
 
+#map-plugins {
+	.map-footer {
+		position: relative;
+		width: 100%;
+		height: 100%;
+	}
+}
+
 //** Zoom buttons
 
 #map-plugins {
@@ -18,7 +26,8 @@
 		right: 420px;
 		bottom: @line-height-base * 2.5;
 		z-index: 15000;
-		width: auto;
+		width: 30px !important;
+    background-color: #f2f2f0;
 		margin: 0;
 
 		.plus,
@@ -26,7 +35,7 @@
 			display: flex;
 			align-items: center;
 			width: 30px;
-			height: 30px;
+			height: 30px !important;
 			margin-left: auto;
 			border: 1px solid @gray-light-2;
 			padding: 0;
@@ -143,6 +152,10 @@
 				.btn;
 				.btn-sm;
 				.btn-tertiary;
+				display: inline-flex;
+				align-items: center;
+				box-sizing: border-box;
+				height: 22px;
 				position: relative;
 				width: auto;
 				margin: 0 0 0 -1px;
@@ -150,7 +163,11 @@
 
 				&.selected {
 					.btn-secondary;
-          border-radius: 0;
+					padding: @line-height-modifier (@line-height-modifier * 1.5);
+					font-size: @font-size-xs;
+					line-height: @line-height-modifier * 2;
+					height: 22px;
+					border-radius: 0;
 					z-index: 2;
 					color: #fff;
 				}
@@ -196,8 +213,6 @@
 		right: 470px;
 		bottom: @line-height-base * 2.5;
 
-		.olScaleLine {
-		}
 		.olScaleLine-inner {
 			border: 2px solid @gray-darker-2;
 			border-top: none;
@@ -215,59 +230,28 @@
 
 // TODO: Remove when search box is separated to own ui component
 #mark-coordinates {
-  margin-right: 10px;
+  margin-right: 0;
 }
 #map-plugins {
 	.coordinates {
+        @coordinates-gap: (@line-height-modifier * 1.5);
         position: absolute;
         top: 0;
         right: 10px;
-		font-size: 0;
+		display: inline-flex;
+		align-items: center;
+		gap: @coordinates-gap;
+		font-size: @font-size-xs;
 		color: @gray-darkest;
 		text-align: right;
 
-		.cbSpansWrapper {
+		.cbCrsLabel {
+			color: @gray;
+		}
+
+		.cbCoordinate {
 			display: inline-block;
-			vertical-align: middle;
-			width: auto;
-			padding: 0;
-
-			.cbRow {
-				display: inline-block;
-				height: @line-height-base * 2;
-				padding: (@line-height-modifier * 2) 0;
-				margin-right: @line-height-modifier;
-        .box-sizing(border-box);
-
-				.cbCrsLabel {
-					font-size: @font-size-xs;
-					color: @gray;
-				}
-
-				.cbLabel {
-					display: inline-block;
-					float: none;
-					width: auto;
-					margin-right: 3px;
-					font-size: @font-size-xs;
-				}
-
-				.cbValue {
-					display: inline-block;
-					float: none;
-					width: auto;
-					padding: 0;
-					font-size: @font-size-xs;
-				}
-
-				&:last-child {
-					margin-right: @line-height-modifier * 2;
-				}
-			}
-
-			br {
-				display: none;
-			}
+			white-space: nowrap;
 		}
 
 		.crosshair-wrapper {

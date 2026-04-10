@@ -6,7 +6,7 @@ import { AdminPanel } from '@view/admin-panel/AdminPanel.js';
 import { ApplicationModel } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
-import { CoordinatesDisplay } from '@view/footer/CoordinatesDisplay.js';
+import { Footer } from '@view/footer/Footer.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { LocationSearch } from '@model/LocationSearch.js';
 import { MainMenu } from '@view/MainMenu.js';
@@ -38,7 +38,6 @@ import { SelectedLinkProperty } from '@model/SelectedLinkProperty.js';
 import { SelectedNodesAndJunctions } from '@model/SelectedNodesAndJunctions.js';
 import { SelectedProjectLink } from '@model/SelectedProjectLink.js';
 import { TileMapCollection } from '@model/TileMapCollection.js';
-import { TileMapSelector } from '@view/footer/TileMapSelector.js';
 import { URLRouter } from './router.js';
 import { ZoomBox } from '@view/map/markers/ZoomBox.js';
 import { dateutil } from '@utils/DateUtils.js';
@@ -47,26 +46,6 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
 
 let applicationModel;
-
-export const getApplicationModel = () => applicationModel;
-export const getStartupParameters = () => {
-  return applicationModel ? applicationModel.getStartupParameters() : undefined;
-};
-export const getProjectCollection = () => {
-  return applicationModel ? applicationModel.getProjectCollection() : undefined;
-};
-export const getSelectedProjectLinkProperty = () => {
-  return applicationModel ? applicationModel.getSelectedProjectLinkProperty() : undefined;
-};
-export const getProjectLinkLayer = () => {
-  return applicationModel ? applicationModel.getProjectLinkLayer() : undefined;
-};
-export const getMainMenu = () => {
-  return applicationModel ? applicationModel.getMainMenu() : undefined;
-};
-export const getProjectMenu = () => {
-  return applicationModel ? applicationModel.getProjectMenu() : undefined;
-};
 
 // Starts application
 export function start() {
@@ -266,9 +245,8 @@ const setupProjectMenus = function (models, map, backend, projectChangeTable, st
 const initializeMapPlugins = function (map, startupParameters) {
   const mapPluginsContainer = jQuery('#map-plugins');
   new ScaleBar(map, mapPluginsContainer);
-  new TileMapSelector(mapPluginsContainer, applicationModel);
   new ZoomBox(map, mapPluginsContainer, applicationModel);
-  new CoordinatesDisplay(map, mapPluginsContainer);
+  new Footer(map, mapPluginsContainer, applicationModel);
 
   const toolTip = `<i class="fas fa-info-circle" title="Versio: ${startupParameters.deploy_date}"></i>\n`;
 

@@ -5,7 +5,6 @@
  * @param {Object} layers - Active map layers keyed by layer name
  * @param {Object} applicationModel - Application state manager
  */
-import { createCrosshairToggle } from '@view/footer/CrosshairToggle.js';
 import { eventbus } from '@utils/eventbus.js';
 import { showToast } from '@components/Toast.js';
 import { geometrycalculator } from '@utils/GeometryCalculations.js';
@@ -68,8 +67,6 @@ export function MapView(map, layers, applicationModel) {
     eventbus.on('application:initialized layer:fetched', function () {
       const zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
-
-      createCrosshairToggle($('.mapplugin.coordinates'), map);
       isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);
