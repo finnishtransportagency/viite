@@ -41,7 +41,6 @@ export function ProjectActionMenu(options) {
       onStateChange
     } = options;
     const mainMenu = options.mainMenu;
-    const startupParameters = options.startupParameters;
     const activeEventbus = injectedEventbus || eventbus;
     const projectChangeTable = getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection);
 
@@ -242,7 +241,7 @@ export function ProjectActionMenu(options) {
       const btns = config.buttonStates;
       
       let validateBtn = '';
-      if (startupParameters && _.includes(startupParameters.roles, 'dev')) {
+      if (options.canUseDevTools) {
         validateBtn = `<button id="validate-button" class="${config.cssClasses.validate}" ${btns.validate.disabled ? 'disabled' : ''} title="${btns.validate.title}">Validoi projekti</button>`;
       }
 

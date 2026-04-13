@@ -13,6 +13,8 @@ import { eventutil } from '@utils/EventUtils.js';
 
 export function ProjectList(projectCollection, options = {}) {
   const applicationModel = options.applicationModel;
+  const canUseDevTools = applicationModel.getStartupParameters()?.roles?.includes('dev') ?? false;
+  
   let projectMenuInstance = null;
 
   const ensureProjectMenu = () => {
@@ -25,9 +27,9 @@ export function ProjectList(projectCollection, options = {}) {
       map: options.map,
       eventbus: options.eventbus || eventbus,
       applicationModel: applicationModel,
+      canValidateProject: canUseDevTools,
       backend: options.backend,
       projectChangeInfoModel: options.projectChangeInfoModel,
-      startupParameters: options.startupParameters,
       mainMenu: options.mainMenu
     });
 
@@ -38,11 +40,11 @@ export function ProjectList(projectCollection, options = {}) {
       selectedProjectLinkProperty: options.selectedProjectLinkProperty,
       mainMenu: options.mainMenu,
       applicationModel: applicationModel,
+      canUseDevTools: canUseDevTools,
       map: options.map,
       backend: options.backend,
       projectChangeTable: actionMenu.getProjectChangeTable(),
-      projectChangeInfoModel: options.projectChangeInfoModel,
-      startupParameters: options.startupParameters
+      projectChangeInfoModel: options.projectChangeInfoModel
     });
 
     return projectMenuInstance;

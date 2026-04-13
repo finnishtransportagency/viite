@@ -2,7 +2,7 @@
  * MainMenu - Renders the main navigation panel and manages top-level UI state.
  * Switches between the main button menu, link info view, and delegated module states.
  */
-import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+
 import { LinkInfo } from './link-info/LinkInfo.js';
 import { MenuContainer } from '@components/MenuContainer.js';
 import { NodeMenu } from '@node-menu/NodeMenu.js';
@@ -12,7 +12,6 @@ import { RoadAddressBrowserWindow } from '@view/road-address-inspection/RoadAddr
 import { RoadAddressChangesBrowserWindow } from '@view/road-address-inspection/RoadAddressChangesBrowserWindow.js';
 import { RoadNamingToolWindow } from '@view/road-name-maintenance-modal/RoadNamingToolWindow.js';
 import { RoadNetworkErrorsList } from '@view/road-network-errors-list/RoadNetworkErrorsList.js';
-import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 
 /**
@@ -41,12 +40,21 @@ export function MainMenu(options = {}) {
   const activeEventbus = options.eventbus || eventbus;
   const projectCollection = options.projectCollection;
   const models = options.models || {};
+  const mainMenuApi = { setState: () => undefined };
   const roadNamingTool = new RoadNamingToolWindow(options.roadNameCollection);
   const roadAddressBrowser = new RoadAddressBrowserWindow(options.backend);
   const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(options.backend);
   const roadNetworkErrorsList = new RoadNetworkErrorsList(options.backend, { applicationModel: applicationModel });
-  const adminPanel = new AdminPanel(options.backend, {
-    applicationModel: applicationModel
+  const adminPanel = new AdminPanel(options.backend, { applicationModel: applicationModel });
+  const projectList = new ProjectList(projectCollection, {
+    applicationModel: applicationModel,
+    map: options.map,
+    backend: options.backend,
+    eventbus: activeEventbus,
+    mainMenu: mainMenuApi,
+    selectedProjectLinkProperty: options.selectedProjectLinkProperty,
+    projectLinkLayer: options.projectLinkLayer,
+    projectChangeInfoModel: options.projectChangeInfoModel
   });
   const nodeMenu = new NodeMenu(
     options.map,
@@ -54,37 +62,19 @@ export function MainMenu(options = {}) {
     options.backend,
     models.selectedNodesAndJunctions,
     models.roadCollection,
-    startupParameters,
     {
       applicationModel: applicationModel,
-      dateutil: dateutil,
-      moment: moment,
       navigateToHash: function (hashValue) {
         location.hash = hashValue;
       }
     }
   );
   let menu = null;
-  const mainMenuApi = { setState: () => undefined };
 
   if (nodeMenu) {
     nodeMenu.initialize();
   }
 
-  const showProjectList = () => {
-    const projectList = new ProjectList(projectCollection, {
-      applicationModel: applicationModel,
-      map: options.map,
-      backend: options.backend,
-      eventbus: activeEventbus,
-      mainMenu: mainMenuApi,
-      selectedProjectLinkProperty: options.selectedProjectLinkProperty,
-      projectLinkLayer: options.projectLinkLayer,
-      projectChangeInfoModel: options.projectChangeInfoModel,
-      startupParameters: startupParameters
-    });
-    projectList.show();
-  };
 
   const createMenuContainer = () => {
     if (!MenuContainer) {
@@ -109,7 +99,7 @@ export function MainMenu(options = {}) {
     const setState = (state, data) => {
       switch (state) {
         case 'main':
-          renderBody(renderMainMenuBody());
+          renderBody(renderMainMenu());
           bindMenuActions();
           break;
         case 'linkInfo':
@@ -119,7 +109,7 @@ export function MainMenu(options = {}) {
           });
           break;
         case 'project':
-            showProjectList();
+            projectList.show();
           break;
         case 'nameTool':
           roadNamingTool.show();
@@ -140,13 +130,13 @@ export function MainMenu(options = {}) {
           adminPanel.show();
           break;
         default:
-          renderBody(renderMainMenuBody());
+          renderBody(renderMainMenu());
           bindMenuActions();
           break;
       }
     };
 
-    const renderMainMenuBody = () => {
+    const renderMainMenu = () => {
       const roles = startupParameters.roles;
       const isUserAdmin = _.includes(roles, 'admin');
       const isUserOperator = _.includes(roles, 'operator');

@@ -157,7 +157,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         }
 
         case States.LINK_EDIT: {
-          const linkEditForm = new LinkEditForm(options.startupParameters);
+          const linkEditForm = new LinkEditForm(options.canUseDevTools);
           const links = options.projectCollection ? options.projectCollection.getProjectLinks() : [];
           contentHtml = linkEditForm.render(
             project.data, 

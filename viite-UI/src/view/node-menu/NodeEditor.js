@@ -1,20 +1,18 @@
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { NodeTableUtils } from '@node-menu/DataTable.js';
+import { dateutil } from '@utils/DateUtils.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
   /**
    * NodeEditor - Editable node form with detach, validation and save flows.
    * Supports editing node metadata, junction numbers and junction ET values.
    */
-export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, containerElement, dependencies) {
-    const nodeEditingDisabledAttribute = _.includes(startupParameters.roles, 'viite') ? '' : 'disabled';
-    const userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
+export function NodeEditor(selectedNodesAndJunctions, dataTable, backend, roadCollection, containerElement, permissionToEditNodes) {
+    const nodeEditingDisabledAttribute = permissionToEditNodes ? '' : 'disabled';
     const tableUtils = NodeTableUtils;
-    const ConfirmPopup = dependencies.ConfirmPopup;
-    const dateutil = dependencies.dateutil;
-    const moment = dependencies.moment;
-    const eventbus = dependencies.eventbus;
 
     let picker;
     let editorExitHandler = _.noop;
@@ -768,7 +766,7 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParamete
       addDatePicker($container.find('#nodeStartDate'), currentNode.startDate || moment('1.1.1900', dateutil.FINNISH_DATE_FORMAT).toDate());
       disableAutoComplete();
 
-      if (userHasPermissionToEdit) {
+      if (permissionToEditNodes) {
         $container.find('.junction-address-header').append('<i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i>');
       }
 

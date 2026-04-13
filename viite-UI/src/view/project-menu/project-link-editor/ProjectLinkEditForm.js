@@ -12,7 +12,7 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { DevAddressTool } from './DevTool.js';
 
-export function LinkEditForm(startupParameters) {
+export function LinkEditForm(canUseDevTools) {
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const Track = ViiteEnumerations.Track;
     const AdministrativeClass = ViiteEnumerations.AdministrativeClass;
@@ -233,7 +233,7 @@ export function LinkEditForm(startupParameters) {
     };
 
     const renderDevTool = function (links, project) {
-      if (!startupParameters || !_.includes(startupParameters.roles, 'dev')) return '';
+      if (!canUseDevTools) return '';
       const devTool = new DevAddressTool('');
       return devTool.render(links, project);
     };

@@ -2,7 +2,6 @@
  * Coordinates the node search, detail display, and edit flows inside the node side panel.
  * Switches between search, template, and editor states while keeping map actions synchronized.
  */
-import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DataTable } from '@node-menu/DataTable.js';
 import { showToast } from '@components/Toast.js';
 import { MenuContainer } from '@components/MenuContainer.js';
@@ -10,9 +9,8 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
 import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
-import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
-export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions, roadCollection, startupParameters, dependencies) {
+export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions, roadCollection, dependencies) {
   const applicationModel = dependencies.applicationModel;
   const navigateToHash = dependencies.navigateToHash;
 
@@ -67,14 +65,9 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
     const dataMenu = new NodeDataMenu(dataTable, getBodyContainer, {
       applicationModel: applicationModel
     });
-    const nodeEditor = new NodeEditor(selectedNodesAndJunctions, dataTable, startupParameters, backend, roadCollection, getBodyContainer, {
-      ConfirmPopup: ConfirmPopup,
-      applicationModel: applicationModel,
-      dateutil: dependencies.dateutil,
-      moment: dependencies.moment,
-      ViiteEnumerations: ViiteEnumerations,
-      eventbus: eventbus
-    });
+
+    const permissionToEditNodes = applicationModel.getStartupParameters()?.roles?.includes('viite') ?? false;
+    const nodeEditor = new NodeEditor(selectedNodesAndJunctions, dataTable, backend, roadCollection, getBodyContainer, permissionToEditNodes);
 
     const showSearch = function () {
       setCurrentState(STATE.SEARCH);
