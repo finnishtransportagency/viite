@@ -390,7 +390,7 @@ export function ProjectActionMenu(options) {
       }
       
       rootElement.off('click', 'button.projectErrorButton').on('click', 'button.projectErrorButton', function() {
-        const buttonId = parseInt($(this).attr('id'));
+        const buttonId = parseInt($(this).attr('id'), 10);
         const coordinateData = config.coordinates[buttonId];
         
         if (coordinateData && coordinateData.coordinates) {
@@ -413,7 +413,7 @@ export function ProjectActionMenu(options) {
       });
       
       rootElement.off('click', 'button.linkIdList').on('click', 'button.linkIdList', function() {
-        const errorIndex = parseInt($(this).attr('id'));
+        const errorIndex = parseInt($(this).attr('id'), 10);
         const projectErrors = projectCollection.getProjectErrors();
         if (projectErrors && projectErrors[errorIndex] && projectErrors[errorIndex].linkIds) {
           const linkIds = projectErrors[errorIndex].linkIds;

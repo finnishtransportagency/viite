@@ -3,7 +3,9 @@
   "name": "viite",
   "version": "0.0.1",
   "devDependencies": {
-    "eslint": "^5.16.0",
+    "@eslint/eslintrc": "^3.3.5",
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
     "grunt": "1.6.1",
     "grunt-cache-bust": "^1.7.0",
     "grunt-contrib-clean": "~2.0.1",
@@ -38,6 +40,6 @@
   },
   "scripts": {
     "test": "grunt test",
-    "lint": "eslint gruntfile.js viite-UI/test/**/*.js viite-UI/src/**/*.js viite-UI/test_data/*.js viite-UI/src/"
+    "lint": "eslint --no-error-on-unmatched-pattern gruntfile.js viite-UI/test/**/*.js viite-UI/src/**/*.js viite-UI/test_data/*.js viite-UI/src/"
   }
 }

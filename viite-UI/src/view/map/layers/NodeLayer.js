@@ -779,7 +779,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         const currentNode = selectedNodesAndJunctions.getCurrentNode();
         const currentTemplates = selectedNodesAndJunctions.getCurrentTemplates();
 
-        if (parseInt(zoom) >= zoomlevels.minZoomForNodes) {
+        if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
           let filteredNodePointTemplates = templates.nodePoints;
 
           if (currentNode) {
@@ -831,7 +831,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
           });
         }
 
-        if (parseInt(zoom) >= zoomlevels.minZoomForJunctions) {
+        if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
 
           const filteredJunctions = _.flatten(_.map(filteredNodes, "junctions"));
           let filteredJunctionTemplates = templates.junctions;

@@ -142,7 +142,7 @@ export const UpdateUserForm = {
 
             const east = eastRaw === undefined || eastRaw === '' ? DEFAULT_COORDINATES.east : parseFloat(eastRaw);
             const north = northRaw === undefined || northRaw === '' ? DEFAULT_COORDINATES.north : parseFloat(northRaw);
-            const zoom = zoomRaw === undefined || zoomRaw === '' ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw);
+            const zoom = zoomRaw === undefined || zoomRaw === '' ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw, 10);
 
             const fields = { roles, elinvoimakeskus, east, north, zoom };
             const { valid } = validateUserFieldsAndToastErrors(fields, {

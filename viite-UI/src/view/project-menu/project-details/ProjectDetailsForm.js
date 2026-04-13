@@ -15,7 +15,6 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function ProjectDetailsForm(callbacks = {}) {
   const applicationModel = callbacks.applicationModel;
-    const mainMenu = callbacks.mainMenu;
     let startDatePicker = null;
     const projectCollection = callbacks.projectCollection;
     const map = callbacks.map;

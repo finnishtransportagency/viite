@@ -5,8 +5,6 @@
 export function ValidationUtils() {
     
     const checkDateNotification = function (projectStartDate) {
-      let projectNotificationText = "";
-
       if (!projectStartDate || projectStartDate.length === 0) {
         return "";
       }
@@ -16,16 +14,13 @@ export function ValidationUtils() {
       const allowedChars = /^[0-9.]+$/;
 
       // Check the project start date input field for incorrect characters
-      if (allowedChars.test(projectStartDate)) {
-        projectNotificationText = "";
-      }
-      else {
-        projectNotificationText = 'Päivämäärä saa sisältää vain numeroita tai pisteitä';
+      if (!allowedChars.test(projectStartDate)) {
+        return 'Päivämäärä saa sisältää vain numeroita tai pisteitä';
       }
 
-      const day = parseInt(parts_DMY[0]);
-      const month = parseInt(parts_DMY[1]);
-      const year = parseInt(parts_DMY[2]);
+      const day = parseInt(parts_DMY[0], 10);
+      const month = parseInt(parts_DMY[1], 10);
+      const year = parseInt(parts_DMY[2], 10);
 
       if (isNaN(day) || isNaN(month) || isNaN(year) || month < 1 || month > 12 || day < 1 || day > 31) {
         return 'Virheellinen päivämäärä. Tarkista päivä, kuukausi ja vuosi';
@@ -35,13 +30,13 @@ export function ValidationUtils() {
       const projectSD = new Date(year, month - 1, day);
       const nowDate = new Date();
       if (projectSD.getFullYear() < nowDate.getFullYear() - 20) {
-        projectNotificationText = 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+        return 'Vanha päiväys. Projektin alkupäivämäärä yli 20 vuotta historiassa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
       }
-      else if (projectSD.getFullYear() > nowDate.getFullYear() + 1) {
-        projectNotificationText = 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
+      if (projectSD.getFullYear() > nowDate.getFullYear() + 1) {
+        return 'Tulevaisuuden päiväys. Projektin alkupäivä yli vuoden verran tulevaisuudessa. Varmista päivämäärän oikeellisuus ennen jatkamista.';
       }
 
-      return projectNotificationText;
+      return '';
     };
 
     const isRoadPartInvalid = function (_rootElement) {

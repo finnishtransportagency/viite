@@ -85,8 +85,8 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${results[i].startDate}</td>
                                       </tr>`;
           }
-          arr[++arrPointer] =`    </tbody>
-                          </table>`;
+          arr.push(`    </tbody>
+                          </table>`);
           return $(arr.join('')); // join the array to one large string and create jquery element from said string
       }
 
@@ -142,8 +142,8 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${results[i].startDate}</td>
                                       </tr>`;
           }
-          arr[++arrPointer] =`    </tbody>
-                          </table>`;
+          arr.push(`    </tbody>
+                          </table>`);
           return $(arr.join('')); // join the array to one large string and create jquery element from said string
       }
 
@@ -209,8 +209,8 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${results[i].nodeNumber}</td>
                                       </tr>`;
           }
-          arr[++arrPointer] =     `</tbody>
-                              </table>`;
+          arr.push(`</tbody>
+                              </table>`);
           return $(arr.join('')); // join the array to one large string and create jquery element from said string
       }
 
@@ -279,8 +279,8 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${EnumerationUtils.getBeforeAfterDisplayText(results[i].beforeAfter)}</td>
                                       </tr>`;
           }
-          arr[++arrPointer] =`    </tbody>
-                              </table>`;
+          arr.push(`    </tbody>
+                              </table>`);
           return $(arr.join('')); // join the array to one large string and create jquery element from said string
       }
 
@@ -325,8 +325,8 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${results[i].roadName}</td>
                                       </tr>`;
           }
-          arr[++arrPointer] =`    </tbody>
-                              </table>`;
+          arr.push(`    </tbody>
+                              </table>`);
           return $(arr.join('')); // join the array to one large string and create jquery element from said string
       }
 

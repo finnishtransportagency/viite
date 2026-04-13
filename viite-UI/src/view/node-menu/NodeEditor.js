@@ -500,18 +500,18 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, backend, roadCo
 
       rootElement.on('change.nodeEditor', '[id^=junction-number-textbox-]', function () {
         updateJunctionNumberEmptyState(this);
-        selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
+        selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId'), 10), parseInt(this.value, 10));
       });
 
       rootElement.on('change.nodeEditor', '[id^=junction-point-address-input-]', function () {
         const idString = $(this).attr('junctionPointId');
-        const addr = parseInt(this.value);
+        const addr = parseInt(this.value, 10);
         selectedNodesAndJunctions.setJunctionPointAddress(idString, addr);
       });
 
       rootElement.on('change.nodeEditor', '[id^="detach-node-point-"]', function () {
         const me = this;
-        const match = junctionAndNodePointsByNodePointCoordinates(parseInt(me.value));
+        const match = junctionAndNodePointsByNodePointCoordinates(parseInt(me.value, 10));
         if (me.checked) {
           if (!_.isEmpty(match.junction) || match.nodePoints.length > 1) {
             new ConfirmPopup(buildMessage(match.junction, match.nodePoints), {
@@ -542,7 +542,7 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, backend, roadCo
 
       rootElement.on('change.nodeEditor', '[id^="detach-junction-"]', function () {
         const me = this;
-        const match = junctionAndNodePointsByJunctionPointsCoordinates(parseInt(me.value));
+        const match = junctionAndNodePointsByJunctionPointsCoordinates(parseInt(me.value, 10));
         if (me.checked) {
           if (!_.isEmpty(match.nodePoints)) {
             new ConfirmPopup(buildMessage(match.junction, match.nodePoints), {
@@ -651,8 +651,8 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, backend, roadCo
       });
 
       subscribeEventbus('change:nodeTypeDropdown', function (nodeType) {
-        const typeHasChanged = selectedNodesAndJunctions.typeHasChanged(parseInt(nodeType));
-        selectedNodesAndJunctions.setNodeType(parseInt(nodeType));
+        const typeHasChanged = selectedNodesAndJunctions.typeHasChanged(parseInt(nodeType, 10));
+        selectedNodesAndJunctions.setNodeType(parseInt(nodeType, 10));
 
         if (!typeHasChanged) {
           selectedNodesAndJunctions.setStartDate(selectedNodesAndJunctions.getInitialStartDate());

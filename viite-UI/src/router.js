@@ -72,7 +72,7 @@ export function URLRouter(map, backend, models, applicationModel) {
       roadAddressProject: function (projectId) {
         applicationModel.selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
-        const parsedProjectId = parseInt(projectId);
+        const parsedProjectId = parseInt(projectId, 10);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       },
 

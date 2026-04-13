@@ -97,7 +97,7 @@ export function LinkEditForm(canUseDevTools) {
         .map(s => s.roadLinkSource)
         .uniq()
         .map(a => {
-          const linkGeom = _.find(LinkSources, source => source.value === parseInt(a));
+          const linkGeom = _.find(LinkSources, source => source.value === parseInt(a, 10));
           return linkGeom === undefined ? LinkSources.Unknown.descriptionFI : linkGeom.descriptionFI;
         })
         .uniq()
@@ -867,7 +867,7 @@ export function LinkEditForm(canUseDevTools) {
         const statusDropdownValue = $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
         
-        if (!this.validateEVK(parseInt($('#elinvoimakeskus')[0].value), changeType)) {
+        if (!this.validateEVK(parseInt($('#elinvoimakeskus')[0].value, 10), changeType)) {
           new ConfirmPopup('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.', { type: "alert" });
           return false;
         }

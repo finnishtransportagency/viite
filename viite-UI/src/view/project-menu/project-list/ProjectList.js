@@ -138,8 +138,8 @@ export function ProjectList(projectCollection, options = {}) {
     };
 
     const handleProjectOpen = ($el) => {
-      const id = parseInt($el.data('id'));
-      const status = parseInt($el.data('status'));
+      const id = parseInt($el.data('id'), 10);
+      const status = parseInt($el.data('status'), 10);
       const proceed = () => {
         clearInterval(pollProjects);
         ensureProjectMenu();

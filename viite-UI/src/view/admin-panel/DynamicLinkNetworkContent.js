@@ -61,9 +61,9 @@ export function DynamicLinkNetworkContent(backend) {
             const parts = dateString.split('-');
             if (parts.length !== 3) return false;
             
-            const year = parseInt(parts[0]);
-            const month = parseInt(parts[1]);
-            const day = parseInt(parts[2]);
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const day = parseInt(parts[2], 10);
             
             if (month < 1 || month > 12 || day < 1 || day > 31) {
                 setInfoText("Tarkista päivämäärä!");

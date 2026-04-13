@@ -5,6 +5,7 @@
  */
 import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
@@ -213,8 +214,8 @@ export function RoadAddressChangesBrowserWindow(backend) {
                                             <td>${results[i].projectAcceptedDate}</td>
                                         </tr>`;
             }
-            arr[++arrPointer] =`    </tbody>
-                                </table>`;
+            arr.push(`    </tbody>
+                                </table>`);
             return $(arr.join('')); // join the array to one large string and create jquery element from said string
         }
 

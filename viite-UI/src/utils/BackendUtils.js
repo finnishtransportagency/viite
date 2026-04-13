@@ -4,7 +4,7 @@ import { eventbus } from '@utils/eventbus.js';
 export function Backend() {
     let loadingProject;
     // var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
-    let gettingRoadLinks;
+    const gettingRoadLinks = null;
     moment.locale('fi');
 
     // Backend returns an array of EVK shortnames, but frontend expects numbers. So [EVK0] -> [0]
@@ -14,7 +14,7 @@ export function Backend() {
           // Extract numbers from each string in roadMaintainers
           project.evks = project.roadMaintainers.map(rm => {
             const match = rm.match(/\d+/); // find digits in the string
-            return match ? parseInt(match[0]) : null;
+            return match ? parseInt(match[0], 10) : null;
           }).filter(num => num !== null); // remove nulls if no number found
         } else {
           project.evks = [];

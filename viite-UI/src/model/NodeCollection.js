@@ -219,7 +219,7 @@ export function NodeCollection(backend, locationSearch) {
 
     eventbus.on('nodeSearchTool:clickNodePointTemplate', function (id) {
       const nodePointTemplate = _.find(userNodePointTemplates, function (template) {
-        return template.id === parseInt(id);
+        return template.id === parseInt(id, 10);
       });
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (nodePointTemplateFetched) {
@@ -232,7 +232,7 @@ export function NodeCollection(backend, locationSearch) {
 
     eventbus.on('nodeSearchTool:clickJunctionTemplate', function (id) {
       const junctionTemplate = _.find(userJunctionTemplates, function (template) {
-        return template.id === parseInt(id);
+        return template.id === parseInt(id, 10);
       });
       if (_.isUndefined(junctionTemplate)) {
         backend.getJunctionTemplateById(id, function (junctionTemplateFetched) {

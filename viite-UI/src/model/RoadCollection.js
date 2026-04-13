@@ -168,7 +168,7 @@ export function RoadCollection(backend) {
         return groupDataConstructionTypeFilter(group, lifecycleStatus.UnderConstruction);
       });
 
-      if (parseInt(zoom) <= zoomlevels.minZoomForEditMode) {
+      if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode) {
         // only the fetched road links that have an address
         setRoadLinkGroups(fetchedWithAddresses);
       } else {

@@ -6,6 +6,7 @@ import { eventbus } from '@utils/eventbus.js';
 export function RoadNamingToolWindow(roadNameCollection) {
     const newId = -1000;
     const defaultDateFormat = 'DD.MM.YYYY';
+    const acceptedDateFormats = ['D.M.YYYY', 'DD.MM.YYYY'];
     let modal = null;
 
     // Generate the base HTML content for the naming tool
@@ -14,7 +15,7 @@ export function RoadNamingToolWindow(roadNameCollection) {
         <div id="name-search-window" class="form-horizontal naming-list">
           <div class="name-tool-content-new">
             <div class="panel-header">
-              <input type="text" class="road-input" style="height: 22px" id="roadSearchParameter" placeholder="Tienumero">
+              <input type="text" class="road-input" style="height: 22px" id="roadSearchParameter" placeholder="Tienumero" autocomplete="off">
               <div id="buttons-div">
                 <button id="executeRoadSearch" class="btn-primary" style="height: 22px; padding: 2px 8px">Hae</button>
                 <button id="createRoad" class="btn-primary" style="display: none">Luo Tie</button>
@@ -47,13 +48,13 @@ export function RoadNamingToolWindow(roadNameCollection) {
       if ((fieldName === "startDate" || fieldName === "endDate") && writable) {
         return `
           <div class="date-picker-container" data-roadId="${roadId}" data-FieldName="${fieldName}">
-            <input id="datePickerInput-${roadId}-${fieldName}" class="${inputClass} date-picker-input" value="${dataField}" ${readOnly} data-roadId="${roadId}" data-FieldName="${fieldName}" name="${fieldName}-${roadId}" style="margin-top: 0; ${leftMargin} width: 85%">
+            <input id="datePickerInput-${roadId}-${fieldName}" class="${inputClass} date-picker-input" value="${dataField}" ${readOnly} data-roadId="${roadId}" data-FieldName="${fieldName}" name="${fieldName}-${roadId}" style="margin-top: 0; ${leftMargin} width: 85%" autocomplete="off">
           </div>
         `;
       } else {
         return `
           <div>
-            <input class="${inputClass}" value="${dataField}" ${readOnly} data-roadId="${roadId}" data-FieldName="${fieldName}" data-originalvalue="${dataField}" name="${fieldName}-${roadId}" style="margin-top: 0; ${leftMargin} width: 85%" ${maxLengthAttr}>
+            <input class="${inputClass}" value="${dataField}" ${readOnly} data-roadId="${roadId}" data-FieldName="${fieldName}" data-originalvalue="${dataField}" name="${fieldName}-${roadId}" style="margin-top: 0; ${leftMargin} width: 85%" ${maxLengthAttr} autocomplete="off">
           </div>
         `;
       }
@@ -84,9 +85,9 @@ export function RoadNamingToolWindow(roadNameCollection) {
     };
 
     const retroactivelyAddDatePickers = (originalStartDate) => {
-      const inputs = $('.date-picker-input:not([placeholder])');
+      const inputs = $('.date-picker-input[data-FieldName="startDate"]:not([placeholder])');
       inputs.each((_, input) => {
-        if (parseInt(input.dataset.roadid) === newId && !$(input).hasClass('hasDatepicker')) {
+        if (parseInt(input.dataset.roadid, 10) === newId && !$(input).hasClass('hasDatepicker')) {
           const datePicker = new DatePicker({
             id: input.id,
             minDate: originalStartDate,
@@ -136,8 +137,11 @@ export function RoadNamingToolWindow(roadNameCollection) {
           roadNameCollection.setRoadName(roadId, fieldValue);
           break;
         case "startDate":
-          if (parseInt(roadId) === newId) {
-            const endDateForPreviousRoadName = moment(fieldValue, defaultDateFormat).subtract(1, 'days').format(defaultDateFormat);
+          if (parseInt(roadId, 10) === newId) {
+            const parsedFieldDate = moment(fieldValue, acceptedDateFormats, true);
+            const endDateForPreviousRoadName = parsedFieldDate.isValid()
+              ? parsedFieldDate.subtract(1, 'days').format(defaultDateFormat)
+              : '';
             $(`.form-control[data-roadId=${originalRoadId}][data-FieldName=endDate]`).val(endDateForPreviousRoadName);
             roadNameCollection.setEndDate(originalRoadId, endDateForPreviousRoadName);
           }
@@ -153,28 +157,23 @@ export function RoadNamingToolWindow(roadNameCollection) {
 
     const isValidDate = (dateString, originalStartDate) => {
       if (!dateString || !originalStartDate) return false;
-      const dates = getDateObjects(dateString, originalStartDate);
-      const splitDateString = dateString.split(".");
-      if (splitDateString.length !== 3) return false;
 
-      const day = parseInt(splitDateString[0]);
-      const month = parseInt(splitDateString[1]);
-      const year = parseInt(splitDateString[2]);
+      const fieldDate = moment(dateString.trim(), acceptedDateFormats, true);
+      if (!fieldDate.isValid()) return false;
 
-      const monthLength = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-      if (year % 400 === 0 || (year % 100 !== 0 && year % 4 === 0)) monthLength[1] = 29;
+      const dates = getDateObjects(fieldDate, originalStartDate);
+      if (!dates) return false;
 
-      const dateValidation = dates.futureDateSinceCurrent.isAfter(dates.fieldDate) && dates.pastDate.isSameOrBefore(dates.fieldDate);
-      const sizeValidation = splitDateString[2].length === 4;
-      const dayValidation = day > 0 && day <= monthLength[month - 1];
-      const monthValidation = month > 0 && month <= 12;
-
-      return dateValidation && sizeValidation && dayValidation && monthValidation;
+      return dates.futureDateSinceCurrent.isAfter(fieldDate) && dates.pastDate.isSameOrBefore(fieldDate);
     };
 
-    const getDateObjects = (fieldValue, originalStartDate) => {
-      const fieldDate = moment(fieldValue.trim(), defaultDateFormat);
-      const lowerStart = moment(originalStartDate.trim(), defaultDateFormat).add(1, 'days');
+    const getDateObjects = (fieldDate, originalStartDate) => {
+      const originalDate = moment(originalStartDate.trim(), acceptedDateFormats, true);
+      if (!originalDate.isValid()) {
+        return null;
+      }
+
+      const lowerStart = originalDate.add(1, 'days');
       const currentUpperLimit = moment().add(5, 'years');
       return { fieldDate, futureDateSinceCurrent: currentUpperLimit, pastDate: lowerStart };
     };
@@ -214,6 +213,7 @@ export function RoadNamingToolWindow(roadNameCollection) {
           const lastEndDate = $content.find('input[data-FieldName="endDate"]').last();
           if (lastEndDate.val() === "") lastEndDate.val("pp.kk.vvvv");
           lastEndDate.prop("readonly", true);
+          lastEndDate.prop("disabled", true);
 
           addSaveEvent();
           toggleSaveButton();
@@ -241,7 +241,7 @@ export function RoadNamingToolWindow(roadNameCollection) {
           </tr><tr style="border-bottom:1px solid darkgray;"><td colspan="100%"></td></tr>
         `);
 
-        $(`.form-control[data-roadId=${newId}][data-FieldName=endDate]`).val("pp.kk.vvvv").prop("readonly", true);
+        $(`.form-control[data-roadId=${newId}][data-FieldName=endDate]`).val("pp.kk.vvvv").prop("readonly", true).prop("disabled", true);
         retroactivelyAddDatePickers(originalStartDate);
         toggleSaveButton();
       });

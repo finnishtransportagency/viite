@@ -145,7 +145,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       const ids = idString.split("-");
       if (ids.length === 2) {
         _.each(ids, function (id) {
-          const jp = getJunctionPoint(parseInt(id));
+          const jp = getJunctionPoint(parseInt(id, 10));
           if (_.isUndefined(jp)) {
             console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
           } else {

@@ -650,7 +650,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
       const currentCoordinates = map.getView().getCenter();
       const errorIndex = event.currentTarget.id;
       const errorCoordinates = _.find(coordinateButtons, function (b) {
-        return b.index === parseInt(errorIndex);
+        return b.index === parseInt(errorIndex, 10);
       }).coordinates;
       const index = _.findIndex(errorCoordinates, function (coordinates) {
         return coordinates.x === currentCoordinates[0] && coordinates.y === currentCoordinates[1];
@@ -685,7 +685,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
     };
 
     this.checkIfReserved = function (data) {
-      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value), data[1].value, data.projectId);
+      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value, 10), data[4].value === '' ? 0 : parseInt(data[4].value, 10), data[5].value === '' ? 0 : parseInt(data[5].value, 10), data[1].value, data.projectId);
 
     };
 
