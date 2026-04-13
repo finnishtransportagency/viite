@@ -253,10 +253,9 @@ ViiteEnumerations.BeforeAfter = {
   };
 
 ViiteEnumerations.Tool = {
-    Select: {value: "Select", description: 'Solmun valinta'},
-    Attach: {value: "Attach", alias: ["Select"]},
+    Attach: {value: "Attach"},
     Add: {value: "Add"},
-    Default: {value: "Default", alias: ["Select"]},
+    Default: {value: "Default"},
     Unknown: {value: ""}
   };
 

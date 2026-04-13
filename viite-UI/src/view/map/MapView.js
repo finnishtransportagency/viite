@@ -73,7 +73,6 @@ export function MapView(map, layers, applicationModel) {
 
     const setCursor = function (tool) {
       const cursor = {
-        'Select': 'default',
         'Attach': 'default',
         'Add': 'crosshair',
         'Cut': 'crosshair',

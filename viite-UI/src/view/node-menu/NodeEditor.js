@@ -12,7 +12,6 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParamete
     const userHasPermissionToEdit = _.includes(startupParameters.roles, 'viite');
     const tableUtils = NodeTableUtils;
     const ConfirmPopup = dependencies.ConfirmPopup;
-    const applicationModel = dependencies.applicationModel;
     const dateutil = dependencies.dateutil;
     const moment = dependencies.moment;
     const eventbus = dependencies.eventbus;
@@ -589,7 +588,7 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParamete
       rootElement.on('click.nodeEditor', '.btn-edit-node-cancel', function () {
         selectedNodesAndJunctions.closeNode(true);
         cleanup();
-        editorExitHandler('search');
+        editorExitHandler('templates');
       });
 
       const panelElement = $('#menu-container');
@@ -610,7 +609,7 @@ export function NodeEditor(selectedNodesAndJunctions, dataTable, startupParamete
       panelElement.on('click.nodeEditorFooter', '.btn-edit-node-cancel', function () {
         selectedNodesAndJunctions.closeNode(true);
         cleanup();
-        editorExitHandler('search');
+        editorExitHandler('templates');
       });
 
       rootElement.on('click.nodeEditor', '#edit-junction-point-addresses', function () {

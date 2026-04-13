@@ -11,7 +11,6 @@ export function MapLegendDisplay(applicationModel) {
   const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const className = 'road-link';
     const title = 'Selite';
-    const selectToolIcon = '<img src="images/select-tool.svg"/>';
     const expandedTemplate = _.template(`
       <div class="panel <%= className %>">
       <header class="panel-header expanded"><%- title %></header>
@@ -178,80 +177,6 @@ export function MapLegendDisplay(applicationModel) {
     roadClassLegend.append(createLifecycleStatusLegendEntries());
     roadClassLegend.append(calibrationPointPicture);
 
-    const Tool = function (toolName, icon, description) {
-      const classNameForTool = toolName.toLowerCase();
-      const toolElement = $('<div class="action"></div>').addClass(classNameForTool).attr('action', toolName).append(icon).on('click', function () {
-        selectTool();
-      });
-
-      const deactivate = function () {
-        toolElement.removeClass('active');
-      };
-      const activate = function () {
-        toolElement.addClass('active');
-      };
-
-      const selectTool = function () {
-        applicationModel.setSelectedTool(toolName);
-      };
-
-      return {
-        element: toolElement,
-        deactivate: deactivate,
-        activate: activate,
-        name: toolName,
-        description: description
-      };
-    };
-
-    const ToolSelection = function (tools) {
-      const toolSelectionElement = $('<div class="panel-section panel-actions"></div>');
-      _.each(tools, function (tool) {
-        toolSelectionElement.append(tool.element);
-        toolSelectionElement.append(`<div>${tool.description}</div>`);
-      });
-
-      const doHide = function () {
-        toolSelectionElement.hide();
-      };
-      const doShow = function () {
-        toolSelectionElement.show();
-      };
-
-      eventbus.on('tool:changed', function (_name) {
-        _.each(tools, function (tool) {
-          if (applicationModel.isSelectedTool(tool.name)) {
-            tool.activate();
-          } else {
-            tool.deactivate();
-          }
-        });
-      });
-
-      eventbus.on('tool:clear', function () {
-        reset();
-      });
-
-      const reset = function () {
-        _.each(tools, function (tool) {
-          tool.deactivate();
-        });
-      };
-
-      doHide();
-
-      return {
-        element: toolSelectionElement,
-        reset: reset,
-        show: doShow,
-        hide: doHide
-      };
-    };
-
-    const nodeToolSelection = new ToolSelection([
-      new Tool(ViiteEnumerations.Tool.Select.value, selectToolIcon, ViiteEnumerations.Tool.Select.description)
-    ]);
-
     const templateAttributes = {
       className: className,
       title: title
@@ -299,22 +224,17 @@ export function MapLegendDisplay(applicationModel) {
         container.empty();
         container.append(roadProjectOperations());
         container.append(calibrationPointPicture);
-        nodeToolSelection.hide();
       } else if (applicationModel.getSelectedLayer() === "node") {
         container.empty();
         roadClassLegend.append(createNodeLegendEntries());
         roadClassLegend.append(junctionPicture);
         roadClassLegend.append(junctionTemplatePicture);
         roadClassLegend.append(nodeTemplatePicture);
-        nodeToolSelection.reset();
-        nodeToolSelection.show();
-        elements.expanded.append(nodeToolSelection.element);
       } else {
         container.empty();
         roadClassLegend.append(roadClassLegendEntries);
         roadClassLegend.append(createLifecycleStatusLegendEntries());
         roadClassLegend.append(roadPartStartPointPicture);
-        nodeToolSelection.hide();
       }
     }
 

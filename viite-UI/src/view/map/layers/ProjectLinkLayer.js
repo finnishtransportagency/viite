@@ -395,12 +395,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       else return false;
     }
 
-    const changeTool = function (tool) {
-      if (tool === 'Select') {
-        selectSingleClick.setActive(true);
-      }
-    };
-
     me.eventListener.listenTo(eventbus, 'projectLink:projectLinksCreateSuccess', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
@@ -515,8 +509,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         addSelectInteractions();
       }
     };
-
-    me.eventListener.listenTo(eventbus, 'tool:changed', changeTool);
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:openProject', function (projectSelected) {
       this.project = projectSelected;

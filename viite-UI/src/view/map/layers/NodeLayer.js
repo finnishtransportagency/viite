@@ -46,6 +46,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     const junctionTemplateVector = dblVector();
 
     let selectedNodeStartingCoordinates = null;
+    let lastSelectedTemplates = null;
 
     const directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -265,18 +266,13 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
       switch (applicationModel.getSelectedTool()) {
         case ViiteEnumerations.Tool.Unknown.value:
-          if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
+          if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
+            selectNode(selectedNode.node);
+            selectedNodeStartingCoordinates = selectedNode.node.coordinates;
+          } else if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
             selectJunctionTemplate(selectedJunctionTemplate.junctionTemplate);
           } else if (!_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) {
             selectNodePointTemplate(selectedNodePointTemplate.nodePointTemplate);
-          }
-          break;
-        case ViiteEnumerations.Tool.Select.value:
-          if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
-            selectNode(selectedNode.node);
-
-            // Update starting coordinates before translate happens for precise coordinates (only for nodes, not junctions)
-            selectedNodeStartingCoordinates = selectedNode.node.coordinates;
           }
           break;
         case ViiteEnumerations.Tool.Attach.value:
@@ -443,7 +439,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
-      applicationModel.setSelectedTool(ViiteEnumerations.Tool.Select.value);
+      applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
     }
 
     function selectNodePointTemplate(nodePointTemplate) {
@@ -528,6 +524,9 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     }
 
     me.eventListener.listenTo(eventbus, 'node:unselected', function (current, cancel) {
+      if (!current) {
+        return;
+      }
       if (cancel) {
         const original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
         if (original && original.nodeNumber) {
@@ -539,6 +538,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     });
 
     me.eventListener.listenTo(eventbus, 'templates:selected', function (templates) {
+      lastSelectedTemplates = _.cloneDeep(templates);
       highlightTemplates(templates);
     });
 
@@ -546,15 +546,18 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       clearHighlights();
     });
 
+    me.eventListener.listenTo(eventbus, 'templates:unselected', function () {
+      lastSelectedTemplates = null;
+    });
+
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
       toggleSelectInteractions(!applicationModel.isSelectedTool(ViiteEnumerations.Tool.Add.value));
       switch (tool) {
         case ViiteEnumerations.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
-          setProperty([nodeMarkerLayer], 'selectable', false);
+          setProperty([nodeMarkerLayer], 'selectable', true);
           setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
           break;
-        case ViiteEnumerations.Tool.Select.value:
         case ViiteEnumerations.Tool.Attach.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
           setProperty([nodeMarkerLayer], 'selectable', true);
@@ -570,6 +573,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     });
 
     function createNewNodeMarker(coords) {
+      const templates = selectedNodesAndJunctions.getCurrentTemplates() || lastSelectedTemplates;
       const node = {
         coordinates: { x: coords.x, y: coords.y },
         type: ViiteEnumerations.NodeType.UnknownNodeType.value,
@@ -580,7 +584,8 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         function (feature) {
           return feature.node.id === node.id;
         });
-      attachNode(node, selectedNodesAndJunctions.getCurrentTemplates());
+      attachNode(node, templates);
+      eventbus.trigger('node:newNodeCreated', node, templates);
     }
 
     function removeCurrentNodeMarker(node) {

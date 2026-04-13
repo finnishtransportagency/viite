@@ -118,9 +118,13 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
     };
 
     const renderTemplateDetailsBody = function (templates) {
+      const safeTemplates = {
+        junctions: _.get(templates, 'junctions', []),
+        nodePoints: _.get(templates, 'nodePoints', [])
+      };
       const templateTables = [];
 
-      const sortedJunctionRows = _.map(tableUtils.sortedTemplateRows(tableUtils.junctionTemplateRows(templates.junctions)), function (item) {
+      const sortedJunctionRows = _.map(tableUtils.sortedTemplateRows(tableUtils.junctionTemplateRows(safeTemplates.junctions)), function (item) {
         return {
           id: item.id,
           className: 'junction-template-static-row',
@@ -142,7 +146,7 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
         }));
       }
 
-      const sortedNodePointRows = _.map(_.sortBy(tableUtils.getNodePointsRowsInfo(templates.nodePoints), ['roadNumber', 'roadPartNumber', 'addr']), function (item) {
+      const sortedNodePointRows = _.map(_.sortBy(tableUtils.getNodePointsRowsInfo(safeTemplates.nodePoints), ['roadNumber', 'roadPartNumber', 'addr']), function (item) {
         return {
           id: item.id,
           className: 'node-point-template-static-row',
@@ -220,12 +224,14 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
       panelElement.on('click.nodeDataMenu', '#attachToMapNode', function () {
         panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
         panelElement.find('#attachToMapNode').addClass('active');
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
         applicationModel.setSelectedTool(ViiteEnumerations.Tool.Attach.value);
       });
 
       panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {
         panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
         panelElement.find('#attachToNewNode').addClass('active');
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
         applicationModel.setSelectedTool(ViiteEnumerations.Tool.Add.value);
       });
     };

@@ -15,7 +15,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     let current = {};
 
     const openNode = function (node, openNodetemplates) {
-      clean();
+      current = {};
       setCurrentNode(node);
       eventbus.trigger('node:selected', current.node, openNodetemplates);
     };
@@ -44,7 +44,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     function openTemplates(templatesToOpen) {
-      clean();
+      current = {};
       setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
       eventbus.trigger('templates:selected', current.templates);
     }
@@ -279,13 +279,8 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       );
     }
 
-    function clean() {
-      current = {};
-    }
-
     const close = function (options, params, cancel) {
       eventbus.trigger(options, params, cancel);
-      eventbus.trigger('nodesAndJunctions:open');
     };
 
     const closeForm = function () {
@@ -293,13 +288,14 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const closeNode = function (cancel) {
-      close('node:unselected', current.node, cancel);
-      clean();
+      const currentNode = current && current.node ? current.node : undefined;
+      close('node:unselected', currentNode, cancel);
+      current = {};
       eventbus.trigger('nodeLayer:refreshView');
     };
 
     const closeTemplates = function () {
-      clean();
+      current = {};
       close('templates:unselected');
     };
 

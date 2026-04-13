@@ -18,7 +18,6 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
 
     const STATE = {
       SEARCH: 'search',
-      DISPLAY_NODE: 'display-node',
       DISPLAY_TEMPLATES: 'display-templates',
       EDITOR: 'editor'
     };
@@ -127,29 +126,6 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
       fetchUntreatedTemplates();
     };
 
-    const showNodeDisplay = function (node, templates) {
-      setCurrentState(STATE.DISPLAY_NODE);
-
-      if (menu) {
-        menu.setHeader(dataMenu.getNodeHeader());
-      }
-
-      dataMenu.showNode(node, templates);
-      dataMenu.bindEvents({
-        onEditNode: function () {
-          const currentNode = selectedNodesAndJunctions.getCurrentNode();
-          if (_.isEmpty(currentNode)) {
-            new ConfirmPopup('Avaa ensin hakutulos ennen muokkausta.', { type: 'alert' });
-            return;
-          }
-          showNodeEditor(currentNode, templates);
-        },
-        onBackToSearch: function () {
-          showSearch();
-        }
-      });
-    };
-
     const showTemplateDisplay = function (templates) {
       setCurrentState(STATE.DISPLAY_TEMPLATES);
 
@@ -181,8 +157,14 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
 
       nodeEditor.showNode(node, templates, {
         onExit: function (target) {
-          if (target === 'display') {
-            showNodeDisplay(node, templates);
+          if (target === 'templates') {
+            const templatesToShow = templates || selectedNodesAndJunctions.getCurrentTemplates();
+            if (!templatesToShow || (_.isEmpty(templatesToShow.nodePoints) && _.isEmpty(templatesToShow.junctions))) {
+              showSearch();
+              return;
+            }
+            eventbus.trigger('selectedNodesAndJunctions:openTemplates', templatesToShow);
+            showTemplateDisplay(templatesToShow);
           } else {
             showSearch();
           }
@@ -228,7 +210,17 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
         }
       });
 
+      eventbus.on('node:newNodeCreated', function (node, templates) {
+        const currentNode = !_.isEmpty(node) ? node : selectedNodesAndJunctions.getCurrentNode();
+        if (!_.isEmpty(currentNode)) {
+          showNodeEditor(currentNode, templates || selectedNodesAndJunctions.getCurrentTemplates());
+        }
+      });
+
       eventbus.on('templates:selected', function (templates) {
+        if (currentState === STATE.EDITOR) {
+          return;
+        }
         if (!_.isEmpty(templates.nodePoints) || !_.isEmpty(templates.junctions)) {
           showTemplateDisplay(templates);
         }
