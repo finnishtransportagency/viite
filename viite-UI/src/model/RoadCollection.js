@@ -68,7 +68,7 @@ const RoadLinkModel = function (data) {
   };
 };
 
-export function RoadCollection(backend, applicationModel) {
+export function RoadCollection(backend) {
     let currentAllRoadLinks = [];
     let roadLinkGroups = [];
     let unaddressedRoadLinkGroups = [];
@@ -77,6 +77,11 @@ export function RoadCollection(backend, applicationModel) {
     const lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     let clickedLinearLocationId = 0;
     let selectedRoadLinkModels = [];
+    let pendingProjectHighlightId;
+
+    eventbus.on('roadCollection:pendingProjectHighlight', function (projectId) {
+      pendingProjectHighlightId = projectId;
+    });
 
     const roadLinks = function () {
       return _.flatten(roadLinkGroups);
@@ -188,19 +193,10 @@ export function RoadCollection(backend, applicationModel) {
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched');
-      const hasProjectButtonState =
-        applicationModel &&
-        _.isFunction(applicationModel.isProjectButton) &&
-        applicationModel.isProjectButton();
 
-      if (hasProjectButtonState) {
-        const projectFeature = _.isFunction(applicationModel.getProjectFeature)
-          ? applicationModel.getProjectFeature()
-          : undefined;
-        eventbus.trigger('linkProperties:highlightSelectedProject', projectFeature);
-        if (_.isFunction(applicationModel.setProjectButton)) {
-          applicationModel.setProjectButton(false);
-        }
+      if (!_.isUndefined(pendingProjectHighlightId)) {
+        eventbus.trigger('linkProperties:highlightSelectedProject', pendingProjectHighlightId);
+        pendingProjectHighlightId = undefined;
       }
     };
 

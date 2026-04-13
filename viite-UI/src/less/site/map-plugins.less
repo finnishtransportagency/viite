@@ -138,12 +138,16 @@
 
 #map-plugins {
 	.tile-map-selector {
-		display: inline-flex;
+		display: flex;
         position: absolute;
-        top: 9px;
+        top: 0;
+		height: 100%;
+		align-items: center;
         padding: 0 (@line-height-modifier * 2);
 
 		ul {
+			display: inline-flex;
+			align-items: center;
             margin: 0;
             padding: 0;
 			height: auto;
@@ -185,14 +189,16 @@
 			}
 		}
 
-	    .property-boundaries-visible-wrapper, .noroadaddress-visible-wrapper, .underconstruction-visible-wrapper, .roads-visible-wrapper {
+	    .layer-option-visible-wrapper {
+			display: inline-flex;
 			border-left: 1px solid #cbcbc9;
 			margin-left: 10px;
-			height: 45px;
+			height: 100%;
 			padding-left: 10px;
 			vertical-align: middle;
-			margin-top: -10px;
-			padding-top: 7px;
+			margin-top: 0;
+			padding-top: 0;
+      align-items: center;
 
 			.common-checkbox {
 				margin: 0;

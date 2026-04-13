@@ -18,8 +18,8 @@ export function Footer(map, container, applicationModel) {
 }
 
 function renderTileMapSelector(container, applicationModel) {
-  const renderLayerOptionCheckbox = (wrapperClassName, id, label, checked = false) => `
-      <div class="${wrapperClassName}">
+  const renderLayerOptionCheckbox = (id, label, checked = false) => `
+      <div class="layer-option-visible-wrapper">
         ${checkbox({
           id,
           label,
@@ -43,11 +43,11 @@ function renderTileMapSelector(container, applicationModel) {
           <li data-layerid="none" title="Piilota kartta">Piilota kartta</li>
         </ul>
 
-        ${renderLayerOptionCheckbox('property-boundaries-visible-wrapper', 'propertyBoundariesVisibleCheckbox', 'Näytä kiinteistörajat')}
-        ${renderLayerOptionCheckbox('noroadaddress-visible-wrapper', 'unAddressedRoadsVisibleCheckbox', 'Näytä tieosoitteettomat-linkit', true)}
-        ${renderLayerOptionCheckbox('underconstruction-visible-wrapper', 'underConstructionVisibleCheckbox', 'Näytä rakenteilla-linkit', true)}
-        ${renderLayerOptionCheckbox('roads-visible-wrapper', 'roadsVisibleCheckbox', 'Näytä tieosoiteverkko', true)}
-        ${renderLayerOptionCheckbox('roads-visible-wrapper', 'regionalBordersVisibleCheckbox', 'Näytä maakuntarajat')}
+        ${renderLayerOptionCheckbox('propertyBoundariesVisibleCheckbox', 'Näytä kiinteistörajat')}
+        ${renderLayerOptionCheckbox('unAddressedRoadsVisibleCheckbox', 'Näytä tieosoitteettomat-linkit', true)}
+        ${renderLayerOptionCheckbox('underConstructionVisibleCheckbox', 'Näytä rakenteilla-linkit', true)}
+        ${renderLayerOptionCheckbox('roadsVisibleCheckbox', 'Näytä tieosoiteverkko', true)}
+        ${renderLayerOptionCheckbox('regionalBordersVisibleCheckbox', 'Näytä maakuntarajat')}
 
         <div class="checkbox-dropdown-wrapper">
           <button class="dropdown-toggle" aria-expanded="false">Valitse karttavaihtoehdot</button>
@@ -162,13 +162,13 @@ function renderTileMapSelector(container, applicationModel) {
 
   function updateUIForScreenSize() {
     if (window.innerWidth <= BREAKPOINT_PX) {
-      container.find('.property-boundaries-visible-wrapper, .noroadaddress-visible-wrapper, .underconstruction-visible-wrapper, .roads-visible-wrapper').hide();
+      container.find('.layer-option-visible-wrapper').hide();
       $checkboxDropdownWrapper.show();
       syncDropdownCheckboxesFromMain();
       $checkboxDropdownWrapper.removeClass('open');
       $dropdownToggle.attr('aria-expanded', 'false');
     } else {
-      container.find('.property-boundaries-visible-wrapper, .noroadaddress-visible-wrapper, .underconstruction-visible-wrapper, .roads-visible-wrapper').show();
+      container.find('.layer-option-visible-wrapper').show();
       $checkboxDropdownWrapper.hide();
       $checkboxDropdownWrapper.removeClass('open');
       $dropdownToggle.attr('aria-expanded', 'false');

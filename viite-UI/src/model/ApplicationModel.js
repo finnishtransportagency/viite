@@ -20,8 +20,6 @@ export function ApplicationModel() {
     let selectedLayer;
     let selectedTool = ViiteEnumerations.Tool.Unknown.value;
     let centerLonLat;
-    let projectButton = false;
-    let projectFeature;
     let selectionType = ViiteEnumerations.SelectionType.All;
     let sessionUsername = '';
     let sessionUserRoles = '';
@@ -46,16 +44,6 @@ export function ApplicationModel() {
         return selectionType.value === type.value;
       else
         return false;
-    };
-
-    const setProjectFeature = function (featureLinkID) {
-      projectFeature = featureLinkID;
-    };
-
-    const setProjectButton = function (newState) {
-      if (projectButton !== newState) {
-        projectButton = newState;
-      }
     };
 
     const setZoomLevel = function (level) {
@@ -95,10 +83,6 @@ export function ApplicationModel() {
       };
     };
 
-    const isProjectButton = function () {
-      return projectButton;
-    };
-
     const getSelectedTool = function () {
       return selectedTool;
     };
@@ -109,10 +93,6 @@ export function ApplicationModel() {
 
     const getSelectedLayer = function () {
       return selectedLayer;
-    };
-
-    const getProjectFeature = function () {
-      return projectFeature;
     };
 
     const getCurrentLocation = function () {
@@ -185,10 +165,6 @@ export function ApplicationModel() {
       toggleRoadVisibility: toggleRoadVisibility,
       selectLayer: selectLayer,
       getSelectedLayer: getSelectedLayer,
-      setProjectButton: setProjectButton,
-      setProjectFeature: setProjectFeature,
-      getProjectFeature: getProjectFeature,
-      isProjectButton: isProjectButton,
       getCurrentLocation: getCurrentLocation,
       setSelectionType: setSelectionType,
       getSelectionType: getSelectionType,

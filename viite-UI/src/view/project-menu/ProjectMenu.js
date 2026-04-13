@@ -378,8 +378,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
       updateUI(States.CONFIGURATION, project.data, false);
 
-      applicationModel.setProjectButton(true);
-      applicationModel.setProjectFeature(project.data.id);
+      eventbus.trigger('roadCollection:pendingProjectHighlight', project.data.id);
 
       if (!_.isUndefined(project.data)) {
         eventbus.trigger('linkProperties:selectedProject', result.linkId, project.data);
