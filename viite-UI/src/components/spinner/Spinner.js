@@ -1,5 +1,5 @@
 /* Usage:
-import { Spinner } from './components/spinner/Spinner.js';
+import { Spinner } from '@/components/spinner/Spinner.js';
 
 const html = '<button id="fetch-data">Hae data</button>';
 $('#actions').html(html);
@@ -11,77 +11,49 @@ $('#fetch-data').on('click', function () {
   });
 });
 */
-const DEFAULT_TOKEN = '__default__';
 const AUTO_HIDE_DELAY_MS = 8000;
 
-const activeTokens = new Set();
-const tokenTimeouts = new Map();
-
-function getToken(token) {
-  return typeof token === 'undefined' ? DEFAULT_TOKEN : token;
-}
+let autoHideTimeout = null;
 
 function removeOverlay() {
   $('.spinner-overlay').remove();
 }
 
 function ensureOverlay() {
-  if ($('.spinner-overlay').length) {
-    return;
-  }
-
-  const $spinnerOverlay = $('<div></div>')
+  if ($('.spinner-overlay').length) return;
+  $('<div></div>')
     .addClass('spinner-overlay modal-overlay')
-    .append($('<div></div>').addClass('spinner'));
-
-  $('body').append($spinnerOverlay);
+    .append($('<div></div>').addClass('spinner'))
+    .appendTo($('body'));
 }
 
-function clearTokenTimeout(token) {
-  const timeoutId = tokenTimeouts.get(token);
-  if (typeof timeoutId === 'undefined') {
-    return;
+function clearAutoHide() {
+  if (autoHideTimeout !== null) {
+    window.clearTimeout(autoHideTimeout);
+    autoHideTimeout = null;
   }
-
-  window.clearTimeout(timeoutId);
-  tokenTimeouts.delete(token);
-}
-
-function scheduleAutoHide(token) {
-  clearTokenTimeout(token);
-  tokenTimeouts.set(token, window.setTimeout(function () {
-    Spinner.hide(token);
-  }, AUTO_HIDE_DELAY_MS));
 }
 
 export const Spinner = {
-  show: function (token) {
-    const resolvedToken = getToken(token);
-    activeTokens.add(resolvedToken);
+  show: function () {
     ensureOverlay();
-    scheduleAutoHide(resolvedToken);
+    clearAutoHide();
+    autoHideTimeout = window.setTimeout(function () {
+      Spinner.hide();
+    }, AUTO_HIDE_DELAY_MS);
   },
 
-  hide: function (token) {
-    const resolvedToken = getToken(token);
-    clearTokenTimeout(resolvedToken);
-    activeTokens.delete(resolvedToken);
-
-    if (activeTokens.size === 0) {
-      removeOverlay();
-    }
+  hide: function () {
+    clearAutoHide();
+    removeOverlay();
   },
 
   clear: function () {
-    tokenTimeouts.forEach(function (timeoutId) {
-      window.clearTimeout(timeoutId);
-    });
-    tokenTimeouts.clear();
-    activeTokens.clear();
+    clearAutoHide();
     removeOverlay();
   },
 
   isVisible: function () {
-    return activeTokens.size > 0 || $('.spinner-overlay').length > 0;
+    return $('.spinner-overlay').length > 0;
   }
 };

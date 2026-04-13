@@ -231,8 +231,7 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
       panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {
         panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
         panelElement.find('#attachToNewNode').addClass('active');
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Add.value);
+
       });
     };
 

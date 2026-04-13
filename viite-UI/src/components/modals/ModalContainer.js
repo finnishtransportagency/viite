@@ -42,19 +42,16 @@ export function ModalContainer(config) {
         } = config;
 
         // Internal state variables
-        let modalElement;            // jQuery object for modal container
-        let overlayElement;          // jQuery object for dark overlay
-        let contentContainer;        // jQuery object for content area
-        let eventsBound = false;     // Track if events are already bound
-        let currentTitle = '';       // Current modal title
+        let modalElement;
+        let overlayElement;
+        let contentContainer;
+        let eventsBound = false;
+        let currentTitle = ''; 
 
         // Initialize modal immediately
         createModal();
 
-        /**
-         * Creates the modal header with title, optional help button, and close button
-         * @returns {jQuery} Header element as jQuery object
-         */
+        // Creates the modal header with title, optional help button, and close button
         function createHeader() {
             const headerHtml = `
                 <div class="modal-header">
@@ -72,10 +69,8 @@ export function ModalContainer(config) {
             return $(headerHtml);
         }
 
-        /**
-         * Creates the main modal container with header and content area
-         * @returns {jQuery} Modal container element as jQuery object
-         */
+        // Creates the main modal container with header and content area
+
         function createModal() {
             const styleAttr = style ? ` style="${style}"` : '';
             modalElement = $(`<div class="modal-container ${className}"${styleAttr}></div>`).hide();
@@ -88,10 +83,7 @@ export function ModalContainer(config) {
             return modalElement;
         }
 
-        /**
-         * Creates the overlay with dark background and modal window container
-         * @returns {jQuery} Overlay element as jQuery object
-         */
+        // Creates the overlay with dark background and modal window container
         function createOverlay() {
             overlayElement = $('<div class="modal-overlay viite-modal-overlay confirm-modal"></div>');
             const windowContainer = $('<div class="modal-window"></div>');
@@ -100,10 +92,7 @@ export function ModalContainer(config) {
             return overlayElement;
         }
 
-        /**
-         * Binds event handlers for modal interactions
-         * Handles close button clicks, overlay clicks, and ESC key
-         */
+        // Binds event handlers for modal interactions and handles close button clicks, overlay clicks, and ESC key
         function bindEvents() {
             if (!modalElement || eventsBound) return;
             
@@ -120,7 +109,6 @@ export function ModalContainer(config) {
 
         /**
          * Shows the modal with dark overlay
-         * Creates overlay if needed and appends to DOM
          * @param {Object} openConfig - Configuration for opening modal
          * @param {string} [openConfig.title=''] - Modal title
          * @param {string|jQuery} openConfig.content - Modal content
@@ -153,9 +141,7 @@ export function ModalContainer(config) {
             }
         }
 
-        /**
-         * Hides the modal and removes overlay from DOM
-         */
+        // Hides the modal and removes overlay from DOM
         function close() {
             
             modalElement.hide();

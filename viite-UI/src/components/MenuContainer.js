@@ -1,4 +1,6 @@
-/* Usage:
+/* This is used as a shared container for the right menu panel for both node and project menus and it provides header, body and footer sections.
+
+Usage:
 import { MenuContainer } from '@/components/MenuContainer.js';
 
 const menu = MenuContainer('#menu-container', onClose);
@@ -6,11 +8,7 @@ menu.setHeader('<h3>Valikko</h3>');
 menu.setBody(`<div>${contentHtml}</div>`);
 menu.setFooter('<button class="btn-primary">Tallenna</button>');
 */
-/*
- * MenuContainer renders header/body/footer regions directly into #menu-container.
- * Header and footer are hidden when no content is set.
- * MenuWrapper remains as a compatibility alias while callers move to MenuContainer.
- */
+
 export function MenuContainer(container, onClose) {
     const $container = $(container);
     let $root = null;
