@@ -32,13 +32,13 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
             <table class="change-table-dimensions">
                 <thead>
                   <tr class="change-table-top-header">
-                    <th id="label-type" colspan="1">Ilmoitus</th>
-                    <th id="label-source" colspan="9">Nykyosoite<i id="label-source-btn" class="btn-icon sort fas fa-sort"></i></th>
+                    <th id="label-type" colspan="2">Ilmoitus</th>
+                    <th id="label-source" colspan="10">Nykyosoite<i id="label-source-btn" class="btn-icon sort fas fa-sort"></i></th>
                     <th colspan="1"></th>
-                    <th id="label-target" colspan="9">Uusi osoite<i id="label-target-btn" class="btn-icon sort fas fa-sort"></i></th>
+                    <th id="label-target" colspan="10">Uusi osoite<i id="label-target-btn" class="btn-icon sort fas fa-sort"></i></th>
                   </tr>
                     <tr class="change-header">
-                        <th class="project-change-table-dimension-header"></th>
+                        <th class="project-change-table-dimension-header" colspan="2"></th>
                         
                         <th class="project-change-table-dimension-header">TIE</th>
                         <th class="project-change-table-dimension-header">AJR</th>
@@ -48,7 +48,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
                         <th class="project-change-table-dimension-header">PITUUS</th>
                         <th class="project-change-table-dimension-header">JATK</th>
                         <th class="project-change-table-dimension-header">HALL</th>
-                        <th class="project-change-table-dimension-header elinvoimakeskus">ELINVOIMAKESKUS</th>
+                        <th class="project-change-table-dimension-header elinvoimakeskus" colspan="2">ELINVOIMAKESKUS</th>
                         
                         <th class="project-change-table-dimension-header target">KÄÄNTÖ</th>
                         
@@ -60,7 +60,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
                         <th class="project-change-table-dimension-header">PITUUS</th>
                         <th class="project-change-table-dimension-header">JATK</th>
                         <th class="project-change-table-dimension-header">HALL</th>
-                        <th class="project-change-table-dimension-header elinvoimakeskus">ELINVOIMAKESKUS</th>
+                        <th class="project-change-table-dimension-header elinvoimakeskus" colspan="2">ELINVOIMAKESKUS</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -383,10 +383,10 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     }
 
     function getEmptySource(changeInfoSeq) {
-      return `<td class="project-change-table-dimension-first">
+      return `<td class="project-change-table-dimension-first" colspan="2">
         ${getChangeType(changeInfoSeq.changetype)}
       </td>
-      ${emptyCells(9)}`;
+      ${emptyCells(9)}`;    
     }
 
     function getEmptyTarget() {
@@ -412,7 +412,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
         <td class="project-change-table-dimension">${formatLength(targetLength, false)}</td>
         <td class="project-change-table-dimension">${changeInfoSeq.target.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(changeInfoSeq.target.administrativeClass)}</td>
-        <td class="project-change-table-dimension">${changeInfoSeq.target.elinvoimakeskus || ''}</td>
+        <td class="project-change-table-dimension elinvoimakeskus" colspan="2">${changeInfoSeq.target.elinvoimakeskus || ''}</td>
       `;
     }
 
@@ -427,7 +427,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       };
 
       return `
-        <td class="project-change-table-dimension-first">${getChangeType(changeInfoSeq.changetype)}</td>
+        <td class="project-change-table-dimension-first" colspan="2">${getChangeType(changeInfoSeq.changetype)}</td>
         <td class="project-change-table-dimension">${changeInfoSeq.source.roadNumber}</td>
         <td class="project-change-table-dimension">${changeInfoSeq.source.trackCode}</td>
         <td class="project-change-table-dimension">${changeInfoSeq.source.startRoadPartNumber}</td>
@@ -436,7 +436,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
         <td class="project-change-table-dimension">${formatLength(sourceLength, true)}</td>
         <td class="project-change-table-dimension">${changeInfoSeq.source.discontinuity}</td>
         <td class="project-change-table-dimension">${getAdministrativeClassText(changeInfoSeq.source.administrativeClass)}</td>
-        <td class="project-change-table-dimension">${changeInfoSeq.source.elinvoimakeskus || ''}</td>
+        <td class="project-change-table-dimension elinvoimakeskus" colspan="2">${changeInfoSeq.source.elinvoimakeskus || ''}</td>
       `;
     }
 

@@ -301,8 +301,8 @@ export function ProjectActionMenu(options) {
             type: 'alert',
             okButtonLbl: 'OK'
           });
-          Spinner.hide();
         }
+        Spinner.hide();
       });
     };
 

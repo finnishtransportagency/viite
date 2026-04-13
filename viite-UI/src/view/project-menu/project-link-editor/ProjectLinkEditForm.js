@@ -871,7 +871,17 @@ export function LinkEditForm(startupParameters) {
           new ConfirmPopup('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.', { type: "alert" });
           return false;
         }
-        
+
+        // Clear visual selection before save so the async success path (highlightFeatures)
+        // does not re-apply the green highlight on the saved links.
+        if (activeContext.projectLinkLayer) {
+          activeContext.projectLinkLayer.clearHighlights();
+        }
+        if (activeContext.selectedProjectLinkProperty) {
+          activeContext.selectedProjectLinkProperty.cleanIds();
+          activeContext.selectedProjectLinkProperty.clean();
+        }
+
         if (changeType.value === RoadAddressChangeType.Revert.value) {
           if (projectCollection) {
             projectCollection.revertChangesRoadlink(selectedLinks);

@@ -205,9 +205,31 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       // Always work with fresh DOM references (disposable pattern)
       // Unbind any previous listeners before binding new ones
       const editSpan = rootElement.find('#editProjectSpan');
-      editSpan.off('click').on('click', () => { 
-        editFlag = true; 
-        updateUI(States.CONFIGURATION, project.data, false); 
+      editSpan.off('click').on('click', () => {
+        eventbus.trigger('projectChangeTable:hide');
+        syncRoadAddressingState({ changeTableOpen: false });
+        eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
+        eventbus.trigger('roadAddressProject:deactivateAllSelections');
+        applicationModel.selectLayer('linkProperty', true, false);
+
+        const projectId = project.data && project.data.id;
+        if (projectId && options.projectCollection && _.isFunction(options.projectCollection.getProjectsWithLinksById)) {
+          Spinner.show();
+          options.projectCollection.getProjectsWithLinksById(projectId)
+            .then((result) => {
+              eventbus.trigger('roadAddress:openProject', result);
+              editFlag = true;
+            })
+            .catch(() => {
+              Spinner.hide();
+              editFlag = true;
+              updateUI(States.CONFIGURATION, project.data, false);
+            });
+          return;
+        }
+
+        editFlag = true;
+        updateUI(States.CONFIGURATION, project.data, false);
       });
 
       // Bind save and cancel button events for LINK_EDIT state
