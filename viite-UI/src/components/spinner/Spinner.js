@@ -1,3 +1,16 @@
+/* Usage:
+import { Spinner } from './components/spinner/Spinner.js';
+
+const html = '<button id="fetch-data">Hae data</button>';
+$('#actions').html(html);
+
+$('#fetch-data').on('click', function () {
+  Spinner.show('fetch-data');
+  runSearch().finally(function () {
+    Spinner.hide('fetch-data');
+  });
+});
+*/
 const DEFAULT_TOKEN = '__default__';
 const AUTO_HIDE_DELAY_MS = 8000;
 

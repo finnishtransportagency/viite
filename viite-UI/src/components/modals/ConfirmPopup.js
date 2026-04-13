@@ -1,4 +1,15 @@
 // Generic confirm popup component for confirmation and alert dialogs
+/* Usage:
+import { ConfirmPopup } from './components/modals/ConfirmPopup.js';
+
+$('#remove-button').on('click', function () {
+  ConfirmPopup('Are you sure?', {
+    type: 'confirm',
+    successCallback: onConfirm,
+    closeCallback: onCancel
+  });
+});
+*/
 export function ConfirmPopup(message, options = {}) {
     const defaultOptions = {
       type: "confirm",

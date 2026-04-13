@@ -1,9 +1,11 @@
 // Toast for a duration based on message length (3–5 seconds)
 // Useful for notifying user about errors and successes without requiring manual dismissal
-/* 
-Usage example: 
-import { showToast } from '@components/Toast.js';
-showToast("Message", { type: 'success' });
+/* Usage:
+import { showToast } from '@/components/Toast.js';
+
+document.getElementById('save-button').addEventListener('click', function () {
+    showToast('Tallennettu onnistuneesti', { type: 'success' });
+});
 */
 
 let container;

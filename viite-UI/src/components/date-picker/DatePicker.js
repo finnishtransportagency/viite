@@ -1,5 +1,24 @@
 import { dateutil } from '@utils/DateUtils.js';
 
+/* Usage:
+import { DatePicker } from '@/components/date-picker/DatePicker.js';
+
+const startDatePicker = DatePicker({
+  id: 'startDate',
+  onChange: function (value) {
+    console.log('Valittu paivamaara:', value);
+  }
+});
+
+const html = `
+  <div id="start-date-slot">
+    ${startDatePicker.render()}
+  </div>
+`;
+
+$('#form-container').html(html);
+startDatePicker.initialize('#start-date-slot');
+*/
 export function DatePicker(options) {
   const momentLib = window.moment;
   const PikadayCtor = window.Pikaday;

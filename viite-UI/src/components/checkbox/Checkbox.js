@@ -1,3 +1,16 @@
+/* Usage: 
+import { checkbox } from '@/components/checkbox/Checkbox.js';
+
+<div>
+  ${checkbox({
+    id,
+    label,
+    checked
+  })}
+</div>
+
+*/
+
 export function checkbox({ 
   id = '', 
   name = id, 

@@ -1,6 +1,7 @@
 /**
  * @example
- * // Basic usage
+ * import { ModalContainer } from './components/modals/ModalContainer.js';
+ *
  * const modal = new ModalContainer({
  *     helpUrl: 'manual.html#section',
  *     onClose: () => console.log('closed')
