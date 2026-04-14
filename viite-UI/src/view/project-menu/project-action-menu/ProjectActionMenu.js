@@ -262,7 +262,6 @@ export function ProjectActionMenu(options) {
       activeEventbus.trigger('roadAddressProject:startAllInteractions');
       activeEventbus.trigger('projectChangeTable:hide');
       projectCollection.clearRoadAddressProjects();
-      activeEventbus.trigger('layer:enableButtons', false);
 
       if (typeof closeProjectMenu === 'function') {
         closeProjectMenu({ noSave: Boolean(noSave) });

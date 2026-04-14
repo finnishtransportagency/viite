@@ -1,11 +1,11 @@
 /*
  * ProjectMenu: Orchestrates project workflow via MenuContainer.
  * Manages state transitions (CONFIGURATION → ROAD_ADDRESSING → LINK_EDIT)
- * and delegates rendering to child components (ProjectDetailsForm, ProjectActionMenu, LinkEditForm).
+ * and delegates rendering to child components (ProjectDetailsForm, ProjectActionMenu, ProjectLinkEditor).
  * Uses MenuContainer's setHeader(), setBody(), setFooter() for clean content updates.
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
-import { LinkEditForm } from './project-link-editor/ProjectLinkEditForm.js';
+import { ProjectLinkEditor } from './project-link-editor/ProjectLinkEditor.js';
 import { MenuContainer } from '@components/MenuContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
@@ -157,17 +157,17 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         }
 
         case States.LINK_EDIT: {
-          const linkEditForm = new LinkEditForm(options.canUseDevTools);
+          const projectLinkEditor = new ProjectLinkEditor(options.canUseDevTools);
           const links = options.projectCollection ? options.projectCollection.getProjectLinks() : [];
-          contentHtml = linkEditForm.render(
+          contentHtml = projectLinkEditor.render(
             project.data, 
             additionalData.selectedLinks, 
             additionalData.errorMessage,
             links
           );
           
-          footerHtml = linkEditForm.renderFooter(project.data, options.projectCollection);
-          childInstance = linkEditForm;
+          footerHtml = projectLinkEditor.renderFooter(project.data, options.projectCollection);
+          childInstance = projectLinkEditor;
           break;
         }
 
@@ -368,7 +368,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     eventbus.on('roadAddress:projectSentSuccess', function () {
       showToast('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
       closeProjectMenu();
-      eventbus.trigger('layer:enableButtons', false);
       eventbus.trigger('roadLinks:refreshView');
     });
 

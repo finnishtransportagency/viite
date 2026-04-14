@@ -46,7 +46,7 @@ export function SelectedProjectLink(projectLinkCollection) {
     const openCtrl = function (linkIds) {
       if (linkIds.length === 0) {
         cleanIds();
-        close();
+        current = [];
       } else {
         const added = _.difference(linkIds, me.ids);
         me.ids = linkIds;
@@ -121,10 +121,6 @@ export function SelectedProjectLink(projectLinkCollection) {
       me.ids = [];
     }
 
-    function close() {
-      current = [];
-      eventbus.trigger('layer:enableButtons', true);
-    }
 
     const isSplit = function () {
       return get().length > 1 && !_.isUndefined(get()[0].connectedLinkId);
@@ -141,7 +137,6 @@ export function SelectedProjectLink(projectLinkCollection) {
       get: get,
       clean: clean,
       cleanIds: cleanIds,
-      close: close,
       isSelected: isSelected,
       setCurrent: setCurrent,
       getCurrent: getCurrent,

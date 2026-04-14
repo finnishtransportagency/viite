@@ -28,7 +28,6 @@ export function SelectedLinkProperty(roadCollection, applicationModel) {
         setCurrent([]);
         dirty = false;
         featuresToKeep = [];
-        eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
       }
     };
@@ -161,7 +160,6 @@ export function SelectedLinkProperty(roadCollection, applicationModel) {
     }
 
     eventbus.on('linkProperties:closed', function () {
-      eventbus.trigger('layer:enableButtons', true);
       applicationModel.setSelectionType(SelectionType.All);
       clearFeaturesToKeep();
     });
