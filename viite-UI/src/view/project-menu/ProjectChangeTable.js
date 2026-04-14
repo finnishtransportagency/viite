@@ -106,7 +106,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 
     function hide() {
       const $changeTableFrame = $('.change-table-frame');
-      $('#information-content').empty();
+
       eventbus.trigger('projectChangeTable:closed');
       changeTableOpen = false;
       if (typeof callbacks.onClosed === 'function') {

@@ -247,16 +247,16 @@ export function LinkEditForm(canUseDevTools) {
       
       if (selected[0].status !== RoadAddressChangeType.New.value) {
         if (isPartialReversed) {
-          infoLabel = `<label class="form-group" style="color: white;">Osittain käännetty</label>`;
+          infoLabel = `<label class="form-group change-direction-info">Osittain käännetty</label>`;
         } else if (selected[0].reversed) {
-          infoLabel = `<label class="form-group" style="color: white;"><span">&#9745;</span> Käännetty</label>`;
+          infoLabel = `<label class="form-group change-direction-info"><span>&#9745;</span> Käännetty</label>`;
         } else {
-          infoLabel = `<label class="form-group" style="color: white;"><span>&#9744;</span> Käännetty</label>`;
+          infoLabel = `<label class="form-group change-direction-info"><span>&#9744;</span> Käännetty</label>`;
         }
       }
 
       return `
-        <div hidden class="form-group changeDirectionDiv" style="margin-top:15px">
+        <div hidden class="form-group changeDirectionDiv change-direction-container">
           <button id="changeDirectionButton" class="form-group changeDirection btn-primary">Käännä tieosan kasvusuunta</button>
           ${infoLabel}
         </div>`;
@@ -281,7 +281,7 @@ export function LinkEditForm(canUseDevTools) {
 
     const renderErrorMessage = function (errorMessage) {
       if (!errorMessage) return "";
-      return `<label style="text-transform: none; color: white;">VIRHE: ${errorMessage}</label>`;
+      return `<label class="project-link-error-message">VIRHE: ${errorMessage}</label>`;
     };
 
     const renderLinkId = function (selected) {
@@ -292,13 +292,13 @@ export function LinkEditForm(canUseDevTools) {
     const renderLinkLength = function (selected) {
       if (selected.length === 1) {
         const length = Math.round(selected[0].endMValue - selected[0].startMValue);
-        return staticField('Geometrian pituus', length);
+        return staticField('Geometrioiden yhteenlaskettu pituus', length);
       }
       const combinedLength = selected.reduce((sum, link) => sum + Math.round(link.endMValue - link.startMValue), 0);
       return `
         <div class="form-group-metadata">
-          <p class="form-control-static asset-log-info-metadata" style="color: white;">
-            Geometrian pituus: ${combinedLength}
+          <p class="form-control-static project-link-static-text">
+            Geometrioiden yhteenlaskettu pituus: ${combinedLength}
           </p>
         </div>`;
     };
@@ -306,14 +306,14 @@ export function LinkEditForm(canUseDevTools) {
     const renderActionSelectedField = function () {
       return `
         <div class="form-group action-selected-field" hidden="true">
-          <div class="asset-log-info" style="color: white;">Tarkista tekemäsi muutokset.<br>Jos muutokset ok, tallenna.</div>
+          <div class="project-link-static-text">Tarkista tekemäsi muutokset.<br>Jos muutokset ok, tallenna.</div>
         </div>`;
     };
 
     const staticField = function (labelText, dataField) {
       return `
         <div class="form-group">
-          <p class="form-control-static asset-log-info" style="color: white;">${labelText} : ${dataField}</p>
+          <p class="form-control-static project-link-static-text">${labelText} : ${dataField}</p>
         </div>`;
     };
 
@@ -322,7 +322,7 @@ export function LinkEditForm(canUseDevTools) {
       const disabled = nameToDisplay !== "" && isBlocked;
       const lengthLimit = maxLength ? `maxlength="${maxLength}"` : '';
       return `
-        <input type="text" class="form-control administrativeClassAndRoadName" style="float:none; display:inline-block; color: white; background-color: #646461;" id="roadName" value="${nameToDisplay}" ${disabled ? 'disabled' : ''} ${lengthLimit}/>`;
+        <input type="text" class="form-control administrativeClassAndRoadName project-link-road-name" id="roadName" value="${nameToDisplay}" ${disabled ? 'disabled' : ''} ${lengthLimit}/>`;
     };
 
     const addTrackCodeDropdown = function (trackDefaultValue) {

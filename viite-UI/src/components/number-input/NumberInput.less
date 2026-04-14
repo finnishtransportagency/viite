@@ -12,13 +12,19 @@
   .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
   .shadow-box();
 
-  // Focus state
   .form-control-focus();
   .placeholder();
 
   // Ensure consistent width override
   &.form-control.small-input {
     width: 55px !important;
+  }
+
+  &:focus,
+  &:focus-visible,
+  &:active {
+    border: 1px solid #a4a4a2;
+    box-shadow: 0 0 5px rgba(204, 204, 204, 0.559);
   }
 
   &[disabled],

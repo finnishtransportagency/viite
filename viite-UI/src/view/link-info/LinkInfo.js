@@ -66,7 +66,7 @@ export function LinkInfo(selectedLinkProperty) {
         ? Math.round(props.endMValue - props.startMValue)
         : _.reduce(links, (sum, l) => sum + Math.round(l.endMValue - l.startMValue), 0);
 
-      return `<div class="form-group-metadata">Geometrian pituus: ${withFallback(totalLength)}</div>`;
+      return `<div class="form-group-metadata">Geometrioiden yhteenlaskettu pituus: ${withFallback(totalLength)}</div>`;
     }
 
     function constructField(label, data) {

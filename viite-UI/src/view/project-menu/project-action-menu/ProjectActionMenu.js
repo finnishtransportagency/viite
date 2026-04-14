@@ -276,7 +276,7 @@ export function ProjectActionMenu(options) {
     };
 
     const handleRecalculateClick = function () {
-      $('#information-content').empty();
+
       const currentProject = projectCollection.getCurrentProject();
       Spinner.show();
       $('.validation-warning').remove();

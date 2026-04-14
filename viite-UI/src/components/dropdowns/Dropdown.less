@@ -5,7 +5,6 @@
 
   .form-control-focus(@input-border-focus-dark);
 
-  .placeholder(@input-color-placeholder-dark);
 
   &[disabled],
   &[readonly],
@@ -22,19 +21,16 @@
   font-size: @font-size-base;
   line-height: @line-height-modifier * 3;
   color: @input-color;
-  background-color: @input-bg;
   .box-sizing(border-box);
-  .transition(~"border-color ease-in-out .15s, box-shadow ease-in-out .15s");
-  .shadow-box();
 
   // Customize the `:focus` state to imitate native WebKit styles.
   .form-control-focus();
 
-  .placeholder();
-
-
-  // Reset height for `textarea`s
-  textarea& {
-    height: auto;
+  // Active/selected visual state: white border and white glow.
+  &:focus,
+  &:focus-visible,
+  &:active {
+    border: 1px solid #a4a4a2;
+    box-shadow: 0 0 5px rgba(204, 204, 204, 0.559);
   }
 }

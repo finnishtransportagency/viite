@@ -1,70 +1,70 @@
 <html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="node_modules/ol/ol.css">
+    <link rel="stylesheet" type="text/css" href="node_modules/pikaday/css/pikaday.css">
+    <link rel="stylesheet" type="text/css" href="css/viite.css">
+    <link
+      rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+      integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
+      crossorigin="anonymous"
+    >
+    <title>Viite</title>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <link rel="stylesheet" type="text/css" href="node_modules/ol/ol.css">
-  <link rel="stylesheet" type="text/css" href="node_modules/pikaday/css/pikaday.css">
-  <link rel="stylesheet" type="text/css" href="css/viite.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
-    integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
-  <title>Viite</title>
-</head>
-
-<body class="digiroad2">
-  <header id="header">
-    <a href="./"><span class="logo">Viite</span></a>
-    <span class="headerTooltip" id="headerTooltip"></span>
-    <span class="notification" id="notification">
-    </span>
-    <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
-  </header>
-  <div class="app-layout">
-    <div class="container">
-      <div id="contentMap">
-        <div id="mapdiv" class="no-copy">
-          <div id="popup" class="ol-viite-roadaddress-popup">
-            <div id="popup-content"></div>
+  <body>
+    <header id="header">
+      <a href="./"><span class="logo">Viite</span></a>
+      <span class="headerTooltip" id="headerTooltip"></span>
+      <span class="notification" id="notification">
+      </span>
+      <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
+    </header>
+    <div class="app-layout">
+      <div class="container">
+        <div id="contentMap">
+          <div id="mapdiv" class="no-copy">
+            <div id="popup" class="ol-viite-roadaddress-popup">
+              <div id="popup-content"></div>
+            </div>
           </div>
+          <button class="crosshair crosshair-center"></button>
+          <div class="crosshair crosshair-top"></div>
+          <div class="crosshair crosshair-bottom"></div>
+          <div class="crosshair crosshair-left"></div>
+          <div class="crosshair crosshair-right"></div>
         </div>
-        <button class="crosshair crosshair-center"></button>
-        <div class="crosshair crosshair-top"></div>
-        <div class="crosshair crosshair-bottom"></div>
-        <div class="crosshair crosshair-left"></div>
-        <div class="crosshair crosshair-right"></div>
+        <nav id="map-tools"></nav>
+        <div id="menu-container"></div>
       </div>
-      <nav id="map-tools"></nav>
-      <div id="menu-container">
-        <div id="information-content"></div>
-      </div>
+      <footer id="map-plugins"></footer>
     </div>
-    <footer id="map-plugins"></footer>
-  </div>
-  <script type="text/javascript" src="node_modules/ol/dist/ol.js"></script>
-  <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
-  <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
-  <script type="text/javascript" src="node_modules/lodash/lodash.js"></script>
-  <script type="text/javascript" src="node_modules/backbone/backbone.js"></script>
-  <script type="text/javascript">
-    if (window.__backboneAgent) {
-      window.__backboneAgent.handleBackbone(Backbone);
-    }
-  </script>
-  <script type="text/javascript" src="node_modules/pikaday/pikaday.js"></script>
-  <script type="text/javascript" src="node_modules/proj4/dist/proj4.js"></script>
-  <script type="text/javascript" src="node_modules/interactjs/dist/interact.min.js"></script>
-  <script type="importmap">
-    {
-      "imports": {
-        "@components/": "./src/components/",
-        "@model/": "./src/model/",
-        "@node-menu/": "./src/view/node-menu/",
-        "@utils/": "./src/utils/",
-        "@view/": "./src/view/"
+    <script type="text/javascript" src="node_modules/ol/dist/ol.js"></script>
+    <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
+    <script type="text/javascript" src="node_modules/lodash/lodash.js"></script>
+    <script type="text/javascript" src="node_modules/backbone/backbone.js"></script>
+    <script type="text/javascript">
+      if (window.__backboneAgent) {
+        window.__backboneAgent.handleBackbone(Backbone);
       }
-    }
-  </script>
-  <script type="module" src="src/main.js"></script>
+    </script>
+    <script type="text/javascript" src="node_modules/pikaday/pikaday.js"></script>
+    <script type="text/javascript" src="node_modules/proj4/dist/proj4.js"></script>
+    <script type="text/javascript" src="node_modules/interactjs/dist/interact.min.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "@components/": "./src/components/",
+          "@model/": "./src/model/",
+          "@node-menu/": "./src/view/node-menu/",
+          "@utils/": "./src/utils/",
+          "@view/": "./src/view/"
+        }
+      }
+    </script>
+    <script type="module" src="src/main.js"></script>
 
-</body>
-
+  </body>
 </html>
