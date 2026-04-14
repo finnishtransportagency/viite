@@ -11,7 +11,7 @@ import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { LocationSearch } from '@model/LocationSearch.js';
 import { MainMenu } from '@view/MainMenu.js';
 import { MapView } from '@view/map/MapView.js';
-import { NavigationPanel } from '@view/legend-panel/NavigationPanel.js';
+import { SearchPanel } from '@view/search-panel/SearchPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
@@ -59,7 +59,7 @@ export function start() {
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
     bindEvents();
-    new NavigationPanel({
+    new SearchPanel({
       container: jQuery('#map-tools'),
       backend: backend,
       applicationModel: applicationModel

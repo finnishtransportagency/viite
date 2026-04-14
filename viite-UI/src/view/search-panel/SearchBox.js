@@ -1,6 +1,6 @@
 /**
  * SearchBox component
- * Provides location search functionality with address, road address, link ID, and coordinate search.
+ * Handles road address/location search input, result rendering, and coordinate selection events.
  * @param {Object} locationSearch - Location search service
  * @returns {Object} Component with element property
  */
@@ -12,7 +12,7 @@ export function SearchBox(locationSearch) {
     const groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
     const coordinatesDiv = $('<div class="panel"></div>');
     const inputWrapper = $('<div class="input-wrapper"></div>');
-    const coordinatesText = $('<input type="text" class="location input-sm" placeholder="Osoite / koordinaatit" title="' + tooltip + '"/>');
+    const coordinatesText = $('<input type="text" class="location-search-input" placeholder="Osoite / koordinaatit" title="' + tooltip + '"/>');
     const clearButton = $('<button id="clearSearch" class="close wbtn-close clear-btn" aria-label="Tyhjennä haku" title="Tyhjennä haku"><i class="fas fa-times"></i></button>');
     const moveButton = $('<button id="executeSearch" class="btn-primary">Hae</button>');
     const panelHeader = $('<div class="panel-header"></div>');
@@ -74,7 +74,7 @@ export function SearchBox(locationSearch) {
         clearButton.hide();
       });
 
-      clearButton.hide(); // Hide initially
+      clearButton.hide();
 
       coordinatesText.on('input', function () {
         if (coordinatesText.val().length > 0) {

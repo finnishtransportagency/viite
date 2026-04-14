@@ -633,10 +633,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       toggleSelectInteractions(false, false);
     });
 
-    me.eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections roadAddressProject:deactivateAllSelections', function () {
-      toggleSelectInteractions(false, true);
-    });
-
     me.eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function () {
       toggleSelectInteractions(true, false);
     });
