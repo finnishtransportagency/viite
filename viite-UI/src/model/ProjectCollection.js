@@ -288,6 +288,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
                 publishableProject = successObject.publishable;
                 me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
+                eventbus.trigger('roadAddressProject:projectLinkSaved', dataJson.projectId, successObject.publishable);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
               } else {
                 new ConfirmPopup(successObject.errorMessage, { type: "alert" });

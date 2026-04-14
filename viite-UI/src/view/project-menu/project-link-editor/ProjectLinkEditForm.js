@@ -64,7 +64,7 @@ export function LinkEditForm(canUseDevTools) {
     };
 
     // ==========================================
-    // HTML RENDERING (VIEW)
+    // HTML RENDERING
     // ==========================================
     const render = function (project, selected, errorMessage, links = []) {
       const road = {
@@ -264,7 +264,7 @@ export function LinkEditForm(canUseDevTools) {
 
     const renderDistanceValue = function () {
       return `
-        <div id="distanceValue">
+        <div id="distanceValue" hidden>
           <div class="form-group distance-header">
             <img src="images/calibration-point.svg" class="calibration-point"/>
             <label>ETÄISYYSLUKEMA VALINNAN</label>
@@ -418,7 +418,7 @@ export function LinkEditForm(canUseDevTools) {
     };
 
     // ==========================================
-    // 3. UTILITIES & LOGIC
+    // UTILITIES & LOGIC
     // ==========================================
     const transitionModifiers = (targetStatus, currentStatus) => {
       const mod = _.includes(targetStatus.transitionFrom, currentStatus) ? '' : 'disabled hidden';
@@ -470,6 +470,7 @@ export function LinkEditForm(canUseDevTools) {
         case RoadAddressChangeType.Unchanged.value:
           dropdown_0_new.prop('disabled', true);
           $("#dropDown_0 option[value=" + RoadAddressChangeType.Unchanged.description + "]").attr('selected', 'selected').change();
+          rootElement.find('#distanceValue').prop('hidden', true);
           break;
         case RoadAddressChangeType.New.value:
           dropdown_0_new.attr('selected', 'selected').change();
@@ -477,6 +478,7 @@ export function LinkEditForm(canUseDevTools) {
             projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedLinks));
           }
           rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('#distanceValue').prop('hidden', false);
           if (selectedLinks[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
           break;
@@ -484,14 +486,18 @@ export function LinkEditForm(canUseDevTools) {
           dropdown_0_new.prop('disabled', true);
           $("#dropDown_0 option[value=" + RoadAddressChangeType.Transfer.description + "]").attr('selected', 'selected').change();
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('#distanceValue').prop('hidden', true);
           break;
         case RoadAddressChangeType.Numbering.value:
           $("#dropDown_0 option[value=" + RoadAddressChangeType.Numbering.description + "]").attr('selected', 'selected').change();
+          rootElement.find('#distanceValue').prop('hidden', true);
           break;
         case RoadAddressChangeType.Terminated.value:
           $("#dropDown_0 option[value=" + RoadAddressChangeType.Terminated.description + "]").attr('selected', 'selected').change();
+          rootElement.find('#distanceValue').prop('hidden', true);
           break;
         default:
+          rootElement.find('#distanceValue').prop('hidden', true);
           break;
       }
       if (selectedLinks && selectedLinks.length > 0) {
@@ -579,6 +585,7 @@ export function LinkEditForm(canUseDevTools) {
           uiElements.devTool.prop('hidden', false);
           uiElements.newRoadAddress.prop('hidden', true);
           uiElements.changeDirection.prop('hidden', true);
+          uiElements.distanceValue.prop('hidden', true);
           if (projectCollection) {
             projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Terminated.value)));
           }
@@ -595,6 +602,8 @@ export function LinkEditForm(canUseDevTools) {
             fillDistanceValues(selectedLinks, projectCollection);
             uiElements.changeDirection.prop('hidden', false);
             uiElements.distanceValue.prop('hidden', false);
+          } else {
+            uiElements.distanceValue.prop('hidden', false);
           }
           break;
 
@@ -608,6 +617,7 @@ export function LinkEditForm(canUseDevTools) {
           uiElements.devTool.prop('hidden', false);
           uiElements.newRoadAddress.prop('hidden', false);
           uiElements.changeDirection.prop('hidden', true);
+          uiElements.distanceValue.prop('hidden', true);
           
           if (projectCollection) {
             projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Unchanged.value)));
@@ -618,31 +628,39 @@ export function LinkEditForm(canUseDevTools) {
           enableFields(true);
           uiElements.newRoadAddress.prop('hidden', false);
           uiElements.devTool.prop('hidden', false);
+          uiElements.distanceValue.prop('hidden', true);
           if (projectCollection) {
             projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Transfer.value)));
           }
           break;
 
-        case RoadAddressChangeType.Numbering.description:
+        case RoadAddressChangeType.Numbering.description: {
           uiElements.devTool.prop('hidden', false);
           new ConfirmPopup("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosale.", { type: "alert" });
-          formControls.tie.prop('disabled', false);
-          formControls.osa.prop('disabled', false);
+
+          const isHandled = selectedLinks[0] && selectedLinks[0].status !== RoadAddressChangeType.NotHandled.value;
+
+          formControls.tie.prop('disabled', isHandled);
+          formControls.osa.prop('disabled', isHandled);
           formControls.trackCode.prop('disabled', true);
           formControls.discontinuity.prop('disabled', false);
           formControls.adminClass.prop('disabled', true);
-          
+          uiElements.distanceValue.prop('hidden', true);
+
           if (projectCollection) {
             projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Numbering.value)));
           }
           uiElements.newRoadAddress.prop('hidden', false);
           uiElements.updateButton.prop('disabled', false);
+
           break;
+        }
 
         case RoadAddressChangeType.Revert.description:
           uiElements.devTool.prop('hidden', true);
           uiElements.newRoadAddress.prop('hidden', true);
           uiElements.changeDirection.prop('hidden', true);
+          uiElements.distanceValue.prop('hidden', true);
           uiElements.updateButton.prop('disabled', false);
           break;
 
@@ -650,6 +668,7 @@ export function LinkEditForm(canUseDevTools) {
           uiElements.devTool.prop('hidden', true);
           uiElements.newRoadAddress.prop('hidden', true);
           uiElements.changeDirection.prop('hidden', true);
+          uiElements.distanceValue.prop('hidden', true);
           break;
       }
 
@@ -670,7 +689,7 @@ export function LinkEditForm(canUseDevTools) {
     };
 
     // ==========================================
-    // 4. EVENT LISTENERS (CONTROLLER)
+    // EVENT LISTENERS
     // ==========================================
     const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable, editContext = {}) {
       const rootElement = $('#menu-container');
@@ -849,31 +868,15 @@ export function LinkEditForm(canUseDevTools) {
         }
       };
 
-      eventbus.on('roadAddressProject:discardChanges', cancelChanges);
-
-    // ==========================================
-    // 5. PUBLIC API
-    // ==========================================
-    return {
-      render,
-      bindEvents,
-      renderFooter,
-      checkInputs,
-      updateForm,
-      updateFormControls,
-      validateEVK,
-      cancelChanges,
-      validateAndSave: function(projectCollection, selectedLinks) {
+      const validateAndSave = (projectCollection, selectedLinks) => {
         const statusDropdownValue = $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
         
-        if (!this.validateEVK(parseInt($('#elinvoimakeskus')[0].value, 10), changeType)) {
+        if (!validateEVK(parseInt($('#elinvoimakeskus')[0].value, 10), changeType)) {
           new ConfirmPopup('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.', { type: "alert" });
           return false;
         }
 
-        // Clear visual selection before save so the async success path (highlightFeatures)
-        // does not re-apply the green highlight on the saved links.
         if (activeContext.projectLinkLayer) {
           activeContext.projectLinkLayer.clearHighlights();
         }
@@ -900,6 +903,23 @@ export function LinkEditForm(canUseDevTools) {
           }
         }
         return true;
-      }
+      };
+
+      eventbus.on('roadAddressProject:discardChanges', cancelChanges);
+
+      
+    // ==========================================
+    // PUBLIC API
+    // ==========================================
+    return {
+      render,
+      bindEvents,
+      renderFooter,
+      checkInputs,
+      updateForm,
+      updateFormControls,
+      validateEVK,
+      cancelChanges,
+      validateAndSave
     };
 }
