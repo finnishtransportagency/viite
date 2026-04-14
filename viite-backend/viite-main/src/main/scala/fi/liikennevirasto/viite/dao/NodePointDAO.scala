@@ -523,8 +523,7 @@ class NodePointDAO extends BaseDAO {
       RoadPart(0, 0),
       null,
       //8, //TODO: Verify the validity of these default values
-      ArealRoadMaintainer.getEVK(8),       //TODO: Verify the validity of these default values
-
+      ArealRoadMaintainer.getEVK(8)       //TODO: Verify the validity of these default values. EDIT: Default values are valid because the are not used in persisting data.
     )))
   }
 }

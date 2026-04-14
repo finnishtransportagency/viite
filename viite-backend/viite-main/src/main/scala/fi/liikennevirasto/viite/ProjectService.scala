@@ -233,13 +233,20 @@ class ProjectService(
       }
   }
 
+  def parsePrefilledDataRoadMaintainer(municipalitycode: Int): ArealRoadMaintainer = {
+    val attempt = Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("EVK12")
+    println(s"Tried to get road maintainer from municipality code: $municipalitycode, got: $attempt")
+    ArealRoadMaintainer.apply(attempt)
+  }
+
   def parsePreFillData(linkId: String, projectId: Long): Either[String, PreFillInfo] = {
     roadLinkService.getSuravageLinksById(Set(linkId)) match {
       case List((roadNumber, roadPartNumber, municipalitycode)) =>
+        println(s"ProjectService.scala :: parsePreFillData :: roadNumber: $roadNumber, roadPartNumber: $roadPartNumber, municipalitycode: $municipalitycode")
         preFillRoadName(
           roadNumber,
           roadPartNumber,
-          ArealRoadMaintainer.apply(Try(municipalityToViiteEVKMapping(municipalitycode)).getOrElse("EVK12")), // Default to EVK11 if municipality code is not found in mapping. This is to narrow down the occurrences of the EVK0-bug
+          parsePrefilledDataRoadMaintainer(municipalitycode), // Default to EVK11 if municipality code is not found in mapping. This is to narrow down the occurrences of the EVK0-bug
           projectId
         )
       case _ => Left(s"Link could not be found from project: $projectId")
@@ -501,7 +508,7 @@ class ProjectService(
               "errorMessage" -> (linkIds.toSet -- roadLinks.keySet).mkString(ErrorRoadLinkNotFound + " puuttuvat id:t ", ", ", ""))
           val project = fetchProjectById(projectId).getOrElse(throw new RuntimeException(s"Missing project $projectId"))
           val projectLinks: Seq[ProjectLink] = linkIds.distinct.map { id: String =>
-            newProjectLink(roadLinks(id), project, roadPart, track, Discontinuity.Continuous, administrativeClass,/* roadEly,*/ roadMaintainer, roadName)
+            newProjectLink(roadLinks(id), project, roadPart, track, Discontinuity.Continuous, administrativeClass, roadMaintainer, roadName)
           }
 
           if (isConnectedtoOtherProjects(projectId, projectLinks)) {
