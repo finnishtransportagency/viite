@@ -98,6 +98,7 @@ export function ProjectLinkEditor(canUseDevTools) {
     // ==========================================
     const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable, editContext = {}) {
       const rootElement = $('#menu-container');
+      let isInitializing = true;
       activeContext.projectCollection = projectCollection || editContext.projectCollection;
       activeContext.projectLinkLayer = editContext.projectLinkLayer;
       activeContext.selectedProjectLinkProperty = editContext.selectedProjectLinkProperty;
@@ -131,7 +132,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 
       rootElement.on('change', '#roadAddressProjectForm #dropDown_0', (e) => {
         FormState.setChangeType(e.target.value);
-        updateFormControls(e.target.value, selected, projectCollection);
+        updateFormControls(e.target.value, selected, projectCollection, { markDirty: !isInitializing });
       });
 
       rootElement.on('change', '#trackCodeDropdown, #administrativeClassDropdown', () => {
@@ -239,6 +240,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 
       updateForm(selected, projectCollection);
       disableFormInputs();
+      isInitializing = false;
       
       if (projectChangeTable) {
         checkInputs(projectChangeTable);

@@ -52,7 +52,7 @@ export function createProjectLinkEditorLogic(dependencies) {
     updateButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
   };
 
-  const changeDropDownValue = (statusCode, selectedLinks, projectCollection) => {
+  const changeDropDownValue = (statusCode, selectedLinks) => {
     const dropdown_0_new = $(`#dropDown_0 option[value=${RoadAddressChangeType.New.description}]`);
     const rootElement = $(menuSelector);
 
@@ -64,9 +64,6 @@ export function createProjectLinkEditorLogic(dependencies) {
         break;
       case RoadAddressChangeType.New.value:
         dropdown_0_new.attr('selected', 'selected').change();
-        if (projectCollection) {
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedLinks));
-        }
         rootElement.find('.new-road-address').prop('hidden', false);
         rootElement.find('#distanceValue').prop('hidden', false);
         if (selectedLinks[0].id !== 0) {
@@ -126,9 +123,9 @@ export function createProjectLinkEditorLogic(dependencies) {
     }
   };
 
-  const updateForm = (selected, projectCollection) => {
+  const updateForm = (selected) => {
     if (!selected || !selected[0]) return;
-    changeDropDownValue(selected[0].status, selected, projectCollection);
+    changeDropDownValue(selected[0].status, selected);
     const projectLinkMaxByEndAddressM = _.maxBy(selected, link => link.addrMRange.end);
     if (projectLinkMaxByEndAddressM) {
       const selectedDiscontinuity = projectLinkMaxByEndAddressM.addrMRange.end === 0
@@ -139,7 +136,8 @@ export function createProjectLinkEditorLogic(dependencies) {
     }
   };
 
-  const updateFormControls = (changeType, selectedLinks, projectCollection) => {
+  const updateFormControls = (changeType, selectedLinks, projectCollection, options = {}) => {
+    const { markDirty = true } = options;
     const rootElement = $(menuSelector);
 
     const formControls = {
@@ -171,6 +169,18 @@ export function createProjectLinkEditorLogic(dependencies) {
       linearLocationId: link.linearLocationId
     });
 
+    const setDirtyLinks = (status) => {
+      if (projectCollection && markDirty) {
+        projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, status)));
+      }
+    };
+
+    const syncTmpDirty = () => {
+      if (projectCollection && markDirty) {
+        projectCollection.setTmpDirty(projectCollection.getDirty());
+      }
+    };
+
     switch (changeType) {
       case RoadAddressChangeType.Terminated.description:
         enableFields(false);
@@ -178,18 +188,14 @@ export function createProjectLinkEditorLogic(dependencies) {
         uiElements.newRoadAddress.prop('hidden', true);
         uiElements.changeDirection.prop('hidden', true);
         uiElements.distanceValue.prop('hidden', true);
-        if (projectCollection) {
-          projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Terminated.value)));
-        }
+        setDirtyLinks(RoadAddressChangeType.Terminated.value);
         break;
 
       case RoadAddressChangeType.New.description:
         enableFields(true);
         uiElements.devTool.prop('hidden', false);
         uiElements.newRoadAddress.prop('hidden', false);
-        if (projectCollection) {
-          projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.New.value)));
-        }
+        setDirtyLinks(RoadAddressChangeType.New.value);
         if (selectedLinks[0].id !== -1) {
           fillDistanceValues(selectedLinks, projectCollection);
           uiElements.changeDirection.prop('hidden', false);
@@ -211,9 +217,7 @@ export function createProjectLinkEditorLogic(dependencies) {
         uiElements.changeDirection.prop('hidden', true);
         uiElements.distanceValue.prop('hidden', true);
 
-        if (projectCollection) {
-          projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Unchanged.value)));
-        }
+        setDirtyLinks(RoadAddressChangeType.Unchanged.value);
         break;
 
       case RoadAddressChangeType.Transfer.description:
@@ -221,9 +225,7 @@ export function createProjectLinkEditorLogic(dependencies) {
         uiElements.newRoadAddress.prop('hidden', false);
         uiElements.devTool.prop('hidden', false);
         uiElements.distanceValue.prop('hidden', true);
-        if (projectCollection) {
-          projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Transfer.value)));
-        }
+        setDirtyLinks(RoadAddressChangeType.Transfer.value);
         break;
 
       case RoadAddressChangeType.Numbering.description: {
@@ -239,9 +241,7 @@ export function createProjectLinkEditorLogic(dependencies) {
         formControls.adminClass.prop('disabled', true);
         uiElements.distanceValue.prop('hidden', true);
 
-        if (projectCollection) {
-          projectCollection.setDirty(selectedLinks.map(link => mapLinkData(link, RoadAddressChangeType.Numbering.value)));
-        }
+        setDirtyLinks(RoadAddressChangeType.Numbering.value);
         uiElements.newRoadAddress.prop('hidden', false);
         uiElements.updateButton.prop('disabled', false);
 
@@ -264,9 +264,7 @@ export function createProjectLinkEditorLogic(dependencies) {
         break;
     }
 
-    if (projectCollection) {
-      projectCollection.setTmpDirty(projectCollection.getDirty());
-    }
+    syncTmpDirty();
   };
 
   const validateEVK = (evkValue, changeType) => {

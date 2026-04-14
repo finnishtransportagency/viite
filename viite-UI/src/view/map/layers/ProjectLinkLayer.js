@@ -174,6 +174,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
         if (projectCollection.isDirty()) {
           fireDeselectionConfirmation(modPressed, selection, 'single');
+          console.log("Project collection was dirty, showing deselection confirmation");
         } else {
           eventbus.trigger('roadAddressProject:discardChanges');
           if (!_.isUndefined(selection)) {
@@ -238,6 +239,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         const selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
+        console.log("IsNotEditingData was false, showing deselection confirmation");
         fireDeselectionConfirmation(ctrlPressed, selection, 'double');
       }
       highlightFeatures();
