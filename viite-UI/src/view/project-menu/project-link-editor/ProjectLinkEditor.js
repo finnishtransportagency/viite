@@ -5,7 +5,7 @@
  * Supports disposable lifecycle: rebuilt per show, all listeners bound to fresh DOM.
  * Key methods: bindEvents(), cancelChanges(), validateAndSave() for form interaction.
  */
-import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
@@ -75,8 +75,7 @@ export function ProjectLinkEditor(canUseDevTools) {
       defineOptionModifiers,
       checkInputs,
       updateForm,
-      updateFormControls,
-      validateEVK
+      updateFormControls
     } = behavior;
 
     const renderer = createProjectLinkEditorHTML({
@@ -278,11 +277,6 @@ export function ProjectLinkEditor(canUseDevTools) {
       const validateAndSave = (projectCollection, selectedLinks) => {
         const statusDropdownValue = $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
-        
-        if (!validateEVK(parseInt($('#elinvoimakeskus')[0].value, 10), changeType)) {
-          new ConfirmPopup('Tarkista antamasi Elinvoimakeskus-koodi. Annettu arvo on virheellinen.', { type: "alert" });
-          return false;
-        }
 
         if (activeContext.projectLinkLayer) {
           activeContext.projectLinkLayer.clearHighlights();
@@ -325,7 +319,6 @@ export function ProjectLinkEditor(canUseDevTools) {
       checkInputs,
       updateForm,
       updateFormControls,
-      validateEVK,
       cancelChanges,
       validateAndSave
     };

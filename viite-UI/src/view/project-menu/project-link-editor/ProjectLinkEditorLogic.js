@@ -5,7 +5,6 @@ export function createProjectLinkEditorLogic(dependencies) {
     RoadAddressChangeType,
     CalibrationCode,
     editableStatus,
-    validEvks,
     formState,
     menuSelector = '#menu-container'
   } = dependencies;
@@ -267,22 +266,10 @@ export function createProjectLinkEditorLogic(dependencies) {
     syncTmpDirty();
   };
 
-  const validateEVK = (evkValue, changeType) => {
-    if (changeType.value === RoadAddressChangeType.Terminated.value) {
-      return true;
-    }
-    let isValidEvk = _.some(validEvks, evk => evk.value === evkValue);
-    if (evkValue === 0 && changeType !== RoadAddressChangeType.Revert) {
-      isValidEvk = false;
-    }
-    return isValidEvk;
-  };
-
   return {
     defineOptionModifiers,
     checkInputs,
     updateForm,
-    updateFormControls,
-    validateEVK
+    updateFormControls
   };
 }
