@@ -66,6 +66,23 @@ object SynchronizationUtils {
     Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= maxDiffForTracks
   }
 
+  // Clamps the average start address to ensure it does not create a gap or overlap with adjacent links
+  def clampSharedStartAddrM(averageStart: Long, sectionLinks: Seq[ProjectLink], previousLinks: Seq[ProjectLink]): Long = {
+    val minAverageStart = previousLinks.map(_.addrMRange.start + 1).reduceOption(_ max _).getOrElse(averageStart)
+    val maxAverageStart = sectionLinks.map(_.addrMRange.end - 1).min
+
+    if (minAverageStart > maxAverageStart) averageStart
+    else math.max(minAverageStart, math.min(averageStart, maxAverageStart))
+  }
+
+  def clampSharedEndAddrM(averageEnd: Long, sectionLinks: Seq[ProjectLink], followingLinks: Seq[ProjectLink]): Long = {
+    val minAverageEnd = sectionLinks.map(_.addrMRange.start + 1).max
+    val maxAverageEnd = followingLinks.map(_.addrMRange.end - 1).reduceOption(_ min _).getOrElse(averageEnd)
+
+    if (minAverageEnd > maxAverageEnd) averageEnd
+    else math.max(minAverageEnd, math.min(averageEnd, maxAverageEnd))
+  }
+
   def replaceStartsWith(projectLink: ProjectLink, replacingStartAddrM: Long): ProjectLink = {
     projectLink.copy(
       addrMRange          = AddrMRange(replacingStartAddrM, projectLink.addrMRange.end),
