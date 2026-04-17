@@ -12,27 +12,10 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function MapView(map, layers, applicationModel) {
-    let isInitialized = false;
     const centerMarkerLayer = new ol.source.Vector({});
     let enableCtrlModifier = false;
     const metaKeyCodes = ViiteEnumerations.MetaKeyCodes;
 
-    const showAssetZoomDialog = function () {
-      //showToast('Zoomaa lähemmäksi, jos haluat nähdä kohteita', { type: 'info' });
-    };
-
-    const minZoomForContent = function () {
-      if (applicationModel.getSelectedLayer()) {
-        return layers[applicationModel.getSelectedLayer()].minZoomForContent || zoomlevels.minZoomForRoadNetwork;
-      }
-      return zoomlevels.minZoomForRoadNetwork;
-    };
-
-    const refreshMap = function (mapState) {
-      if (mapState.zoom < minZoomForContent() && (isInitialized && mapState.hasZoomLevelChanged)) {
-        showAssetZoomDialog();
-      }
-    };
 
     const drawCenterMarker = function (position) {
       // Create a new Feature with the exact point in the center of the map
@@ -67,7 +50,6 @@ export function MapView(map, layers, applicationModel) {
     eventbus.on('application:initialized layer:fetched', function () {
       const zoom = zoomlevels.getViewZoom(map);
       applicationModel.setZoomLevel(zoom);
-      isInitialized = true;
       eventbus.trigger('map:initialized', map);
     }, this);
 
@@ -103,7 +85,7 @@ export function MapView(map, layers, applicationModel) {
       }
     }, this);
 
-    eventbus.on('map:refresh', refreshMap, this);
+
 
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 

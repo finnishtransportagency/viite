@@ -141,15 +141,13 @@ export function ApplicationModel() {
     });
 
     const refreshMap = function (zoomLevel, bbox, center) {
-      const hasZoomLevelChanged = zoomLevel.level !== zoomLevel;
       setZoomLevel(zoomLevel);
       centerLonLat = center;
       eventbus.trigger('map:refresh', {
         selectedLayer: selectedLayer,
         zoom: getZoomLevel(),
         bbox: bbox,
-        center: center,
-        hasZoomLevelChanged: hasZoomLevelChanged
+        center: center
       });
     };
 
