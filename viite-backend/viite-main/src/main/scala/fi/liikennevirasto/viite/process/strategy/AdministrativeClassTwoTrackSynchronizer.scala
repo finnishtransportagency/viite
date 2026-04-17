@@ -27,6 +27,9 @@ import fi.vaylavirasto.viite.util.ViiteException
  */
 object AdministrativeClassTwoTrackSynchronizer {
 
+  private def tooLargeDiffError(leftLinkId: String, rightLinkId: String): ViiteException =
+    ViiteException(s"Linkkien $leftLinkId ja $rightLinkId etäisyysarvot eroavat toisistaan yli sallitun rajan (${SynchronizationUtils.maxDiffForTracks}). Yritä tehdä hallinnollisen luokan muutos kohdista, jotka ovat pituudeltaan lähempänä toisiaan, tai ota yhteyttä Viite tukeen.")
+
   /**
    * Adjusts two track administrative class change sections to match + the surrounding links if needed.
    * @param roadPartProjectLinksWithoutNewLinks Sequence of project links to adjust on a single road part (NOTE! RoadAddressChangeType.New links NOT allowed)
@@ -158,7 +161,7 @@ object AdministrativeClassTwoTrackSynchronizer {
           SynchronizationUtils.updateProjectLinksList(Seq(adjustedAdminClassChangedLeft, adjustedAdminClassChangedRight), projectLinks)
       }
     } else {
-      projectLinks
+        throw tooLargeDiffError(lastAdminClassChangedOnLeft.linkId, lastAdminClassChangedOnRight.linkId)
     }
   }
 
@@ -276,6 +279,14 @@ object AdministrativeClassTwoTrackSynchronizer {
               val firstRight = currentRightSection.minBy(_.addrMRange.start)
               val lastRight = currentRightSection.maxBy(_.addrMRange.end)
 
+              if (!SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLeft, firstRight)) {
+                throw tooLargeDiffError(firstLeft.linkId, firstRight.linkId)
+              }
+
+              if (!SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastLeft, lastRight)) {
+                throw tooLargeDiffError(lastLeft.linkId, lastRight.linkId)
+              }
+
               val prevLeftLink = SynchronizationUtils.findPreviousLink(updatedProjectLinks, firstLeft, Track.RightSide)
               val prevRightLink = SynchronizationUtils.findPreviousLink(updatedProjectLinks, firstRight, Track.LeftSide)
 
@@ -345,14 +356,17 @@ object AdministrativeClassTwoTrackSynchronizer {
     leftMiddleSections.filterNot(_.exists(link => processedLeftSectionIds.contains(link.id))).foreach { leftSection =>
       val firstLeft = leftSection.minBy(_.addrMRange.start)
       val lastLeft  = leftSection.maxBy(_.addrMRange.end)
+      val unprocessedRightSections = rightMiddleSections.filterNot(_.exists(link => processedRightSectionIds.contains(link.id)))
 
       // Find the right section whose start and end are within maxDiffForTracks of the left section.
-      rightMiddleSections.filterNot(_.exists(link => processedRightSectionIds.contains(link.id))).find { rightSection =>
+      val matchedRightSection = unprocessedRightSections.find { rightSection =>
         val firstRight = rightSection.minBy(_.addrMRange.start)
         val lastRight  = rightSection.maxBy(_.addrMRange.end)
         SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLeft, firstRight) &&
         SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastLeft, lastRight)
-      }.foreach { rightSection =>
+      }
+
+      matchedRightSection.foreach { rightSection =>
         val firstRight = rightSection.minBy(_.addrMRange.start)
         val lastRight  = rightSection.maxBy(_.addrMRange.end)
 
@@ -405,6 +419,24 @@ object AdministrativeClassTwoTrackSynchronizer {
           adjustedLeft ++ adjustedRight ++ adjustedPreceding ++ adjustedFollowing,
           updatedProjectLinks
         )
+
+        processedLeftSectionIds ++= leftSection.map(_.id)
+        processedRightSectionIds ++= rightSection.map(_.id)
+      }
+
+      if (matchedRightSection.isEmpty && unprocessedRightSections.nonEmpty) {
+        val rightSection = unprocessedRightSections.head
+
+        val firstRight = rightSection.minBy(_.addrMRange.start)
+        val lastRight  = rightSection.maxBy(_.addrMRange.end)
+
+        if (!SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLeft, firstRight)) {
+          throw tooLargeDiffError(firstLeft.linkId, firstRight.linkId)
+        }
+
+        if (!SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastLeft, lastRight)) {
+          throw tooLargeDiffError(lastLeft.linkId, lastRight.linkId)
+        }
       }
     }
 

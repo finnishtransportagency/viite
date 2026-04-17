@@ -4,6 +4,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.{TerminatedTwoTrackSectionSynchronizer, AdministrativeClassTwoTrackSynchronizer}
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model._
+import fi.vaylavirasto.viite.util.ViiteException
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -483,5 +484,21 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
     result.find(_.id == 123).get.originalAddrMRange should be(AddrMRange(102, 130))
     result.find(_.id == 127).get.addrMRange should be(AddrMRange(106, 130))
     result.find(_.id == 127).get.originalAddrMRange should be(AddrMRange(106, 130))
+  }
+
+  test("Case 12 - Administrative Class Change: Middle section with too large difference throws") {
+    val links = Seq(
+      buildTestLink(130, Track.RightSide, (0, 20), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(131, Track.RightSide, (20, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(132, Track.RightSide, (40, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+
+      buildTestLink(133, Track.LeftSide, (0, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(134, Track.LeftSide, (40, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(135, Track.LeftSide, (60, 80), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
+    )
+
+    intercept[ViiteException] {
+      AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges(links)
+    }
   }
 }
