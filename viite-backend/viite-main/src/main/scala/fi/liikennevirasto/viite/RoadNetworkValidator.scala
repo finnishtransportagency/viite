@@ -151,6 +151,8 @@ class RoadNetworkValidator {
     logger.info(s"Validating overlapping roadways in history for road part: $roadPart")
     val overlappingRoadwaysInHistory = roadNetworkDAO.fetchOverlappingRoadwaysInHistory(roadPart)
     if (overlappingRoadwaysInHistory.nonEmpty) {
+      println(s"OVERLAPPING :::: ${overlappingRoadwaysInHistory.size}")
+      overlappingRoadwaysInHistory.foreach(o => println(s"Overlapping roadway in history: Roadway ID: ${o.id}, Road Part: ${o.roadPart.roadNumber}, Road Part: ${o.roadPart.partNumber}, ADDR M START: ${o.addrMRange.start}, ADDR M END: ${o.addrMRange.end}, Track: ${o.track}, Start Date: ${o.startDate}, End Date: ${o.endDate}"))
       logger.warn(s"Found overlapping roadways in history for road part: $roadPart")
       throw new RoadNetworkValidationException(s"$OverlappingRoadwayInHistory (tieosa $roadPart)")
     }
