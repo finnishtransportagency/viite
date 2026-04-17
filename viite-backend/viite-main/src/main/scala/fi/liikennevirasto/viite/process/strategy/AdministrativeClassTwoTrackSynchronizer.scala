@@ -27,6 +27,9 @@ import fi.vaylavirasto.viite.util.ViiteException
  */
 object AdministrativeClassTwoTrackSynchronizer {
 
+  private def tooLargeDiffError(leftLinkId: String, rightLinkId: String): ViiteException =
+    ViiteException(s"Linkkien $leftLinkId ja $rightLinkId etäisyysarvot eroavat toisistaan yli sallitun rajan (${SynchronizationUtils.maxDiffForTracks}). Yritä tehdä hallinnollisen luokan muutos kohdista, jotka ovat pituudeltaan lähempänä toisiaan, tai ota yhteyttä Viite tukeen.")
+
   /**
    * Adjusts two track administrative class change sections to match + the surrounding links if needed.
    * @param roadPartProjectLinksWithoutNewLinks Sequence of project links to adjust on a single road part (NOTE! RoadAddressChangeType.New links NOT allowed)
@@ -82,7 +85,7 @@ object AdministrativeClassTwoTrackSynchronizer {
   private def adminClassChangedLinksToContinuousTwoTrackSections(adminClassChangedLinks: Seq[ProjectLink]) : (Seq[Seq[ProjectLink]], Seq[Seq[ProjectLink]]) = {
     val adminClassChangedLeft = adminClassChangedLinks.filter(_.track == Track.LeftSide)
     val adminClassChangedRight = adminClassChangedLinks.filter(_.track == Track.RightSide)
-    
+
     // Group administrative class changed links into continuous sections
     val leftAdminClassChangedSections = toContinuousSectionsByAdminClassChange(adminClassChangedLeft)
     val rightAdminClassChangedSections = toContinuousSectionsByAdminClassChange(adminClassChangedRight)
@@ -126,8 +129,14 @@ object AdministrativeClassTwoTrackSynchronizer {
 
     // Adjust only the intersection where the start-of-road admin class change ends.
     if (SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastAdminClassChangedOnLeft, lastAdminClassChangedOnRight)) {
-      val (adjustedAdminClassChangedLeft, adjustedAdminClassChangedRight, averageEnd) =
-        adjustAdminClassChangedLinksToMatchAtTheEnd(lastAdminClassChangedOnLeft, lastAdminClassChangedOnRight)
+      val averageEnd = SynchronizationUtils.clampSharedEndAddrM(
+        TwoTrackRoadUtils.calculateAverageAddrM(lastAdminClassChangedOnLeft.addrMRange.end, lastAdminClassChangedOnRight.addrMRange.end),
+        Seq(lastAdminClassChangedOnLeft, lastAdminClassChangedOnRight),
+        Seq(continuousAfterAdminClassChangedLeft, continuousAfterAdminClassChangedRight).flatten
+      )
+
+      val adjustedAdminClassChangedLeft = SynchronizationUtils.replaceEndsWith(lastAdminClassChangedOnLeft, averageEnd)
+      val adjustedAdminClassChangedRight = SynchronizationUtils.replaceEndsWith(lastAdminClassChangedOnRight, averageEnd)
 
       (continuousAfterAdminClassChangedLeft, continuousAfterAdminClassChangedRight) match {
         case (Some(leftContinuous), Some(rightContinuous)) =>
@@ -152,11 +161,11 @@ object AdministrativeClassTwoTrackSynchronizer {
           SynchronizationUtils.updateProjectLinksList(Seq(adjustedAdminClassChangedLeft, adjustedAdminClassChangedRight), projectLinks)
       }
     } else {
-      projectLinks
+        throw tooLargeDiffError(lastAdminClassChangedOnLeft.linkId, lastAdminClassChangedOnRight.linkId)
     }
   }
 
-    // Helper methods for middle section administrative class change processing
+  // Helper methods for middle section administrative class change processing
   private def isMiddleSection(section: Seq[ProjectLink], maxAddrM: Long): Boolean =
     !section.exists(_.addrMRange.isRoadPartStart) &&
     !section.exists(_.originalAddrMRange.end == maxAddrM)
@@ -270,14 +279,34 @@ object AdministrativeClassTwoTrackSynchronizer {
               val firstRight = currentRightSection.minBy(_.addrMRange.start)
               val lastRight = currentRightSection.maxBy(_.addrMRange.end)
 
-              val averageStart = TwoTrackRoadUtils.calculateAverageAddrM(firstLeft.addrMRange.start, firstRight.addrMRange.start)
-              val averageEnd = TwoTrackRoadUtils.calculateAverageAddrM(lastLeft.addrMRange.end, lastRight.addrMRange.end)
+              if (!SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLeft, firstRight)) {
+                throw tooLargeDiffError(firstLeft.linkId, firstRight.linkId)
+              }
 
-              val adjustedLeft = adjustSection(firstLeft, lastLeft, averageStart, averageEnd)
-              val adjustedRight = adjustSection(firstRight, lastRight, averageStart, averageEnd)
+              if (!SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastLeft, lastRight)) {
+                throw tooLargeDiffError(lastLeft.linkId, lastRight.linkId)
+              }
 
               val prevLeftLink = SynchronizationUtils.findPreviousLink(updatedProjectLinks, firstLeft, Track.RightSide)
               val prevRightLink = SynchronizationUtils.findPreviousLink(updatedProjectLinks, firstRight, Track.LeftSide)
+
+              val nextLeftLink = SynchronizationUtils.findNextLink(updatedProjectLinks, lastLeft, Track.RightSide)
+              val nextRightLink = SynchronizationUtils.findNextLink(updatedProjectLinks, lastRight, Track.LeftSide)
+
+              val averageStart = SynchronizationUtils.clampSharedStartAddrM(
+                TwoTrackRoadUtils.calculateAverageAddrM(firstLeft.addrMRange.start, firstRight.addrMRange.start),
+                Seq(firstLeft, firstRight),
+                Seq(prevLeftLink, prevRightLink).flatten
+              )
+
+              val averageEnd = SynchronizationUtils.clampSharedEndAddrM(
+                TwoTrackRoadUtils.calculateAverageAddrM(lastLeft.addrMRange.end, lastRight.addrMRange.end),
+                Seq(lastLeft, lastRight),
+                Seq(nextLeftLink, nextRightLink).flatten
+              )
+
+              val adjustedLeft = adjustSection(firstLeft, lastLeft, averageStart, averageEnd)
+              val adjustedRight = adjustSection(firstRight, lastRight, averageStart, averageEnd)
 
               val adjustedPreceding = {
                 (prevLeftLink, prevRightLink) match {
@@ -294,9 +323,6 @@ object AdministrativeClassTwoTrackSynchronizer {
                     Seq.empty[ProjectLink]
                 }
               }
-
-              val nextLeftLink = SynchronizationUtils.findNextLink(updatedProjectLinks, lastLeft, Track.RightSide)
-              val nextRightLink = SynchronizationUtils.findNextLink(updatedProjectLinks, lastRight, Track.LeftSide)
 
               val adjustedFollowing = {
                 (nextLeftLink, nextRightLink) match {
@@ -330,26 +356,42 @@ object AdministrativeClassTwoTrackSynchronizer {
     leftMiddleSections.filterNot(_.exists(link => processedLeftSectionIds.contains(link.id))).foreach { leftSection =>
       val firstLeft = leftSection.minBy(_.addrMRange.start)
       val lastLeft  = leftSection.maxBy(_.addrMRange.end)
+      val unprocessedRightSections = rightMiddleSections.filterNot(_.exists(link => processedRightSectionIds.contains(link.id)))
 
       // Find the right section whose start and end are within maxDiffForTracks of the left section.
-      rightMiddleSections.filterNot(_.exists(link => processedRightSectionIds.contains(link.id))).find { rightSection =>
+      val matchedRightSection = unprocessedRightSections.find { rightSection =>
         val firstRight = rightSection.minBy(_.addrMRange.start)
         val lastRight  = rightSection.maxBy(_.addrMRange.end)
         SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLeft, firstRight) &&
         SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastLeft, lastRight)
-      }.foreach { rightSection =>
+      }
+
+      matchedRightSection.foreach { rightSection =>
         val firstRight = rightSection.minBy(_.addrMRange.start)
         val lastRight  = rightSection.maxBy(_.addrMRange.end)
-
-        val averageStart = TwoTrackRoadUtils.calculateAverageAddrM(firstLeft.addrMRange.start, firstRight.addrMRange.start)
-        val averageEnd   = TwoTrackRoadUtils.calculateAverageAddrM(lastLeft.addrMRange.end,    lastRight.addrMRange.end)
-
-        val adjustedLeft  = adjustSection(firstLeft,  lastLeft,  averageStart, averageEnd)
-        val adjustedRight = adjustSection(firstRight, lastRight, averageStart, averageEnd)
 
         // Find the link ending where the admin-class section begins on each track.
         val prevLeftLink  = SynchronizationUtils.findPreviousLink(updatedProjectLinks, firstLeft, Track.RightSide)
         val prevRightLink = SynchronizationUtils.findPreviousLink(updatedProjectLinks, firstRight, Track.LeftSide)
+
+        // Find the link starting where the admin-class section ends on each track.
+        val nextLeftLink  = SynchronizationUtils.findNextLink(updatedProjectLinks, lastLeft, Track.RightSide)
+        val nextRightLink = SynchronizationUtils.findNextLink(updatedProjectLinks, lastRight, Track.LeftSide)
+
+        val averageStart = SynchronizationUtils.clampSharedStartAddrM(
+          TwoTrackRoadUtils.calculateAverageAddrM(firstLeft.addrMRange.start, firstRight.addrMRange.start),
+          Seq(firstLeft, firstRight),
+          Seq(prevLeftLink, prevRightLink).flatten
+        )
+
+        val averageEnd = SynchronizationUtils.clampSharedEndAddrM(
+          TwoTrackRoadUtils.calculateAverageAddrM(lastLeft.addrMRange.end, lastRight.addrMRange.end),
+          Seq(lastLeft, lastRight),
+          Seq(nextLeftLink, nextRightLink).flatten
+        )
+
+        val adjustedLeft  = adjustSection(firstLeft,  lastLeft,  averageStart, averageEnd)
+        val adjustedRight = adjustSection(firstRight, lastRight, averageStart, averageEnd)
 
         val adjustedPreceding: Seq[ProjectLink] = (prevLeftLink, prevRightLink) match {
           case (Some(prevLeft), Some(prevRight)) =>
@@ -361,10 +403,6 @@ object AdministrativeClassTwoTrackSynchronizer {
           case (None, Some(prevRight)) => Seq(SynchronizationUtils.replaceEndsWith(prevRight, averageStart))
           case _                       => Seq.empty
         }
-
-        // Find the link starting where the admin-class section ends on each track.
-        val nextLeftLink  = SynchronizationUtils.findNextLink(updatedProjectLinks, lastLeft, Track.RightSide)
-        val nextRightLink = SynchronizationUtils.findNextLink(updatedProjectLinks, lastRight, Track.LeftSide)
 
         val adjustedFollowing: Seq[ProjectLink] = (nextLeftLink, nextRightLink) match {
           case (Some(nextLeft), Some(nextRight)) =>
@@ -381,6 +419,24 @@ object AdministrativeClassTwoTrackSynchronizer {
           adjustedLeft ++ adjustedRight ++ adjustedPreceding ++ adjustedFollowing,
           updatedProjectLinks
         )
+
+        processedLeftSectionIds ++= leftSection.map(_.id)
+        processedRightSectionIds ++= rightSection.map(_.id)
+      }
+
+      if (matchedRightSection.isEmpty && unprocessedRightSections.nonEmpty) {
+        val rightSection = unprocessedRightSections.head
+
+        val firstRight = rightSection.minBy(_.addrMRange.start)
+        val lastRight  = rightSection.maxBy(_.addrMRange.end)
+
+        if (!SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLeft, firstRight)) {
+          throw tooLargeDiffError(firstLeft.linkId, firstRight.linkId)
+        }
+
+        if (!SynchronizationUtils.areTracksCloseEnoughOnEndAddrM(lastLeft, lastRight)) {
+          throw tooLargeDiffError(lastLeft.linkId, lastRight.linkId)
+        }
       }
     }
 
@@ -406,7 +462,7 @@ object AdministrativeClassTwoTrackSynchronizer {
         val (leftAdminClassChangedSections, rightAdminClassChangedSections) = adminClassChangedLinksToContinuousTwoTrackSections(adminClassChangedLinks)
         val lastAdminClassChangedLeftSectionOpt   = leftAdminClassChangedSections.find(section => section.exists(_.id == lastAdminClassChangedLeft.id))
         val lastAdminClassChangedRightSectionOpt  = rightAdminClassChangedSections.find(section => section.exists(_.id == lastAdminClassChangedRight.id))
-        
+
         (lastAdminClassChangedLeftSectionOpt, lastAdminClassChangedRightSectionOpt) match {
           case (Some(leftSection), Some(rightSection)) =>
             handleTwoTrackRoadPartEndAdminClassChange(leftSection, rightSection, projectLinks)
@@ -437,17 +493,24 @@ object AdministrativeClassTwoTrackSynchronizer {
     val firstLinkOnLeftAdminClassChangedSection  = adminClassChangedLeftSection.minBy(_.addrMRange.start)
     val firstLinkOnRightAdminClassChangedSection =  adminClassChangedRightSection.minBy(_.addrMRange.start)
 
-    if ((firstLinkOnLeftAdminClassChangedSection.addrMRange.start == firstLinkOnRightAdminClassChangedSection.addrMRange.start) ||    // Address starts already match on first links of admin class change section OR
-      !SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLinkOnLeftAdminClassChangedSection, firstLinkOnRightAdminClassChangedSection)) { // Address starts are too far away each other
+    if ((firstLinkOnLeftAdminClassChangedSection.addrMRange.start == firstLinkOnRightAdminClassChangedSection.addrMRange.start) ||
+      !SynchronizationUtils.areTracksCloseEnoughOnOriginalStartAddrM(firstLinkOnLeftAdminClassChangedSection, firstLinkOnRightAdminClassChangedSection)) {
       // Return the project links unchanged
       projectLinks
     } else {
-      // Update the first admin class changed links of the section to match at the start
-      val (adjustedAdminClassChangedLeft, adjustedAdminClassChangedRight, averageStartForAdminClassChanged) = adjustAdminClassChangedStartToMatch(firstLinkOnLeftAdminClassChangedSection, firstLinkOnRightAdminClassChangedSection)
       // Find previous links if there are any
       val previousLeftLink  = SynchronizationUtils.findPreviousLink(projectLinks, firstLinkOnLeftAdminClassChangedSection, Track.RightSide)
       val previousRightLink = SynchronizationUtils.findPreviousLink(projectLinks, firstLinkOnRightAdminClassChangedSection, Track.LeftSide)
-      
+
+      val averageStartForAdminClassChanged = SynchronizationUtils.clampSharedStartAddrM(
+        TwoTrackRoadUtils.calculateAverageAddrM(firstLinkOnLeftAdminClassChangedSection.addrMRange.start, firstLinkOnRightAdminClassChangedSection.addrMRange.start),
+        Seq(firstLinkOnLeftAdminClassChangedSection, firstLinkOnRightAdminClassChangedSection),
+        Seq(previousLeftLink, previousRightLink).flatten
+      )
+
+      val adjustedAdminClassChangedLeft = SynchronizationUtils.replaceStartsWith(firstLinkOnLeftAdminClassChangedSection, averageStartForAdminClassChanged)
+      val adjustedAdminClassChangedRight = SynchronizationUtils.replaceStartsWith(firstLinkOnRightAdminClassChangedSection, averageStartForAdminClassChanged)
+
       (previousLeftLink, previousRightLink) match {
         case (Some(prevLeft), Some(prevRight)) =>
           // Update the previous link ends to match

@@ -4,6 +4,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.strategy.{TerminatedTwoTrackSectionSynchronizer, AdministrativeClassTwoTrackSynchronizer}
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model._
+import fi.vaylavirasto.viite.util.ViiteException
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -234,61 +235,68 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
     result.find(_.id == 65).get.originalAddrMRange should be(AddrMRange(45, 62))
   } }
 
-  test("Case 7 - Administrative Class Change: Synchronize road part middle with minor discontinuity") {
+  test("Case 7 - Administrative Class Change: Synchronize multiple middle sections with minor discontinuity") {
     /**
       * Before:
-      * 38   60      80                    80      100   120
-      * ----->~~~~~~~> (minor discontiniuity)~~~~~~~>-----> 
-      * 36   56      76                    76      104   126
-      * ----->~~~~~~~> (minor discontiniuity)~~~~~~~>-----> 
+      * 38   60      80                     80   90   100   120
+      * ----->~~~~~~~> (minor discontinuity) ---->~~~~~>----->
+      * 36   56      76                     76   88   104   126
+      * ----->~~~~~~~> (minor discontinuity) ---->~~~~~>----->
       *
       * After:
-      * 38   58      80                    80      102   120
-      * ----->~~~~~~~> (minor discontiniuity)~~~~~~~>-----> 
-      * 36   58      76                    76      102   126
-      * ----->~~~~~~~> (minor discontiniuity)~~~~~~~>-----> 
+      * 38   58      78                     78   89   102   120
+      * ----->~~~~~~~> (minor discontinuity) ---->~~~~~>----->
+      * 36   58      78                    78    89   102   126
+      * ----->~~~~~~~> (minor discontinuity) ---->~~~~~>----->
       *
-      * avg start = (60+56)/2 = 58  →  preceding ends snap to 58, first admin links start at 58
-      * avg end   = (100+104)/2 = 102  →  last admin links end at 102, following links start at 102
-      * internal boundary (80 / 76) is untouched
+      * Section 1 averages: start (60+56)/2 = 58, end (80+76)/2 = 78
+      * Section 2 averages: start (90+88)/2 = 89, end (100+104)/2 = 102
       */
     val links = Seq(
-      buildTestLink(70, Track.RightSide, (38, 60),  RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(71, Track.RightSide, (60, 80),  RoadAddressChangeType.Unchanged, Discontinuity.MinorDiscontinuity, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(72, Track.RightSide, (80, 100), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(73, Track.RightSide, (100, 120), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(70, Track.RightSide, (38, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(71, Track.RightSide, (60, 80), RoadAddressChangeType.Unchanged, Discontinuity.MinorDiscontinuity, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(72, Track.RightSide, (80, 90), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(73, Track.RightSide, (90, 100), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(78, Track.RightSide, (100, 120), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
 
-      buildTestLink(74, Track.LeftSide, (36, 56),  RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(75, Track.LeftSide, (56, 76),  RoadAddressChangeType.Unchanged, Discontinuity.MinorDiscontinuity, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(76, Track.LeftSide, (76, 104), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(77, Track.LeftSide, (104, 126), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
+      buildTestLink(74, Track.LeftSide, (36, 56), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(75, Track.LeftSide, (56, 76), RoadAddressChangeType.Unchanged, Discontinuity.MinorDiscontinuity, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(76, Track.LeftSide, (76, 88), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(77, Track.LeftSide, (88, 104), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(79, Track.LeftSide, (104, 126), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
     )
 
     val result = AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges(links)
 
-    // Preceding links: only ends are snapped, starts are preserved
+    // Preceding links for section 1: only ends are snapped, starts are preserved
     result.find(_.id == 70).get.addrMRange should be(AddrMRange(38, 58))
     result.find(_.id == 70).get.originalAddrMRange should be(AddrMRange(38, 58))
     result.find(_.id == 74).get.addrMRange should be(AddrMRange(36, 58))
     result.find(_.id == 74).get.originalAddrMRange should be(AddrMRange(36, 58))
 
-    // First admin-changed links: start averaged to 58, end (80/76) untouched
-    result.find(_.id == 71).get.addrMRange should be(AddrMRange(58, 80))
-    result.find(_.id == 71).get.originalAddrMRange should be(AddrMRange(58, 80))
-    result.find(_.id == 75).get.addrMRange should be(AddrMRange(58, 76))
-    result.find(_.id == 75).get.originalAddrMRange should be(AddrMRange(58, 76))
+    // First middle admin-changed section
+    result.find(_.id == 71).get.addrMRange should be(AddrMRange(58, 78))
+    result.find(_.id == 71).get.originalAddrMRange should be(AddrMRange(58, 78))
+    result.find(_.id == 75).get.addrMRange should be(AddrMRange(58, 78))
+    result.find(_.id == 75).get.originalAddrMRange should be(AddrMRange(58, 78))
 
-    // Last admin-changed links: start (80/76) untouched, end averaged to 102
-    result.find(_.id == 72).get.addrMRange should be(AddrMRange(80, 102))
-    result.find(_.id == 72).get.originalAddrMRange should be(AddrMRange(80, 102))
-    result.find(_.id == 76).get.addrMRange should be(AddrMRange(76, 102))
-    result.find(_.id == 76).get.originalAddrMRange should be(AddrMRange(76, 102))
+    // Unchanged middle links between sections become the preceding links of section 2
+    result.find(_.id == 72).get.addrMRange should be(AddrMRange(78, 89))
+    result.find(_.id == 72).get.originalAddrMRange should be(AddrMRange(78, 89))
+    result.find(_.id == 76).get.addrMRange should be(AddrMRange(78, 89))
+    result.find(_.id == 76).get.originalAddrMRange should be(AddrMRange(78, 89))
 
-    // Following links: starts snapped to 102
-    result.find(_.id == 73).get.addrMRange should be(AddrMRange(102, 120))
-    result.find(_.id == 73).get.originalAddrMRange should be(AddrMRange(102, 120))
-    result.find(_.id == 77).get.addrMRange should be(AddrMRange(102, 126))
-    result.find(_.id == 77).get.originalAddrMRange should be(AddrMRange(102, 126))
+    // Second middle admin-changed section
+    result.find(_.id == 73).get.addrMRange should be(AddrMRange(89, 102))
+    result.find(_.id == 73).get.originalAddrMRange should be(AddrMRange(89, 102))
+    result.find(_.id == 77).get.addrMRange should be(AddrMRange(89, 102))
+    result.find(_.id == 77).get.originalAddrMRange should be(AddrMRange(89, 102))
+
+    // Following links of section 2: starts snapped to 102
+    result.find(_.id == 78).get.addrMRange should be(AddrMRange(102, 120))
+    result.find(_.id == 78).get.originalAddrMRange should be(AddrMRange(102, 120))
+    result.find(_.id == 79).get.addrMRange should be(AddrMRange(102, 126))
+    result.find(_.id == 79).get.originalAddrMRange should be(AddrMRange(102, 126))
   }
 
   test("Case 8 - Administrative Class Change: Synchronize road part end with 1 link on track 1 and 2 links on track 2") {
@@ -420,5 +428,77 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
     result.find(_.id == 112).get.originalAddrMRange should be(AddrMRange(82, 100))
     result.find(_.id == 115).get.addrMRange should be(AddrMRange(82, 100))
     result.find(_.id == 115).get.originalAddrMRange should be(AddrMRange(82, 100))
+  }
+
+  test("Case 11 - Administrative Class Change: Following link of 2m still synchronizes safely") {
+    /**
+      * Before:
+      * 0   50               100 102 130
+      * ---->~~~~~~~~~~~~~~~~>--->---->
+      * 0    54                 104 106 130
+      * ----->~~~~~~~~~~~~~~~~~~>--->---->
+      *
+      * Raw averages: start (50+54)/2 = 52, end (100+104)/2 = 102
+      * Because the right-side following link is only 2m (100-102), safe end clamps to 101.
+      *
+      * After:
+      * 0  52               101 102 130
+      * --->~~~~~~~~~~~~~~~~>--->---->
+      * 0  52               101   106 130
+      * --->~~~~~~~~~~~~~~~~>----->---->
+      */
+    val links = Seq(
+      buildTestLink(120, Track.RightSide, (0, 50), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(121, Track.RightSide, (50, 100), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(122, Track.RightSide, (100, 102), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(123, Track.RightSide, (102, 130), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+
+      buildTestLink(124, Track.LeftSide, (0, 54), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(125, Track.LeftSide, (54, 104), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(126, Track.LeftSide, (104, 106), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(127, Track.LeftSide, (106, 130), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
+    )
+
+    val result = AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges(links)
+
+    // Start boundary average applies normally
+    result.find(_.id == 120).get.addrMRange should be(AddrMRange(0, 52))
+    result.find(_.id == 120).get.originalAddrMRange should be(AddrMRange(0, 52))
+    result.find(_.id == 124).get.addrMRange should be(AddrMRange(0, 52))
+    result.find(_.id == 124).get.originalAddrMRange should be(AddrMRange(0, 52))
+
+    // End boundary is clamped to 101 to keep the 2m following link valid
+    result.find(_.id == 121).get.addrMRange should be(AddrMRange(52, 101))
+    result.find(_.id == 121).get.originalAddrMRange should be(AddrMRange(52, 101))
+    result.find(_.id == 125).get.addrMRange should be(AddrMRange(52, 101))
+    result.find(_.id == 125).get.originalAddrMRange should be(AddrMRange(52, 101))
+
+    // Following links start at the clamped boundary
+    result.find(_.id == 122).get.addrMRange should be(AddrMRange(101, 102))
+    result.find(_.id == 122).get.originalAddrMRange should be(AddrMRange(101, 102))
+    result.find(_.id == 126).get.addrMRange should be(AddrMRange(101, 106))
+    result.find(_.id == 126).get.originalAddrMRange should be(AddrMRange(101, 106))
+
+    // Tail links after the tiny following links remain unchanged
+    result.find(_.id == 123).get.addrMRange should be(AddrMRange(102, 130))
+    result.find(_.id == 123).get.originalAddrMRange should be(AddrMRange(102, 130))
+    result.find(_.id == 127).get.addrMRange should be(AddrMRange(106, 130))
+    result.find(_.id == 127).get.originalAddrMRange should be(AddrMRange(106, 130))
+  }
+
+  test("Case 12 - Administrative Class Change: Middle section with too large difference throws") {
+    val links = Seq(
+      buildTestLink(130, Track.RightSide, (0, 20), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(131, Track.RightSide, (20, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(132, Track.RightSide, (40, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+
+      buildTestLink(133, Track.LeftSide, (0, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(134, Track.LeftSide, (40, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(135, Track.LeftSide, (60, 80), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
+    )
+
+    intercept[ViiteException] {
+      AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges(links)
+    }
   }
 }

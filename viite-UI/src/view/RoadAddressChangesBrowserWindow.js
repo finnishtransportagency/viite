@@ -19,6 +19,10 @@
         roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadAddressChangesBrowserForm());
 
+        function formatElyValue(elyValue) {
+            return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+        }
+
         // ========== Validation helpers (extracted) ==========
         function validateDate(dateString, dateElement) {
             // Check format ignoring whitespace
@@ -174,7 +178,7 @@
                 arr[++arrPointer] = `   <tr>
                                             <td>${results[i].startDate}</td>
                                             <td>${results[i].oldEvk}</td>
-                                            <td>${results[i].oldEly}</td>
+                                            <td>${formatElyValue(results[i].oldEly)}</td>
                                             <td>${results[i].oldRoadNumber}</td>
                                             <td>${results[i].oldTrack}</td>
                                             <td>${results[i].oldRoadPartNumber}</td>

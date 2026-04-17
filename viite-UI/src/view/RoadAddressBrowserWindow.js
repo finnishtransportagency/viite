@@ -19,6 +19,10 @@
       roadAddrBrowserWindow.append(roadAddressChangesBrowserHeader);
       roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
 
+      function formatElyValue(elyValue) {
+          return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+      }
+
       function createArrayOfArraysForTracks(results) {
           const array = [];
           let arrayPointer = -1;
@@ -26,7 +30,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  formatElyValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].track,
                   results[i].roadPartNumber,
@@ -66,7 +70,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
               <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${formatElyValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].track}</td>
                                           <td>${results[i].roadPartNumber}</td>
@@ -89,7 +93,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  formatElyValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].roadPartNumber,
                   results[i].addrMRange.start,
@@ -125,7 +129,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
                                           <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${formatElyValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrMRange.start}</td>
@@ -146,7 +150,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  formatElyValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].roadPartNumber,
                   results[i].addrM,
@@ -189,7 +193,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
                                           <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${formatElyValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrM}</td>
@@ -283,7 +287,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
                   results[i].evk,
-                  results[i].ely,
+                  formatElyValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].roadName
               ];
@@ -312,7 +316,7 @@
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] = `   <tr>
                                           <td>${results[i].evk}</td>
-                                          <td>${results[i].ely}</td>
+                                          <td>${formatElyValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadName}</td>
                                       </tr>`;
