@@ -21,9 +21,6 @@ export const dateutil = {};
     return momentLib(dateObject).format(FINNISH_DATE_FORMAT);
   };
 
-  const dateToFinnishString = function (s) {
-    return s ? momentLib(s, dateutil.FINNISH_DATE_FORMAT) : null;
-  };
 
   dateutil.isFinnishDateString = function (dateString) {
     // Regular expression to match date format with day 1-31 and month 1-12
@@ -37,14 +34,6 @@ export const dateutil = {};
 
   dateutil.addSingleDatePicker = function (element, additionalOptions) {
     return dateutil.addFinnishDatePicker(element, additionalOptions);
-  };
-
-  dateutil.addSingleDatePickerWithMinDate = function (fromElement, minDate) {
-    const from = dateToFinnishString(minDate);
-    const datePicker = dateutil.addFinnishDatePicker(fromElement);
-    datePicker.setMinDate(from.toDate());
-    datePicker.gotoToday();
-    return datePicker;
   };
 
   function addPicker(jqueryElement, additionalOptions) {
