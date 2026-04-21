@@ -11,8 +11,9 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { LocationInputParser } from '@utils/LocationInputParser.js';
+import { getCurrentLocation } from '@model/ApplicationModel.js';
 
-export function LocationSearch(backend, applicationModel) {
+export function LocationSearch(backend) {
     /**
      * Search by street address
      *
@@ -126,7 +127,7 @@ export function LocationSearch(backend, applicationModel) {
 
     this.search = function (searchString) {
       function addDistance(item) {
-        const currentLocation = applicationModel.getCurrentLocation();
+        const currentLocation = getCurrentLocation();
         const distance = GeometryUtils.distanceOfPoints(
           [currentLocation[0], currentLocation[1]],
           [item.lon, item.lat]);

@@ -10,8 +10,8 @@ import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
 import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
 import { eventbus } from '@utils/eventbus.js';
+import { getStartupParameters, selectLayer } from '@model/ApplicationModel.js';
 export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions, roadCollection, dependencies) {
-  const applicationModel = dependencies.applicationModel;
   const navigateToHash = dependencies.navigateToHash;
 
     const STATE = {
@@ -63,10 +63,10 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
     const dataTable = new DataTable();
     const searchMenu = new NodeSearchMenu(dataTable);
     const dataMenu = new NodeDataMenu(dataTable, getBodyContainer, {
-      applicationModel: applicationModel
+
     });
 
-    const permissionToEditNodes = applicationModel.getStartupParameters()?.roles?.includes('viite') ?? false;
+    const permissionToEditNodes = getStartupParameters()?.roles?.includes('viite') ?? false;
     const nodeEditor = new NodeEditor(selectedNodesAndJunctions, dataTable, backend, roadCollection, getBodyContainer, permissionToEditNodes);
 
     const showSearch = function () {
@@ -114,7 +114,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
         }
       });
 
-      applicationModel.selectLayer('node');
+      selectLayer('node');
       Spinner.show();
       fetchUntreatedTemplates();
     };
@@ -234,7 +234,7 @@ export function NodeMenu(map, nodeCollection, backend, selectedNodesAndJunctions
 
     const show = function () {
       const closeHandler = function () {
-        applicationModel.selectLayer('linkProperty', true);
+        selectLayer('linkProperty', true);
         eventbus.trigger('nodesAndJunctions:close');
       };
 

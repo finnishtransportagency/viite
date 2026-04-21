@@ -13,11 +13,11 @@ import { RoadAddressChangesBrowserWindow } from '@view/road-address-inspection/R
 import { RoadNamingToolWindow } from '@view/road-name-maintenance-modal/RoadNamingToolWindow.js';
 import { RoadNetworkErrorsList } from '@view/road-network-errors-list/RoadNetworkErrorsList.js';
 import { eventbus } from '@utils/eventbus.js';
+import { getStartupParameters } from '@model/ApplicationModel.js';
 
 /**
  * @param {Object} options
  * @param {Object} options.selectedLinkProperty
- * @param {Object} options.applicationModel
  * @param {Object} options.backend
  * @param {Object} options.map
  * @param {Object} options.eventbus
@@ -35,8 +35,7 @@ export function MainMenu(options = {}) {
   const selectedLinkProperty = options.selectedLinkProperty;
   const rootElement = $('#menu-container');
   const linkInfo = new LinkInfo(selectedLinkProperty);
-  const applicationModel = options.applicationModel;
-  const startupParameters = applicationModel.getStartupParameters();
+  const startupParameters = getStartupParameters();
   const activeEventbus = options.eventbus || eventbus;
   const projectCollection = options.projectCollection;
   const models = options.models || {};
@@ -44,10 +43,9 @@ export function MainMenu(options = {}) {
   const roadNamingTool = new RoadNamingToolWindow(options.roadNameCollection);
   const roadAddressBrowser = new RoadAddressBrowserWindow(options.backend);
   const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(options.backend);
-  const roadNetworkErrorsList = new RoadNetworkErrorsList(options.backend, { applicationModel: applicationModel });
-  const adminPanel = new AdminPanel(options.backend, { applicationModel: applicationModel });
+  const roadNetworkErrorsList = new RoadNetworkErrorsList(options.backend, {});
+  const adminPanel = new AdminPanel(options.backend, {});
   const projectList = new ProjectList(projectCollection, {
-    applicationModel: applicationModel,
     map: options.map,
     backend: options.backend,
     eventbus: activeEventbus,
@@ -63,7 +61,6 @@ export function MainMenu(options = {}) {
     models.selectedNodesAndJunctions,
     models.roadCollection,
     {
-      applicationModel: applicationModel,
       navigateToHash: function (hashValue) {
         location.hash = hashValue;
       }

@@ -10,10 +10,10 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { eventutil } from '@utils/EventUtils.js';
+import { getStartupParameters, getSessionUsername } from '@model/ApplicationModel.js';
 
 export function ProjectList(projectCollection, options = {}) {
-  const applicationModel = options.applicationModel;
-  const canUseDevTools = applicationModel.getStartupParameters()?.roles?.includes('dev') ?? false;
+  const canUseDevTools = getStartupParameters()?.roles?.includes('dev') ?? false;
   
   let projectMenuInstance = null;
 
@@ -26,7 +26,6 @@ export function ProjectList(projectCollection, options = {}) {
       projectCollection: projectCollection,
       map: options.map,
       eventbus: options.eventbus || eventbus,
-      applicationModel: applicationModel,
       canValidateProject: canUseDevTools,
       backend: options.backend,
       projectChangeInfoModel: options.projectChangeInfoModel,
@@ -39,7 +38,6 @@ export function ProjectList(projectCollection, options = {}) {
       projectLinkLayer: options.projectLinkLayer,
       selectedProjectLinkProperty: options.selectedProjectLinkProperty,
       mainMenu: options.mainMenu,
-      applicationModel: applicationModel,
       canUseDevTools: canUseDevTools,
       map: options.map,
       backend: options.backend,
@@ -132,7 +130,7 @@ export function ProjectList(projectCollection, options = {}) {
     const handleFilterToggle = () => {
       state.filterBox.visible = !state.filterBox.visible;
       if (state.filterBox.visible && !state.filterBox.input) {
-        state.filterBox.input = applicationModel.getSessionUsername();
+        state.filterBox.input = getSessionUsername();
       }
       render();
     };

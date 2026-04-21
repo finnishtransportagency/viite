@@ -3,13 +3,14 @@ import { eventbus } from '@utils/eventbus.js';
 import { LocationSearch } from '@model/LocationSearch.js';
 import { getLegendDisplayHtml } from './LegendDisplay.js';
 import { SearchBox } from './SearchBox.js';
+import { getSelectedLayer } from '@model/ApplicationModel.js';
 
 export function SearchPanel(options = {}) {
-  const { container, backend, applicationModel } = options;
+  const { container, backend } = options;
 
   const searchPanel = $('<div class="search-panel"></div>');
   const searchBox = options.searchBox || new SearchBox(
-    new LocationSearch(backend, applicationModel)
+    new LocationSearch(backend)
   );
 
   const legendGroup = $(`
@@ -28,7 +29,7 @@ export function SearchPanel(options = {}) {
   searchPanel.append(legendGroup);
 
   function updateLegendContent(layerName) {
-    const layer = layerName || applicationModel.getSelectedLayer();
+    const layer = layerName || getSelectedLayer();
     legendContent
       .empty()
       .append(getLegendDisplayHtml(layer));
@@ -39,7 +40,7 @@ export function SearchPanel(options = {}) {
   });
 
   // Initial render
-  updateLegendContent(applicationModel.getSelectedLayer());
+  updateLegendContent(getSelectedLayer());
   container.append(searchPanel);
 
   return {

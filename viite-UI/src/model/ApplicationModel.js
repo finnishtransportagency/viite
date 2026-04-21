@@ -1,6 +1,3 @@
-import { eventbus } from '@utils/eventbus.js';
-import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-
 /**
  * ApplicationModel - Central application state management
  * 
@@ -11,168 +8,271 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
  * - Project state and user session
  * - Selection types and special configurations
  */
-export function ApplicationModel() {
-    const zoom = {
-      level: undefined
-    };
-    const specialSelectionTypes = [ViiteEnumerations.SelectionType.Unknown.value];
+import { ViiteEnumerations } from "@utils/ViiteEnumerations.js";
 
-    let selectedLayer;
-    let selectedTool = ViiteEnumerations.Tool.Unknown.value;
-    let centerLonLat;
-    let selectionType = ViiteEnumerations.SelectionType.All;
-    let sessionUsername = '';
-    let sessionUserRoles = '';
-    const appContext = {
-      startupParameters: undefined,
-      projectCollection: undefined,
-      selectedProjectLinkProperty: undefined,
-      projectLinkLayer: undefined,
-      mainMenu: undefined
-    };
+const specialSelectionTypes = [
+  ViiteEnumerations.SelectionType.Unknown.value
+];
 
-    const getSelectionType = function () {
-      return selectionType;
-    };
+const state = {
+  zoomLevel: undefined,
+  selectedLayer: undefined,
+  selectedTool: ViiteEnumerations.Tool.Unknown.value,
+  centerLonLat: undefined,
+  selectionType: ViiteEnumerations.SelectionType.All,
+  sessionUsername: "",
+  sessionUserRoles: "",
+  roadsVisibility: true,
 
-    const setSelectionType = function (type) {
-      selectionType = type;
-    };
+  appContext: {
+    startupParameters: undefined,
+    projectCollection: undefined,
+    selectedProjectLinkProperty: undefined,
+    projectLinkLayer: undefined,
+    mainMenu: undefined
+  }
+};
 
-    const selectionTypeIs = function (type) {
-      if (!_.isUndefined(selectionType.value) || !_.isUndefined(type.value))
-        return selectionType.value === type.value;
-      else
-        return false;
-    };
+const listeners = new Map();
 
-    const setZoomLevel = function (level) {
-      zoom.level = Math.round(level);
-    };
+function emit(eventName, ...args) {
+  const handlers = listeners.get(eventName);
+  if (!handlers) return;
 
-    const getZoomLevel = function () {
-      return zoom.level;
-    };
-
-    let roadsVisibility = true;
-
-    function toggleRoadVisibility() {
-      roadsVisibility = !roadsVisibility;
-    }
-
-    function isSelectedTool(tool) {
-      const alias = _.has(ViiteEnumerations.Tool[selectedTool], 'alias') ? ViiteEnumerations.Tool[selectedTool].alias : [];
-      return tool === selectedTool || _.includes(alias, tool);
-    }
-
-    function setSelectedTool(tool) {
-      if (isSelectedTool(tool)) {
-        selectedTool = ViiteEnumerations.Tool.Unknown.value;
-        eventbus.trigger('tool:clear');
-      } else {
-        selectedTool = tool;
-      }
-      eventbus.trigger('tool:changed', selectedTool);
-    }
-
-    const getUserGeoLocation = function () {
-      return {
-        x: centerLonLat[0],
-        y: centerLonLat[1],
-        zoom: zoom.level
-      };
-    };
-
-    const getSelectedTool = function () {
-      return selectedTool;
-    };
-
-    const getRoadVisibility = function () {
-      return roadsVisibility;
-    };
-
-    const getSelectedLayer = function () {
-      return selectedLayer;
-    };
-
-    const getCurrentLocation = function () {
-      return centerLonLat;
-    };
-
-    const getSessionUsername = function () {
-      return sessionUsername;
-    };
-
-    const getSessionUserRoles = function () {
-      return sessionUserRoles;
-    };
-
-    const setStartupParameters = function (startupParameters) {
-      appContext.startupParameters = startupParameters;
-    };
-
-    const getStartupParameters = function () {
-      return appContext.startupParameters;
-    };
-
-    const setProjectCollection = function (projectCollection) {
-      appContext.projectCollection = projectCollection;
-    };
-
-    const getProjectCollection = function () {
-      return appContext.projectCollection;
-    };
-
-    const selectLayer = function (layer, toggleStart, noSave) {
-      const tool = layer === 'node' ? ViiteEnumerations.Tool.Unknown.value : ViiteEnumerations.Tool.Default.value;
-      setSelectedTool(tool);
-      if (layer !== selectedLayer) {
-        const previouslySelectedLayer = selectedLayer;
-        selectedLayer = layer;
-        eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
-      } else if (layer === 'linkProperty' && toggleStart) {
-        eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer, noSave);
-      }
-    };
-
-    eventbus.on("userData:fetched", function (userData) {
-      sessionUsername = userData.userName;
-      sessionUserRoles = userData.roles;
-    });
-
-    const refreshMap = function (zoomLevel, bbox, center) {
-      setZoomLevel(zoomLevel);
-      centerLonLat = center;
-      eventbus.trigger('map:refresh', {
-        selectedLayer: selectedLayer,
-        zoom: getZoomLevel(),
-        bbox: bbox,
-        center: center
-      });
-    };
-
-    return {
-      refreshMap: refreshMap,
-      getUserGeoLocation: getUserGeoLocation,
-      setSelectedTool: setSelectedTool,
-      getSelectedTool: getSelectedTool,
-      isSelectedTool: isSelectedTool,
-      zoom: zoom,
-      setZoomLevel: setZoomLevel,
-      getRoadVisibility: getRoadVisibility,
-      toggleRoadVisibility: toggleRoadVisibility,
-      selectLayer: selectLayer,
-      getSelectedLayer: getSelectedLayer,
-      getCurrentLocation: getCurrentLocation,
-      setSelectionType: setSelectionType,
-      getSelectionType: getSelectionType,
-      selectionTypeIs: selectionTypeIs,
-      getSessionUsername: getSessionUsername,
-      getSessionUserRoles: getSessionUserRoles,
-      setStartupParameters: setStartupParameters,
-      getStartupParameters: getStartupParameters,
-      setProjectCollection: setProjectCollection,
-      getProjectCollection: getProjectCollection,
-      specialSelectionTypes: specialSelectionTypes
-    };
+  handlers.forEach((handler) => handler(...args));
 }
+
+function on(eventName, handler) {
+  if (!listeners.has(eventName)) {
+    listeners.set(eventName, new Set());
+  }
+
+  listeners.get(eventName).add(handler);
+}
+
+function off(eventName, handler) {
+  const handlers = listeners.get(eventName);
+  if (!handlers) return;
+
+  handlers.delete(handler);
+
+  if (handlers.size === 0) {
+    listeners.delete(eventName);
+  }
+}
+
+function getState() {
+  return state;
+}
+
+function getSelectionType() {
+  return state.selectionType;
+}
+
+function setSelectionType(type) {
+  state.selectionType = type;
+  emit("selectionType:changed", type);
+}
+
+function selectionTypeIs(type) {
+  if (
+    _.isUndefined(state.selectionType?.value) ||
+    _.isUndefined(type?.value)
+  ) {
+    return false;
+  }
+
+  return state.selectionType.value === type.value;
+}
+
+function setZoomLevel(level) {
+  state.zoomLevel = Math.round(level);
+  emit("zoom:changed", state.zoomLevel);
+}
+
+function getZoomLevel() {
+  return state.zoomLevel;
+}
+
+function toggleRoadVisibility() {
+  state.roadsVisibility = !state.roadsVisibility;
+  emit("roadsVisibility:changed", state.roadsVisibility);
+}
+
+function getRoadVisibility() {
+  return state.roadsVisibility;
+}
+
+function isSelectedTool(tool) {
+  const aliases =
+    ViiteEnumerations.Tool[state.selectedTool]?.alias || [];
+
+  return (
+    tool === state.selectedTool ||
+    _.includes(aliases, tool)
+  );
+}
+
+function setSelectedTool(tool) {
+  if (isSelectedTool(tool)) {
+    state.selectedTool =
+      ViiteEnumerations.Tool.Unknown.value;
+
+    emit("tool:clear");
+  } else {
+    state.selectedTool = tool;
+  }
+
+  emit("tool:changed", state.selectedTool);
+}
+
+function getSelectedTool() {
+  return state.selectedTool;
+}
+
+function getUserGeoLocation() {
+  if (!state.centerLonLat) return undefined;
+
+  return {
+    x: state.centerLonLat[0],
+    y: state.centerLonLat[1],
+    zoom: state.zoomLevel
+  };
+}
+
+function getSelectedLayer() {
+  return state.selectedLayer;
+}
+
+function getCurrentLocation() {
+  return state.centerLonLat;
+}
+
+function getSessionUsername() {
+  return state.sessionUsername;
+}
+
+function getSessionUserRoles() {
+  return state.sessionUserRoles;
+}
+
+function setUserData(userData) {
+  state.sessionUsername = userData.userName;
+  state.sessionUserRoles = userData.roles;
+
+  emit("userData:changed", userData);
+}
+
+function setStartupParameters(startupParameters) {
+  state.appContext.startupParameters =
+    startupParameters;
+
+  emit(
+    "startupParameters:changed",
+    startupParameters
+  );
+}
+
+function getStartupParameters() {
+  return state.appContext.startupParameters;
+}
+
+function setProjectCollection(projectCollection) {
+  state.appContext.projectCollection =
+    projectCollection;
+
+  emit(
+    "projectCollection:changed",
+    projectCollection
+  );
+}
+
+function getProjectCollection() {
+  return state.appContext.projectCollection;
+}
+
+function selectLayer(layer, toggleStart, noSave) {
+  const tool =
+    layer === "node"
+      ? ViiteEnumerations.Tool.Unknown.value
+      : ViiteEnumerations.Tool.Default.value;
+
+  setSelectedTool(tool);
+
+  if (layer !== state.selectedLayer) {
+    const previous = state.selectedLayer;
+
+    state.selectedLayer = layer;
+
+    emit(
+      "layer:selected",
+      layer,
+      previous,
+      toggleStart
+    );
+  } else if (
+    layer === "linkProperty" &&
+    toggleStart
+  ) {
+    emit(
+      "roadLayer:toggleProjectSelectionInForm",
+      layer,
+      noSave
+    );
+  }
+}
+
+function refreshMap(zoomLevel, bbox, center) {
+  setZoomLevel(zoomLevel);
+  state.centerLonLat = center;
+
+  emit("map:refresh", {
+    selectedLayer: state.selectedLayer,
+    zoom: state.zoomLevel,
+    bbox,
+    center
+  });
+}
+
+export {
+  state,
+  getState,
+  on,
+  off,
+  emit,
+
+  refreshMap,
+
+  getUserGeoLocation,
+
+  setSelectedTool,
+  getSelectedTool,
+  isSelectedTool,
+
+  setZoomLevel,
+  getZoomLevel,
+
+  getRoadVisibility,
+  toggleRoadVisibility,
+
+  selectLayer,
+  getSelectedLayer,
+
+  getCurrentLocation,
+
+  setSelectionType,
+  getSelectionType,
+  selectionTypeIs,
+
+  getSessionUsername,
+  getSessionUserRoles,
+  setUserData,
+
+  setStartupParameters,
+  getStartupParameters,
+
+  setProjectCollection,
+  getProjectCollection,
+
+  specialSelectionTypes
+};

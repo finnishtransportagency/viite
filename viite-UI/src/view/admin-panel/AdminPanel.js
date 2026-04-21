@@ -3,9 +3,9 @@ import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Main as UserManagementMain } from './user-management/Main.js';
 
 // Panel that contains all the tools available for users with admin role
-export function AdminPanel(backend, options = {}) {
+export function AdminPanel(backend) {
 
-    const { applicationModel } = options;
+
 
         const dynamicLinkNetwork = dynamicLinkNetworkContent(backend);
 
@@ -55,7 +55,7 @@ export function AdminPanel(backend, options = {}) {
 
             // Initialize the new user management module
             
-            UserManagementMain.init('#userManagementPanelContainer', { applicationModel });
+            UserManagementMain.init('#userManagementPanelContainer', {});
 
             bindEvents();
         };

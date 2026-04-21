@@ -13,8 +13,9 @@ import { eventbus } from '@utils/eventbus.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
+import { getUserGeoLocation } from '@model/ApplicationModel.js';
 
-export function ProjectCollection(backend, startupParameters, applicationModel) {
+export function ProjectCollection(backend, startupParameters) {
     const me = this;
     // eslint-disable-next-line no-unused-vars
     let roadAddressProjects = [];
@@ -232,7 +233,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
     this.revertChangesRoadlink = function (links) {
       if (!_.isEmpty(links)) {
         Spinner.show();
-        const coordinates = applicationModel.getUserGeoLocation();
+        const coordinates = getUserGeoLocation();
         const data = {
           'projectId': currentProject.project.id,
           'roadNumber': links[0].roadNumber,
@@ -347,7 +348,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
       }));
 
       const projectId = projectInfo.id;
-      const coordinates = applicationModel.getUserGeoLocation();
+      const coordinates = getUserGeoLocation();
       const roadAddressProjectForm = $('#roadAddressProjectForm');
       const endDistance = $('#endDistance')[0];
       const hasDevRights = _.includes(startupParameters.roles, 'dev');
@@ -491,7 +492,7 @@ export function ProjectCollection(backend, startupParameters, applicationModel) 
       const links = _.filter(selectedLinks, function (link) {
         return link.status !== RoadAddressChangeType.Terminated.value;
       });
-      const coordinates = applicationModel.getUserGeoLocation();
+      const coordinates = getUserGeoLocation();
       const dataJson = {
         projectId: projectId,
         roadNumber: selectedLinks[0].roadNumber,

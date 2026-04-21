@@ -7,7 +7,6 @@
  * @param {Object} selectedNodesAndJunctions - Selected nodes and junctions manager
  * @param {Object} nodeCollection - Node collection manager
  * @param {Object} roadCollection - Road collection manager
- * @param {Object} applicationModel - Application model
  * @returns {Object} Layer with show/hide methods and minimum zoom level
  */
 import { eventbus } from '@utils/eventbus.js';
@@ -20,13 +19,14 @@ import { JunctionMarker } from '../markers/JunctionMarker.js';
 import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
 import { NodeMarker } from '../markers/NodeMarker.js';
 import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
+import { getSessionUserRoles, getSelectedTool, setSelectedTool, refreshMap, isSelectedTool, getSelectedLayer } from '@model/ApplicationModel.js';
 
-export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection, applicationModel) {
+export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection) {
   Layer.call(this, map);
 
     const me = this;
     let isDraggingNode = false;
-    let userHasPermissionToEdit = _.includes(applicationModel.getSessionUserRoles(), 'viite');
+    let userHasPermissionToEdit = _.includes(getSessionUserRoles(), 'viite');
     const directionMarkerVector = new ol.source.Vector({});
     const dblVector = function () {
       return { selected: new ol.source.Vector({}), unselected: new ol.source.Vector({}) };
@@ -264,7 +264,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         return !_.isUndefined(selectionTarget.junctionTemplate);
       });
 
-      switch (applicationModel.getSelectedTool()) {
+      switch (getSelectedTool()) {
         case ViiteEnumerations.Tool.Unknown.value:
           if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
             selectNode(selectedNode.node);
@@ -439,7 +439,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
-      applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+      setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
     }
 
     function selectNodePointTemplate(nodePointTemplate) {
@@ -551,7 +551,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     });
 
     me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
-      toggleSelectInteractions(!applicationModel.isSelectedTool(ViiteEnumerations.Tool.Add.value));
+      toggleSelectInteractions(!isSelectedTool(ViiteEnumerations.Tool.Add.value));
       switch (tool) {
         case ViiteEnumerations.Tool.Unknown.value:
           me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
@@ -735,7 +735,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     });
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
-      applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
     me.eventListener.listenTo(eventbus, 'node:repositionNode', function (node, coordinates) {
@@ -769,7 +769,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     this.layerStarted = function (eventListener) {
       eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
         if (isNodeDragged()) return; // Stop node resetting to original position right after/before zoom
-        if (applicationModel.getSelectedLayer() === 'node') {
+        if (getSelectedLayer() === 'node') {
           me.clearLayers(layers);
         }
       });

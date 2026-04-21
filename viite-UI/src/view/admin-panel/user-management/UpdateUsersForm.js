@@ -5,6 +5,7 @@ import { validateUserFieldsAndToastErrors } from './FormValidation.js';
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, getSelectedElinvoimakeskus } from './Dropdowns.js';
 import { showToast } from '@components/Toast.js';
 import { userManagementApi } from '@utils/UserManagementApi.js';
+import { getSessionUsername } from '@model/ApplicationModel.js';
 
 const DEFAULT_COORDINATES = {
     zoom: 3,
@@ -35,8 +36,6 @@ function handleApiResponse(response, successMessage, errorMessage, onSuccess) {
 export const UpdateUserForm = {
     // Fetch all users and render them into the table with editable field
     fetchUsers: function (options = {}) {
-        const { applicationModel } = options;
-
         userManagementApi.getAllUsers(function (users) {
             const tableBody = document.getElementById('userTableBody');
             if (!tableBody) return;
@@ -85,9 +84,7 @@ export const UpdateUserForm = {
             document.querySelectorAll('.delete-user').forEach(function (btn) {
                 btn.addEventListener('click', function () {
                     const username = this.dataset.username;
-                    const currentUsername = applicationModel && typeof applicationModel.getSessionUsername === 'function'
-                        ? applicationModel.getSessionUsername()
-                        : undefined;
+                    const currentUsername = getSessionUsername();
 
                     if (username === currentUsername) {
                         showToast("Et voi poistaa itseäsi.", { type: 'warning' });

@@ -5,7 +5,6 @@
  * @param {Object} map - OpenLayers map instance
  * @param {Object} projectCollection - Project collection manager
  * @param {Object} selectedProjectLinkProperty - Selected project link property manager
- * @param {Object} applicationModel - Application state manager
  * @returns {Object} Layer with redraw method
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -16,8 +15,9 @@ import { ProjectLinkStyler } from '@view/map/ProjectLinkStyler.js';
 import { Layer } from './Layer.js';
 import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
+import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/ApplicationModel.js';
 
-export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty, applicationModel) {
+export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
     const layerName = 'roadAddressProject';
     Layer.call(this, map);
     const me = this;
@@ -438,7 +438,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       removeSelectInteractions();
       const cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
-      if (applicationModel.getSelectedLayer() === 'roadAddressProject') {
+      if (getSelectedLayer() === 'roadAddressProject') {
         const [linksWithNoRoadNumber, linksWithRoadNumber] = _.partition(projectCollection.getAll(), function (projectRoad) {
           return projectRoad.roadNumber === 0;
         });
@@ -514,8 +514,8 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:openProject', function (projectSelected) {
       this.project = projectSelected;
-      eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, applicationModel.getSelectedLayer());
-      applicationModel.selectLayer(layerName);
+      eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, getSelectedLayer());
+      selectLayer(layerName);
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:selected', function (projId) {
@@ -562,8 +562,8 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         hideLayer();
         removeSelectInteractions();
       }
-      projectLinkLayer.setVisible(isActiveLayer && applicationModel.getRoadVisibility());
-      calibrationPointLayer.setVisible(isActiveLayer && applicationModel.getRoadVisibility());
+      projectLinkLayer.setVisible(isActiveLayer && getRoadVisibility());
+      calibrationPointLayer.setVisible(isActiveLayer && getRoadVisibility());
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:deselectFeaturesSelected', function () {
@@ -594,7 +594,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
-      me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer], applicationModel.getRoadVisibility());
+      me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer], getRoadVisibility());
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {

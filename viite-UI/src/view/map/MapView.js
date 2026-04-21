@@ -3,15 +3,15 @@
  * Coordinates map interactions, visible layers, cursor state, and crosshair tooling.
  * @param {Object} map - OpenLayers map instance
  * @param {Object} layers - Active map layers keyed by layer name
- * @param {Object} applicationModel - Application state manager
  */
 import { eventbus } from '@utils/eventbus.js';
 import { showToast } from '@components/Toast.js';
 import { geometrycalculator } from '@utils/GeometryCalculations.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { setZoomLevel, getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';
 
-export function MapView(map, layers, applicationModel) {
+export function MapView(map, layers) {
     const centerMarkerLayer = new ol.source.Vector({});
     let enableCtrlModifier = false;
     const metaKeyCodes = ViiteEnumerations.MetaKeyCodes;
@@ -49,7 +49,7 @@ export function MapView(map, layers, applicationModel) {
 
     eventbus.on('application:initialized layer:fetched', function () {
       const zoom = zoomlevels.getViewZoom(map);
-      applicationModel.setZoomLevel(zoom);
+      setZoomLevel(zoom);
       eventbus.trigger('map:initialized', map);
     }, this);
 
@@ -96,13 +96,13 @@ export function MapView(map, layers, applicationModel) {
       if (layerToBeHidden) {
         layerToBeHidden.hide(map);
       }
-      if (applicationModel.getRoadVisibility()) layerToBeShown.show(map);
+      if (getRoadVisibility()) layerToBeShown.show(map);
       enableCtrlModifier = (layer === 'roadAddressProject' || layer === 'linkProperty');
     }, this);
 
     map.on('moveend', function () {
-      applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
-      setCursor(applicationModel.getSelectedTool());
+      refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      setCursor(getSelectedTool());
     });
 
     map.on('pointermove', function (event) {
@@ -130,7 +130,7 @@ export function MapView(map, layers, applicationModel) {
 
     // When the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function (_evt) {
-      setCursor(applicationModel.getSelectedTool());
+      setCursor(getSelectedTool());
     });
 
     $('body').on('keydown', function (evt) {
@@ -140,8 +140,8 @@ export function MapView(map, layers, applicationModel) {
 
     $('body').on('keyup', function (evt) {
       if (_.includes(metaKeyCodes, evt.which) && evt.originalEvent.key !== ViiteEnumerations.SelectKeyName) // ctrl key up
-        setCursor(applicationModel.getSelectedTool());
+        setCursor(getSelectedTool());
     });
 
-  setCursor(applicationModel.getSelectedTool());
+  setCursor(getSelectedTool());
 }

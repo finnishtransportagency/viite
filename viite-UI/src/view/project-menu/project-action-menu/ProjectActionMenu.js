@@ -11,6 +11,7 @@ import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { selectLayer } from '@model/ApplicationModel.js';
 
 const changeTableByProjectCollection = new WeakMap();
 
@@ -32,7 +33,6 @@ export function ProjectActionMenu(options) {
       projectCollection,
       map,
       eventbus: injectedEventbus,
-      applicationModel,
       backend,
       projectChangeInfoModel,
       container = '#menu-container',
@@ -270,7 +270,7 @@ export function ProjectActionMenu(options) {
         activeEventbus.trigger('roadAddressProject:deactivateAllSelections');
         activeEventbus.trigger('roadAddressProject:clearOnClose');
         mainMenu.setState('main');
-        applicationModel.selectLayer('linkProperty', true, noSave);
+        selectLayer('linkProperty', true, noSave);
       }
     };
 

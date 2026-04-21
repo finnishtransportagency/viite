@@ -2,7 +2,6 @@
  * RoadLayer component
  * Manages the vector layer for displaying road links and handling road address information overlays.
  * @param {Object} map - OpenLayers map instance
- * @param {Object} applicationModel - Application state manager
  * @returns {Object} Layer with refresh and clear methods
  */
 import { eventbus } from '@utils/eventbus.js';
@@ -11,8 +10,9 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
+import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
-export function RoadLayer(map, applicationModel) {
+export function RoadLayer(map) {
   Layer.call(this, map);
     const me = this;
     const roadLinkStyler = new RoadLinkStyler();
@@ -117,7 +117,7 @@ export function RoadLayer(map, applicationModel) {
     });
 
     const handleRoadsVisibility = function () {
-      roadLayer.setVisible(applicationModel.getRoadVisibility() && zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadLinks);
+      roadLayer.setVisible(getRoadVisibility() && zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadLinks);
     };
 
     this.refreshMap = function (mapState) {
@@ -127,10 +127,10 @@ export function RoadLayer(map, applicationModel) {
         Spinner.hide();
       } else {
         /*
-         This could be implemented also with eventbus.trigger(applicationModel.getSelectedLayer() + ':fetch');
+         This could be implemented also with eventbus.trigger(getSelectedLayer() + ':fetch');
          but this implementation makes it easier to find the eventbus call when needed.
         */
-        switch (applicationModel.getSelectedLayer()) {
+        switch (getSelectedLayer()) {
           case 'linkProperty':
             eventbus.trigger('linkProperty:fetch');
             break;

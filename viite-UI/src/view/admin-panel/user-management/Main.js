@@ -7,7 +7,6 @@ import { View } from './View.js';
  */
 export const Main = {
     init: function (containerSelector, options = {}) {
-        const { applicationModel } = options;
         const container = document.querySelector(containerSelector);
 
         if (!container || !View || !AddUserForm || !UpdateUserForm) {
@@ -18,10 +17,10 @@ export const Main = {
         container.innerHTML = View.getContent();
         AddUserForm.bindEvents(containerSelector, {
             onUserAdded: function () {
-                UpdateUserForm.fetchUsers({ applicationModel });
+                UpdateUserForm.fetchUsers({});
             }
         });
-        UpdateUserForm.bindEvents(containerSelector, { applicationModel });
-        UpdateUserForm.fetchUsers({ applicationModel });
+        UpdateUserForm.bindEvents(containerSelector, {});
+        UpdateUserForm.fetchUsers({});
     }
 };

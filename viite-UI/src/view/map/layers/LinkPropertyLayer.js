@@ -6,7 +6,6 @@
  * @param {Object} roadLayer - Road layer reference
  * @param {Object} selectedLinkProperty - Selected link property manager
  * @param {Object} roadCollection - Road collection manager
- * @param {Object} applicationModel - Application model
  * @returns {Object} Layer with methods for refresh, dirty check, and view management
  */
 import { eventbus } from '@utils/eventbus.js';
@@ -16,8 +15,9 @@ import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
 import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
+import { specialSelectionTypes, getSelectionType, getSelectedLayer, getRoadVisibility, selectionTypeIs } from '@model/ApplicationModel.js';
 
-export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection, applicationModel) {
+export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
     Layer.call(this, map);
     const me = this;
 
@@ -298,7 +298,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       const hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function (feature) {
         return feature;
       }));
-      const nonSpecialSelectionType = !_.includes(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
+      const nonSpecialSelectionType = !_.includes(specialSelectionTypes, getSelectionType().value);
       if (isActiveLayer) {
         if (hasFeatureOnPoint && nonSpecialSelectionType) {
           selectedLinkProperty.close();
@@ -495,7 +495,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
           });
         }
         // Draw calibration points in view mode only
-        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints && applicationModel.getSelectedLayer() === 'linkProperty') {
+        if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints && getSelectedLayer() === 'linkProperty') {
           const actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
             const calMarker = new CalibrationPoint(actualPoint);
@@ -535,7 +535,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     };
 
     eventbus.listenTo(eventbus, 'linkProperties:selected linkProperties:unselected roadLinks:fetched', function() {
-      if (applicationModel.getSelectedLayer() === 'linkProperty' || applicationModel.getSelectedLayer() === 'node') {
+      if (getSelectedLayer() === 'linkProperty' || getSelectedLayer() === 'node') {
         redraw();
       }
     });
@@ -580,7 +580,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       });
       eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
         //Exclude underConstruction layers from toggle
-        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer], applicationModel.getRoadVisibility());
+        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer], getRoadVisibility());
       });
 
       eventListener.listenTo(eventbus, 'roadLinks:refreshView', function () {
@@ -603,7 +603,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
         feature.setStyle(roadLinkStyler.getRoadLinkStyles(feature.linkData, map));
         return feature;
       });
-      if (applicationModel.getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
+      if (getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
         reservedRoadLayer.getSource().addFeatures(styledFeatures);
       }
     });
@@ -624,7 +624,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     me.eventListener.listenTo(eventbus, 'linkProperties:unselected', function () {
       clearHighlights();
       setGeneralOpacity(1);
-      if (applicationModel.selectionTypeIs(SelectionType.Unknown)) {
+      if (selectionTypeIs(SelectionType.Unknown)) {
         setGeneralOpacity(0.2);
       }
     });
@@ -663,7 +663,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       const nonAdressedOrConstructionLayers = layers.filter(function(layerItem) {
         return layerItem !== unAddressedRoadLayer && layerItem !== underConstructionRoadLayer;
       });
-      me.toggleLayersVisibility(nonAdressedOrConstructionLayers, applicationModel.getRoadVisibility());
+      me.toggleLayersVisibility(nonAdressedOrConstructionLayers, getRoadVisibility());
     });
 
     function clearHighlights() {

@@ -12,6 +12,7 @@ import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/Toast.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { selectLayer, getSelectedTool } from '@model/ApplicationModel.js';
 
 const States = {
     CONFIGURATION:   'CONFIGURATION',
@@ -21,7 +22,6 @@ const States = {
 
 export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const rootElement = $(containerSelector || '#menu-container');
-    const applicationModel = options.applicationModel;
     const mainMenu = options.mainMenu;
     const eventbus = eventBus;
     const selectedProjectLinkProperty = options.selectedProjectLinkProperty;
@@ -70,7 +70,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       eventbus.trigger('roadAddressProject:clearOnClose');
       clearSelectedProjectLinks();
       eventbus.trigger('layer:selected', 'linkProperty', null, true);
-      applicationModel.selectLayer('linkProperty', true, noSave);
+      selectLayer('linkProperty', true, noSave);
     };
 
     const ensureMenu = () => {
@@ -116,7 +116,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
             continueToActions: (actionData) => {
               updateUI(States.ROAD_ADDRESSING, actionData.project, false);
             },
-            applicationModel: applicationModel,
             mainMenu: mainMenu,
             backend: options.backend,
             projectCollection: options.projectCollection,
@@ -210,7 +209,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         syncRoadAddressingState({ changeTableOpen: false });
         eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
         eventbus.trigger('roadAddressProject:deactivateAllSelections');
-        applicationModel.selectLayer('linkProperty', true, false);
+        selectLayer('linkProperty', true, false);
 
         const projectId = project.data && project.data.id;
         if (projectId && options.projectCollection && _.isFunction(options.projectCollection.getProjectsWithLinksById)) {
@@ -296,7 +295,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       if (newState === States.ROAD_ADDRESSING) {
         eventbus.trigger('roadAddressProject:startAllInteractions');
         // Ensure correct cursor is set by triggering tool change
-        eventbus.trigger('tool:changed', applicationModel.getSelectedTool());
+        eventbus.trigger('tool:changed', getSelectedTool());
       }
       
       render();

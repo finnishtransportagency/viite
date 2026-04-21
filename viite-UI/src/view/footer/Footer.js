@@ -1,5 +1,6 @@
 import { checkbox } from '@components/checkbox/Checkbox.js';
 import { eventbus } from '@utils/eventbus.js';
+import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 
 /* Contains following elements:
 - TileMapSelector: A set of buttons used for selecting which map background to show
@@ -7,17 +8,17 @@ import { eventbus } from '@utils/eventbus.js';
 - CrosshairToggle: A checkbox for toggling a crosshair in the center of the map and clicking on the map through it (see MapView.js for details)
 */
 
-export function Footer(map, container, applicationModel) {
+export function Footer(map, container) {
   const element = '<div class="map-footer"></div>';
   container.append(element);
 
   const footerContainer = container.find('.map-footer');
-  renderTileMapSelector(footerContainer, applicationModel);
+  renderTileMapSelector(footerContainer);
   renderCoordinatesDisplay(footerContainer);
   createCrosshairToggle(footerContainer.find('.mapplugin.coordinates'), map);
 }
 
-function renderTileMapSelector(container, applicationModel) {
+function renderTileMapSelector(container) {
   const renderLayerOptionCheckbox = (id, label, checked = false) => `
       <div class="layer-option-visible-wrapper">
         ${checkbox({
@@ -114,7 +115,7 @@ function renderTileMapSelector(container, applicationModel) {
   });
 
   container.on('change', '#roadsVisibleCheckbox', function () {
-    applicationModel.toggleRoadVisibility();
+    toggleRoadVisibility();
     eventbus.trigger('linkProperty:visibilityChanged');
     eventbus.trigger('roadAddressProject:visibilityChanged');
   });

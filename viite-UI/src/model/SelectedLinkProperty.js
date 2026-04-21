@@ -11,8 +11,9 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
+import { setSelectionType } from '@model/ApplicationModel.js';
 
-export function SelectedLinkProperty(roadCollection, applicationModel) {
+export function SelectedLinkProperty(roadCollection) {
     let current = [];
     let dirty = false;
     let featuresToKeep = [];
@@ -160,7 +161,7 @@ export function SelectedLinkProperty(roadCollection, applicationModel) {
     }
 
     eventbus.on('linkProperties:closed', function () {
-      applicationModel.setSelectionType(SelectionType.All);
+      setSelectionType(SelectionType.All);
       clearFeaturesToKeep();
     });
 

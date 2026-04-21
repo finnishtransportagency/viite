@@ -5,25 +5,26 @@
 /* eslint-disable prefer-named-capture-group */
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { selectLayer, refreshMap } from '@model/ApplicationModel.js';
 
-export function URLRouter(map, backend, models, applicationModel) {
+export function URLRouter(map, backend, models) {
   const Router = Backbone.Router.extend({
       initialize: function () {
 
         this.route(/^(\d+)$/, function (layer) {
-          applicationModel.selectLayer(layer);
+          selectLayer(layer);
         });
 
         this.route(/^([A-Za-z]+)\/?$/, function (layer) {
           if (layer === 'linkProperty') {
-            applicationModel.selectLayer('linkProperty');
+            selectLayer('linkProperty');
           } else {
-            applicationModel.selectLayer(layer);
+            selectLayer(layer);
           }
         });
 
         this.route(/^$/, function () {
-          applicationModel.selectLayer('linkProperty');
+          selectLayer('linkProperty');
         });
       },
 
@@ -37,7 +38,7 @@ export function URLRouter(map, backend, models, applicationModel) {
       },
 
       linkProperty: function (linkId) {
-        applicationModel.selectLayer('linkProperty');
+        selectLayer('linkProperty');
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
@@ -49,7 +50,7 @@ export function URLRouter(map, backend, models, applicationModel) {
       },
 
       linkPropertyByMml: function (mmlId) {
-        applicationModel.selectLayer('linkProperty');
+        selectLayer('linkProperty');
         backend.getRoadLinkByMmlId(mmlId, function (response) {
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
@@ -60,7 +61,7 @@ export function URLRouter(map, backend, models, applicationModel) {
       },
 
       linkPropertyByMtk: function (mtkid) {
-        applicationModel.selectLayer('linkProperty');
+        selectLayer('linkProperty');
         backend.getRoadLinkByMtkId(mtkid, function (response) {
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
@@ -70,7 +71,7 @@ export function URLRouter(map, backend, models, applicationModel) {
         });
       },
       roadAddressProject: function (projectId) {
-        applicationModel.selectLayer('roadAddressProject');
+        selectLayer('roadAddressProject');
         eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
         const parsedProjectId = parseInt(projectId, 10);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
@@ -118,18 +119,18 @@ export function URLRouter(map, backend, models, applicationModel) {
         router.navigate(`${baseUrl}${linkIdUrl}`);
         const initialCenter = map.getView().getCenter();
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
-          applicationModel.selectLayer('linkProperty', false);
+          selectLayer('linkProperty', false);
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);
         } else if (typeof linkId !== 'undefined') {
-          applicationModel.selectLayer('linkProperty', false);
+          selectLayer('linkProperty', false);
           backend.getProjectLinkByLinkId(linkId, function (response) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           });
         }
         const newCenter = map.getView().getCenter();
         if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
-          applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
+          refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
         }
       }
     });

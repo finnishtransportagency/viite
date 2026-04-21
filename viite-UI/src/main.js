@@ -2,7 +2,7 @@
  * Main application entry point and initialization module for Viite UI.
  * Handles application startup, map setup, layer management, and component initialization.
  */
-import { ApplicationModel } from '@model/ApplicationModel.js';
+import { setStartupParameters, setProjectCollection, refreshMap } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
@@ -31,22 +31,19 @@ import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
 
-let applicationModel;
-
 // Starts application
 export function start() {
   const backend = new Backend();
   backend.getStartupParametersWithCallback(function (startupParameters) {
-    applicationModel = new ApplicationModel();
-    applicationModel.setStartupParameters(startupParameters);
-    const roadCollection = new RoadCollection(backend, applicationModel);
-    const projectCollection = new ProjectCollection(backend, startupParameters, applicationModel);
-    applicationModel.setProjectCollection(projectCollection);
+    setStartupParameters(startupParameters);
+    const roadCollection = new RoadCollection(backend);
+    const projectCollection = new ProjectCollection(backend, startupParameters);
+    setProjectCollection(projectCollection);
     const roadNameCollection = new RoadNameCollection(backend);
-    const selectedLinkProperty = new SelectedLinkProperty(roadCollection, applicationModel);
+    const selectedLinkProperty = new SelectedLinkProperty(roadCollection);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-    const nodeCollection = new NodeCollection(backend, new LocationSearch(backend, applicationModel));
+    const nodeCollection = new NodeCollection(backend, new LocationSearch(backend));
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
 
     const models = {
@@ -61,14 +58,13 @@ export function start() {
     bindEvents();
     new SearchPanel({
       container: jQuery('#map-tools'),
-      backend: backend,
-      applicationModel: applicationModel
+      backend: backend
     });
 
     backend.getUserRoles();
     setupProjections();
     const map = initializeApplicationMap(backend, models, startupParameters, roadNameCollection);
-    new URLRouter(map, backend, models, applicationModel);
+    new URLRouter(map, backend, models);
     eventbus.trigger('application:initialized');
   });
 }
@@ -120,10 +116,10 @@ const createOpenLayersMap = function (startupParameters, layers) {
 };
 
 const setupMapLayers = function (map, models) {
-  const roadLayer = new RoadLayer(map, applicationModel);
-  const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, applicationModel);
-  const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, applicationModel);
-  const nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection, applicationModel);
+  const roadLayer = new RoadLayer(map);
+  const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
+  const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection);
+  const nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection);
 
   return {
     road: roadLayer,
@@ -136,14 +132,13 @@ const setupMapLayers = function (map, models) {
 const initializeMapPlugins = function (map) {
   const mapPluginsContainer = jQuery('#map-plugins');
   new ScaleBar(map, mapPluginsContainer);
-  new ZoomBox(map, mapPluginsContainer, applicationModel);
-  new Footer(map, mapPluginsContainer, applicationModel);
+  new ZoomBox(map, mapPluginsContainer);
+  new Footer(map, mapPluginsContainer);
 };
 
 const initializeMainMenu = function (backend, map, models, roadNameCollection) {
   new MainMenu({
     selectedLinkProperty: models.selectedLinkProperty,
-    applicationModel: applicationModel,
     eventbus: eventbus,
     projectCollection: models.projectCollection,
     map: map,
@@ -203,9 +198,9 @@ const initializeApplicationMap = function (backend, models, startupParameters, r
   initializeMapPlugins(map);
   setupHeaderInfo(backend, startupParameters);
 
-  new MapView(map, layers, applicationModel);
+  new MapView(map, layers);
 
-  applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
+  refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
 
   return map;
 };

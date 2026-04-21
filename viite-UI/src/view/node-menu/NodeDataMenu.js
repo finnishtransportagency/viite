@@ -1,5 +1,6 @@
 import { NodeTableUtils } from './DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { setSelectedTool } from '@model/ApplicationModel.js';
 
 /**
  * NodeDataMenu - Read-only detail panel for searched node and template data.
@@ -7,7 +8,6 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
  */
 export function NodeDataMenu(dataTable, containerElement, dependencies) {
   const tableUtils = NodeTableUtils;
-  const applicationModel = dependencies.applicationModel;
 
     const renderDataTable = function (props) {
       return dataTable.setProps(props).render();
@@ -224,15 +224,15 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
       panelElement.on('click.nodeDataMenu', '#attachToMapNode', function () {
         panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
         panelElement.find('#attachToMapNode').addClass('active');
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Attach.value);
+        setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+        setSelectedTool(ViiteEnumerations.Tool.Attach.value);
       });
 
       panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {
         panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
         panelElement.find('#attachToNewNode').addClass('active');
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
-        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Add.value);
+        setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+        setSelectedTool(ViiteEnumerations.Tool.Add.value);
       });
     };
 

@@ -12,9 +12,9 @@ import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { selectLayer, refreshMap } from '@model/ApplicationModel.js';
 
 export function ProjectDetailsForm(callbacks = {}) {
-  const applicationModel = callbacks.applicationModel;
     let startDatePicker = null;
     const projectCollection = callbacks.projectCollection;
     const map = callbacks.map;
@@ -355,7 +355,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 
         // Prevent saving if project is published, but let them continue to action menu so they can inspect change table
         if (isProjectPublished) {
-          applicationModel.selectLayer('roadAddressProject', true, false);
+          selectLayer('roadAddressProject', true, false);
 
           if (callbacks.continueToActions) {
             callbacks.continueToActions({ project: projectData });
@@ -390,7 +390,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 
           // Wait before refreshing the map to ensure the layer is selected
           setTimeout(function() {
-            applicationModel.refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+            refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
           }, 1800);
 
           if (result && result.success) {
@@ -412,7 +412,7 @@ export function ProjectDetailsForm(callbacks = {}) {
               eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, savedProject);
             }
             
-            applicationModel.selectLayer('roadAddressProject', true, false);
+            selectLayer('roadAddressProject', true, false);
             
             // For 'Jatka toimenpiteisiin' button, always continue to action menu
             if (callbacks.continueToActions) {
@@ -472,7 +472,7 @@ export function ProjectDetailsForm(callbacks = {}) {
                   }
                   
                   // Set the selected layer to roadAddressProject when project is saved
-                  applicationModel.selectLayer('roadAddressProject', true, false);
+                  selectLayer('roadAddressProject', true, false);
 
                   if (isEditCancel) {
                     returnToActions(latestProject);
@@ -496,25 +496,25 @@ export function ProjectDetailsForm(callbacks = {}) {
             },
             closeCallback: function () {
               if (isEditCancel) {
-                applicationModel.selectLayer('roadAddressProject', true, false);
+                selectLayer('roadAddressProject', true, false);
                 returnToActions();
                 return;
               }
 
               // Close without saving - reset layer to default
-              applicationModel.selectLayer('linkProperty', true, false);
+              selectLayer('linkProperty', true, false);
               callbacks.closeProjectMenu();
             }
           });
         } else {
           if (isEditCancel) {
-            applicationModel.selectLayer('roadAddressProject', true, false);
+            selectLayer('roadAddressProject', true, false);
             returnToActions();
             return;
           }
 
           // No unsaved changes, close directly - reset layer to default
-          applicationModel.selectLayer('linkProperty', true, false);
+          selectLayer('linkProperty', true, false);
           callbacks.closeProjectMenu();
         }
       });
@@ -524,7 +524,7 @@ export function ProjectDetailsForm(callbacks = {}) {
             successCallback: function () {
                projectCollection.deleteProject(projectData.id);
                // Reset layer to default after project deletion
-               applicationModel.selectLayer('linkProperty', true, false);
+               selectLayer('linkProperty', true, false);
                callbacks.closeProjectMenu();
             }
           });
