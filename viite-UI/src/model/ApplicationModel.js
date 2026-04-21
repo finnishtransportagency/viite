@@ -9,6 +9,7 @@
  * - Selection types and special configurations
  */
 import { ViiteEnumerations } from "@utils/ViiteEnumerations.js";
+import { eventbus } from "@utils/eventbus.js";
 
 const specialSelectionTypes = [
   ViiteEnumerations.SelectionType.Unknown.value
@@ -33,34 +34,6 @@ const state = {
   }
 };
 
-const listeners = new Map();
-
-function emit(eventName, ...args) {
-  const handlers = listeners.get(eventName);
-  if (!handlers) return;
-
-  handlers.forEach((handler) => handler(...args));
-}
-
-function on(eventName, handler) {
-  if (!listeners.has(eventName)) {
-    listeners.set(eventName, new Set());
-  }
-
-  listeners.get(eventName).add(handler);
-}
-
-function off(eventName, handler) {
-  const handlers = listeners.get(eventName);
-  if (!handlers) return;
-
-  handlers.delete(handler);
-
-  if (handlers.size === 0) {
-    listeners.delete(eventName);
-  }
-}
-
 function getState() {
   return state;
 }
@@ -71,7 +44,7 @@ function getSelectionType() {
 
 function setSelectionType(type) {
   state.selectionType = type;
-  emit("selectionType:changed", type);
+  eventbus.trigger("selectionType:changed", type);
 }
 
 function selectionTypeIs(type) {
@@ -87,7 +60,7 @@ function selectionTypeIs(type) {
 
 function setZoomLevel(level) {
   state.zoomLevel = Math.round(level);
-  emit("zoom:changed", state.zoomLevel);
+  eventbus.trigger("zoom:changed", state.zoomLevel);
 }
 
 function getZoomLevel() {
@@ -96,7 +69,7 @@ function getZoomLevel() {
 
 function toggleRoadVisibility() {
   state.roadsVisibility = !state.roadsVisibility;
-  emit("roadsVisibility:changed", state.roadsVisibility);
+  eventbus.trigger("roadsVisibility:changed", state.roadsVisibility);
 }
 
 function getRoadVisibility() {
@@ -118,12 +91,12 @@ function setSelectedTool(tool) {
     state.selectedTool =
       ViiteEnumerations.Tool.Unknown.value;
 
-    emit("tool:clear");
+    eventbus.trigger("tool:clear");
   } else {
     state.selectedTool = tool;
   }
 
-  emit("tool:changed", state.selectedTool);
+  eventbus.trigger("tool:changed", state.selectedTool);
 }
 
 function getSelectedTool() {
@@ -160,14 +133,14 @@ function setUserData(userData) {
   state.sessionUsername = userData.userName;
   state.sessionUserRoles = userData.roles;
 
-  emit("userData:changed", userData);
+  eventbus.trigger("userData:changed", userData);
 }
 
 function setStartupParameters(startupParameters) {
   state.appContext.startupParameters =
     startupParameters;
 
-  emit(
+  eventbus.trigger(
     "startupParameters:changed",
     startupParameters
   );
@@ -181,7 +154,7 @@ function setProjectCollection(projectCollection) {
   state.appContext.projectCollection =
     projectCollection;
 
-  emit(
+  eventbus.trigger(
     "projectCollection:changed",
     projectCollection
   );
@@ -204,7 +177,7 @@ function selectLayer(layer, toggleStart, noSave) {
 
     state.selectedLayer = layer;
 
-    emit(
+    eventbus.trigger(
       "layer:selected",
       layer,
       previous,
@@ -214,7 +187,7 @@ function selectLayer(layer, toggleStart, noSave) {
     layer === "linkProperty" &&
     toggleStart
   ) {
-    emit(
+    eventbus.trigger(
       "roadLayer:toggleProjectSelectionInForm",
       layer,
       noSave
@@ -226,7 +199,7 @@ function refreshMap(zoomLevel, bbox, center) {
   setZoomLevel(zoomLevel);
   state.centerLonLat = center;
 
-  emit("map:refresh", {
+  eventbus.trigger("map:refresh", {
     selectedLayer: state.selectedLayer,
     zoom: state.zoomLevel,
     bbox,
@@ -237,9 +210,6 @@ function refreshMap(zoomLevel, bbox, center) {
 export {
   state,
   getState,
-  on,
-  off,
-  emit,
 
   refreshMap,
 
