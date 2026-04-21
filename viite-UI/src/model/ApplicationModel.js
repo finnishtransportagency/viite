@@ -27,16 +27,11 @@ const state = {
 
   appContext: {
     startupParameters: undefined,
-    projectCollection: undefined,
     selectedProjectLinkProperty: undefined,
     projectLinkLayer: undefined,
     mainMenu: undefined
   }
 };
-
-function getState() {
-  return state;
-}
 
 function getSelectionType() {
   return state.selectionType;
@@ -150,20 +145,6 @@ function getStartupParameters() {
   return state.appContext.startupParameters;
 }
 
-function setProjectCollection(projectCollection) {
-  state.appContext.projectCollection =
-    projectCollection;
-
-  eventbus.trigger(
-    "projectCollection:changed",
-    projectCollection
-  );
-}
-
-function getProjectCollection() {
-  return state.appContext.projectCollection;
-}
-
 function selectLayer(layer, toggleStart, noSave) {
   const tool =
     layer === "node"
@@ -208,9 +189,6 @@ function refreshMap(zoomLevel, bbox, center) {
 }
 
 export {
-  state,
-  getState,
-
   refreshMap,
 
   getUserGeoLocation,
@@ -240,9 +218,6 @@ export {
 
   setStartupParameters,
   getStartupParameters,
-
-  setProjectCollection,
-  getProjectCollection,
 
   specialSelectionTypes
 };

@@ -2,7 +2,7 @@
  * Main application entry point and initialization module for Viite UI.
  * Handles application startup, map setup, layer management, and component initialization.
  */
-import { setStartupParameters, setProjectCollection, refreshMap } from '@model/ApplicationModel.js';
+import { setStartupParameters, refreshMap } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
@@ -37,7 +37,6 @@ export function start() {
     setStartupParameters(startupParameters);
     const roadCollection = new RoadCollection(backend);
     const projectCollection = new ProjectCollection(backend, startupParameters);
-    setProjectCollection(projectCollection);
     const roadNameCollection = new RoadNameCollection(backend);
     const selectedLinkProperty = new SelectedLinkProperty(roadCollection);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
