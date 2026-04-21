@@ -24,6 +24,11 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       return current.node;
     };
 
+    const initializeCurrentNode = function (node) {
+      current = {};
+      setCurrentNode(node);
+    };
+
     function setCurrentNode(node) {
       current.node = _.cloneDeep(node);
     }
@@ -97,42 +102,66 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const setNodeName = function (name) {
-      current.node.name = name;
-      updateNodesAndJunctionsMarker();
+      if (current.node) {
+        current.node.name = name;
+        updateNodesAndJunctionsMarker();
+      }
     };
 
     const setNodeType = function (type) {
-      current.node.type = type;
-      updateNodesAndJunctionsMarker();
+      if (current.node) {
+        current.node.type = type;
+        updateNodesAndJunctionsMarker();
+      }
     };
 
     const setStartDate = function (startDate) {
-      current.node.startDate = startDate;
+      if (current.node) {
+        current.node.startDate = startDate;
+      }
     };
 
     const typeHasChanged = function (nodeType) {
+      if (!current.node) {
+        return ViiteEnumerations.NodeType.UnknownNodeType.value !== nodeType;
+      }
       if (current.node.nodeNumber) {
         return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).type !== nodeType;
       } else return ViiteEnumerations.NodeType.UnknownNodeType.value !== nodeType;
     };
 
     const getInitialStartDate = function () {
+      if (!current.node) {
+        return '';
+      }
       return nodeCollection.getNodeByNodeNumber(current.node.nodeNumber).startDate;
     };
 
     const setJunctionNumber = function (id, junctionNumber) {
+      if (!current.node || !current.node.junctions) {
+        return;
+      }
+
+      const normalizedJunctionNumber = _.trim((junctionNumber || '').toString()) === ''
+        ? NaN
+        : parseInt(junctionNumber, 10);
+
       const junction = _.find(current.node.junctions, function (junctionToSet) {
-        return junctionToSet.id === id;
+        return junctionToSet.id === id ||
+          junctionToSet.id.toString() === (id || '').toString();
       });
 
       if (!_.isUndefined(junction)) {
-        junction.junctionNumber = junctionNumber;
+        junction.junctionNumber = normalizedJunctionNumber;
         eventbus.trigger('junction:validate');
         updateNodesAndJunctionsMarker();
       }
     };
 
     const getJunctionPoint = function (id) {
+      if (!current.node || !current.node.junctions) {
+        return undefined;
+      }
       const junctionPoints = _.flatMap(current.node.junctions, function (junction) {
         return junction.junctionPoints;
       });
@@ -159,6 +188,9 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const detachJunctionAndNodePoints = function (junction, nodePoints) {
+      if (!current.node) {
+        return;
+      }
       if (!_.isUndefined(junction)) {
         _.remove(current.node.junctions, function (j) {
           return j.id === junction.id;
@@ -174,6 +206,9 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const attachJunctionAndNodePoints = function (junction, nodePoints) {
+      if (!current.node) {
+        return;
+      }
       if (!_.isUndefined(junction)) {
         if (_.filter(current.node.junctions, function (j) {
           return j.id === junction.id;
@@ -193,6 +228,9 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const validateJunctionNumbers = function () {
+      if (!current.node || !current.node.junctions) {
+        return true;
+      }
 
       const errorMessage = function (junctions) {
         let message = '';
@@ -232,8 +270,11 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const isDirty = function () {
+      if (!current.node) {
+        return false;
+      }
       let original = false;
-      if (current.node.nodeNumber) {
+      if (current.node && current.node.nodeNumber) {
         original = nodeCollection.getNodeByNodeNumber(current.node.nodeNumber);
       }
       let nodePointsEquality = false;
@@ -267,6 +308,9 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const isObsoleteNode = function () {
+      if (!current.node) {
+        return true;
+      }
       return _.isEmpty(current.node.junctions) && _.isEmpty(_.filter(current.node.nodePoints, function (np) {
         return np.type !== ViiteEnumerations.NodePointType.CalculatedNodePoint.value;
       }));
@@ -313,6 +357,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 
     return {
       openNode: openNode,
+      initializeCurrentNode: initializeCurrentNode,
       openNodePointTemplate: openNodePointTemplate,
       openJunctionTemplate: openJunctionTemplate,
       getCurrentNode: getCurrentNode,
