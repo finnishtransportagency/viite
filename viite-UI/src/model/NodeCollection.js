@@ -3,6 +3,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { events } from '@utils/EventUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { searchLocation } from './LocationSearch.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -14,7 +15,7 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
  * - Backend integration for node operations
  * - Node point and junction template handling
  */
-export function NodeCollection(backend, locationSearch) {
+export function NodeCollection(backend) {
     const me = this;
     let nodes = [];
     let nodesWithAttributes = [];
@@ -94,7 +95,7 @@ export function NodeCollection(backend, locationSearch) {
 
       try {
         // Search for location based on road address information
-        const searchResults = await locationSearch.search(
+        const searchResults = await searchLocation(
             `${template.roadNumber} ${template.roadPartNumber} ${template.addrM} ${template.track}`
         );
 

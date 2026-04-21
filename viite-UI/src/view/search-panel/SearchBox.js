@@ -1,13 +1,13 @@
 /**
  * SearchBox component
  * Handles road address/location search input, result rendering, and coordinate selection events.
- * @param {Object} locationSearch - Location search service
  * @returns {Object} Component with element property
  */
 import { eventbus } from '@utils/eventbus.js';
 import { showToast } from '@components/Toast.js';
+import { searchLocation } from '@model/LocationSearch.js';
 
-export function SearchBox(locationSearch) {
+export function SearchBox() {
     const tooltip = "Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'), \ntieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),\nlinkki-id:llä (esim. '06ad934c-5241-4055-9ae6-71d63190f6d7:1')\ntai koordinaateilla ('P, I', esim. '6673830, 388774')";
     const groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
     const coordinatesDiv = $('<div class="panel"></div>');
@@ -48,7 +48,7 @@ export function SearchBox(locationSearch) {
         searchResults.html('Haku käynnissä…');
         resultsSection.show();
 
-        locationSearch.search(coordinatesText.val()).then(function (results) {
+        searchLocation(coordinatesText.val()).then(function (results) {
           populateSearchResults(results);
           if (results.length === 1) {
             const result = results[0];

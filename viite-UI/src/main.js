@@ -8,10 +8,9 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
-import { LocationSearch } from '@model/LocationSearch.js';
 import { MainMenu } from '@view/MainMenu.js';
 import { MapView } from '@view/map/MapView.js';
-import { SearchPanel } from '@view/search-panel/SearchPanel.js';
+import { createSearchPanel } from '@view/search-panel/SearchPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
@@ -43,7 +42,7 @@ export function start() {
     const selectedLinkProperty = new SelectedLinkProperty(roadCollection);
     const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
-    const nodeCollection = new NodeCollection(backend, new LocationSearch(backend));
+    const nodeCollection = new NodeCollection(backend);
     const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
 
     const models = {
@@ -56,10 +55,8 @@ export function start() {
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
     bindEvents();
-    new SearchPanel({
-      container: jQuery('#map-tools'),
-      backend: backend
-    });
+    const searchPanel = createSearchPanel();
+    jQuery('#map-tools').append(searchPanel.element);
 
     backend.getUserRoles();
     setupProjections();

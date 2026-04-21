@@ -6,7 +6,7 @@ import { View } from './View.js';
  * Main - Parent container of user management related content
  */
 export const Main = {
-    init: function (containerSelector, options = {}) {
+    init: function (containerSelector) {
         const container = document.querySelector(containerSelector);
 
         if (!container || !View || !AddUserForm || !UpdateUserForm) {

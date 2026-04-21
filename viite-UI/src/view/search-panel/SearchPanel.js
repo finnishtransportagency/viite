@@ -1,17 +1,12 @@
 // Orchestrates search panel rendering and updates legend HTML by selected layer.
 import { eventbus } from '@utils/eventbus.js';
-import { LocationSearch } from '@model/LocationSearch.js';
 import { getLegendDisplayHtml } from './LegendDisplay.js';
 import { SearchBox } from './SearchBox.js';
 import { getSelectedLayer } from '@model/ApplicationModel.js';
 
-export function SearchPanel(options = {}) {
-  const { container, backend } = options;
-
+export function SearchPanel() {
   const searchPanel = $('<div class="search-panel"></div>');
-  const searchBox = options.searchBox || new SearchBox(
-    new LocationSearch(backend)
-  );
+  const searchBox = new SearchBox();
 
   const legendGroup = $(`
     <div class="panel-group road-links">
@@ -41,9 +36,10 @@ export function SearchPanel(options = {}) {
 
   // Initial render
   updateLegendContent(getSelectedLayer());
-  container.append(searchPanel);
 
   return {
     element: searchPanel
   };
 }
+
+export const createSearchPanel = SearchPanel;
