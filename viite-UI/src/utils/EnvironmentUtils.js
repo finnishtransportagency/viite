@@ -35,8 +35,19 @@ const localizedName = function () {
   return localizedEnvironmentName[Environment.name()];
 };
 
+const browserTitle = function () {
+  const environmentTitle = {
+    integration: 'Viite - QA',
+    production: 'Viite',
+    staging: 'Viite - DEV',
+    unknown: 'Viite - LOCAL'
+  };
+  return environmentTitle[Environment.name()] || 'Viite';
+};
+
 export const Environment = {
   name: name,
   urlPath: urlPath,
-  localizedName: localizedName
+  localizedName: localizedName,
+  browserTitle: browserTitle
 };

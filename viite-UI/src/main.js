@@ -32,6 +32,7 @@ import { Environment } from '@utils/EnvironmentUtils.js';
 
 // Starts application
 export function start() {
+  document.title = Environment.browserTitle();
   const backend = new Backend();
   backend.getStartupParametersWithCallback(function (startupParameters) {
     setStartupParameters(startupParameters);
