@@ -2863,6 +2863,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     }
   }
 
+  // TODO: Is no longer used, safe to delete?
   def validateProjectByIdHighPriorityOnly(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
     if (newSession) {
       runWithReadOnlySession {
