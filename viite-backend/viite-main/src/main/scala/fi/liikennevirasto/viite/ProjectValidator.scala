@@ -515,6 +515,7 @@ class ProjectValidator {
 
   /** Returns the high priority validation errors found within projectLinks (i.e. those that should be addressed
    *  first by the user, before any other possible errors). */
+   // TODO: No longer used, safe to delete?
   def projectLinksHighPriorityValidation(project: Project, projectLinks: Seq[ProjectLink]): Seq[ValidationErrorDetails] = {
 
     // function to get any (high priority) validation errors for the project links
