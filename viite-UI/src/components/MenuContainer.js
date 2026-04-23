@@ -3,90 +3,72 @@
 Usage:
 import { MenuContainer } from '@/components/MenuContainer.js';
 
-const menu = MenuContainer('#menu-container', onClose);
+const menu = MenuContainer();
 menu.setHeader('<h3>Valikko</h3>');
 menu.setBody(`<div>${contentHtml}</div>`);
 menu.setFooter('<button class="btn-primary">Tallenna</button>');
 */
 
-export function MenuContainer(container, onClose) {
-    const $container = $(container);
-    let $root = null;
-    let $headerEl = null;
-    let $headerContentEl = null;
-    let $closeBtn = null;
-    let $bodyEl = null;
-    let $footerEl = null;
+export function MenuContainer() {
+  let defaultCloseCallback = () => undefined;
+  let closeCallback = defaultCloseCallback;
 
-    const buildDOM = () => {
-      $root = $container;
-      $root.empty().addClass('menu-container-layout');
+  // 1. Create elements directly
+  const root = document.createElement('div');
+  root.className = 'menu-container-layout';
 
-      $headerEl = $('<header class="menu-header"></header>').appendTo($root).hide();
-      $headerContentEl = $('<div class="menu-header-content"></div>').appendTo($headerEl);
-      $closeBtn = $('<button class="menu-close-btn" title="Sulje" type="button"><i class="fas fa-window-close"></i></button>')
-        .appendTo($headerEl);
+  const header = document.createElement('header');
+  header.className = 'menu-header';
+  header.style.display = 'none';
 
-      if (onClose) {
-        $closeBtn.on('click', onClose);
-      }
+  const headerContent = document.createElement('div');
+  headerContent.className = 'menu-header-content';
 
-      $bodyEl = $('<main class="menu-body"></main>').appendTo($root);
-      $footerEl = $('<footer class="menu-footer"></footer>').appendTo($root).hide();
-    };
+  const closeButton = document.createElement('button');
+  closeButton.className = 'menu-close-btn';
+  closeButton.type = 'button';
+  closeButton.title = 'Sulje';
+  closeButton.innerHTML = '<i class="fas fa-window-close"></i>';
 
-    const setHeader = (html) => {
-      if (!$headerContentEl) return;
-      if (html) {
-        $headerEl.show();
-        $headerContentEl.html(html);
-      } else {
-        $headerContentEl.empty();
-        $headerEl.hide();
-      }
-    };
+  const body = document.createElement('main');
+  body.className = 'menu-body';
 
-    const setBody = (html) => {
-      if (!$bodyEl) return;
-      $bodyEl.html(html || '');
-    };
+  const footer = document.createElement('footer');
+  footer.className = 'menu-footer';
+  footer.style.display = 'none';
 
-    const setFooter = (html) => {
-      if (!$footerEl) return;
-      if (html) {
-        $footerEl.html(html).show();
-      } else {
-        $footerEl.empty().hide();
-      }
-    };
+  // 2. Assemble structure
+  header.append(headerContent, closeButton);
+  root.append(header, body, footer);
 
-    const setOnClose = (callback) => {
-      if (!$closeBtn) return;
-      $closeBtn.off('click');
-      if (callback) {
-        $closeBtn.on('click', callback);
-      }
-    };
+  // 3. Third approach: Event listener assignment 
+  // (Directly reference the created variable, no selector needed)
+  closeButton.addEventListener('click', (event) => {
+    event.preventDefault();
+    closeCallback();
+  });
 
-    const getBody = () => $bodyEl;
+  const setHeader = (html, onCloseOverride) => {
+    closeCallback = _.isFunction(onCloseOverride) ? onCloseOverride : defaultCloseCallback;
+    headerContent.innerHTML = html || '';
+    header.style.display = html ? '' : 'none';
+  };
 
-    const clear = () => {
-      if ($closeBtn) {
-        $closeBtn.off('click');
-      }
+  const setDefaultClose = (callback) => {
+    defaultCloseCallback = _.isFunction(callback) ? callback : () => undefined;
+    closeCallback = defaultCloseCallback;
+  };
 
-      if ($root) {
-        $root.removeClass('menu-container-layout').empty();
-        $root = null;
-        $headerEl = null;
-        $headerContentEl = null;
-        $closeBtn = null;
-        $bodyEl = null;
-        $footerEl = null;
-      }
-    };
+  const setBody = (html) => {
+    body.innerHTML = html || '';
+  };
 
-    buildDOM();
+  const setFooter = (html) => {
+    footer.innerHTML = html || '';
+    footer.style.display = html ? '' : 'none';
+  };
 
-    return { setHeader, setBody, setFooter, setOnClose, getBody, clear };
-  }
+  const getBody = () => body;
+
+  return { root, setHeader, setBody, setFooter, setDefaultClose, getBody };
+}

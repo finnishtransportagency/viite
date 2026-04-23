@@ -45,6 +45,10 @@ export function MainMenu(options = {}) {
   const roadAddressChangesBrowser = new RoadAddressChangesBrowserWindow(options.backend);
   const roadNetworkErrorsList = new RoadNetworkErrorsList(options.backend, {});
   const adminPanel = new AdminPanel(options.backend, {});
+  
+  const menu = new MenuContainer();
+  document.querySelector('#menu-container').appendChild(menu.root);
+
   const projectList = new ProjectList(projectCollection, {
     map: options.map,
     backend: options.backend,
@@ -52,58 +56,30 @@ export function MainMenu(options = {}) {
     mainMenu: mainMenuApi,
     selectedProjectLinkProperty: options.selectedProjectLinkProperty,
     projectLinkLayer: options.projectLinkLayer,
-    projectChangeInfoModel: options.projectChangeInfoModel
+    projectChangeInfoModel: options.projectChangeInfoModel,
+    menu: menu
   });
-  const nodeMenu = new NodeMenu(
+  const nodeMenu = new NodeMenu (
     options.map,
     models.nodeCollection,
     options.backend,
     models.selectedNodesAndJunctions,
     models.roadCollection,
-    {
-      navigateToHash: function (hashValue) {
-        location.hash = hashValue;
-      }
-    }
+    menu
   );
-  let menu = null;
-
-  if (nodeMenu) {
-    nodeMenu.initialize();
-  }
-
-
-  const createMenuContainer = () => {
-    if (!MenuContainer) {
-      return null;
-    }
-      return new MenuContainer(rootElement);
-  };
-
-    const renderBody = (html, config = {}) => {
-      const header = config.header || '';
-      const onClose = config.onClose || null;
-      menu = createMenuContainer();
-      if (menu) {
-        menu.setHeader(header);
-        menu.setOnClose(onClose);
-        menu.setBody(html);
-      } else {
-        rootElement.html(html);
-      }
-    };
 
     const setState = (state, data) => {
       switch (state) {
         case 'main':
-          renderBody(renderMainMenu());
+          menu.setHeader();
+          menu.setFooter();
+          menu.setBody(renderMainMenu());
           bindMenuActions();
           break;
         case 'linkInfo':
-          renderBody(linkInfo.render(data), {
-            header: 'Tieosoitteen ominaisuustiedot',
-            onClose: () => setState('main')
-          });
+          menu.setFooter();
+          menu.setBody(linkInfo.render(data));
+          menu.setHeader('Tieosoitteen ominaisuustiedot');
           break;
         case 'project':
             projectList.show();
@@ -112,7 +88,7 @@ export function MainMenu(options = {}) {
           roadNamingTool.show();
           break;
         case 'node':
-          nodeMenu.show();
+          nodeMenu.render();
           break;
         case 'roadAddressBrowser':
           roadAddressBrowser.show();
@@ -127,7 +103,9 @@ export function MainMenu(options = {}) {
           adminPanel.show();
           break;
         default:
-          renderBody(renderMainMenu());
+          menu.setHeader();
+          menu.setFooter();
+          menu.setBody(renderMainMenu());
           bindMenuActions();
           break;
       }
@@ -155,6 +133,7 @@ export function MainMenu(options = {}) {
         </div>`;
     };
 
+    // Handle menu button clicks and map them to states
     const bindMenuActions = () => {
       const buttonToState = {
         formProjectButton: 'project',
@@ -195,12 +174,11 @@ export function MainMenu(options = {}) {
       activeEventbus.on('nodesAndJunctions:close', () => {
         setState('main');
       });
-      
     };
 
   bindEvents();
   setState('main');
-  mainMenuApi.setState = setState;
+  menu.setDefaultClose(() => setState('main'));
   
   return {
     setState

@@ -42,7 +42,8 @@ export function ProjectList(projectCollection, options = {}) {
       map: options.map,
       backend: options.backend,
       projectChangeTable: actionMenu.getProjectChangeTable(),
-      projectChangeInfoModel: options.projectChangeInfoModel
+      projectChangeInfoModel: options.projectChangeInfoModel,
+      menu: options.menu
     });
 
     return projectMenuInstance;

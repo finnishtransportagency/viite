@@ -146,12 +146,6 @@ function getStartupParameters() {
 }
 
 function selectLayer(layer, toggleStart, noSave) {
-  const tool =
-    layer === "node"
-      ? ViiteEnumerations.Tool.Unknown.value
-      : ViiteEnumerations.Tool.Default.value;
-
-  setSelectedTool(tool);
 
   if (layer !== state.selectedLayer) {
     const previous = state.selectedLayer;

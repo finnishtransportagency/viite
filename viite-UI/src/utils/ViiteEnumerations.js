@@ -22,9 +22,9 @@ ViiteEnumerations.ChangeType = {
 ViiteEnumerations.LinkGeomSource = {
     NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
     ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
-    SuravageLinkInterface: {value: 3, descriptionFI: "Suravage", description: "SuravageLinkInterface"},
+    SuravageLinkInterface: {value: 3, descriptionFI: "Suravage", description: "SuravageLinkInterface"}, // Not used anymore
     FrozenLinkInterface: {value: 4, descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
-    HistoryLinkInterface: {value: 5, descriptionFI: "MML historia", description: "HistoryLinkInterface"},
+    HistoryLinkInterface: {value: 5, descriptionFI: "MML historia", description: "HistoryLinkInterface"}, // Not used anymore
     Unknown: {value: 99, descriptionFI: "Tuntematon", description: "Unknown"}
   };
 
