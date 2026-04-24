@@ -344,6 +344,9 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     const saveNode = function () {
+      if (_.isUndefined(current.node)) {
+        return;
+      }
       eventbus.trigger('node:save', current.node);
     };
 

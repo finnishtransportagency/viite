@@ -439,7 +439,11 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
-      setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+
+      // Set small delay to prevent bug where wrong menu appears after attaching node
+      setTimeout(() => {
+        setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+      }, 10);
     }
 
     function selectNodePointTemplate(nodePointTemplate) {

@@ -111,6 +111,9 @@ export function MainMenu(options = {}) {
       }
     };
 
+    // Expose the live state transition function to child menus created earlier.
+    mainMenuApi.setState = setState;
+
     const renderMainMenu = () => {
       const roles = startupParameters.roles;
       const isUserAdmin = _.includes(roles, 'admin');
