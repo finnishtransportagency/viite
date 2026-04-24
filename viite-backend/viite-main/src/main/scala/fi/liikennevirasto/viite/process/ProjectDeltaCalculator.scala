@@ -163,6 +163,7 @@ object ProjectDeltaCalculator {
       combinePair(combinedSeq.tail, allNonTerminatedProjectLinks, combineTwo(result.head, combinedSeq.head, allNonTerminatedProjectLinks) ++ result.tail)
   }
 
+  // Usage removed in VIITE-3725, safe to remove?
   def createAverageValuesForTransferedStarts(starts: Map[RoadPart, Seq[ProjectLink]]): Seq[ProjectLink] = {
     starts.mapValues(pls => {
       if (pls.size == 2 && pls.forall(_.track != Track.Combined) && (pls.head.status == RoadAddressChangeType.Termination && pls.last.status == RoadAddressChangeType.Termination)) {
@@ -179,6 +180,7 @@ object ProjectDeltaCalculator {
     }).values.flatten.toSeq
   }
 
+  // Usage removed in VIITE-3725, safe to remove?
   private def sortAndTakeTerminated(pls: Seq[ProjectLink]): Seq[ProjectLink] = {
     if (pls.isEmpty) pls
     else {
@@ -198,37 +200,20 @@ object ProjectDeltaCalculator {
    * @return Changetable rows
    */
   def generateChangeTableRowsFromProjectLinks(projectLinks: Seq[ProjectLink], allProjectLinks: Seq[ProjectLink]): ChangeTableRows2 = {
-    val startLinks = projectLinks.filter(pl => pl.addrMRange.isRoadPartStart).groupBy(pl => {
-      (pl.roadPart)})
-    val leftAndRightTrackProjectLinks = allProjectLinks.filter(pl => {pl.track != Track.Combined})
-    val leftAndRightTrackProjectLinksGroupedByRoadPart = leftAndRightTrackProjectLinks.groupBy(pl => {pl.roadPart})
-    val terminatedForAveraging = leftAndRightTrackProjectLinksGroupedByRoadPart.mapValues(pls => {
-        if (pls.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart)) {
-          val (r, l) = pls.partition(_.track == Track.RightSide)
-          Seq(sortAndTakeTerminated(r),sortAndTakeTerminated(l)).flatten
-      } else
-          Seq()
-      })
-
-//TODO: TÄÄLLÄ HÄRVÄTÄÄN JOTAIN TERMINATED LINKKIEN KANSSA
-    val averagedStarts = if (projectLinks.forall(_.status == RoadAddressChangeType.Termination)) createAverageValuesForTransferedStarts(terminatedForAveraging) else createAverageValuesForTransferedStarts(startLinks)
-    val averagedTerminated = createAverageValuesForTransferedStarts(terminatedForAveraging)
+    val hasTerminatedAtRoadPartStart = allProjectLinks.exists(pl =>
+      pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart
+    )
 
     def groupToSections(pl: ProjectLink): (RoadPart, Track, Boolean) = (pl.originalRoadPart, pl.originalTrack, pl.reversed)
     val grouped =
-      if (allProjectLinks.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart)) {
-        val projectLinksWithAveragedReplacements = (averagedStarts ++ projectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id)))
-        projectLinksWithAveragedReplacements.sortBy(pl => (pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.originalAddrMRange.start)).groupBy(groupToSections)
+      if (hasTerminatedAtRoadPartStart) {
+        projectLinks.sortBy(pl => (pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.originalAddrMRange.start)).groupBy(groupToSections)
       } else
         projectLinks.sortBy(pl => (pl.roadPart.roadNumber, pl.roadPart.partNumber, pl.addrMRange.start)).groupBy(groupToSections)
 
-    val allWithAveraged = if (allProjectLinks.exists(pl => pl.status == RoadAddressChangeType.Termination && pl.originalAddrMRange.isRoadPartStart))
-      (averagedStarts ++ averagedTerminated ++ allProjectLinks.filterNot(pl => averagedStarts.map(_.id).contains(pl.id) || averagedTerminated.map(_.id).contains(pl.id)))
-    else allProjectLinks
-
     val sectioned = grouped.mapValues((pls: Seq[ProjectLink]) => {
 
-      combineWithProjectLinks(pls, Seq(), allWithAveraged.filter(pl => {
+      combineWithProjectLinks(pls, Seq(), allProjectLinks.filter(pl => {
         pl.roadPart == pls.head.roadPart
       }))
     }).values.flatten.map(pl => {
