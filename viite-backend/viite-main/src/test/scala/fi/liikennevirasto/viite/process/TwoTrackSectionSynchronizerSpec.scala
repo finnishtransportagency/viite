@@ -148,32 +148,32 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
 
   test("Case 4 - Terminations: Large gap should NOT synchronize") {
     /**
-     * Before: Large gap between terminations (> maxDiffForTracks = 10)
+     * Before: Large gap between terminations (> maxDiffForTracks = 20)
      * 0     20         50
      * ======>--------> 
      * ======>-------------->
-     * 0     40           60
+     * 0     41           60
      *
      * After: Should remain unchanged because gap is too large
      * 0     20         50
      * ======>--------> 
      * ======>-------------->
-     * 0     40           60
+     * 0     41           60
      */
     val links = Seq(
       buildTestLink(40, Track.RightSide, (0, 20), RoadAddressChangeType.Termination),
       buildTestLink(41, Track.RightSide, (20, 50), RoadAddressChangeType.Unchanged),
-      buildTestLink(42, Track.LeftSide, (0, 40), RoadAddressChangeType.Termination),
-      buildTestLink(43, Track.LeftSide, (40, 60), RoadAddressChangeType.Unchanged)
+      buildTestLink(42, Track.LeftSide, (0, 41), RoadAddressChangeType.Termination),
+      buildTestLink(43, Track.LeftSide, (41, 60), RoadAddressChangeType.Unchanged)
     )
 
     val result = TerminatedTwoTrackSectionSynchronizer.adjustTerminations(links)
 
-    // Links should remain unchanged because gap (40-20=20) > maxDiffForTracks (10)
+    // Links should remain unchanged because gap (41-20=21) > maxDiffForTracks (20)
     result.find(_.id == 40).get.addrMRange should be(AddrMRange(0, 20))
     result.find(_.id == 41).get.addrMRange should be(AddrMRange(20, 50))
-    result.find(_.id == 42).get.addrMRange should be(AddrMRange(0, 40))
-    result.find(_.id == 43).get.addrMRange should be(AddrMRange(40, 60))
+    result.find(_.id == 42).get.addrMRange should be(AddrMRange(0, 41))
+    result.find(_.id == 43).get.addrMRange should be(AddrMRange(41, 60))
   }
 
   test("Case 5 - Administrative class change: No administrative class changes should not affect links") {
@@ -492,9 +492,9 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
       buildTestLink(131, Track.RightSide, (20, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
       buildTestLink(132, Track.RightSide, (40, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
 
-      buildTestLink(133, Track.LeftSide, (0, 40), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(134, Track.LeftSide, (40, 60), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
-      buildTestLink(135, Track.LeftSide, (60, 80), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
+      buildTestLink(133, Track.LeftSide, (0, 41), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(134, Track.LeftSide, (41, 61), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.State, originalAdminClass = AdministrativeClass.Municipality),
+      buildTestLink(135, Track.LeftSide, (61, 80), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality)
     )
 
     intercept[ViiteException] {
