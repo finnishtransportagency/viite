@@ -8,8 +8,6 @@ import fi.vaylavirasto.viite.model.{AddrMRange, Track}
 
 object SynchronizationUtils {
 
-  // NOTE: If this value is changed, make sure to update the test cases in TwoTrackSectionSynchronizerSpec as well,
-  // since they rely on this threshold for determining when to align originalAddrMRange to addrMRange.
   val maxDiffForAddressChange = 20L // This number is arbitrary and may require adjustments in the future.
   val maxDiffForTracks = maxDiffForAddressChange
   val maxDiffForOriginalAddrMAlignment = 1L
