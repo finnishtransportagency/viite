@@ -8,8 +8,9 @@ import fi.vaylavirasto.viite.model.{AddrMRange, Track}
 
 object SynchronizationUtils {
 
-  val maxDiffForAddressChange = 10L // This number is arbitrary and may require adjustments in the future.
+  val maxDiffForAddressChange = 20L // This number is arbitrary and may require adjustments in the future.
   val maxDiffForTracks = maxDiffForAddressChange
+  val maxDiffForOriginalAddrMAlignment = 1L
 
   /**
    * Generic method to divide project links into continuous sections based on a predicate.
@@ -117,5 +118,24 @@ object SynchronizationUtils {
    */
   def findNextLink(links: Seq[ProjectLink], target: ProjectLink, trackToExclude: Track): Option[ProjectLink] = {
     links.find(pl => pl.track != trackToExclude && target.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+  }
+
+  /**
+   * Workaround for occasional 1m drift between calculated addrMRange and originalAddrMRange.
+   *
+   * If either start or end differs by at most maxDiff, originalAddrMRange is aligned to addrMRange
+   * for that boundary.
+   */
+  def alignOriginalAddrMToCalculatedAddrMWhenClose(projectLinks: Seq[ProjectLink], maxDiff: Long = maxDiffForOriginalAddrMAlignment): Seq[ProjectLink] = {
+    projectLinks.map { link =>
+      val alignedStart = if (Math.abs(link.originalAddrMRange.start - link.addrMRange.start) <= maxDiff) link.addrMRange.start else link.originalAddrMRange.start
+      val alignedEnd = if (Math.abs(link.originalAddrMRange.end - link.addrMRange.end) <= maxDiff) link.addrMRange.end else link.originalAddrMRange.end
+
+      if (alignedStart != link.originalAddrMRange.start || alignedEnd != link.originalAddrMRange.end) {
+        link.copy(originalAddrMRange = AddrMRange(alignedStart, alignedEnd))
+      } else {
+        link
+      }
+    }
   }
 }

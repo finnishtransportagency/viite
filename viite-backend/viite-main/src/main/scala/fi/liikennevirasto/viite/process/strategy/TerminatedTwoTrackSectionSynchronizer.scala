@@ -52,7 +52,7 @@ object TerminatedTwoTrackSectionSynchronizer {
         roadPartProjectLinksWithoutNewLinks
       }
     }
-    processedLinks
+    SynchronizationUtils.alignOriginalAddrMToCalculatedAddrMWhenClose(processedLinks)
   }
 
   /**
