@@ -2078,6 +2078,27 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     })
   }
 
+  private val maxDiffForOriginalAddrMAlignment = 1L
+
+  /**
+   * Workaround for occasional 1m drift between calculated addrMRange and originalAddrMRange.
+   *
+   * If either start or end differs by at most maxDiff, originalAddrMRange is aligned to addrMRange
+   * for that boundary.
+   */
+  private def alignOriginalAddrMToCalculatedAddrMWhenClose(projectLinks: Seq[ProjectLink], maxDiff: Long = maxDiffForOriginalAddrMAlignment): Seq[ProjectLink] = {
+    projectLinks.map { link =>
+      val alignedStart = if (Math.abs(link.originalAddrMRange.start - link.addrMRange.start) <= maxDiff) link.addrMRange.start else link.originalAddrMRange.start
+      val alignedEnd = if (Math.abs(link.originalAddrMRange.end - link.addrMRange.end) <= maxDiff) link.addrMRange.end else link.originalAddrMRange.end
+
+      if (alignedStart != link.originalAddrMRange.start || alignedEnd != link.originalAddrMRange.end) {
+        link.copy(originalAddrMRange = AddrMRange(alignedStart, alignedEnd))
+      } else {
+        link
+      }
+    }
+  }
+
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
@@ -2101,7 +2122,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
 
           // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
-          (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+          val recalculatedWithTerminated = (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+
+          // Apply rounding correction to originalAddrMRange for links where the difference between original and calculated addrM values is within the defined threshold
+          alignOriginalAddrMToCalculatedAddrMWhenClose(recalculatedWithTerminated)
       }.toSeq
 
 

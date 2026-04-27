@@ -68,7 +68,7 @@ object AdministrativeClassTwoTrackSynchronizer {
       roadPartProjectLinksWithoutNewLinks
     }
 
-    SynchronizationUtils.alignOriginalAddrMToCalculatedAddrMWhenClose(processedLinks)
+    processedLinks
   }
 
   /**
