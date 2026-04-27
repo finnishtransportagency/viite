@@ -50,7 +50,7 @@ object AdministrativeClassTwoTrackSynchronizer {
     }
 
     // Check that there are administrative class changes on both tracks
-    if (existsAdminClassChangesOnParallelTracks(roadPartProjectLinksWithoutNewLinks)) {
+    val processedLinks = if (existsAdminClassChangesOnParallelTracks(roadPartProjectLinksWithoutNewLinks)) {
       val orderedProjectLinks = roadPartProjectLinksWithoutNewLinks.sortBy(_.addrMRange.start)
 
       // List of administrative class change cases
@@ -67,6 +67,8 @@ object AdministrativeClassTwoTrackSynchronizer {
       // else we return the links unchanged.
       roadPartProjectLinksWithoutNewLinks
     }
+
+    SynchronizationUtils.alignOriginalAddrMToCalculatedAddrMWhenClose(processedLinks)
   }
 
   /**
