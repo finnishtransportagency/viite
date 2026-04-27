@@ -6,11 +6,11 @@
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ProjectLinkEditor } from './project-link-editor/ProjectLinkEditor.js';
-import { MenuContainer } from '@components/MenuContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/Toast.js';
+import { setMainMenuState } from '@view/MainMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer, getSelectedTool } from '@model/ApplicationModel.js';
 
@@ -22,10 +22,9 @@ const States = {
 
 export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const rootElement = $(containerSelector || '#menu-container');
-    const mainMenu = options.mainMenu;
     const eventbus = eventBus;
     const selectedProjectLinkProperty = options.selectedProjectLinkProperty;
-    let menu = null;
+    const menu = options?.menu || null;
 
     const clearSelectedProjectLinks = () => {
       if (!selectedProjectLinkProperty) {
@@ -47,7 +46,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     };
 
     const closeProjectMenu = ({ noSave = false } = {}) => {
-      
+
       // Reset component state
       currentState = States.CONFIGURATION;
       project.data = null;
@@ -56,29 +55,18 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       additionalData = { selectedLinks: [] };
       
       // Clean up MenuContainer and release DOM references
-      if (menu) {
-        menu.clear();
-        menu = null;
-      }
-      
+
       // Restore main UI state
-      if (mainMenu && typeof mainMenu.setState === 'function') {
-        mainMenu.setState('main');
-      }
+      setMainMenuState('main');
+
       eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
       eventbus.trigger('roadAddressProject:deactivateAllSelections');
       eventbus.trigger('roadAddressProject:clearOnClose');
-      clearSelectedProjectLinks();
       eventbus.trigger('layer:selected', 'linkProperty', null, true);
+      clearSelectedProjectLinks();
       selectLayer('linkProperty', true, noSave);
     };
 
-    const ensureMenu = () => {
-      if (!menu) {
-        menu = new MenuContainer(rootElement, closeProjectMenu);
-      }
-      return menu;
-    };
 
     // --- State & Project Management ---
     let currentState = States.ROAD_ADDRESSING;
@@ -116,7 +104,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
             continueToActions: (actionData) => {
               updateUI(States.ROAD_ADDRESSING, actionData.project, false);
             },
-            mainMenu: mainMenu,
+            mainMenu: options.mainMenu,
             backend: options.backend,
             projectCollection: options.projectCollection,
             map: options.map,
@@ -143,7 +131,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
             ...options,
             eventbus: eventbus,
             project: project.data,
-            mainMenu: mainMenu,
+            mainMenu: options.mainMenu,
             closeProjectMenu: closeProjectMenu,
             initialState: roadAddressingState,
             onStateChange: syncRoadAddressingState
@@ -175,11 +163,10 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
           break;
       }
 
-      const activeMenu = ensureMenu();
       // Update MenuContainer with fresh content from child component
-      activeMenu.setHeader(renderTitle());
-      activeMenu.setBody(contentHtml);
-      activeMenu.setFooter(footerHtml);
+      menu.setHeader(renderTitle(), closeProjectMenu);
+      menu.setBody(contentHtml);
+      menu.setFooter(footerHtml);
       // Bind event handlers to newly rendered DOM (disposable pattern)
       bindInternalEvents(childInstance);
     };

@@ -12,7 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { eventutil } from '@utils/EventUtils.js';
 import { getStartupParameters, getSessionUsername } from '@model/ApplicationModel.js';
 
-export function ProjectList(projectCollection, options = {}) {
+export function ProjectList(options = {}) {
   const canUseDevTools = getStartupParameters()?.roles?.includes('dev') ?? false;
   
   let projectMenuInstance = null;
@@ -23,7 +23,7 @@ export function ProjectList(projectCollection, options = {}) {
     }
 
     const actionMenu = new ProjectActionMenu({
-      projectCollection: projectCollection,
+      projectCollection: options.projectCollection,
       map: options.map,
       eventbus: options.eventbus || eventbus,
       canValidateProject: canUseDevTools,
@@ -34,7 +34,7 @@ export function ProjectList(projectCollection, options = {}) {
 
     projectMenuInstance = new ProjectMenu('#menu-container', options.eventbus || eventbus, {
       projectMenu: actionMenu,
-      projectCollection: projectCollection,
+      projectCollection: options.projectCollection,
       projectLinkLayer: options.projectLinkLayer,
       selectedProjectLinkProperty: options.selectedProjectLinkProperty,
       mainMenu: options.mainMenu,
@@ -143,7 +143,7 @@ export function ProjectList(projectCollection, options = {}) {
         clearInterval(pollProjects);
         ensureProjectMenu();
         if (status === projectStatus.ErrorInViite.value) {
-          projectCollection.reOpenProjectById(id);
+          options.projectCollection.reOpenProjectById(id);
           eventbus.once("roadAddressProject:reOpenedProject", () => openProjectSteps(id));
         } else {
           openProjectSteps(id);
@@ -165,22 +165,22 @@ export function ProjectList(projectCollection, options = {}) {
     const handleCreateNew = () => {
       clearInterval(pollProjects);
       modalContainer.close();
-      projectCollection.clearRoadAddressProjects();
+      options.projectCollection.clearRoadAddressProjects();
       const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
       const projectMenu = ensureProjectMenu();
       if (projectMenu && _.isFunction(projectMenu.showProjectDetails)) {
-        projectMenu.showProjectDetails(newProj, true, projectCollection, newProj);
+        projectMenu.showProjectDetails(newProj, true, options.projectCollection, newProj);
       }
       $('.edit-mode-btn:visible').click();
     };
 
     const fetchProjects = () => {
-      projectCollection.getProjects(state.onlyActive);
+      options.projectCollection.getProjects(state.onlyActive);
     };
 
     const openProjectSteps = (projectId) => {
       Spinner.show();
-      projectCollection.getProjectsWithLinksById(projectId).then(result => {
+      options.projectCollection.getProjectsWithLinksById(projectId).then(result => {
         hide();
         eventbus.trigger('roadAddress:openProject', result);
         $('.edit-mode-btn:visible').click();
@@ -283,7 +283,7 @@ export function ProjectList(projectCollection, options = {}) {
       modalContainer = new ModalContainer({ onClose: hide });
       modalContainer.open({ title: 'Tieosoiteprojektit', content: $container });
       fetchProjects();
-      pollProjects = setInterval(() => projectCollection.getProjectStates(state.projects.map(p => p.id)), 30000);
+      pollProjects = setInterval(() => options.projectCollection.getProjectStates(state.projects.map(p => p.id)), 30000);
     }
 
     function hide() {

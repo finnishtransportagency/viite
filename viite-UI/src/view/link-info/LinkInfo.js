@@ -1,7 +1,7 @@
 // Displays data about clicked link
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
-export function LinkInfo(selectedLinkProperty) {
+export function LinkInfo(selectedLinkProperty, menu) {
 
     // Helper to handle null/undefined values by returning a fallback string.
     function withFallback(val) {
@@ -136,6 +136,8 @@ export function LinkInfo(selectedLinkProperty) {
       
       const isSameRoad = roadNumbers.length === 1;
       const isSamePart = isSameRoad && roadPartNumbers.length === 1;
+
+      menu.setHeader('Tieosoitteen ominaisuustiedot');
 
       return `
         <div class="wrapper read-only link-info-wrapper">
