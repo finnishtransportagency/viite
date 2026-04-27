@@ -65,6 +65,8 @@
           formCommon.setDisabledAndTitleAttributesById("send-button", true, "Päivitä etäisyyslukemat ja avaa yhteenvetotaulukko ensin");
         }
       } else {
+        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektin tulee läpäistä validoinnit");
+        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
         formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
       }
 
