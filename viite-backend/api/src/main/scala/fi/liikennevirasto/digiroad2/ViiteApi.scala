@@ -1317,9 +1317,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         val invalidUnchangedLinkErrors = PostGISDatabaseScalikeJDBC.runWithTransaction {
           val project = projectService.fetchProjectById(projectId).get
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
-          
+
           if (invalidUnchangedLinkErrors.isEmpty) {
-            projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+            try {
+              projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+            } catch {
+              case e: RoadAddressException =>
+                logger.warn(s"Recalculation failed for project $projectId during recalculate-and-validate, continuing with existing link values. ${e.getMessage}", e)
+            }
           }
           invalidUnchangedLinkErrors
         }
@@ -1331,9 +1336,6 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
-        case ex: RoadAddressException =>
-          logger.info("Road address Exception: " + ex.getMessage)
-          Map("success" -> false, "errorMessage" -> ex.getMessage)
         case ex: ProjectValidationException =>
           Map("success" -> false, "errorMessage" -> ex.getMessage, "validationErrors" -> ex.getValidationErrors)
         case ex: Exception =>

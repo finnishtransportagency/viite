@@ -2883,8 +2883,14 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       val linksBeforeValidation = projectLinkDAO.fetchProjectLinks(projectId)
 
       // Address-dependent validations require calculated M-values. Recalculate first if needed.
+      // If recalculation fails, log a warning and continue validation with the existing links.
       if (linksBeforeValidation.exists(_.isNotCalculated)) {
-        recalculateProjectLinks(projectId, project.modifiedBy)
+        try {
+          recalculateProjectLinks(projectId, project.modifiedBy)
+        } catch {
+          case e: Exception =>
+            logger.warn(s"Recalculation failed for project $projectId during validation, continuing with existing link values. ${e.getMessage}", e)
+        }
       }
 
       val linksForValidation = projectLinkDAO.fetchProjectLinks(projectId)
