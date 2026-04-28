@@ -928,7 +928,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
             val projectMap = roadAddressProjectToApi(project, projectService.getProjectEvk(project.id))
             val reservedparts = project.reservedParts.map(projectReservedPartToApi)
             val formedparts = project.formedParts.map(projectFormedPartToApi(Some(project.id)))
-            val errorParts = projectService.validateProjectById(project.id)
+            val validationResult = try {
+              Right(projectService.validateProjectById(project.id))
+            } catch {
+              case e: RoadAddressException =>
+                logger.warn(s"Validation failed while opening project $projectId.", e)
+                Left(())
+            }
+            val errorParts = validationResult.getOrElse(Seq.empty)
             val publishable = errorParts.isEmpty
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
               "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi))
@@ -1108,7 +1115,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
               println(s"RAN INTO AN ERROR WHILE UPDATING PROJECT LINKS ::: $errorMessage")
               Map("success" -> false, "errorMessage" -> errorMessage)}
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(projectService.projectValidator.errorPartsToApi)
+              val validationResult = try {
+                Right(projectService.validateProjectById(links.projectId).map(projectService.projectValidator.errorPartsToApi))
+              } catch {
+                case e: RoadAddressException =>
+                  logger.warn(s"Validation failed after updating project links for project ${links.projectId}", e)
+                  Left(())
+              }
+              val projectErrors = validationResult.getOrElse(Seq.empty)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
