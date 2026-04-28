@@ -997,7 +997,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           val user = userProvider.getCurrentUser.username
           projectService.revertLinks(linksToRevert.projectId, RoadPart(linksToRevert.roadNumber, linksToRevert.roadPartNumber), linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
@@ -1054,7 +1054,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
             Map("success" -> true,
-              "publishable" -> projectErrors.isEmpty,
+              "publishable" -> !response.contains("projectErrors"),
               "projectErrors" -> projectErrors,
               "errorMessage" -> response.get("errorMessage"))
           case _ => response
@@ -1116,7 +1116,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
               Map("success" -> false, "errorMessage" -> errorMessage)}
             case None =>
               val validationResult = try {
-                Right(projectService.validateProjectById(links.projectId).map(projectService.projectValidator.errorPartsToApi))
+                Right(projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi))
               } catch {
                 case e: RoadAddressException =>
                   logger.warn(s"Validation failed after updating project links for project ${links.projectId}", e)
