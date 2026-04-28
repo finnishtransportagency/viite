@@ -928,7 +928,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
             val projectMap = roadAddressProjectToApi(project, projectService.getProjectEvk(project.id))
             val reservedparts = project.reservedParts.map(projectReservedPartToApi)
             val formedparts = project.formedParts.map(projectFormedPartToApi(Some(project.id)))
-            val errorParts = projectService.validateProjectById(project.id)
+            val validationResult = try {
+              Right(projectService.validateProjectById(project.id))
+            } catch {
+              case e: RoadAddressException =>
+                logger.warn(s"Validation failed while opening project $projectId.", e)
+                Left(())
+            }
+            val errorParts = validationResult.getOrElse(Seq.empty)
             val publishable = errorParts.isEmpty
             Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
               "reservedInfo" -> reservedparts, "formedInfo" -> formedparts, "publishable" -> publishable, "projectErrors" -> errorParts.map(projectService.projectValidator.errorPartsToApi))
@@ -990,7 +997,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           val user = userProvider.getCurrentUser.username
           projectService.revertLinks(linksToRevert.projectId, RoadPart(linksToRevert.roadNumber, linksToRevert.roadPartNumber), linksToRevert.links, linksToRevert.coordinates, user) match {
             case None =>
-              val projectErrors = projectService.validateProjectById(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
+              val projectErrors = projectService.validateProjectByIdHighPriorityOnly(linksToRevert.projectId).map(projectService.projectValidator.errorPartsToApi)
               val project = projectService.getSingleProjectById(linksToRevert.projectId).get
               Map("success" -> true,
                 "publishable" -> projectErrors.isEmpty,
@@ -1047,7 +1054,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
             Map("success" -> true,
-              "publishable" -> projectErrors.isEmpty,
+              "publishable" -> !response.contains("projectErrors"),
               "projectErrors" -> projectErrors,
               "errorMessage" -> response.get("errorMessage"))
           case _ => response
@@ -1108,7 +1115,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
               println(s"RAN INTO AN ERROR WHILE UPDATING PROJECT LINKS ::: $errorMessage")
               Map("success" -> false, "errorMessage" -> errorMessage)}
             case None =>
-              val projectErrors = projectService.validateProjectById(links.projectId).map(projectService.projectValidator.errorPartsToApi)
+              val validationResult = try {
+                Right(projectService.validateProjectByIdHighPriorityOnly(links.projectId).map(projectService.projectValidator.errorPartsToApi))
+              } catch {
+                case e: RoadAddressException =>
+                  logger.warn(s"Validation failed after updating project links for project ${links.projectId}", e)
+                  Left(())
+              }
+              val projectErrors = validationResult.getOrElse(Seq.empty)
               val project = projectService.getSingleProjectById(links.projectId).get
               Map("success" -> true, "id" -> links.projectId,
                 "publishable" -> projectErrors.isEmpty,
@@ -1303,9 +1317,14 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         val invalidUnchangedLinkErrors = PostGISDatabaseScalikeJDBC.runWithTransaction {
           val project = projectService.fetchProjectById(projectId).get
           val invalidUnchangedLinkErrors = projectService.projectValidator.checkForInvalidUnchangedLinks(project, projectLinkDAO.fetchProjectLinks(projectId))
-          
+
           if (invalidUnchangedLinkErrors.isEmpty) {
-            projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+            try {
+              projectService.recalculateProjectLinks(projectId, project.modifiedBy)
+            } catch {
+              case e: RoadAddressException =>
+                logger.warn(s"Recalculation failed for project $projectId during recalculate-and-validate, continuing with existing link values. ${e.getMessage}", e)
+            }
           }
           invalidUnchangedLinkErrors
         }
@@ -1317,9 +1336,6 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         // return validation errors
         Map("success" -> true, "validationErrors" -> validationErrors)
       } catch {
-        case ex: RoadAddressException =>
-          logger.info("Road address Exception: " + ex.getMessage)
-          Map("success" -> false, "errorMessage" -> ex.getMessage)
         case ex: ProjectValidationException =>
           Map("success" -> false, "errorMessage" -> ex.getMessage, "validationErrors" -> ex.getValidationErrors)
         case ex: Exception =>

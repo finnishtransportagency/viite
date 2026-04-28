@@ -2878,16 +2878,34 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     * @return A sequence of validation errors, can be empty.
     */
   def validateProjectById(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
+    def validateWithCalculatedLinks(): Seq[projectValidator.ValidationErrorDetails] = {
+      val project = fetchProjectById(projectId).get
+      val linksBeforeValidation = projectLinkDAO.fetchProjectLinks(projectId)
+
+      // Address-dependent validations require calculated M-values. Recalculate first if needed.
+      // If recalculation fails, log a warning and continue validation with the existing links.
+      if (linksBeforeValidation.exists(_.isNotCalculated)) {
+        try {
+          recalculateProjectLinks(projectId, project.modifiedBy)
+        } catch {
+          case e: Exception =>
+            logger.warn(s"Recalculation failed for project $projectId during validation, continuing with existing link values. ${e.getMessage}", e)
+        }
+      }
+
+      val linksForValidation = projectLinkDAO.fetchProjectLinks(projectId)
+      projectValidator.validateProject(project, linksForValidation)
+    }
+
     if (newSession) {
-      runWithReadOnlySession {
-        projectValidator.validateProject(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+      runWithTransaction {
+        validateWithCalculatedLinks()
       }
     } else {
-      projectValidator.validateProject(fetchProjectById(projectId).get, projectLinkDAO.fetchProjectLinks(projectId))
+      validateWithCalculatedLinks()
     }
   }
 
-  // TODO: Is no longer used, safe to delete?
   def validateProjectByIdHighPriorityOnly(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
     if (newSession) {
       runWithReadOnlySession {
