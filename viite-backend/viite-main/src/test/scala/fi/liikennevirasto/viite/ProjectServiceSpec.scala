@@ -5588,6 +5588,73 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
    }
  }
 
+  test("spreadAddrMValuesToProjectLinks should not recurse indefinitely when preview exceeds end boundary on first step") {
+    val links = Seq(
+      dummyProjectLink(
+        roadPart = RoadPart(1, 1),
+        trackCode = Track.Combined,
+        discontinuityType = Discontinuity.Continuous,
+        addrMRange = AddrMRange(0, 10),
+        startDate = Some(DateTime.now()),
+        status = RoadAddressChangeType.Unchanged,
+        startMValue = 0.0,
+        endMValue = 10.0,
+        linkId = "overflow-1"
+      ),
+      // Negative length can make coefficient/backtracking branch kick in.
+      dummyProjectLink(
+        roadPart = RoadPart(1, 1),
+        trackCode = Track.Combined,
+        discontinuityType = Discontinuity.Continuous,
+        addrMRange = AddrMRange(10, 1),
+        startDate = Some(DateTime.now()),
+        status = RoadAddressChangeType.Unchanged,
+        startMValue = 10.0,
+        endMValue = 1.0,
+        linkId = "overflow-2"
+      )
+    )
+
+    noException should be thrownBy {
+      val updated = projectService.spreadAddrMValuesToProjectLinks(0, 100, links, editOriginalValues = false)
+      updated.size should be(2)
+      updated.head.addrMRange.start should be(0)
+      updated.last.addrMRange.end should be(100)
+    }
+  }
+
+  test("spreadAddrMValuesToProjectLinks should still produce bounded ranges for normal input") {
+    val links = Seq(
+      dummyProjectLink(
+        roadPart = RoadPart(1, 1),
+        trackCode = Track.Combined,
+        discontinuityType = Discontinuity.Continuous,
+        addrMRange = AddrMRange(0, 50),
+        startDate = Some(DateTime.now()),
+        status = RoadAddressChangeType.Unchanged,
+        startMValue = 0.0,
+        endMValue = 50.0,
+        linkId = "normal-1"
+      ),
+      dummyProjectLink(
+        roadPart = RoadPart(1, 1),
+        trackCode = Track.Combined,
+        discontinuityType = Discontinuity.Continuous,
+        addrMRange = AddrMRange(50, 100),
+        startDate = Some(DateTime.now()),
+        status = RoadAddressChangeType.Unchanged,
+        startMValue = 50.0,
+        endMValue = 100.0,
+        linkId = "normal-2"
+      )
+    )
+
+    val updated = projectService.spreadAddrMValuesToProjectLinks(0, 100, links, editOriginalValues = false)
+    updated.size should be(2)
+    updated.head.addrMRange.start should be(0)
+    updated.last.addrMRange.end should be(100)
+  }
+
  private def projectLink(addrMRange: AddrMRange, track: Track, projectId: Long, status: RoadAddressChangeType = RoadAddressChangeType.NotHandled,
                          roadPart: RoadPart = RoadPart(19999, 1), discontinuity: Discontinuity = Discontinuity.Continuous, roadMaintainer: ArealRoadMaintainer = ArealRoadMaintainer.getEVK(8), roadwayId: Long = 0L, linearLocationId: Long = 0L) = {
    val startDate = if (status !== RoadAddressChangeType.New) Some(DateTime.now()) else None
