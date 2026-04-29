@@ -1419,30 +1419,56 @@ class ProjectService(
           // Recursively retry with decremented value if between startAddr and endAddr.
           mappedAddressValues(Seq(remaining.head), processed, list.last, endAddr, coef, list, increment - 1, depth + 1)
         } else {
-          // Recursively retry with modified processed and remaining sequences to avoid exceeding boundaries.
-          mappedAddressValues(processed.last +: remaining, processed.init, list.init.last, endAddr, coef, list.init, increment - 1, depth + 1)
+
+
+          if (processed.nonEmpty && list.size > 1) {
+            mappedAddressValues(
+              processed.last +: remaining,
+              processed.init,
+              list.init.last,
+              endAddr,
+              coef,
+              list.init,
+              increment - 1,
+              depth + 1
+            )
+          } else {
+            // No previous element available -> clamp to end boundary instead of crashing.
+            list :+ Math.round(endAddr)
+          }
+
+
         }
 
         // Recursive call to process the next ProjectLink with updated parameters and increment depth.
-        mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, increment, depth + 1)
+       val result = mappedAddressValues(remaining.tail, processed :+ remaining.head, previewValue, endAddr, coef, adjustedList, increment, depth + 1)
+        println(s"Returning from mappedAddressValues call at depth $depth with result: ${result.mkString(", ")}")
+        result
       }
     }
 
     // Calculate the scaling coefficient for address spreading based on total ProjectLink address range.
     val coefficient = (endAddrM - startAddrM) / projectLinks.map(pl => pl.endMValue - pl.startMValue).sum
 
+
     // Generate the list of addresses spread across ProjectLinks.
     val addresses = mappedAddressValues(projectLinks.init, Seq(), startAddrM, endAddrM, coefficient, Seq(startAddrM), 0) :+ endAddrM
 
+
     // Map each ProjectLink to a new range (either original or current address values) and return the modified sequence.
-    projectLinks.zip(addresses.zip(addresses.tail)).map {
+    val result = projectLinks.zip(addresses.zip(addresses.tail)).map {
       case (projectLink, (st, en)) =>
-        if (editOriginalValues)
-          projectLink.copy(originalAddrMRange = AddrMRange(st, en)) // Set original address values.
-        else
+        if (editOriginalValues) {
+          projectLink.copy(originalAddrMRange = AddrMRange(st, en))
+        } // Set original address values.
+        else {
           projectLink.copy(addrMRange = AddrMRange(st, en)) // Set regular address values.
+        }
     }
+    println(s"Resulting project links after spreading address values: ${result.map(pl => s"id: ${pl.id}, startAddrM: ${pl.addrMRange.start}, endAddrM: ${pl.addrMRange.end}").mkString("; ")}")
+  result
   }
+
 
 
 def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -1669,8 +1695,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         projectLinks.map(pl =>
           pl.copy(
             sideCode  = {
-              if (pl.status == RoadAddressChangeType.New && pl.sideCode == SideCode.Unknown)
-                SideCode.TowardsDigitizing // TODO is this doing more harm than good? Should we just let it be Unknown and edit the SideCodes separately?
+              if (pl.status == RoadAddressChangeType.New && pl.sideCode == SideCode.Unknown) {
+                SideCode.TowardsDigitizing
+              } // TODO is this doing more harm than good? Should we just let it be Unknown and edit the SideCodes separately?
               else
                 pl.sideCode
             }
@@ -1729,9 +1756,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
         if (devToolData.isDefined) {
           val projectLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
+
           updateProjectLinksWithDevToolData(devToolData.get, projectLinks)
         }
-
+// TODO: ALKAA NÄYTTÄÄ SILTÄ; ETTÄ NÄILLÄ MAIN SE MENEE PIELEEN
         val toUpdateLinks = projectLinkDAO.fetchProjectLinksByProjectAndLinkId(ids, linkIds.toSet, projectId)
           userDefinedEndAddressM.foreach(addressM => {
             val endSegment                = toUpdateLinks.maxBy(_.addrMRange.end)
@@ -1753,6 +1781,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             } else
               Seq.empty[ProjectCalibrationPoint]
           })
+        println(s"${roadAddressChangeType}")
           roadAddressChangeType match {
             case RoadAddressChangeType.Termination =>
               if (devToolData.isDefined) {
@@ -1772,9 +1801,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                   x.roadPart == newRoadPart)) // check the original numbering wasn't exactly the same
                   throw new ProjectValidationException(ErrorRenumberingToOriginalNumber) // you cannot use current roadnumber and roadpart number in numbering operation
                 if (currentAddresses.nonEmpty) {
-                  logger.info(s"ERROR IN PROJECT SERVICE")
-                  logger.info(s"CURRENT ADDRESS NOT EMPTY ::: ")
-                  currentAddresses.foreach(ca => logger.info(s"CURRENT ADDRESS :::: id: ${ca.id} :: linkId: ${ca.linkId} :: roadMaintainer: ${ca.roadMaintainer.name} :: roadPart: ${ca.roadPart} :: roadName: ${ca.roadName} :: discontinity: ${ca.discontinuity}"))
                   throw new ProjectValidationException(ErrorRoadAlreadyExistsOrInUse)
                 }
                 if (toUpdateLinks.map(pl => (pl.roadPart)).distinct.lengthCompare(1) != 0 ||
@@ -1859,6 +1885,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
               setDiscontinuityAndUpdateProjectLinks(updatedLinks)
 
             case RoadAddressChangeType.New => {
+              print(s"Adding new road address for road number ${newRoadPart.roadNumber} with new road part ${newRoadPart.partNumber} and track ${newTrackCode} to project $projectId")
               // Current logic allows only re adding new road addresses within same road/part group
               if (toUpdateLinks.groupBy(l => (l.roadPart)).size <= 1) {
                 checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.New, toUpdateLinks)
@@ -2302,7 +2329,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
       case Some(rp) => {
-        println(s"MATCHED")
         val previousImpl = rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
         println(s"Previous impl: ${previousImpl.id}")
         val currentImpl = rp.roadMaintainer.getOrElse(ra.roadMaintainer)
@@ -2918,6 +2944,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   }
 
   def validateLinkTrack(track: Int): Boolean = {
+    println(s"VALIDATING TRACK CODE ::: $track")
     Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
   }
 
