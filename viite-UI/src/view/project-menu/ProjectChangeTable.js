@@ -10,6 +10,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const ProjectStatus = ViiteEnumerations.ProjectStatus;
     let windowMaximized = false;
+    let initialHeightAutoSized = false;
     let callbacks = {
       onClosed: null,
       onValidationResult: null
@@ -73,6 +74,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     function show() {
       const $container = $('.container');
       $container.append(changeTable);
+      initialHeightAutoSized = false;
       
       const $changeTableFrame = $('.change-table-frame');
       
@@ -102,6 +104,40 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       bindEvents();
       getChanges();
       enableTableInteractions();
+    }
+
+    function autoSizeInitialHeight(rowCount) {
+      if (initialHeightAutoSized || windowMaximized) {
+        return;
+      }
+
+      const $changeTableFrame = $('.change-table-frame');
+      const $scrollArea = $changeTableFrame.find('.change-table-dimension-headers');
+
+      if (!$changeTableFrame.length || !$scrollArea.length) {
+        return;
+      }
+
+      const maxVisibleRows = 10;
+      const visibleRows = Math.max(1, Math.min(maxVisibleRows, rowCount || 0));
+      const firstRowHeight = $scrollArea.find('tbody tr:first').outerHeight(true) || 28;
+      const headerHeight = _.reduce($scrollArea.find('thead tr').toArray(), function (sum, row) {
+        return sum + ($(row).outerHeight(true) || 0);
+      }, 0);
+
+      const frameChromeHeight = ($changeTableFrame.outerHeight() || 0) - ($scrollArea.height() || 0);
+      const desiredScrollAreaHeight = headerHeight + (firstRowHeight * visibleRows);
+      const minHeight = 280;
+      const maxHeight = Math.floor($(window).height() * 0.9);
+      const desiredFrameHeight = Math.max(minHeight, Math.min(maxHeight, frameChromeHeight + desiredScrollAreaHeight));
+      const centeredTop = Math.max(10, ($(window).height() - desiredFrameHeight) / 2.2);
+
+      $changeTableFrame.css({
+        height: desiredFrameHeight + 'px',
+        top: centeredTop + 'px'
+      });
+
+      initialHeightAutoSized = true;
     }
 
     function hide() {
@@ -268,6 +304,9 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       const $rowChanges = $('.row-changes');
       $rowChanges.remove();
       $('.change-table-dimensions tbody').append($(htmlTable));
+      autoSizeInitialHeight(projectChangeData && projectChangeData.changeTable && projectChangeData.changeTable.changeInfoSeq
+        ? projectChangeData.changeTable.changeInfoSeq.length
+        : 0);
       
       changeTableOpen = true;
       

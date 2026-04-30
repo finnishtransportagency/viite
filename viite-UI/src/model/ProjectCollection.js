@@ -44,6 +44,25 @@ export function ProjectCollection(backend, startupParameters) {
       editedBeginDistance = false;
     };
 
+    const normalizeProjectErrors = function (payload) {
+      if (_.isArray(payload)) {
+        return payload;
+      }
+
+      if (_.isObject(payload)) {
+        const extractedErrors = _.find([
+          payload.projectErrors,
+          payload.validationErrors,
+          _.get(payload, 'project.projectErrors'),
+          _.get(payload, 'project.validationErrors')
+        ], _.isArray);
+
+        return _.isArray(extractedErrors) ? extractedErrors : [];
+      }
+
+      return [];
+    };
+
     const projectLinks = function () {
       return _.flatten(fetchedProjectLinks);
     };
@@ -132,7 +151,7 @@ export function ProjectCollection(backend, startupParameters) {
           id: result.project.id,
           publishable: result.publishable
         };
-        me.setAndWriteProjectErrorsToUser(result.projectErrors);
+        me.setAndWriteProjectErrorsToUser(result);
         me.setReservedParts(result.reservedInfo);
         me.setFormedParts(result.formedInfo);
         publishableProject = result.publishable;
@@ -218,7 +237,7 @@ export function ProjectCollection(backend, startupParameters) {
             publishable: false
           };
           currentProject = result;
-          me.setAndWriteProjectErrorsToUser(result.projectErrors);
+          me.setAndWriteProjectErrorsToUser(result);
           me.setReservedParts(result.reservedInfo);
           me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
@@ -247,7 +266,7 @@ export function ProjectCollection(backend, startupParameters) {
           if (response.success) {
             dirtyProjectLinkIds = [];
             publishableProject = response.publishable;
-            me.setAndWriteProjectErrorsToUser(response.projectErrors);
+            me.setAndWriteProjectErrorsToUser(response);
             me.setFormedParts(response.formedInfo);
             eventbus.trigger('projectLink:revertedChanges', response);
           } else {
@@ -271,7 +290,7 @@ export function ProjectCollection(backend, startupParameters) {
             backend.createProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
-                me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
+                me.setAndWriteProjectErrorsToUser(successObject);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
@@ -287,7 +306,7 @@ export function ProjectCollection(backend, startupParameters) {
             backend.updateProjectLinks(dataJson, function (successObject) {
               if (successObject.success) {
                 publishableProject = successObject.publishable;
-                me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
+                me.setAndWriteProjectErrorsToUser(successObject);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddressProject:projectLinkSaved', dataJson.projectId, successObject.publishable);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
@@ -463,7 +482,7 @@ export function ProjectCollection(backend, startupParameters) {
             publishable: false
           };
           currentProject = result;
-          me.setAndWriteProjectErrorsToUser(result.projectErrors || []);
+          me.setAndWriteProjectErrorsToUser(result);
           me.setReservedParts(result.reservedInfo);
           me.setFormedParts(result.formedInfo);
           eventbus.trigger('roadAddress:projectSaved', result);
@@ -503,7 +522,7 @@ export function ProjectCollection(backend, startupParameters) {
       resetEditedDistance();
       backend.directionChangeNewRoadlink(dataJson, function (successObject) {
         if (successObject.success) {
-          me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
+          me.setAndWriteProjectErrorsToUser(successObject);
           eventbus.trigger('changeProjectDirection:clicked');
         } else {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
@@ -594,7 +613,7 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.setProjectErrors = function (errors) {
-      projectErrors = errors;
+      projectErrors = normalizeProjectErrors(errors);
     };
 
     this.clearProjectErrors = function () {

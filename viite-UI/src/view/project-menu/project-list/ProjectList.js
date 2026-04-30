@@ -55,6 +55,8 @@ export function ProjectList(options = {}) {
       orderBy: { id: "sortStatus", reversed: false },
       filterBox: { input: "", visible: false },
       loading: false,
+      loadingStartedAt: 0,
+      loadingTimeoutId: null,
       onlyActive: true
     };
 
@@ -157,7 +159,15 @@ export function ProjectList(options = {}) {
     };
 
     const handleSync = () => {
+      if (state.loading) {
+        return;
+      }
       state.loading = true;
+      state.loadingStartedAt = Date.now();
+      if (state.loadingTimeoutId) {
+        clearTimeout(state.loadingTimeoutId);
+        state.loadingTimeoutId = null;
+      }
       render();
       fetchProjects();
     };
@@ -240,7 +250,7 @@ export function ProjectList(options = {}) {
               label: 'Näytä kaikki tieverkolle päivitetyt projektit',
               checked: !state.onlyActive
             })}
-            <i id="sync" class="fas refresh-button fa-sync-alt ${state.loading ? 'btn-spin' : ''}" title="Päivitä lista"></i>
+            <i id="sync" class="fas refresh-button fa-sync-alt ${state.loading ? 'refresh-spin' : ''}" title="Päivitä lista"></i>
           </div>
         </div>`;
     };
@@ -251,6 +261,29 @@ export function ProjectList(options = {}) {
         const input = $container.find('#userNameBox')[0];
         if (input) { input.focus(); input.setSelectionRange(state.filterBox.input.length, state.filterBox.input.length); }
       }
+    };
+
+    const stopLoading = () => {
+      const minimumSpinnerMs = 350;
+      const elapsedMs = Date.now() - state.loadingStartedAt;
+      const remainingMs = Math.max(0, minimumSpinnerMs - elapsedMs);
+
+      if (state.loadingTimeoutId) {
+        clearTimeout(state.loadingTimeoutId);
+        state.loadingTimeoutId = null;
+      }
+
+      if (remainingMs === 0) {
+        state.loading = false;
+        render();
+        return;
+      }
+
+      state.loadingTimeoutId = setTimeout(() => {
+        state.loading = false;
+        state.loadingTimeoutId = null;
+        render();
+      }, remainingMs);
     };
 
     function bindEvents() {
@@ -265,8 +298,7 @@ export function ProjectList(options = {}) {
 
       eventbus.off('roadAddressProjects:fetched').on('roadAddressProjects:fetched', (projects) => {
         state.projects = projects.filter(p => p.statusCode !== projectStatus.Deleted.value);
-        state.loading = false;
-        render();
+        stopLoading();
       });
     }
 
@@ -274,7 +306,8 @@ export function ProjectList(options = {}) {
       state.projects = [];
       state.filterBox.input = '';
       state.filterBox.visible = false;
-      state.loading = true;
+      state.loading = false;
+      state.loadingStartedAt = 0;
       state.onlyActive = true;
       ensureProjectMenu();
       $container = $('<div id="project-list-root"></div>');
@@ -289,6 +322,10 @@ export function ProjectList(options = {}) {
     function hide() {
       if (pollProjects) clearInterval(pollProjects);
       pollProjects = null;
+      if (state.loadingTimeoutId) {
+        clearTimeout(state.loadingTimeoutId);
+        state.loadingTimeoutId = null;
+      }
       state.loading = false;
       $(document).off('.projectList');
       if (modalContainer) modalContainer.close();

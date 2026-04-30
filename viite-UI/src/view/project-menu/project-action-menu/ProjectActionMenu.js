@@ -43,6 +43,7 @@ export function ProjectActionMenu(options) {
     const mainMenu = options.mainMenu;
     const activeEventbus = injectedEventbus || eventbus;
     const projectChangeTable = getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection);
+    let onProjectErrorsUpdatedHandler;
 
     const state = Object.assign({
       hasErrors: false,
@@ -128,8 +129,7 @@ export function ProjectActionMenu(options) {
       // Refresh error display
       const $errorContainer = $root.find('#project-errors');
       if ($errorContainer.length) {
-        const currentProject = projectCollection.getCurrentProject();
-        const errorsHtml = currentProject ? errorsList(projectCollection) : '';
+        const errorsHtml = errorsList(projectCollection);
         $errorContainer.html(errorsHtml);
       }
       
@@ -226,8 +226,7 @@ export function ProjectActionMenu(options) {
     };
 
     const renderContent = function () {
-      const currentProject = projectCollection.getCurrentProject();
-      const errorsHtml = currentProject ? errorsList(projectCollection) : '';
+      const errorsHtml = errorsList(projectCollection);
       
       return `
         <div class="form form-horizontal form-dark">
@@ -423,6 +422,17 @@ export function ProjectActionMenu(options) {
           });
         }
       });
+
+      if (_.isFunction(onProjectErrorsUpdatedHandler)) {
+        activeEventbus.off('roadAddressProject:writeProjectErrors', onProjectErrorsUpdatedHandler);
+      }
+
+      onProjectErrorsUpdatedHandler = function () {
+        evaluateButtonStates();
+        refresh();
+      };
+
+      activeEventbus.on('roadAddressProject:writeProjectErrors', onProjectErrorsUpdatedHandler);
     };
 
     return {

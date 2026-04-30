@@ -12,8 +12,7 @@
 
 #sync {
   cursor: pointer;
-  font-size: 16px;
-  transition: transform 0.2s;
+  font-size: 14px;
 }
 
 #sync:hover {
@@ -27,8 +26,6 @@
   -webkit-font-smoothing: antialiased;
   display: inline-block;
   line-height: 1;
-  font-family: "Font Awesome 5 Free";
-  font-weight: 900;
 }
 
 .project-list-header {
@@ -126,12 +123,16 @@
   flex-direction: row;
 }
 
-.btn-spin {
-  animation: spin 2s linear infinite;
+.refresh-spin {
+  animation: project-list-spin 0.5s ease-out infinite;
 }
 
-@keyframes spin {
-  100% {
+@keyframes project-list-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
     transform: rotate(360deg);
   }
 }
