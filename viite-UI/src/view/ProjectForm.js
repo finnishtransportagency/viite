@@ -820,6 +820,7 @@
         eventbus.trigger('layer:enableButtons', true);
         if (changeLayerMode) {
           applicationModel.selectLayer('linkProperty', true, noSave);
+          window.location.hash = '';
           eventbus.trigger('roadAddressProject:clearOnClose');
           projectLinkLayer.hide();
         }
