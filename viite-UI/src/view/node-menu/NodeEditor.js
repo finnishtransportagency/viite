@@ -91,8 +91,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
 
   const renderFooter = () => `
     <div class="node-editor-footer">
-      <button class="save btn-primary btn-block btn-edit-node-save" disabled>Tallenna</button>
-      <button class="cancel btn-secondary btn-block btn-edit-node-cancel">Peruuta</button>
+      <button class="save btn-primary btn-block node-editor-save" disabled>Tallenna</button>
+      <button class="cancel btn-secondary btn-block node-editor-cancel">Peruuta</button>
     </div>`;
 
   // ─── Table builders ─────────────────────────────────────────────────────────
@@ -273,13 +273,13 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   };
 
   const setSaveButtonDisabled = (disabled) => {
-    getContainer().find('.btn-edit-node-save').prop('disabled', disabled);
-    $('#menu-container').find('.menu-footer .btn-edit-node-save').prop('disabled', disabled);
+    getContainer().find('.node-editor-save').prop('disabled', disabled);
+    $('#menu-container').find('.menu-footer .node-editor-save').prop('disabled', disabled);
   };
 
   const setCancelButtonDisabled = (disabled) => {
-    getContainer().find('.btn-edit-node-cancel').prop('disabled', disabled);
-    $('#menu-container').find('.menu-footer .btn-edit-node-cancel').prop('disabled', disabled);
+    getContainer().find('.node-editor-cancel').prop('disabled', disabled);
+    $('#menu-container').find('.menu-footer .node-editor-cancel').prop('disabled', disabled);
   };
 
   const syncActionButtons = () => {
@@ -419,13 +419,13 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
       editorExitHandler('templates');
     };
 
-    $container.on('click.nodeEditor', '.btn-edit-node-save', onSave);
-    $container.on('click.nodeEditor', '.btn-edit-node-cancel', onCancel);
+    $container.on('click.nodeEditor', '.node-editor-save', onSave);
+    $container.on('click.nodeEditor', '.node-editor-cancel', onCancel);
 
     const $panel = $('#menu-container');
     $panel.off('.nodeEditorFooter');
-    $panel.on('click.nodeEditorFooter', '.btn-edit-node-save', onSave);
-    $panel.on('click.nodeEditorFooter', '.btn-edit-node-cancel', onCancel);
+    $panel.on('click.nodeEditorFooter', '.node-editor-save', onSave);
+    $panel.on('click.nodeEditorFooter', '.node-editor-cancel', onCancel);
 
     // Eventbus: coordinates update, backend responses, save lifecycle
     subscribeEventbus('node:displayCoordinates', (coords) => {
