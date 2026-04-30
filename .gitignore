@@ -20,3 +20,5 @@ revision.properties
 bonecp.properties
 .github/
 .env
+.db
+session-manager-plugin.deb

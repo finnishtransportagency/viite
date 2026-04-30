@@ -58,7 +58,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       source: nodeMarkerVector.unselected,
       name: 'nodeMarkerLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodeMarker.value,
-      selectable: false
+      selectable: true
     });
 
     const nodeMarkerSelectedLayer = new ol.layer.Vector({
@@ -83,7 +83,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       source: nodePointTemplateVector.unselected,
       name: 'nodePointTemplateLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.NodePointTemplate.value,
-      selectable: false
+      selectable: true
     });
 
     const nodePointTemplateSelectedLayer = new ol.layer.Vector({
@@ -96,7 +96,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       source: junctionTemplateVector.unselected,
       name: 'junctionTemplateLayer',
       zIndex: ViiteEnumerations.NodesAndJunctionsZIndex.JunctionTemplate.value,
-      selectable: false
+      selectable: true
     });
 
     const junctionTemplateSelectedLayer = new ol.layer.Vector({
@@ -707,6 +707,14 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
           updateJunctionNumberOnMap(junction);
         }
       }
+    });
+
+    me.eventListener.listenTo(eventbus, 'nodeEditor:opened', function () {
+      setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+    });
+
+    me.eventListener.listenTo(eventbus, 'nodeEditor:closed', function () {
+      setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
     });
 
     me.eventListener.listenTo(eventbus, 'junction:detach', function (junction) {

@@ -1,5 +1,6 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 
 /**
  * SelectedNodesAndJunctions - Manages selected nodes and junctions state
@@ -15,9 +16,11 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     let current = {};
 
     const openNode = function (node, openNodetemplates) {
+      console.log("Opening node " + node);
       current = {};
       setCurrentNode(node);
       eventbus.trigger('node:selected', current.node, openNodetemplates);
+      setNodeMenuState('editor', current.node, openNodetemplates);
     };
 
     const getCurrentNode = function () {
@@ -52,6 +55,10 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       current = {};
       setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
       eventbus.trigger('templates:selected', current.templates);
+      if (!current.templates || (_.isEmpty(current.templates.nodePoints) && _.isEmpty(current.templates.junctions))) {
+        return;
+      }
+      setNodeMenuState('display-templates', current.templates);
     }
 
     const getCurrentTemplates = function () {

@@ -1,8 +1,8 @@
 // ===== Node menu color variables =====
-@node-color-gold: #e19656;
-@node-color-amber: #c09853;
+@node-color-gold: #f09a4f;
+@node-color-amber: #d4aa62;
 @node-color-border-gray: #a3a4a1;
-@node-color-junction-blue: #5fa6ec;
+@node-color-junction-blue: #6aadf0;
 
 // ===== Node editor form =====
 
@@ -187,6 +187,23 @@
   align-items: end;
 }
 
+.node-search-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.node-search-scroll-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-top: 12px;
+  padding-right: 8px;
+  box-sizing: border-box;
+}
+
 .grid-column-center {
   grid-column: 1;
   display: flex;
@@ -255,7 +272,6 @@
   // For Firefox
   -moz-appearance: textfield;
 }
-
 
 .node-search-section-title-container {
   width: 100%;

@@ -218,7 +218,8 @@ export function NodeCollection(backend) {
       });
     });
 
-    eventbus.on('nodeSearchTool:clickNodePointTemplate', function (id) {
+    eventbus.on('nodeSearchTool:clickNodePointTemplate', function (payload) {
+      const id = _.isObject(payload) ? payload.id : payload;
       const nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id, 10);
       });
@@ -231,16 +232,48 @@ export function NodeCollection(backend) {
       }
     });
 
-    eventbus.on('nodeSearchTool:clickJunctionTemplate', function (id) {
+    eventbus.on('nodeSearchTool:clickJunctionTemplate', function (payload) {
+      const id = _.isObject(payload) ? payload.id : payload;
+      const coordinates = _.isObject(payload) ? payload.coordinates : null;
+      const rowData = _.isObject(payload) ? payload.rowData : null;
+
       const junctionTemplate = _.find(userJunctionTemplates, function (template) {
+        if (template.id !== parseInt(id, 10)) {
+          return false;
+        }
+
+        if (!coordinates) {
+          return true;
+        }
+
+        return _.some(template.junctionPoints || [], function (junctionPoint) {
+          return _.isEqual(junctionPoint.coordinates, coordinates);
+        });
+      });
+
+      const fallbackJunctionTemplate = junctionTemplate || _.find(userJunctionTemplates, function (template) {
         return template.id === parseInt(id, 10);
       });
-      if (_.isUndefined(junctionTemplate)) {
+
+      const templateForLocation = function (template) {
+        if (!rowData) {
+          return template;
+        }
+
+        return _.assign({}, template, {
+          roadNumber: Number(rowData.roadNumber),
+          track: Number(rowData.track),
+          roadPartNumber: Number(rowData.roadPartNumber),
+          addrM: Number(rowData.addrM)
+        });
+      };
+
+      if (_.isUndefined(fallbackJunctionTemplate)) {
         backend.getJunctionTemplateById(id, function (junctionTemplateFetched) {
-          me.moveToLocation(junctionTemplateFetched);
+          me.moveToLocation(templateForLocation(junctionTemplateFetched));
         });
       } else {
-        me.moveToLocation(junctionTemplate);
+        me.moveToLocation(templateForLocation(fallbackJunctionTemplate));
       }
     });
 

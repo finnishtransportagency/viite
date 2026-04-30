@@ -12,14 +12,15 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { setSelectionType } from '@model/ApplicationModel.js';
+import { setMainMenuState } from '@view/MainMenu.js';
 
 export function SelectedLinkProperty(roadCollection) {
     let current = [];
     let dirty = false;
     let featuresToKeep = [];
+
     const LinkSource = ViiteEnumerations.LinkGeomSource;
     const SelectionType = ViiteEnumerations.SelectionType;
-
 
     const close = function () {
       if (!_.isEmpty(current) && !isDirty()) {
@@ -30,9 +31,9 @@ export function SelectedLinkProperty(roadCollection) {
         dirty = false;
         featuresToKeep = [];
         eventbus.trigger('linkProperties:unselected');
+        setMainMenuState('main');
       }
     };
-
 
     function setCurrent(data) {
       current = data;
@@ -130,7 +131,9 @@ export function SelectedLinkProperty(roadCollection) {
         });
         roadCollection.setSelectedRoadLinkModels(roadLinks);
         processOlFeatures(visibleFeatures);
-        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+        const selectedDisplayData = extractDataForDisplay(get());
+        eventbus.trigger('linkProperties:selected', selectedDisplayData);
+        setMainMenuState('linkInfo', selectedDisplayData);
       }
     };
 
@@ -144,7 +147,9 @@ export function SelectedLinkProperty(roadCollection) {
         selected.select();
       });
       processOlFeatures(visibleFeatures);
-      eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+      const selectedDisplayData = extractDataForDisplay(get());
+      eventbus.trigger('linkProperties:selected', selectedDisplayData);
+      setMainMenuState('linkInfo', selectedDisplayData);
     };
 
     function processOlFeatures(visibleFeatures) {
@@ -165,10 +170,6 @@ export function SelectedLinkProperty(roadCollection) {
       clearFeaturesToKeep();
     });
 
-    eventbus.on('roadAddress:openProject', function (_result) {
-      close();
-    });
-
     function isDirty() {
       return dirty;
     }
@@ -185,6 +186,7 @@ export function SelectedLinkProperty(roadCollection) {
       if (!_.isUndefined(_.head(current))) {
         const originalData = _.head(current).getData();
         eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
+        setMainMenuState('linkInfo', _.cloneDeep(originalData));
       }
     };
 

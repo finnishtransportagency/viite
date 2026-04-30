@@ -1,4 +1,4 @@
-import { NodeTableUtils } from './DataTable.js';
+import { DataTable, NodeTableUtils } from './DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setSelectedTool } from '@model/ApplicationModel.js';
 
@@ -6,19 +6,28 @@ import { setSelectedTool } from '@model/ApplicationModel.js';
  * NodeDataMenu - Read-only detail panel for searched node and template data.
  * Shows node/junction tables and exposes buttons that continue into editing flows.
  */
-export function NodeDataMenu(dataTable, containerElement, dependencies) {
-  const tableUtils = NodeTableUtils;
-
+export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
+    const handlers = {
+        onEditNode: () => {
+            const currentNode = selectedNodesAndJunctions.getCurrentNode();
+            if (currentNode) {
+                setNodeMenuState('editor', currentNode, selectedNodesAndJunctions.getCurrentTemplates());
+            }
+        },
+        onBackToSearch: () => {
+            selectedNodesAndJunctions.closeTemplates();
+            setNodeMenuState('search');
+        },
+        onSaveTemplates: () => {
+            const currentNode = selectedNodesAndJunctions.getCurrentNode();
+            if (currentNode) {
+                selectedNodesAndJunctions.saveNode();
+            }
+        }
+    };
+    const dataTable = new DataTable();
     const renderDataTable = function (props) {
       return dataTable.setProps(props).render();
-    };
-
-    const getContainer = function () {
-      if (_.isFunction(containerElement)) {
-        const resolved = containerElement();
-        return resolved ? $(resolved) : $('#menu-container');
-      }
-      return containerElement ? $(containerElement) : $('#menu-container');
     };
 
     const staticField = function (labelText, dataField) {
@@ -27,7 +36,7 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
 
     const toNodePointsRows = function (nodePointsInfo, isTemplate) {
       const cellClassName = isTemplate ? 'node-points-table template' : 'node-points-table';
-      return _.map(_.sortBy(tableUtils.getNodePointsRowsInfo(nodePointsInfo), ['roadNumber', 'roadPartNumber', 'addr']), function (row) {
+      return _.map(_.sortBy(NodeTableUtils.getNodePointsRowsInfo(nodePointsInfo), ['roadNumber', 'roadPartNumber', 'addr']), function (row) {
         return {
           className: isTemplate ? 'node-point-template-row' : '',
           cells: [
@@ -43,16 +52,43 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
     const toJunctionRows = function (junctionsInfo, isTemplate) {
       const cellClassName = isTemplate ? 'node-junctions-table template' : 'node-junctions-table';
       return _.map(junctionsInfo || [], function (junction) {
-        const junctionPointsInfo = tableUtils.getJunctionPointsInfo(junction);
+        const junctionPointsInfo = NodeTableUtils.getJunctionPointsInfo(junction);
         return {
           cells: [
-            { className: cellClassName, content: tableUtils.asFlexColumn(_.map(junctionPointsInfo, 'roadNumber'), cellClassName) },
-            { className: cellClassName, content: tableUtils.asFlexColumn(_.map(junctionPointsInfo, 'track'), cellClassName) },
-            { className: cellClassName, content: tableUtils.asFlexColumn(_.map(junctionPointsInfo, 'roadPartNumber'), cellClassName) },
-            { className: cellClassName, content: tableUtils.asFlexColumn(_.map(junctionPointsInfo, 'addr'), cellClassName) },
-            { className: cellClassName, content: tableUtils.asFlexColumn(_.map(junctionPointsInfo, 'beforeAfter'), cellClassName) }
+            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'roadNumber'), cellClassName) },
+            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'track'), cellClassName) },
+            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'roadPartNumber'), cellClassName) },
+            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'addr'), cellClassName) },
+            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'beforeAfter'), cellClassName) }
           ]
         };
+      });
+    };
+
+    const getTemplateJunctionRowsInfo = function (junctionTemplates) {
+      const rows = _.flatMap(junctionTemplates || [], function (junction) {
+        const junctionPointsInfo = NodeTableUtils.getJunctionPointsInfo(junction);
+
+        if (!_.isEmpty(junctionPointsInfo)) {
+          return junctionPointsInfo;
+        }
+
+        return [{
+          id: junction.id,
+          roadNumber: junction.roadNumber,
+          track: junction.track,
+          roadPartNumber: junction.roadPartNumber,
+          addr: junction.addrM,
+          beforeAfter: junction.ej || 'E'
+        }];
+      });
+
+      return _.uniqWith(rows, function (left, right) {
+        return left.roadNumber === right.roadNumber &&
+          left.track === right.track &&
+          left.roadPartNumber === right.roadPartNumber &&
+          left.addr === right.addr &&
+          left.beforeAfter === right.beforeAfter;
       });
     };
 
@@ -117,14 +153,15 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
       `;
     };
 
-    const renderTemplateDetailsBody = function (templates) {
+    const renderBody = function (templates) {
+      const effectiveTemplates = templates || selectedNodesAndJunctions.getCurrentTemplates() || {};
       const safeTemplates = {
-        junctions: _.get(templates, 'junctions', []),
-        nodePoints: _.get(templates, 'nodePoints', [])
+        junctions: _.get(effectiveTemplates, 'junctions', []),
+        nodePoints: _.get(effectiveTemplates, 'nodePoints', [])
       };
       const templateTables = [];
 
-      const sortedJunctionRows = _.map(tableUtils.sortedTemplateRows(tableUtils.junctionTemplateRows(safeTemplates.junctions)), function (item) {
+      const sortedJunctionRows = _.map(_.sortBy(getTemplateJunctionRowsInfo(safeTemplates.junctions), ['roadNumber', 'roadPartNumber', 'track', 'addr', 'beforeAfter']), function (item) {
         return {
           id: item.id,
           className: 'junction-template-static-row',
@@ -132,8 +169,8 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
             item.roadNumber,
             item.track,
             item.roadPartNumber,
-            item.addrM,
-            item.ej || 'E'
+            item.addr,
+            item.beforeAfter
           ]
         };
       });
@@ -146,7 +183,7 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
         }));
       }
 
-      const sortedNodePointRows = _.map(_.sortBy(tableUtils.getNodePointsRowsInfo(safeTemplates.nodePoints), ['roadNumber', 'roadPartNumber', 'addr']), function (item) {
+      const sortedNodePointRows = _.map(_.sortBy(NodeTableUtils.getNodePointsRowsInfo(safeTemplates.nodePoints), ['roadNumber', 'roadPartNumber', 'addr']), function (item) {
         return {
           id: item.id,
           className: 'node-point-template-static-row',
@@ -178,10 +215,10 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
       `;
     };
 
-    const renderTemplateFooter = function () {
+    const renderFooter = function () {
+      bindEvents();
       return `
         <div class="form form-controls node-template-actions">
-          <button id="attachToMapNode" class="btn-primary btn-block">Valitse kartalta solmu, johon haluat liittää aihiot</button>
           <button id="attachToNewNode" class="btn-primary btn-block">Luo uusi solmu, johon haluat liittää aihiot</button>
           <div class="node-template-actions-split-row">
             <button class="btn-primary btn-edit-node-save btn-block" disabled>Tallenna</button>
@@ -191,28 +228,26 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
       `;
     };
 
-    const showNode = function (node, templates) {
-      getContainer().html(renderNodeDetailsBody(node, templates));
-    };
-
-    const showTemplates = function (templates) {
-      getContainer().html(renderTemplateDetailsBody(templates));
-    };
-
-    const bindEvents = function (handlers) {
+    const bindEvents = function () {
       const panelElement = $('#menu-container');
       panelElement.off('.nodeDataMenu');
 
       panelElement.on('click.nodeDataMenu', '.btn-open-node-editor', function () {
-        handlers.onEditNode();
+        if (_.isFunction(handlers.onEditNode)) {
+          handlers.onEditNode();
+        }
       });
 
       panelElement.on('click.nodeDataMenu', '.btn-node-display-back', function () {
-        handlers.onBackToSearch();
+        if (_.isFunction(handlers.onBackToSearch)) {
+          handlers.onBackToSearch();
+        }
       });
 
       panelElement.on('click.nodeDataMenu', '.btn-edit-templates-cancel', function () {
-        handlers.onBackToSearch();
+        if (_.isFunction(handlers.onBackToSearch)) {
+          handlers.onBackToSearch();
+        }
       });
 
       panelElement.on('click.nodeDataMenu', '.btn-edit-node-save', function () {
@@ -221,28 +256,15 @@ export function NodeDataMenu(dataTable, containerElement, dependencies) {
         }
       });
 
-      panelElement.on('click.nodeDataMenu', '#attachToMapNode', function () {
-        panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
-        panelElement.find('#attachToMapNode').addClass('active');
-        setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
-        setSelectedTool(ViiteEnumerations.Tool.Attach.value);
-      });
-
       panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {
-        panelElement.find('#attachToMapNode, #attachToNewNode').removeClass('active');
         panelElement.find('#attachToNewNode').addClass('active');
-        setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
         setSelectedTool(ViiteEnumerations.Tool.Add.value);
       });
     };
 
     return {
-      showNode: showNode,
-      showTemplates: showTemplates,
-      bindEvents: bindEvents,
-      getNodeHeader: function () { return 'Solmun tiedot'; },
-      getTemplateHeader: function () { return 'Aihioiden tiedot:'; },
-      renderTemplateFooter: renderTemplateFooter
+      renderBody,
+      renderFooter
     };
   }
 
