@@ -149,6 +149,13 @@ export function RoadAddressChangesBrowserWindow(backend) {
             elyEvkSelector.bindEvents();
         }
 
+         function getChangeTypeDisplayText(changeTypeValue) {
+          const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
+              return obj.value === changeTypeValue;
+          });
+          return changeType.displayText;
+        }
+
         /**
          *      This function is performance critical. Pointers in use for reasonable processing time.
          *      If edited be sure to measure table creation time with the largest possible dataset!
@@ -201,7 +208,7 @@ export function RoadAddressChangesBrowserWindow(backend) {
                                             <td>${results[i].oldEndAddrM}</td>
                                             <td>${results[i].oldLength}</td>
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
-                                            <td>${EnumerationUtils.getChangeTypeDisplayText(results[i].changeType)}</td>
+                                            <td>${getChangeTypeDisplayText(results[i].changeType)}</td>
                                             <td>${results[i].newEvk}</td>
 
                                             <td>${results[i].newRoadNumber}</td>

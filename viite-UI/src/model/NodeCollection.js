@@ -1,6 +1,5 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { events } from '@utils/EventUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
@@ -22,7 +21,7 @@ export function NodeCollection(backend) {
     let mapTemplates = [];
     let userNodePointTemplates = [];
     let userJunctionTemplates = [];
-    const saving = events.spinners.saving;
+    const saving = 'node-saving';
 
     this.setMapTemplates = function (templates) {
       mapTemplates = templates;

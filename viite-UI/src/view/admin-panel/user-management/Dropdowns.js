@@ -4,10 +4,10 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
 const ROLES = [
-    { value: 'operator', label: 'Operator', desc: 'Paasy hallintatyokaluihin' },
+    { value: 'operator', label: 'Operator', desc: 'Pääsy hallintatyökaluihin' },
     { value: 'viite', label: 'Viite', desc: 'Tieosoiteprojektien luonti ja muokkaus' },
-    { value: 'dev', label: 'Dev', desc: 'Paasy kehittajatyokaluihin' },
-    { value: 'admin', label: 'Admin', desc: 'Kayttajahallinta ja dynaamisen verkon kaytto' }
+    { value: 'dev', label: 'Dev', desc: 'Pääsy kehittäjätyökaluihin' },
+    { value: 'admin', label: 'Admin', desc: 'Käyttäjähallinta ja dynaamisen verkon käyttö' }
 ];
 
 function getElinvoimakeskusOptions() {

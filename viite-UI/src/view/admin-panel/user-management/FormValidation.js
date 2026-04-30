@@ -1,7 +1,7 @@
 /**
  * FormValidation - Validates user management form fields and provides utility functions.
  */
-import { showToast } from '@components/Toast.js';
+import { showToast } from '@components/toast/Toast.js';
 
 const COORD_LIMITS = {
     east: [50000, 750000],

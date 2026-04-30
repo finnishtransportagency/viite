@@ -9,7 +9,7 @@ import { ProjectLinkEditor } from './project-link-editor/ProjectLinkEditor.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
-import { showToast } from '@components/Toast.js';
+import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer, getSelectedTool } from '@model/ApplicationModel.js';

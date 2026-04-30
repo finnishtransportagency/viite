@@ -5,8 +5,7 @@
  * @param {Object} layers - Active map layers keyed by layer name
  */
 import { eventbus } from '@utils/eventbus.js';
-import { showToast } from '@components/Toast.js';
-import { geometrycalculator } from '@utils/GeometryCalculations.js';
+import { showToast } from '@components/toast/Toast.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { setZoomLevel, getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';
@@ -74,18 +73,12 @@ export function MapView(map, layers) {
     });
 
     eventbus.on('coordinates:selected', function (position) {
-      if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
-        let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
-        if (!_.isUndefined(position.zoom))
-          zoomLevel = position.zoom;
-        map.getView().setCenter([position.lon, position.lat]);
-        map.getView().setZoom(zoomLevel);
-      } else {
-        showToast('Koordinaatit eivät osu kartalle.', { type: 'warning' });
-      }
+      let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
+      if (!_.isUndefined(position.zoom))
+        zoomLevel = position.zoom;
+      map.getView().setCenter([position.lon, position.lat]);
+      map.getView().setZoom(zoomLevel);
     }, this);
-
-
 
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 

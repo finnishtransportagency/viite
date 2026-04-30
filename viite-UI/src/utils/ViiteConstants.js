@@ -10,6 +10,3 @@ export const MAX_LENGTH_FOR_ROAD_NUMBER = 5;
 /** Max length for road part number for example: 111, 123 or 999 */
 export const MAX_LENGTH_FOR_ROAD_PART_NUMBER = 3;
 
-/** Max distance that nodes can be moved (meters) */
-export const MAX_ALLOWED_DISTANCE_FOR_NODES_TO_BE_MOVED = 200;
-

@@ -1,10 +1,11 @@
 import { dateutil } from '@utils/DateUtils.js';
-import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
+import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 
 /**
  * RoadAddressBrowserWindow component
@@ -16,7 +17,7 @@ export function RoadAddressBrowserWindow(backend) {
       let searchParams = {};
       let searchResults = [];
       let modal = null;
-    const roadAddressBrowserForm = new RoadAddressBrowserForm();
+      const roadAddressBrowserForm = new RoadAddressBrowserForm();
 
       const createModal = () => new ModalContainer({
           helpUrl: 'manual/index.html#!index.md#10_Tieosoitteiden_katselu_-ty%C3%B6kalu',
@@ -27,8 +28,15 @@ export function RoadAddressBrowserWindow(backend) {
           }
       });
 
-      function formatElyValue(elyValue) {
-          return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+      function getBeforeAfterDisplayText(beforeAfterValues) {
+        let letterString = "";
+        beforeAfterValues.forEach((value) => {
+            const beforeAfter = _.find(ViiteEnumerations.BeforeAfter, function (obj) {
+                return obj.value === value;
+            });
+            letterString += beforeAfter.displayLetter;
+        });
+        return letterString.split('').sort().join(''); // sort letter string so that 'JE' becomes 'EJ'
       }
 
       function createArrayOfArraysForTracks(results) {
@@ -235,7 +243,7 @@ export function RoadAddressBrowserWindow(backend) {
                   results[i].track,
                   results[i].roadPartNumber,
                   results[i].addrM,
-                  EnumerationUtils.getBeforeAfterDisplayText(results[i].beforeAfter)
+                  getBeforeAfterDisplayText(results[i].beforeAfter)
               ];
           }
           return array; // join the array to one large string and create jquery element from said string
@@ -280,7 +288,7 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${results[i].track}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrM}</td>
-                                          <td>${EnumerationUtils.getBeforeAfterDisplayText(results[i].beforeAfter)}</td>
+                                          <td>${getBeforeAfterDisplayText(results[i].beforeAfter)}</td>
                                       </tr>`;
           }
           arr.push(`    </tbody>

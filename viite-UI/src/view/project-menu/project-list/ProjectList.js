@@ -9,7 +9,7 @@ import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
-import { eventutil } from '@utils/EventUtils.js';
+
 import { getStartupParameters, getSessionUsername } from '@model/ApplicationModel.js';
 
 export function ProjectList(options = {}) {
@@ -287,11 +287,11 @@ export function ProjectList(options = {}) {
     };
 
     function bindEvents() {
-      eventutil.bindClick($container, '.sort', handleSort);
-      eventutil.bindClick($container, '#filterUser', handleFilterToggle);
-      eventutil.bindClick($container, '.project-open', handleProjectOpen);
-      eventutil.bindClick($container, '#sync', handleSync);
-      eventutil.bindClick($container, '.new', handleCreateNew);
+      $($container).off('click', '.sort').on('click', '.sort', function(e) { handleSort($(this), e); });
+      $($container).off('click', '#filterUser').on('click', '#filterUser', function(e) { handleFilterToggle($(this), e); });
+      $($container).off('click', '.project-open').on('click', '.project-open', function(e) { handleProjectOpen($(this), e); });
+      $($container).off('click', '#sync').on('click', '#sync', function(e) { handleSync($(this), e); });
+      $($container).off('click', '.new').on('click', '.new', function(e) { handleCreateNew($(this), e); });
 
       $container.on('input', '#userNameBox', (e) => { state.filterBox.input = e.target.value; render(); });
       $container.on('change', '#OldAcceptedProjectsVisibleCheckbox', (e) => { state.onlyActive = !e.target.checked; fetchProjects(); });

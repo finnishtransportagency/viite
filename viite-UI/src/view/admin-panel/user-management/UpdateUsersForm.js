@@ -3,7 +3,7 @@
  */
 import { validateUserFieldsAndToastErrors } from './FormValidation.js';
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, getSelectedElinvoimakeskus } from './Dropdowns.js';
-import { showToast } from '@components/Toast.js';
+import { showToast } from '@components/toast/Toast.js';
 import { userManagementApi } from '@utils/UserManagementApi.js';
 import { getSessionUsername } from '@model/ApplicationModel.js';
 

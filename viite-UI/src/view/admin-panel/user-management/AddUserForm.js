@@ -2,7 +2,7 @@
  * AddUserForm - Handles user creation with validation
  */
 import { getSelectedElinvoimakeskus, getSelectedRoles, setSelectedElinvoimakeskus, setSelectedRoles } from './Dropdowns.js';
-import { showToast } from '@components/Toast.js';
+import { showToast } from '@components/toast/Toast.js';
 import { validateUserFields } from './FormValidation.js';
 import { userManagementApi } from '@utils/UserManagementApi.js';
 

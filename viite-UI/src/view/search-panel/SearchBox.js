@@ -4,7 +4,7 @@
  * @returns {Object} Component with element property
  */
 import { eventbus } from '@utils/eventbus.js';
-import { showToast } from '@components/Toast.js';
+import { showToast } from '@components/toast/Toast.js';
 import { searchLocation } from '@model/LocationSearch.js';
 
 export function SearchBox() {
