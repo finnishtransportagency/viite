@@ -366,8 +366,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
     runWithReadOnlySession {
       time(logger, "Fetch node point templates") {
         val templates = nodePointDAO.fetchTemplates()
-          println(s"Fetched ${templates.size} node point templates")
-            templates.foreach(template => println(s"Template: road: ${template.roadPart.roadNumber} part: ${template.roadPart.partNumber}"))
             val evkIds = ArealRoadMaintainer.mapUserAuthorizedEVKsToEVKs(authorizedEVKs)
              println(s"Mapped authorized EVKs to EVK IDs: ${evkIds.mkString(", ")}")
           templates.filter(template => authorizedEVKs.contains(template.roadMaintainer.number))
@@ -394,9 +392,7 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
   def getJunctionTemplates(authorizedEvks: Seq[Int]): Seq[JunctionTemplate] = {
     runWithReadOnlySession {
       time(logger, "Fetch Junction templates") {
-        println(s"Authorized EVKs: ${authorizedEvks.mkString(", ")}")
         val result = junctionDAO.fetchTemplates()
-        println(s"RESULT ::: $result")
         val evkIds = ArealRoadMaintainer.mapUserAuthorizedEVKsToEVKs(authorizedEvks)
         println(s"Mapped authorized EVKs to EVK IDs: ${evkIds.mkString(", ")}")
 

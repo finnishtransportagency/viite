@@ -30,6 +30,10 @@ export function RoadAddressChangesBrowserWindow(backend) {
             }
         });
 
+        function formatElyValue(elyValue) {
+            return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+        }
+
         // ========== Validation helpers (extracted) ==========
         function validateDate(dateString, dateElement) {
             // Check format ignoring whitespace

@@ -8,7 +8,9 @@ import fi.vaylavirasto.viite.model.{AddrMRange, Track}
 
 object SynchronizationUtils {
 
-  val maxDiffForAddressChange = 10L // This number is arbitrary and may require adjustments in the future.
+  // NOTE: If this value is changed, make sure to update the test cases in TwoTrackSectionSynchronizerSpec as well,
+  // since they rely on this threshold for determining when to align originalAddrMRange to addrMRange.
+  val maxDiffForAddressChange = 20L // This number is arbitrary and may require adjustments in the future.
   val maxDiffForTracks = maxDiffForAddressChange
 
   /**
@@ -66,6 +68,23 @@ object SynchronizationUtils {
     Math.abs(leftLink.addrMRange.end - rightLink.addrMRange.end) <= maxDiffForTracks
   }
 
+  // Clamps the average start address to ensure it does not create a gap or overlap with adjacent links
+  def clampSharedStartAddrM(averageStart: Long, sectionLinks: Seq[ProjectLink], previousLinks: Seq[ProjectLink]): Long = {
+    val minAverageStart = previousLinks.map(_.addrMRange.start + 1).reduceOption(_ max _).getOrElse(averageStart)
+    val maxAverageStart = sectionLinks.map(_.addrMRange.end - 1).min
+
+    if (minAverageStart > maxAverageStart) averageStart
+    else math.max(minAverageStart, math.min(averageStart, maxAverageStart))
+  }
+
+  def clampSharedEndAddrM(averageEnd: Long, sectionLinks: Seq[ProjectLink], followingLinks: Seq[ProjectLink]): Long = {
+    val minAverageEnd = sectionLinks.map(_.addrMRange.start + 1).max
+    val maxAverageEnd = followingLinks.map(_.addrMRange.end - 1).reduceOption(_ min _).getOrElse(averageEnd)
+
+    if (minAverageEnd > maxAverageEnd) averageEnd
+    else math.max(minAverageEnd, math.min(averageEnd, maxAverageEnd))
+  }
+
   def replaceStartsWith(projectLink: ProjectLink, replacingStartAddrM: Long): ProjectLink = {
     projectLink.copy(
       addrMRange          = AddrMRange(replacingStartAddrM, projectLink.addrMRange.end),
@@ -101,4 +120,5 @@ object SynchronizationUtils {
   def findNextLink(links: Seq[ProjectLink], target: ProjectLink, trackToExclude: Track): Option[ProjectLink] = {
     links.find(pl => pl.track != trackToExclude && target.originalAddrMRange.continuesTo(pl.originalAddrMRange))
   }
+
 }

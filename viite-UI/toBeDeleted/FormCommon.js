@@ -150,9 +150,6 @@
       const link = _.head(_.filter(links, function (l) {
         return !_.isUndefined(l.status);
       }));
-      console.log("LINK :: .evk: ", link.evk);
-      console.log("LINK :: .evkCode: ", link.evkCode);
-      console.log("LINK :: .evks: ", link.evks);
       const administrativeClass = (link.administrativeClassId) ? link.administrativeClassId : AdministrativeClass.Empty.value;
       const projectEditable = project.statusCode === editableStatus;
       let trackCodeDropdown;
@@ -217,8 +214,7 @@
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
-            $('#ely').val(response.ely);
-            $('#elinvoimakeskus').val(response.evk);
+            $('#elinvoimakeskus').val(response.roadMaintainer);
             if (response.roadName !== '') {
               roadNameField.val(response.roadName);
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);

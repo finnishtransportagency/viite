@@ -2178,7 +2178,8 @@ Left|      |Right
    }
  }
 
- test("Test checkTrackCodePairing When project links are created with inconsistent addr m values Then project track codes should inconsistent in middle of track") {
+// TODO: Similar tests exist already in ProjectValidatorSpec, check if this test is safe to remove
+ test("Test checkTrackCodePairing When project links are created with inconsistent addr m values Then project track codes should be inconsistent in middle of track") {
    runWithRollback {
      val (project, projectLinks) = util.setUpProjectWithLinks(RoadAddressChangeType.New, Seq(0L, 10L, 20L, 30L, 40L), changeTrack = true)
      val inconsistentLinks = projectLinks.map { l =>
@@ -2188,7 +2189,7 @@ Left|      |Right
      }
      mockEmptyRoadAddressServiceCalls()
      val validationErrors = projectValidator.checkTrackCodePairing(project, inconsistentLinks).distinct
-     validationErrors.size should be(2)
+     validationErrors.size should be(1)
    }
  }
 

@@ -27,6 +27,10 @@ export function RoadAddressBrowserWindow(backend) {
           }
       });
 
+      function formatElyValue(elyValue) {
+          return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+      }
+
       function createArrayOfArraysForTracks(results) {
           const array = [];
           let arrayPointer = -1;
