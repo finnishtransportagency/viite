@@ -269,6 +269,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink));
         formCommon.replaceAddressInfo(backend, selectedProjectLink, currentProject.project.id);
         updateForm();
+        setDevToolBaselineValues();
         
         // disable form interactions (action dropdown, save and cancel buttons) if change table is open
         if (projectChangeTable.isChangeTableOpen()) {
@@ -304,6 +305,30 @@
         $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       };
 
+      const setDevToolBaselineValues = () => {
+        const baselineFields = [
+          'addrStart',
+          'addrEnd',
+          'origAddrStart',
+          'origAddrEnd',
+          'startCPDropdown',
+          'endCPDropdown',
+          'sideCodeDropdown'
+        ];
+
+        baselineFields.forEach((id) => {
+          const element = document.getElementById(id);
+          if (element) {
+            element.dataset.initialValue = String(element.value);
+          }
+        });
+
+        const roadwayCheckbox = document.getElementById('newRoadwayNumber');
+        if (roadwayCheckbox) {
+          roadwayCheckbox.dataset.initialValue = roadwayCheckbox.checked ? '1' : '0';
+        }
+      };
+
       eventbus.on('projectLink:errorClicked', (selected, errorMessage) => {
         selectedProjectLink = [selected[0]];
         const currentProject = projectCollection.getCurrentProject();
@@ -311,6 +336,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, selectedProjectLink, errorMessage));
         formCommon.replaceAddressInfo(backend, selectedProjectLink);
         updateForm();
+        setDevToolBaselineValues();
       });
 
       eventbus.on('roadAddress:projectFailed', () => {
