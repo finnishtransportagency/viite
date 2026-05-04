@@ -13,7 +13,6 @@ import { EnumerationUtils } from '@utils/EnumerationUtils.js';
  * @param {Object} backend - Backend API wrapper
  */
 export function RoadAddressBrowserWindow(backend) {
-      const me = this;
       let searchParams = {};
       let searchResults = [];
       let modal = null;
@@ -347,7 +346,7 @@ export function RoadAddressBrowserWindow(backend) {
               return data.map((row) => row.join(";")).join("\n");
           }
 
-          const params = me.getSearchParams();
+          const params = searchParams;
 
           // Create file name
           const parts = [
@@ -365,19 +364,19 @@ export function RoadAddressBrowserWindow(backend) {
           let data = [];
           switch (params.target) {
               case "Tracks":
-                  data = createArrayOfArraysForTracks(me.getSearchResults());
+                  data = createArrayOfArraysForTracks(searchResults);
                   break;
               case "RoadParts":
-                  data = createArrayOfArraysForRoadParts(me.getSearchResults());
+                  data = createArrayOfArraysForRoadParts(searchResults);
                   break;
               case "Nodes":
-                  data = createArrayOfArraysForNodes(me.getSearchResults());
+                  data = createArrayOfArraysForNodes(searchResults);
                   break;
               case "Junctions":
-                  data = createArrayOfArraysForJunctions(me.getSearchResults());
+                  data = createArrayOfArraysForJunctions(searchResults);
                   break;
               case "RoadNames":
-                  data = createArrayOfArraysForRoadNames(me.getSearchResults());
+                  data = createArrayOfArraysForRoadNames(searchResults);
                   break;
               default:
           }
@@ -436,9 +435,10 @@ export function RoadAddressBrowserWindow(backend) {
           }
 
           // Clear date error message when typing is started again
-          document.getElementById('roadAddrSituationDate').addEventListener('input', function() {
-              validateDate(this.value);
-              this.setCustomValidity("");
+          document.getElementById('roadAddrSituationDate').addEventListener('input', function(event) {
+              const input = event.currentTarget;
+              validateDate(input.value);
+              input.setCustomValidity("");
           });
 
           function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
@@ -478,14 +478,16 @@ export function RoadAddressBrowserWindow(backend) {
 
 
           // Clear A-osa / L-osa error when either value is changed
-          document.getElementById('roadAddrInputStartPart').addEventListener('input', function() {
-              validateBeginningAndEndParts(this.value);
-              this.setCustomValidity("");
+          document.getElementById('roadAddrInputStartPart').addEventListener('input', function(event) {
+              const input = event.currentTarget;
+              validateBeginningAndEndParts(input.value);
+              input.setCustomValidity("");
           });
 
-          document.getElementById('roadAddrInputEndPart').addEventListener('input', function() {
-              validateBeginningAndEndParts(this.value);
-              this.setCustomValidity("");
+          document.getElementById('roadAddrInputEndPart').addEventListener('input', function(event) {
+              const input = event.currentTarget;
+              validateBeginningAndEndParts(input.value);
+              input.setCustomValidity("");
           });
 
           function willPassValidations() {
@@ -590,8 +592,8 @@ export function RoadAddressBrowserWindow(backend) {
           backend.getDataForRoadAddressBrowser(params, function(result) {
               if (result.success) {
                   Spinner.hide();
-                  me.setSearchParams(params);
-                  me.setSearchResults(result.results);
+                  searchParams = params;
+                  searchResults = result.results;
                   if (result.results.length > 0) {
                       if (result.results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
                           showData(createResultTable(params, result.results));
@@ -608,7 +610,7 @@ export function RoadAddressBrowserWindow(backend) {
       }
 
       function clearResultsAndDisableCsvButton() {
-          me.setSearchResults([]); // empty the search results
+          searchResults = []; // empty the search results
           $('.road-address-browser-window-results-table').remove(); // empty the result table
           $('#exportAsCsvFile').prop("disabled", true); //disable CSV download button
           $('#tableNotification').remove(); // remove notification if present
@@ -655,7 +657,7 @@ export function RoadAddressBrowserWindow(backend) {
               }
           });
 
-          // if any of the input fields change (the input fields are child elements of this wrapper/parent element)
+          // if any of the input fields change (the input fields are child elements of the form wrapper)
           const formEl = modal.getContent().find('#roadAddressBrowser')[0];
           if (formEl) {
               formEl.onchange = function () {
@@ -666,34 +668,37 @@ export function RoadAddressBrowserWindow(backend) {
           // Input field validation handlers
           const roadInput = modal.getContent().find('#roadAddrInputRoad')[0];
           if (roadInput) {
-              roadInput.oninput = function () {
-                  if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
-                      this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER);
+              roadInput.oninput = function (event) {
+                  const input = event.currentTarget;
+                  if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
+                      input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER);
                   }
               };
           }
 
           const startPartInput = modal.getContent().find('#roadAddrInputStartPart')[0];
           if (startPartInput) {
-              startPartInput.oninput = function () {
-                  if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                      this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+              startPartInput.oninput = function (event) {
+                  const input = event.currentTarget;
+                  if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+                      input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                   }
               };
           }
 
           const endPartInput = modal.getContent().find('#roadAddrInputEndPart')[0];
           if (endPartInput) {
-              endPartInput.oninput = function () {
-                  if (this.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                      this.value = this.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+              endPartInput.oninput = function (event) {
+                  const input = event.currentTarget;
+                  if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+                      input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
                   }
               };
           }
 
           /**
            * Situation date input field is disabled when Nodes or Junctions are selected as the target value
-           * This is because Nodes and Junctions can only be browsed on the current road network (complete history info not available)
+           * Nodes and Junctions can only be browsed on the current road network (complete history info not available)
            */
           const targetSelector = getTargetSelector();
           if (targetSelector && targetSelector.config) {
@@ -738,35 +743,19 @@ export function RoadAddressBrowserWindow(backend) {
           });
       }
 
-      this.setSearchParams = function(params)  {
-          searchParams = params;
-      };
+      function show() {
+          modal = createModal();
+          modal.open({
+              title: 'Tieosoitteiden katselu',
+              content: roadAddressBrowserForm.getRoadAddressBrowserForm()
+          });
 
-      this.getSearchParams = function() {
-          return searchParams;
-      };
-
-      this.setSearchResults = function(results) {
-          searchResults = results;
-      };
-
-      this.getSearchResults = function() {
-          return searchResults;
-      };
-
-      return {
-          show: () => {
-              modal = createModal();
-              modal.open({
-                  title: 'Tieosoitteiden katselu',
-                  content: roadAddressBrowserForm.getRoadAddressBrowserForm()
-              });
-
-              const formEl = modal.getContent().find('#roadAddressBrowser')[0];
-              if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
-                  roadAddressBrowserForm.bindSelectorEvents(formEl);
-              }
-              bindEvents();
+          const formEl = modal.getContent().find('#roadAddressBrowser')[0];
+          if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
+              roadAddressBrowserForm.bindSelectorEvents(formEl);
           }
-      };
+          bindEvents();
+      }
+
+      return { show };
 }
