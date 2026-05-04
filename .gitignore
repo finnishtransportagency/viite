@@ -22,4 +22,4 @@ bonecp.properties
 .env
 .db
 session-manager-plugin.deb
-.bloop
+viite-build.json

@@ -8,10 +8,16 @@ import { ModalContainer } from '@components/modals/ModalContainer.js';
 
 export function RoadNetworkErrorsList(backend) {
         let modalContainer;
+        let isModalActive = false;
 
         const showRoadNetworkErrorsListWindow = function () {
 
-            modalContainer = new ModalContainer({});
+            modalContainer = new ModalContainer({
+                onClose: function() {
+                    isModalActive = false;
+                }
+            });
+            isModalActive = true;
 
             modalContainer.open({
                 title: 'Tieverkon virheet',
@@ -19,6 +25,10 @@ export function RoadNetworkErrorsList(backend) {
             });
 
             backend.getRoadNetworkErrors(function(result) {
+                // If modal was closed while loading, ignore this callback
+                if (!isModalActive) {
+                    return;
+                }
                 Spinner.hide();
                 const contentWrapper = $('<div style="padding: 20px"></div>');
                 
@@ -56,12 +66,6 @@ export function RoadNetworkErrorsList(backend) {
             });
         };
 
-        const hideRoadNetworkErrorsListWindow = function () {
-            if (modalContainer) {
-                modalContainer.close();
-                modalContainer = null;
-            }
-        };
 
         const showErrorMessage = function (errorMessage, contentWrapper) {
             contentWrapper.append(`<p>${errorMessage}</p>`);
@@ -330,7 +334,6 @@ export function RoadNetworkErrorsList(backend) {
         };
 
         return {
-            show: showRoadNetworkErrorsListWindow,
-            hide: hideRoadNetworkErrorsListWindow
+            show: showRoadNetworkErrorsListWindow
         };
 }
