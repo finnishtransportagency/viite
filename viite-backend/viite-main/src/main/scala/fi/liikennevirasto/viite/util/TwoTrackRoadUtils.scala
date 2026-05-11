@@ -40,6 +40,51 @@ object TwoTrackRoadUtils {
     Math.round((0.5 * (addrM1 + addrM2)) + erroneousRoundingPreventionCoefficient)
   }
 
+  /**
+   * Averages originalAddrMRange boundaries between Track.RightSide and Track.LeftSide links
+   * when the two tracks have a near-matching boundary (difference strictly less than `maxDiff`).
+   *
+   * Only `originalAddrMRange` is modified; `addrMRange` and geometry are left untouched.
+   *
+   * @param projectLinks Project links for a single road part (may contain any track).
+   * @param maxDiff      Maximum absolute difference (exclusive) in meters that triggers averaging.
+   *                     Defaults to 10.
+   * @return Project links with averaged `originalAddrMRange` boundaries where applicable.
+   */
+  def averageTwoTrackOriginalAddrMBoundaries(projectLinks: Seq[ProjectLink], maxDiff: Long = 10L): Seq[ProjectLink] = {
+    val rightLinks = projectLinks.filter(_.track == Track.RightSide)
+    val leftLinks  = projectLinks.filter(_.track == Track.LeftSide)
+
+    if (rightLinks.isEmpty || leftLinks.isEmpty) return projectLinks
+
+    val rightBoundaries = rightLinks.flatMap(pl => Seq(pl.originalAddrMRange.start, pl.originalAddrMRange.end)).distinct.sorted
+    val leftBoundaries  = leftLinks.flatMap(pl  => Seq(pl.originalAddrMRange.start, pl.originalAddrMRange.end)).distinct.sorted
+
+    // For each right-track boundary, pair it with the nearest left-track boundary within maxDiff.
+    // Parameter order follows the (rightAddrM, leftAddrM) contract of calculateAverageAddrM.
+    val replacementMap = scala.collection.mutable.Map.empty[Long, Long]
+    for (rb <- rightBoundaries) {
+      leftBoundaries
+        .find(lb => { val diff = Math.abs(rb - lb); diff > 0 && diff < maxDiff })
+        .foreach { lb =>
+          val avg = calculateAverageAddrM(rb, lb)
+          replacementMap(rb) = avg
+          replacementMap(lb) = avg
+        }
+    }
+
+    if (replacementMap.isEmpty) return projectLinks
+
+    projectLinks.map { pl =>
+      val newStart = replacementMap.getOrElse(pl.originalAddrMRange.start, pl.originalAddrMRange.start)
+      val newEnd   = replacementMap.getOrElse(pl.originalAddrMRange.end,   pl.originalAddrMRange.end)
+      if (newStart != pl.originalAddrMRange.start || newEnd != pl.originalAddrMRange.end)
+        pl.copy(originalAddrMRange = AddrMRange(newStart, newEnd))
+      else
+        pl
+    }
+  }
+
   /** SplitPlsAtStatusChange searches iteratively link status changes and checks if other track
     * needs to split at the change point and makes splits to the other side projectlinks and creates
     * user defined calibration points.

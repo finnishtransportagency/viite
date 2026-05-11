@@ -10,8 +10,9 @@ import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.process.strategy.AdministrativeClassTwoTrackSynchronizer.{adjustAdministrativeClassChanges}
-import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.{adjustTerminations}
+import fi.liikennevirasto.viite.process.strategy.AdministrativeClassTwoTrackSynchronizer.adjustAdministrativeClassChanges
+import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.adjustTerminations
+import fi.liikennevirasto.viite.util.TwoTrackRoadUtils
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -2128,37 +2129,94 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
+    def logProjectLinksTable(links: Seq[ProjectLink], title: String): Unit = {
+      val sortedLinks = links.sortBy(link =>
+        (link.roadPart.roadNumber, link.roadPart.partNumber, link.track.value, link.originalAddrMRange.start, link.originalAddrMRange.end, link.id)
+      )
+
+      print("===============================================================================================================================\n")
+      print(s"$title\n")
+      print("===============================================================================================================================\n")
+      print(f"${"RoadPart"}%15s | ${"Track"}%5s | ${"Orig Start"}%12s | ${"Orig End"}%12s | ${"Calc Start"}%12s | ${"Calc End"}%12s | ${"Status"}%15s\n")
+      print("-------------------------------------------------------------------------------------------------------------------------------\n")
+
+      var previousRoadPart: Option[RoadPart] = None
+      sortedLinks.foreach { link =>
+        if (previousRoadPart.exists(_ != link.roadPart)) {
+          print("-------------------------------------------------------------------------------------------------------------------------------\n")
+        }
+
+        val linkId = Option(link.linkId).getOrElse(link.id.toString)
+        val roadPart = s"${link.roadPart.roadNumber}/${link.roadPart.partNumber}"
+        print(
+          f"${linkId}%10s | ${roadPart}%15s | ${link.track.value}%5d | ${link.originalAddrMRange.start}%12d | ${link.originalAddrMRange.end}%12d | ${link.addrMRange.start}%12d | ${link.addrMRange.end}%12d | ${link.status.toString}%15s\n"
+        )
+
+        previousRoadPart = Some(link.roadPart)
+      }
+    }
+
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
+      logProjectLinksTable(projectLinks, "PROJECT LINKS BEFORE RECALCULATION - M-VALUES TABLE")
+
       val recalculated = projectLinks.groupBy(pl => {
         (pl.roadPart)
       }).flatMap {
         grp =>
+          val roadPartLabel = s"${grp._1.roadNumber}/${grp._1.partNumber}"
+
+          logProjectLinksTable(grp._2.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - INPUT GROUP")
+
           val fusedLinks = getFusedProjectLinks(grp._2)
+          logProjectLinksTable(fusedLinks.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - AFTER FUSE")
+
+          val linksWithAveragedOriginalAddrM = TwoTrackRoadUtils.averageTwoTrackOriginalAddrMBoundaries(fusedLinks)
+          logProjectLinksTable(linksWithAveragedOriginalAddrM.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - AFTER TWO-TRACK ORIGINAL ADDRM AVERAGING")
+
           val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
-          val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
+          logger.info(s"RECALC STEP [$roadPartLabel] - calibration points fetched: ${calibrationPoints.size}")
+
+          val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(linksWithAveragedOriginalAddrM)
+          logProjectLinksTable(projectLinksWithAdjustedCalibrationPoints.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - AFTER CALIBRATION POINT ADJUSTMENT")
+
           val (newLinks, notNewLinks) = projectLinksWithAdjustedCalibrationPoints.partition(_.status == RoadAddressChangeType.New)
+          logProjectLinksTable(newLinks.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - NEW LINKS")
+          logProjectLinksTable(notNewLinks.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - NON-NEW LINKS")
+
           val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
+          logProjectLinksTable(adjustedNonTerminated.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - NON-TERMINATED AFTER TERMINATION ADJUST")
+          logProjectLinksTable(adjustedTerminated.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - TERMINATED AFTER TERMINATION ADJUST")
           
           // Administrative class synchronization needs full non-terminated road-part context
           // so the neighboring unchanged links can be slid with changed boundaries.
           val adjustedAdminClassNonTerminated = adjustAdministrativeClassChanges(adjustedNonTerminated)
+          logProjectLinksTable(adjustedAdminClassNonTerminated.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - AFTER ADMIN CLASS ADJUST")
 
           val withoutTerminated = (adjustedAdminClassNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
+          logProjectLinksTable(withoutTerminated, s"RECALC STEP [${roadPartLabel}] - NON-TERMINATED INPUT TO ASSIGN")
+
           val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
+          logProjectLinksTable(recalculatedNonTerminated.sortBy(_.addrMRange.start), s"RECALC STEP [${roadPartLabel}] - AFTER ASSIGN ADDRM")
 
           // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
           val recalculatedWithTerminated = (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+          logProjectLinksTable(recalculatedWithTerminated, s"RECALC STEP [${roadPartLabel}] - AFTER ADD TERMINATED")
 
           // Apply rounding correction to originalAddrMRange for links where the difference between original and calculated addrM values is within the defined threshold
-          alignOriginalAddrMToCalculatedAddrMWhenClose(recalculatedWithTerminated)
+          val alignedOriginalAddrM = alignOriginalAddrMToCalculatedAddrMWhenClose(recalculatedWithTerminated)
+          logProjectLinksTable(alignedOriginalAddrM.sortBy(_.addrMRange.end), s"RECALC STEP [${roadPartLabel}] - AFTER ORIGINAL ADDRM ALIGNMENT")
+          alignedOriginalAddrM
       }.toSeq
 
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
+      val updatedProjectLinks = recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers
+      logProjectLinksTable(updatedProjectLinks, "PROJECT LINKS AFTER RECALCULATION - M-VALUES TABLE")
+
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
-      projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
 
       val persistable = recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id))
