@@ -362,9 +362,12 @@
         const element = document.getElementById(id);
         if (!element || _.isUndefined(element.dataset.initialValue)) return false;
 
-        const currentValue = isCheckbox
-          ? (element.checked ? '1' : '0')
-          : String(element.value);
+        let currentValue;
+        if (isCheckbox) {
+          currentValue = element.checked ? '1' : '0';
+        } else {
+          currentValue = String(element.value);
+        }
 
         return currentValue !== String(element.dataset.initialValue);
       };
