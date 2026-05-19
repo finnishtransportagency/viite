@@ -5,6 +5,8 @@ import fi.liikennevirasto.viite.util.{SynchronizationUtils, TwoTrackRoadUtils}
 import fi.vaylavirasto.viite.model.{AddrMRange, Discontinuity, RoadAddressChangeType, Track}
 import fi.vaylavirasto.viite.util.ViiteException
 
+// TODO: No longer used, safe to delete?
+
 /**
  * This object is responsible for synchronizing road address measurements on
  * two-track road parts where administrative classes are being changed. Because physical measurements for Left and Right tracks often vary slightly,
