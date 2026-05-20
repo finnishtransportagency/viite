@@ -184,20 +184,24 @@ object TwoTrackAverager {
 			val rightFollower = SynchronizationUtils.findNextLink(currentLinks, currentRightLast, Track.LeftSide)
 			val leftFollower = SynchronizationUtils.findNextLink(currentLinks, currentLeftLast, Track.RightSide)
 
+      // Slide only if the follower link is contiguous with the current last link, otherwise it indicates a section boundary
+			val slideableRightFollower = rightFollower.filter(f => currentRightLast.addrMRange.continuesTo(f.addrMRange))
+			val slideableLeftFollower = leftFollower.filter(f => currentLeftLast.addrMRange.continuesTo(f.addrMRange))
+
 			val averagedEnd = SynchronizationUtils.clampSharedEndAddrM(
 				TwoTrackRoadUtils.calculateAverageAddrM(currentRightLast.addrMRange.end, currentLeftLast.addrMRange.end),
 				Seq(currentRightLast, currentLeftLast),
-				Seq(rightFollower, leftFollower).flatten
+				Seq(slideableRightFollower, slideableLeftFollower).flatten
 			)
 
-			val isInternalBoundary = rightFollower.isDefined || leftFollower.isDefined
+			val isInternalBoundary = slideableRightFollower.isDefined || slideableLeftFollower.isDefined
 
 			val adjustedRightLast = replaceCurrentEnd(currentRightLast, averagedEnd, updateOriginal = isInternalBoundary)
 			val adjustedLeftLast = replaceCurrentEnd(currentLeftLast, averagedEnd, updateOriginal = isInternalBoundary)
 
-			val followerUpdates = Seq(rightFollower, leftFollower).flatten.map(follower =>
+			val followerUpdates = Seq(slideableRightFollower, slideableLeftFollower).flatten.map { follower =>
 				replaceCurrentStart(follower, averagedEnd, updateOriginal = true)
-			)
+			}
 
 			SynchronizationUtils.updateProjectLinksList(
 				Seq(adjustedRightLast, adjustedLeftLast) ++ followerUpdates,

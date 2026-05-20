@@ -2104,8 +2104,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     })
   }
 
-  private val maxDiffForOriginalAddrMAlignment = 1L
-
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
