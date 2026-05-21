@@ -10,8 +10,7 @@ import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.process.strategy.AdministrativeClassTwoTrackSynchronizer.{adjustAdministrativeClassChanges}
-import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.{adjustTerminations}
+import fi.liikennevirasto.viite.process.strategy.TwoTrackAverager.{averageTwoTrackBoundaries}
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -2105,54 +2104,52 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     })
   }
 
-  private val maxDiffForOriginalAddrMAlignment = 1L
-
-  /**
-   * Workaround for occasional 1m drift between calculated addrMRange and originalAddrMRange.
-   *
-   * If either start or end differs by at most maxDiff, originalAddrMRange is aligned to addrMRange
-   * for that boundary.
-   */
-  private def alignOriginalAddrMToCalculatedAddrMWhenClose(projectLinks: Seq[ProjectLink], maxDiff: Long = maxDiffForOriginalAddrMAlignment): Seq[ProjectLink] = {
-    projectLinks.map { link =>
-      val alignedStart = if (Math.abs(link.originalAddrMRange.start - link.addrMRange.start) <= maxDiff) link.addrMRange.start else link.originalAddrMRange.start
-      val alignedEnd = if (Math.abs(link.originalAddrMRange.end - link.addrMRange.end) <= maxDiff) link.addrMRange.end else link.originalAddrMRange.end
-
-      if (alignedStart != link.originalAddrMRange.start || alignedEnd != link.originalAddrMRange.end) {
-        link.copy(originalAddrMRange = AddrMRange(alignedStart, alignedEnd))
-      } else {
-        link
-      }
-    }
-  }
-
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val recalculated = projectLinks.groupBy(pl => {
-        (pl.roadPart)
-      }).flatMap {
-        grp =>
-          val fusedLinks = getFusedProjectLinks(grp._2)
-          val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
-          val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
-          val (newLinks, notNewLinks) = projectLinksWithAdjustedCalibrationPoints.partition(_.status == RoadAddressChangeType.New)
-          val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
-          
-          // Administrative class synchronization needs full non-terminated road-part context
-          // so the neighboring unchanged links can be slid with changed boundaries.
-          val adjustedAdminClassNonTerminated = adjustAdministrativeClassChanges(adjustedNonTerminated)
+      val preparedByRoadPart = projectLinks.groupBy(_.roadPart).map { case (roadPart, linksOnRoadPart) =>
+        val fusedLinks = getFusedProjectLinks(linksOnRoadPart)
+        val adjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
+        roadPart -> adjustedCalibrationPoints
+      }
 
-          val withoutTerminated = (adjustedAdminClassNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
-          val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
+      val roadPartsToSkipPreAveraging = preparedByRoadPart.collect {
+        case (roadPart, links)
+          if links.exists(_.track == Track.Combined) && links.exists(_.status == RoadAddressChangeType.New) =>
+          roadPart
+      }.toSet
 
-          // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
-          val recalculatedWithTerminated = (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+      // Average all non-New links in one pass to keep boundary adjustments consistent.
+      val allNotNew = preparedByRoadPart.flatMap { case (roadPart, links) =>
+        if (roadPartsToSkipPreAveraging.contains(roadPart)) Seq.empty
+        else links.filter(_.status != RoadAddressChangeType.New)
+      }.toSeq
+      val averagedNotNewById = averageTwoTrackBoundaries(allNotNew).map(pl => pl.id -> pl).toMap
 
-          // Apply rounding correction to originalAddrMRange for links where the difference between original and calculated addrM values is within the defined threshold
-          alignOriginalAddrMToCalculatedAddrMWhenClose(recalculatedWithTerminated)
+      val recalculated = preparedByRoadPart.flatMap { case (roadPart, linksOnRoadPart) =>
+        val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, roadPart)
+
+        val averagedOnRoadPart =
+          if (roadPartsToSkipPreAveraging.contains(roadPart)) linksOnRoadPart
+          else {
+            linksOnRoadPart.map { link =>
+              if (link.status == RoadAddressChangeType.New) link
+              else averagedNotNewById.getOrElse(link.id, link)
+            }
+          }
+
+        val (newLinks, notNewLinks) = averagedOnRoadPart.partition(_.status == RoadAddressChangeType.New)
+        val (adjustedTerminated, adjustedNonTerminated) = notNewLinks.partition(_.status == RoadAddressChangeType.Termination)
+
+        val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
+        val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
+
+        // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end.
+        val recalculatedWithTerminated = (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+
+        recalculatedWithTerminated
       }.toSeq
 
 
