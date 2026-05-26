@@ -6,7 +6,19 @@ import org.joda.time.DateTime
 
 import scala.annotation.tailrec
 
-case class RoadwaySection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, addrMRange: AddrMRange, discontinuity: Discontinuity, administrativeClass: AdministrativeClass, /*ely: Long,*/ roadMaintainer: ArealRoadMaintainer, reversed: Boolean, roadwayNumber: Long, projectLinks: Seq[ProjectLink]) {
+case class RoadwaySection(
+                           roadNumber: Long,
+                           roadPartNumberStart: Long,
+                           roadPartNumberEnd: Long,
+                           track: Track,
+                           addrMRange: AddrMRange,
+                           discontinuity: Discontinuity,
+                           administrativeClass: AdministrativeClass,
+                           /*ely: Long,*/
+                           roadMaintainer: ArealRoadMaintainer,
+                           reversed: Boolean,
+                           roadwayNumber: Long,
+                           projectLinks: Seq[ProjectLink]) {
 }
 
 /**
@@ -165,17 +177,31 @@ object ProjectDeltaCalculator {
 
   def createAverageValuesForTransferedStarts(starts: Map[RoadPart, Seq[ProjectLink]]): Seq[ProjectLink] = {
     starts.mapValues(pls => {
+
       if (pls.size == 2 && pls.forall(_.track != Track.Combined) && (pls.head.status == RoadAddressChangeType.Termination && pls.last.status == RoadAddressChangeType.Termination)) {
         val avg = Math.round(pls.map(_.originalAddrMRange.end).sum * 0.5)
-        pls.map(pl => pl.copy(addrMRange = AddrMRange(pl.addrMRange.start, avg), originalAddrMRange = AddrMRange(pl.originalAddrMRange.start, avg)))
+
+        val headStart = pls.head.addrMRange.start
+        val tailStart = pls.last.addrMRange.start
+
+        if(avg > headStart && avg > tailStart) {
+          pls.map(pl => pl.copy(addrMRange = AddrMRange(pl.addrMRange.start, avg), originalAddrMRange = AddrMRange(pl.originalAddrMRange.start, avg)))
+        }
+      else pls
       }
       else
-        if (pls.size == 2 && pls.forall(_.track != Track.Combined) && (pls.head.originalAddrMRange.start != 0 || pls.last.originalAddrMRange.start != 0L)) {
+        if (pls.size == 2 && pls.forall(_.track != Track.Combined) && (pls.head.originalAddrMRange.start != 0 || pls.last.originalAddrMRange.start != 0L) ) {
           val avg = Math.round(pls.map(_.originalAddrMRange.start).sum * 0.5)
-          pls.map(pl => pl.copy(originalAddrMRange = AddrMRange(avg, pl.originalAddrMRange.end)))
+
+          val headStart = pls.head.addrMRange.start
+          val tailStart = pls.last.addrMRange.start
+
+          if(avg > headStart && avg > tailStart) {
+            pls.map(pl => pl.copy(originalAddrMRange = AddrMRange(avg, pl.originalAddrMRange.end)))
+          } else pls
         }
-         else
-      pls
+        else
+          pls
     }).values.flatten.toSeq
   }
 
@@ -211,7 +237,10 @@ object ProjectDeltaCalculator {
       })
 
 //TODO: TÄÄLLÄ HÄRVÄTÄÄN JOTAIN TERMINATED LINKKIEN KANSSA
-    val averagedStarts = if (projectLinks.forall(_.status == RoadAddressChangeType.Termination)) createAverageValuesForTransferedStarts(terminatedForAveraging) else createAverageValuesForTransferedStarts(startLinks)
+    val averagedStarts = if (projectLinks.forall(_.status == RoadAddressChangeType.Termination)) {
+      createAverageValuesForTransferedStarts(terminatedForAveraging)
+    }
+    else createAverageValuesForTransferedStarts(startLinks)
     val averagedTerminated = createAverageValuesForTransferedStarts(terminatedForAveraging)
 
     def groupToSections(pl: ProjectLink): (RoadPart, Track, Boolean) = (pl.originalRoadPart, pl.originalTrack, pl.reversed)

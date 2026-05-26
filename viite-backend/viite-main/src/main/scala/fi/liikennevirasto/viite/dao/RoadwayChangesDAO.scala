@@ -220,6 +220,9 @@ class RoadwayChangesDAO extends BaseDAO {
     def addToBatch(roadwaySection: RoadwaySection, addressChangeType: RoadAddressChangeType,
                    batchParams: Seq[Seq[Any]]): (Seq[Seq[Any]], Seq[Seq[Any]]) = {
 
+
+      // TODO: TÄSTÄ ALKAEN NÄYTETTÄISIIN KÄPÄLÖITÄVÄN ROADWAY-MUUTOKSIA MUUTOSTYYPEITTÄIN.
+      //TODO:: VOISI OLLA HYVÄ PAIKKA PEREHTYÄ LAKKAUTETTUJEN VIRHEELLISEEN KÄSITTELYYN.
       val nextChangeOrderLink = Sequences.nextRoadwayChangeLink
       // Main roadway change parameters
       val roadwayChangeParams = addressChangeType match {
@@ -374,6 +377,16 @@ class RoadwayChangesDAO extends BaseDAO {
 
           val changeTableRows = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(nonTerminatedProjectlinks, allProjectLinks)
 
+          println(s"GENERATED CHANGE TABLE ROWS ::: adjusted: ${changeTableRows.adjustedSections.size} :: original: ${changeTableRows.originalSections.size}")
+
+          changeTableRows.adjustedSections.foreach(section => {
+            println(s"ADJUSTED SECTION ::: roadNumber: ${section.roadNumber} :: track: ${section.track} :: roadPartNumberStart: ${section.roadPartNumberStart} :: roadPartNumberEnd: ${section.roadPartNumberEnd} :: addrMRange: ${section.addrMRange} :: discontinuity: ${section.discontinuity} :: administrativeClass: ${section.administrativeClass} :: roadMaintainer: ${section.roadMaintainer}")
+          })
+
+          changeTableRows.originalSections.foreach(section => {
+            println(s"ORIGINAL SECTION ::: roadNumber: ${section.roadNumber} :: track: ${section.track} :: roadPartNumberStart: ${section.roadPartNumberStart} :: roadPartNumberEnd: ${section.roadPartNumberEnd} :: addrMRange: ${section.addrMRange} :: discontinuity: ${section.discontinuity} :: administrativeClass: ${section.administrativeClass} :: roadMaintainer: ${section.roadMaintainer}")
+          })
+
           // Initialize empty sequence for batch parameters
           var roadwayParams = Seq[Seq[Any]]()
           var linkParams = Seq[Seq[Any]]()
@@ -432,6 +445,17 @@ class RoadwayChangesDAO extends BaseDAO {
             allProjectLinks.filter(_.status == RoadAddressChangeType.Termination),
             allProjectLinks
           )
+
+          println(s"TERMINATED SECTIONS ::: adjusted: ${terminated.adjustedSections.size} :: original: ${terminated.originalSections.size}")
+
+          terminated.adjustedSections.foreach(section => {
+            println(s"TERMINATED SECTION ::: roadNumber: ${section.roadNumber} :: track: ${section.track} :: roadPartNumberStart: ${section.roadPartNumberStart} :: roadPartNumberEnd: ${section.roadPartNumberEnd} :: addrMRange: ${section.addrMRange} :: discontinuity: ${section.discontinuity} :: administrativeClass: ${section.administrativeClass} :: roadMaintainer: ${section.roadMaintainer}")
+          })
+
+          terminated.originalSections.foreach(section => {
+            println(s"TERMINATED ORIGINAL SECTION ::: roadNumber: ${section.roadNumber} :: track: ${section.track} :: roadPartNumberStart: ${section.roadPartNumberStart} :: roadPartNumberEnd: ${section.roadPartNumberEnd} :: addrMRange: ${section.addrMRange} :: discontinuity: ${section.discontinuity} :: administrativeClass: ${section.administrativeClass} :: roadMaintainer: ${section.roadMaintainer}")
+          })
+
 
           val twoTrackOldAddressRoadParts = createTwoTrackOldAddressRoadParts(
             unChanged_roadway_sections,
