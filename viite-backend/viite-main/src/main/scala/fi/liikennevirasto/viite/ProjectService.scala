@@ -2115,30 +2115,13 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         roadPart -> adjustedCalibrationPoints
       }
 
-      val roadPartsToSkipPreAveraging = preparedByRoadPart.collect {
-        case (roadPart, links)
-          if links.exists(_.track == Track.Combined) && links.exists(_.status == RoadAddressChangeType.New) =>
-          roadPart
-      }.toSet
-
-      // Average all non-New links in one pass to keep boundary adjustments consistent.
-      val allNotNew = preparedByRoadPart.flatMap { case (roadPart, links) =>
-        if (roadPartsToSkipPreAveraging.contains(roadPart)) Seq.empty
-        else links.filter(_.status != RoadAddressChangeType.New)
-      }.toSeq
-      val averagedNotNewById = averageTwoTrackBoundaries(allNotNew).map(pl => pl.id -> pl).toMap
+      val allPreparedLinks = preparedByRoadPart.values.flatten.toSeq
+      val averagedById = averageTwoTrackBoundaries(allPreparedLinks).map(pl => pl.id -> pl).toMap
 
       val recalculated = preparedByRoadPart.flatMap { case (roadPart, linksOnRoadPart) =>
         val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, roadPart)
 
-        val averagedOnRoadPart =
-          if (roadPartsToSkipPreAveraging.contains(roadPart)) linksOnRoadPart
-          else {
-            linksOnRoadPart.map { link =>
-              if (link.status == RoadAddressChangeType.New) link
-              else averagedNotNewById.getOrElse(link.id, link)
-            }
-          }
+        val averagedOnRoadPart = linksOnRoadPart.map(link => averagedById.getOrElse(link.id, link))
 
         val (newLinks, notNewLinks) = averagedOnRoadPart.partition(_.status == RoadAddressChangeType.New)
         val (adjustedTerminated, adjustedNonTerminated) = notNewLinks.partition(_.status == RoadAddressChangeType.Termination)
@@ -2154,8 +2137,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
+      val updatedProjectLinks = recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers
+
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
-      projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
 
       val persistable = recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id))
