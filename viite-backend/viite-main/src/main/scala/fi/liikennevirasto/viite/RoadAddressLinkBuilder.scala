@@ -134,7 +134,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       Some("kgv_modified"),
       RoadPart(0, 0),
       Track.Unknown.value,
-      ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK11")), // TODO: THIS IS ONE POSSIBLE WHERE THE EVK0 BUG MIGHT ORIGINATE FROM
+      ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK1")),
       Discontinuity.Continuous.value,
       AddrMRange(0, 0),
       "",
