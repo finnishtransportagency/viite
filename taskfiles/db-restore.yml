@@ -10,66 +10,18 @@ tasks:
     cmds:
       - |
         set -euo pipefail
-
-        : "${DB_TARGET_ACCESS:?missing (ssm|direct)}"
-
-        case "$DB_TARGET_ACCESS" in
-          direct)
-            : "${DB_TARGET_RDS_HOST:?missing}"
-            : "${DB_TARGET_PORT:?missing}"
-            echo "Direct connection configured to $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
-            exit 0
-            ;;
-
-          ssm)
-            : "${DB_TARGET_RDS_HOST:?missing}"     # remote DB host (e.g., RDS endpoint)
-            : "${AWS_PROFILE:?missing}"
-            : "${AWS_REGION:?missing}"
-            : "${DB_TARGET_LOCAL_PORT:?missing}"   # local forwarded port
-            : "${DB_TARGET_SSM_TARGET:?missing}"   # EC2/managed instance id for SSM
-            DB_TARGET_PORT="${DB_TARGET_PORT:-5432}"  # remote DB port (default 5432)
-
-            # Refuse if host contains "prod"/"production" (case-insensitive)
-            host_lc="$(printf '%s' "$DB_TARGET_RDS_HOST" | tr '[:upper:]' '[:lower:]')"
-            if [[ "$host_lc" == *prod* ]] || [[ "$host_lc" == *production* ]]; then
-              echo "ERROR: Refusing to connect to production-like host: $DB_TARGET_RDS_HOST"
-              exit 1
-            fi
-
-            SESSION="{{.TARGET_TUNNEL_SESSION}}"
-
-            if ! tmux has-session -t "$SESSION" 2>/dev/null; then
-              tmux new-session -d -s "$SESSION" \
-                "aws ssm start-session \
-                  --region '$AWS_REGION' \
-                  --profile '$AWS_PROFILE' \
-                  --target '$DB_TARGET_SSM_TARGET' \
-                  --document-name AWS-StartPortForwardingSessionToRemoteHost \
-                  --parameters host='$DB_TARGET_RDS_HOST',portNumber='$DB_TARGET_PORT',localPortNumber='$DB_TARGET_LOCAL_PORT'"
-            fi
-
-            echo -n "Opening tunnel to $DB_TARGET_RDS_HOST:$DB_TARGET_PORT (via SSM target $DB_TARGET_SSM_TARGET) "
-            for i in {1..20}; do
-              if nc -z 127.0.0.1 "$DB_TARGET_LOCAL_PORT" 2>/dev/null; then
-                echo ""
-                echo "SSM tunnel ready: 127.0.0.1:$DB_TARGET_LOCAL_PORT -> $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
-                exit 0
-              fi
-              echo -n "."
-              sleep 0.5
-            done
-
-            echo ""
-            echo "ERROR: Tunnel did not open (SSM session likely failed)"
-            echo "Check logs: tmux attach -t $SESSION"
-            exit 1
-            ;;
-
-          *)
-            echo "ERROR: Invalid DB_TARGET_ACCESS='$DB_TARGET_ACCESS' (use ssm|direct)"
-            exit 1
-            ;;
-        esac
+        . ./db/admin/task_helpers.sh
+        start_ssm_tunnel \
+          "{{.TARGET_TUNNEL_SESSION}}" \
+          "TARGET" \
+          "${DB_TARGET_ACCESS:?missing (ssm|direct)}" \
+          "${DB_TARGET_RDS_HOST:?missing}" \
+          "${DB_TARGET_LOCAL_PORT:?missing}" \
+          "${DB_TARGET_PORT:-5432}" \
+          "${DB_TARGET_SSM_TARGET:-}" \
+          "${AWS_REGION:-}" \
+          "${AWS_PROFILE:-}" \
+          "true"
 
   disconnect-target:
     desc: "Stop TARGET SSM port-forward (no-op for direct)"
@@ -77,34 +29,18 @@ tasks:
     cmds:
       - |
         set -euo pipefail
-
-        : "${DB_TARGET_ACCESS:?missing (ssm|direct)}"
-
-        if [ "$DB_TARGET_ACCESS" = "direct" ]; then
-          # Nothing to disconnect, but be explicit
-          if [ -n "${DB_TARGET_RDS_HOST:-}" ] && [ -n "${DB_TARGET_PORT:-}" ]; then
-            echo "Disconnected (direct): $DB_TARGET_RDS_HOST:$DB_TARGET_PORT"
-          else
-            echo "Disconnected (direct)"
-          fi
-          exit 0
-        fi
-
-        # ssm mode
-        host="${DB_TARGET_RDS_HOST:-unknown}"
-        port="${DB_TARGET_PORT:-5432}"
-        lport="${DB_TARGET_LOCAL_PORT:-unknown}"
-
-        if tmux has-session -t {{.TARGET_TUNNEL_SESSION}} 2>/dev/null; then
-          tmux kill-session -t {{.TARGET_TUNNEL_SESSION}} 2>/dev/null || true
-          echo "Disconnected (ssm): 127.0.0.1:$lport -> $host:$port"
-        else
-          echo "No active tunnel session to disconnect (ssm): 127.0.0.1:$lport -> $host:$port"
-        fi
-
+        . ./db/admin/task_helpers.sh
+        stop_ssm_tunnel \
+          "{{.TARGET_TUNNEL_SESSION}}" \
+          "TARGET" \
+          "${DB_TARGET_ACCESS:?missing (ssm|direct)}" \
+          "${DB_TARGET_RDS_HOST:-unknown}" \
+          "${DB_TARGET_PORT:-5432}" \
+          "${DB_TARGET_LOCAL_PORT:-unknown}"
 
   restore:
-    desc: "Restore latest dump to TARGET"
+    desc: "Restore latest dump to TARGET [IMPLEMENTATION TASK — prefer db:restore
+      wrapper]"
     silent: true
     cmds:
       - |

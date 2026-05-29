@@ -358,8 +358,33 @@
         ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked
         : null;
 
+      const changedFromInitial = function (id, isCheckbox) {
+        const element = document.getElementById(id);
+        if (!element || _.isUndefined(element.dataset.initialValue)) return false;
+
+        let currentValue;
+        if (isCheckbox) {
+          currentValue = element.checked ? '1' : '0';
+        } else {
+          currentValue = String(element.value);
+        }
+
+        return currentValue !== String(element.dataset.initialValue);
+      };
+
       let devToolData = null;
-      if (hasDevRights) {
+      const devToolFieldsChanged = hasDevRights && (
+        changedFromInitial('addrStart', false) ||
+        changedFromInitial('addrEnd', false) ||
+        changedFromInitial('origAddrStart', false) ||
+        changedFromInitial('origAddrEnd', false) ||
+        changedFromInitial('startCPDropdown', false) ||
+        changedFromInitial('endCPDropdown', false) ||
+        changedFromInitial('sideCodeDropdown', false) ||
+        changedFromInitial('newRoadwayNumber', true)
+      );
+
+      if (devToolFieldsChanged) {
         devToolData = {
           startAddrMValue: startAddrMValue,
           endAddrMValue: endAddrMValue,
