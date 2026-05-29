@@ -11,7 +11,7 @@ import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 
 class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
 
-  def buildTestLink(id: Long, track: Track, addr: (Long, Long), status: RoadAddressChangeType, discontinuity: Discontinuity = Discontinuity.Continuous, adminClass: AdministrativeClass = AdministrativeClass.State, originalAdminClass: AdministrativeClass = AdministrativeClass.State, roadPart: RoadPart = RoadPart(99999, 1)): ProjectLink = {
+  def buildTestLink(id: Long, track: Track, addr: (Long, Long), status: RoadAddressChangeType, discontinuity: Discontinuity = Discontinuity.Continuous, adminClass: AdministrativeClass = AdministrativeClass.State, originalAdminClass: AdministrativeClass = AdministrativeClass.State, roadPart: RoadPart = RoadPart(99999, 1), originalRoadPartValue: RoadPart = RoadPart(99999, 1)): ProjectLink = {
     val baseLink = ProjectLink(
       id = id, roadPart = roadPart, track = track,
       discontinuity = discontinuity,
@@ -31,9 +31,9 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
       linkGeometryTimeStamp = 0L
     )
     
-    // ProjectLink.originalAdministrativeClass is derived from a DB lookup (roadwayDAO), not a constructor
-    // parameter. Without a real roadway row it falls back to administrativeClass, making it impossible
-    // to test scenarios where the two differ. Override the method via subclass instead.
+    // ProjectLink.originalAdministrativeClass and originalRoadPart are derived from a DB lookup
+    // (roadwayDAO), not constructor parameters. Without a real roadway row, tests can fail with
+    // "No DBSession is set" when code accesses these members. Override via subclass for pure unit tests.
     new ProjectLink(baseLink.id, baseLink.roadPart, baseLink.track, baseLink.discontinuity, 
       baseLink.addrMRange, baseLink.originalAddrMRange, baseLink.startDate, baseLink.endDate, 
       baseLink.createdBy, baseLink.linkId, baseLink.startMValue, baseLink.endMValue, 
@@ -46,6 +46,7 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
       baseLink.roadAddressTrack, baseLink.roadAddressRoadPart) {
       
       override def originalAdministrativeClass: AdministrativeClass = originalAdminClass
+      override def originalRoadPart: RoadPart = originalRoadPartValue
     }
   }
 

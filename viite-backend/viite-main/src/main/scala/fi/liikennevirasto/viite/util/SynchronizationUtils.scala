@@ -118,10 +118,21 @@ object SynchronizationUtils {
    * @param links Sequence of project links to search in
    * @param target The target project link whose following link we seek
    * @param trackToExclude The opposite track to filter out
+   * @param useOriginalAddrMRange When true, matches using originalAddrMRange continuity; otherwise uses addrMRange continuity
    */
-  def findNextLink(links: Seq[ProjectLink], target: ProjectLink, trackToExclude: Track): Option[ProjectLink] = {
-    links.find(pl => pl.track != trackToExclude && target.originalAddrMRange.continuesTo(pl.originalAddrMRange))
+  def findNextLink(
+    links: Seq[ProjectLink],
+    target: ProjectLink,
+    trackToExclude: Track,
+    useOriginalAddrMRange: Boolean = true
+  ): Option[ProjectLink] = {
+    links.find(pl =>
+      pl.track == target.track &&
+        pl.track != trackToExclude &&
+        (if (useOriginalAddrMRange)
+           target.originalAddrMRange.continuesTo(pl.originalAddrMRange)
+         else
+           target.addrMRange.continuesTo(pl.addrMRange))
+    )
   }
-
-
 }
