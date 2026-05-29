@@ -2137,8 +2137,11 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
 
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
+      val updatedProjectLinks = recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers
+      logProjectLinksTable(updatedProjectLinks, "PROJECT LINKS AFTER RECALCULATION - M-VALUES TABLE")
+
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
-      projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
 
       val persistable = recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id))
