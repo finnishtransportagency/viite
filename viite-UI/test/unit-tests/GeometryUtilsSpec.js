@@ -1,5 +1,6 @@
 var assert = require('assert');
-var GeometryUtils = require('../../src/utils/GeometryUtils.js');
+global._ = require('lodash');
+var GeometryUtils = require('../../src/utils/GeometryUtils.js').GeometryUtils;
 
 describe('Geometry utils', function () {
 

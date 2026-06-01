@@ -1,5 +1,6 @@
 var assert = require('assert');
-var LocationInputParser = require('../../src/utils/LocationInputParser.js');
+global._ = require('lodash');
+var LocationInputParser = require('../../src/utils/LocationInputParser.js').LocationInputParser;
 
 describe('Location input parser', function () {
 
