@@ -44,7 +44,7 @@ export function URLRouter(map, backend, models) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
             map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
           } else {
-            console.log(response.reason);
+            console.error(response.reason);
           }
         });
       },

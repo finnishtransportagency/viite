@@ -16,7 +16,6 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     let current = {};
 
     const openNode = function (node, openNodetemplates) {
-      console.log("Opening node " + node);
       current = {};
       setCurrentNode(node);
       eventbus.trigger('node:selected', current.node, openNodetemplates);

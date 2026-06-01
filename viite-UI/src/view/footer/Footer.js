@@ -227,7 +227,6 @@ function createCrosshairToggle(parentElement, map, onFeatureClick = null) {
     const clickData = getFeatureDataAtAtPixel(coords.x, coords.y);
     dispatchMapEvents(coords.x, coords.y, isDoubleClick);
 
-    console.log('Crosshair Click Data:', clickData);
     const finalCallback = callback || onFeatureClick;
     if (typeof finalCallback === 'function') finalCallback(clickData);
 

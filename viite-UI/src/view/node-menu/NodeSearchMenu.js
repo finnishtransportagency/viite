@@ -38,14 +38,12 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
       if (_.isFunction(setNodeMenuState)) {
         setNodeMenuState('editor', completeNode, selectedNodesAndJunctions.getCurrentTemplates());
       }
-      console.log('Opened node with complete data from collection:', completeNode);
       return;
     }
     pendingSearchNodeNumber = searchNode.nodeNumber;
     eventbus.once('node:fetched', () => {
       if (pendingSearchNodeNumber !== searchNode.nodeNumber) return;
       const fetchedNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
-      console.log('Fetched node for search result click:', fetchedNode);
       const nodeToOpen = hasCompleteNodeData(fetchedNode) ? fetchedNode : searchNode;
       selectedNodesAndJunctions.openNode(nodeToOpen);
       if (_.isFunction(setNodeMenuState)) {

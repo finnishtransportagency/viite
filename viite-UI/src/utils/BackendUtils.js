@@ -197,8 +197,6 @@ export function Backend() {
         }, 500),
 
         saveRoadAddressProject: _.throttle(function (data, success, failure) {
-          console.log("SAVING PROJECT WITH PAYLOAD :::: ");
-          console.log(data);
           $.ajax({
             contentType: "application/json",
             type: "PUT",

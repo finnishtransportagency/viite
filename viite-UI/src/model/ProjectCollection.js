@@ -199,8 +199,6 @@ export function ProjectCollection(backend, startupParameters) {
         reservedPartList: _.map(_.filter(me.getReservedParts(), function (part) {
           return !_.isUndefined(part.currentLength, part.currentEly);
         }), function (part) {
-          console.log("WHAT DOES A PART HAVE ::: ");
-          console.log(part);
           return {
             discontinuity: (part.currentDiscontinuity),
             evk: (part.currentEvk),

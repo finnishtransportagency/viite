@@ -10,7 +10,6 @@ export const Main = {
         const container = document.querySelector(containerSelector);
 
         if (!container || !View || !AddUserForm || !UpdateUserForm) {
-            console.error('UserManagement components not loaded yet. Check imports.');
             return;
         }
 
