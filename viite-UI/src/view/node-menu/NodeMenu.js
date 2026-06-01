@@ -1,4 +1,4 @@
-﻿import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
+import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
 import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
 import { setMainMenuState } from '@view/MainMenu.js';

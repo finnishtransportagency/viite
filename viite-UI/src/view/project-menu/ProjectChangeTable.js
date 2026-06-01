@@ -241,101 +241,122 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       };
     }
 
+    function hasChangeTableData(projectChangeData) {
+      return !_.isUndefined(projectChangeData) &&
+        !_.isUndefined(projectChangeData.changeTable) &&
+        projectChangeData.changeTable !== null;
+    }
+
+    function applyValidationHeader($changeTableHeader, hasNegativeLength, hasLengthMismatch) {
+      if (hasNegativeLength) {
+        $changeTableHeader.html($(`<div class="warning-message">Pituuksissa on negatiivisia arvoja. Tarkista muutokset tai ota yhteyttä Viite tukeen.</div>`));
+      } else if (hasLengthMismatch) {
+        $changeTableHeader.html($(`<div class="warning-message">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>`));
+      }
+    }
+
+    function cacheRowValidations(validation) {
+      currentValidations = {};
+      if (validation.results) {
+        validation.results.forEach((result, index) => {
+          if (!result.isValid && result.change) {
+            currentValidations[result.change.id || index] = result;
+          }
+        });
+      }
+    }
+
+    function buildChangeRows(changeInfoSeqList) {
+      let htmlTable = '';
+
+      _.each(changeInfoSeqList, function (changeInfoSeq, index) {
+        const rowColorClass = (index % 2 !== 1) ? 'white-row' : 'gray-row';
+        const rowValidation = currentValidations[changeInfoSeq.id || index];
+        const hasLengthError = rowValidation && !rowValidation.isValid;
+        const rowClass = `${rowColorClass}${hasLengthError ? ' invalid-row' : ''}`;
+        const rowId = changeInfoSeq.id || index;
+
+        htmlTable += `<tr class="row-changes ${rowClass}" data-row-id="${rowId}">`;
+
+        if (changeInfoSeq.changetype === RoadAddressChangeType.New.value) {
+          htmlTable += getEmptySource(changeInfoSeq);
+        } else {
+          htmlTable += getSourceInfo(changeInfoSeq, rowId);
+        }
+
+        htmlTable += getReversed(changeInfoSeq);
+
+        if (changeInfoSeq.changetype === RoadAddressChangeType.Terminated.value) {
+          htmlTable += getEmptyTarget();
+        } else {
+          htmlTable += getTargetInfo(changeInfoSeq, rowId);
+        }
+
+        htmlTable += `</tr>`;
+      });
+
+      return htmlTable;
+    }
+
+    function updateHeaderAndValidationState(projectChangeData, hasLengthMismatch, hasNegativeLength, $changeTableHeader, $changeTableFrame) {
+      const projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
+
+      if (!hasLengthMismatch && !hasNegativeLength) {
+        $changeTableHeader.html($(`
+          <div>Validointi ok. Alla näet muutokset projektissa.</div>
+          <div>Alkupäivämäärä: ${projectDate}</div>
+        `));
+      }
+
+      const currentProject = projectCollection.getCurrentProject();
+      const shouldClearValidations = $changeTableFrame.css('display') === "block" &&
+        currentProject.project.statusCode === ProjectStatus.Incomplete.value &&
+        !hasLengthMismatch &&
+        !hasNegativeLength;
+
+      if (shouldClearValidations) {
+        currentValidations = {};
+      }
+
+      if (typeof callbacks.onValidationResult === 'function') {
+        callbacks.onValidationResult({
+          hasErrors: hasLengthMismatch || hasNegativeLength,
+          publishable: !hasLengthMismatch && !hasNegativeLength
+        });
+      }
+    }
+
     function showChangeTable(projectChangeData) {
       let htmlTable = "";
-      const warningM = projectChangeData.warningMessage;
-      let hasLengthMismatch = false;
-      let hasNegativeLength = false;
+      const warningM = projectChangeData?.warningMessage;
       const $changeTableHeader = $('.change-table-header');
       const $changeTableFrame = $('.change-table-frame');
+      const hasData = hasChangeTableData(projectChangeData);
 
       if (!_.isUndefined(warningM))
         new ConfirmPopup(warningM, { type: "alert" });
 
-      if (!_.isUndefined(projectChangeData) && !_.isUndefined(projectChangeData.changeTable) && projectChangeData.changeTable !== null) {
-        
+      if (hasData) {
         const validation = validateLengthValues(projectChangeData.changeTable);
-        hasLengthMismatch = validation.hasLengthMismatch;
-        hasNegativeLength = validation.hasNegativeLength;
 
-        if (hasNegativeLength) {
-          $changeTableHeader.html($(`<div class="warning-message">Pituuksissa on negatiivisia arvoja. Tarkista muutokset tai ota yhteyttä Viite tukeen.</div>`));
-        } else if (hasLengthMismatch) {
-          $changeTableHeader.html($(`<div class="warning-message">Nykyosoitteen ja uuden osoitteen pituudet eivät täsmää. Ota yhteyttä Viite tukeen.</div>`));
-        }
+        applyValidationHeader($changeTableHeader, validation.hasNegativeLength, validation.hasLengthMismatch);
+        cacheRowValidations(validation);
+        htmlTable = buildChangeRows(projectChangeData.changeTable.changeInfoSeq);
 
-        currentValidations = {};
-        if (validation.results) {
-          validation.results.forEach((result, index) => {
-            if (!result.isValid && result.change) {
-              currentValidations[result.change.id || index] = result;
-            }
-          });
-        }
+        const $rowChanges = $('.row-changes');
+        $rowChanges.remove();
+        $('.change-table-dimensions tbody').append($(htmlTable));
+        autoSizeInitialHeight(projectChangeData.changeTable.changeInfoSeq.length);
 
-        _.each(projectChangeData.changeTable.changeInfoSeq, function (changeInfoSeq, index) {
-          const rowColorClass = (index % 2 !== 1) ? 'white-row' : 'gray-row';
-          
-          const rowValidation = currentValidations[changeInfoSeq.id || index];
-          const hasLengthError = rowValidation && !rowValidation.isValid;
-          const rowClass = `${rowColorClass}${hasLengthError ? ' invalid-row' : ''}`;
-          const rowId = changeInfoSeq.id || index;
-
-          htmlTable += `<tr class="row-changes ${rowClass}" data-row-id="${rowId}">`;
-          
-          if (changeInfoSeq.changetype === RoadAddressChangeType.New.value) {
-            htmlTable += getEmptySource(changeInfoSeq);
-          } else {
-            htmlTable += getSourceInfo(changeInfoSeq, rowId);
-          }
-          
-          htmlTable += getReversed(changeInfoSeq);
-          
-          if (changeInfoSeq.changetype === RoadAddressChangeType.Terminated.value) {
-            htmlTable += getEmptyTarget();
-          } else {
-            htmlTable += getTargetInfo(changeInfoSeq, rowId);
-          }
-          
-          htmlTable += `</tr>`;
-        });
-      }
-
-      const $rowChanges = $('.row-changes');
-      $rowChanges.remove();
-      $('.change-table-dimensions tbody').append($(htmlTable));
-      autoSizeInitialHeight(projectChangeData && projectChangeData.changeTable && projectChangeData.changeTable.changeInfoSeq
-        ? projectChangeData.changeTable.changeInfoSeq.length
-        : 0);
-      
-      changeTableOpen = true;
-      
-      if (projectChangeData && !_.isUndefined(projectChangeData.changeTable)) {
-        const projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
-
-        if (!hasLengthMismatch && !hasNegativeLength) {
-          $changeTableHeader.html($(`
-            <div>Validointi ok. Alla näet muutokset projektissa.</div>
-            <div>Alkupäivämäärä: ${projectDate}</div>
-          `));
-        }
-
-        const currentProject = projectCollection.getCurrentProject();
-
-        if ($changeTableFrame.css('display') === "block" &&
-            currentProject.project.statusCode === ProjectStatus.Incomplete.value &&
-            !hasLengthMismatch &&
-            !hasNegativeLength) {
-          currentValidations = {};
-        }
-
-        if (typeof callbacks.onValidationResult === 'function') {
-          callbacks.onValidationResult({
-            hasErrors: hasLengthMismatch || hasNegativeLength,
-            publishable: !hasLengthMismatch && !hasNegativeLength
-          });
-        }
+        changeTableOpen = true;
+        updateHeaderAndValidationState(projectChangeData, validation.hasLengthMismatch, validation.hasNegativeLength, $changeTableHeader, $changeTableFrame);
       } else {
+        const $rowChanges = $('.row-changes');
+        $rowChanges.remove();
+        $('.change-table-dimensions tbody').append($(htmlTable));
+        autoSizeInitialHeight(0);
+
+        changeTableOpen = true;
         $changeTableHeader.html($(`<div class="warning-message">Tarkista validointitulokset. Yhteenvetotaulukko voi olla puutteellinen.</div>`));
       }
     }

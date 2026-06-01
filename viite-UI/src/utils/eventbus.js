@@ -1,7 +1,7 @@
 export const eventbus = Backbone.Events;
 
 eventbus.oncePromise = function (eventName) {
-  const eventReceived = $.Deferred();
+  const eventReceived = new $.Deferred();
   eventbus.once(eventName, function () {
     eventReceived.resolve();
   });

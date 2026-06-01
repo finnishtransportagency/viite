@@ -30,41 +30,6 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
       return dataTable.setProps(props).render();
     };
 
-    const staticField = function (labelText, dataField) {
-      return `<p class="form-control-static asset-log-info-metadata"><label>` + labelText + `</label>` + dataField + `</p>`;
-    };
-
-    const toNodePointsRows = function (nodePointsInfo, isTemplate) {
-      const cellClassName = isTemplate ? 'node-points-table template' : 'node-points-table';
-      return _.map(_.sortBy(NodeTableUtils.getNodePointsRowsInfo(nodePointsInfo), ['roadNumber', 'roadPartNumber', 'addr']), function (row) {
-        return {
-          className: isTemplate ? 'node-point-template-row' : '',
-          cells: [
-            { className: cellClassName, content: row.roadNumber },
-            { className: cellClassName, content: row.roadPartNumber },
-            { className: cellClassName, content: row.addr },
-            { className: cellClassName, content: row.beforeAfter }
-          ]
-        };
-      });
-    };
-
-    const toJunctionRows = function (junctionsInfo, isTemplate) {
-      const cellClassName = isTemplate ? 'node-junctions-table template' : 'node-junctions-table';
-      return _.map(junctionsInfo || [], function (junction) {
-        const junctionPointsInfo = NodeTableUtils.getJunctionPointsInfo(junction);
-        return {
-          cells: [
-            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'roadNumber'), cellClassName) },
-            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'track'), cellClassName) },
-            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'roadPartNumber'), cellClassName) },
-            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'addr'), cellClassName) },
-            { className: cellClassName, content: NodeTableUtils.asFlexColumn(_.map(junctionPointsInfo, 'beforeAfter'), cellClassName) }
-          ]
-        };
-      });
-    };
-
     const getTemplateJunctionRowsInfo = function (junctionTemplates) {
       const rows = _.flatMap(junctionTemplates || [], function (junction) {
         const junctionPointsInfo = NodeTableUtils.getJunctionPointsInfo(junction);
@@ -90,67 +55,6 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
           left.addr === right.addr &&
           left.beforeAfter === right.beforeAfter;
       });
-    };
-
-    const buildNodePointsTable = function (nodePointTemplates, currentNodePoints) {
-      return {
-        title: 'Solmukohdat',
-        tableId: 'nodePoints-table-info',
-        tableClassName: 'node-points-table-dimension node-template-table',
-        headers: [
-          { label: 'TIE', className: '' },
-          { label: 'OSA', className: '' },
-          { label: 'ET', className: '' },
-          { label: 'EJ', className: '' }
-        ],
-        rows: toNodePointsRows(nodePointTemplates, true)
-          .concat(toNodePointsRows(currentNodePoints, false))
-      };
-    };
-
-    const buildJunctionsTable = function (junctionTemplates, currentJunctions) {
-      return {
-        title: 'Liittymät',
-        tableId: 'junctions-table-info',
-        headers: [
-          { label: 'TIE', className: 'node-junctions-table-header' },
-          { label: 'AJR', className: 'node-junctions-table-header' },
-          { label: 'OSA', className: 'node-junctions-table-header' },
-          { label: 'ET', className: 'node-junctions-table-header junction-address-header' },
-          { label: 'EJ', className: 'node-junctions-table-header' }
-        ],
-        rows: toJunctionRows(junctionTemplates, true)
-          .concat(toJunctionRows(currentJunctions, false))
-      };
-    };
-
-    const renderNodeDetailsBody = function (node, templates) {
-      const nodePointTemplates = !_.isUndefined(templates) && _.has(templates, 'nodePoints') ? templates.nodePoints : undefined;
-      const junctionTemplates = !_.isUndefined(templates) && _.has(templates, 'junctions') ? templates.junctions : undefined;
-      const nodePointsTable = renderDataTable(buildNodePointsTable(nodePointTemplates, node.nodePoints));
-      const junctionsTable = renderDataTable(buildJunctionsTable(junctionTemplates, _.sortBy(node.junctions, 'junctionNumber')));
-
-      return `
-        <div class="wrapper read-only node-form-wrapper">
-          <div class="form form-horizontal form-dark">
-            <div>
-              ${staticField('Solmunumero:', node.nodeNumber ? node.nodeNumber : '-')}
-              ${staticField('Koordinaatit (<i>P</i>, <i>I</i>):', `<span id="node-coordinates">${Math.round(node.coordinates.y)}, ${Math.round(node.coordinates.x)}</span>`)}
-              ${staticField('*Solmun nimi:', node.name || '-')}
-              ${staticField('*Solmutyyppi:', node.type || '-')}
-              ${staticField('*Alkupvm:', node.startDate || '-')}
-            </div>
-            <div>
-              <div id="node-points-info-content">
-                ${nodePointsTable}
-              </div>
-              <div id="junctions-info-content">
-                ${junctionsTable}
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
     };
 
     const renderBody = function (templates) {

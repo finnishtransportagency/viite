@@ -2,6 +2,7 @@ module.exports = function (grunt) {
   const serveStatic = require('serve-static');
   const serveIndex = require('serve-index');
   const path = require('path');
+  const { execSync } = require('child_process');
   const { createProxyMiddleware } = require('http-proxy-middleware');
 
   const apiProxy = createProxyMiddleware({
@@ -27,7 +28,7 @@ module.exports = function (grunt) {
     secure: true,
     xfwd: true,
     headers: {
-      "X-API-Key": process.env.rasterServiceApiKey, // eslint-disable-line no-process-env
+      "X-API-Key": process.env.rasterServiceApiKey,
       host: 'api.vaylapilvi.fi'
     },
     pathRewrite: {
@@ -42,7 +43,7 @@ module.exports = function (grunt) {
     secure: true,
     xfwd: true,
     headers: {
-      "X-API-Key": process.env.rasterServiceApiKey, // eslint-disable-line no-process-env
+      "X-API-Key": process.env.rasterServiceApiKey,
       host: 'api.vaylapilvi.fi'
     },
     pathRewrite: {
@@ -243,7 +244,6 @@ module.exports = function (grunt) {
   });
 
   grunt.loadNpmTasks("grunt-terser");
-  grunt.loadNpmTasks("gruntify-eslint");
   grunt.loadNpmTasks('grunt-mocha-test');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-concat');
@@ -254,6 +254,17 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-cache-bust');
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
+
+  // Use the workspace ESLint version through npm scripts.
+  // gruntify-eslint depends on legacy ESLint and fails with modern parser options.
+  grunt.registerTask('eslint', 'Run ESLint via npm script', function () {
+    try {
+      execSync('npm run lint', { stdio: 'inherit' });
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   var target = grunt.option('target') || 'production';
 

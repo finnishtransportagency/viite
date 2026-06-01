@@ -5,7 +5,6 @@
  * @param {Object} layers - Active map layers keyed by layer name
  */
 import { eventbus } from '@utils/eventbus.js';
-import { showToast } from '@components/toast/Toast.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { setZoomLevel, getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';

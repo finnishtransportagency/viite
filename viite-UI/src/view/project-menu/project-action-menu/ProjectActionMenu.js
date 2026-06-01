@@ -184,6 +184,8 @@ export function ProjectActionMenu(options) {
       _.each(projectErrors, function (error) {
         let fixButton = '';
         const coordinates = getErrorCoordinates(error, links);
+        const errorMessage = _.trim((error.errorMessage || '').toString());
+        const errorLabel = errorMessage ? `<label class="orange">VIRHE: ${errorMessage}</label>` : '';
         
         if (coordinates) {
           fixButton = `<button id="${buttonIndex}" class="btn-primary projectErrorButton" style="margin-right: 8px;">Korjaa</button>`;
@@ -199,7 +201,7 @@ export function ProjectActionMenu(options) {
         
         errorLines += `
           <div class="form-project-errors-list">
-            <label class="orange">VIRHE: ${error.errorMessage ? error.errorMessage : 'N/A'}</label>
+            ${errorLabel}
             <label class="orange">INFO: ${error.info ? error.info : 'N/A'}</label>
             <div>
                ${fixButton}
@@ -230,7 +232,6 @@ export function ProjectActionMenu(options) {
       
       return `
         <div class="form form-horizontal form-dark">
-          <label class="highlighted">ALOITA VALITSEMALLA KOHDE KARTALTA.</label>
           <div class="project-errors" id="project-errors">${errorsHtml}</div>
         </div>`;
     };
