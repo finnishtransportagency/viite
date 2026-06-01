@@ -137,6 +137,7 @@
     function show() {
       $('.container').append('<div class="modal-overlay confirm-modal" id="projectList"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.show());
+      $('#OldAcceptedProjectsVisibleCheckbox').prop('checked', false);
       eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
