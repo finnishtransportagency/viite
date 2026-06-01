@@ -655,7 +655,8 @@ export function ProjectCollection(backend, startupParameters) {
     eventbus.on('roadAddressProject:startProject', this.getProjectsWithLinksById);
 
     eventbus.on('roadPartsValidation:checkRoadParts', function (validationResult) {
-      if (validationResult.success === true) {
+      const reservationValidationSucceeded = validationResult.success === true || validationResult.success === 'ok';
+      if (reservationValidationSucceeded) {
         addToReservedPartList(validationResult);
         eventbus.trigger('roadAddress:projectValidationSucceed');
       } else {

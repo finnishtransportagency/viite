@@ -211,8 +211,6 @@ export function Backend() {
         }, 1000),
 
         createRoadAddressProject: _.throttle(function (data, success, failure) {
-          console.log("CREATED PROJECT WITH PAYLOAD :::: ");
-          console.log(data);
           $.ajax({
             contentType: "application/json",
             type: "POST",
@@ -307,6 +305,10 @@ export function Backend() {
         }, 1000),
 
         getRoadAddressProjectStates: _.throttle(function (projectIDs, callback) {
+          // TODO: Fix 414 Request-URI Too Large.
+          // This currently sends all project IDs in the URL path, which can exceed
+          // proxy/server URI limits when the project list is large. Change to POST
+          // with IDs in request body
           return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
             return _.isFunction(callback) && callback(data);
           });
