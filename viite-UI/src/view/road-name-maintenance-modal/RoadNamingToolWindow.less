@@ -76,4 +76,66 @@
         display: inline-block;
         font-size: 15px;
       }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding-bottom: 8px;
+        margin-left: 8px;
+
+        #roadSearchParameter {
+          width: 200px;
+          height: 22px;
+          padding: 2px 8px;
+          flex: none;
+        }
+
+        #executeRoadSearch {
+          height: 22px;
+          padding: 2px 8px;
+          flex-shrink: 0;
+        }
+      }
+
+      #table-labels {
+        padding-bottom: 4px;
+
+        .label-tie       { width: 138px; }
+        .label-name      { width: 242px; }
+        .label-startdate { width: 100px; }
+        .label-enddate   { width: 100px; }
+      }
     }
+
+#road-list {
+  width: 810px;
+  height: 365px;
+  overflow: auto;
+}
+
+#roadList-table {
+  table-layout: fixed;
+  width: 100%;
+
+  .td-road-number { width: 150px; }
+  .td-road-name   { width: 250px; }
+  .td-date        { width: 110px; }
+
+  tr.road-row-separator {
+    border-bottom: 1px solid darkgray;
+  }
+}
+
+.road-list-input {
+  margin-top: 0;
+  width: 30%;
+
+  &.form-control {
+    margin-left: 8px;
+  }
+}
+
+.btn-invisible {
+  visibility: hidden;
+}

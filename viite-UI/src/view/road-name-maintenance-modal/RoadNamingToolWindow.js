@@ -15,12 +15,10 @@ export function RoadNamingToolWindow(roadNameCollection) {
         <div id="name-search-window" class="form-horizontal naming-list">
           <div class="name-tool-content-new">
             <div class="panel-header">
-              <input type="text" class="road-input" style="height: 22px" id="roadSearchParameter" placeholder="Tienumero" autocomplete="off">
-              <div id="buttons-div">
-                <button id="executeRoadSearch" class="btn-primary" style="height: 22px; padding: 2px 8px">Hae</button>
-                <button id="createRoad" class="btn-primary" style="display: none">Luo Tie</button>
-              </div>
+              <input type="text" class="form-control" id="roadSearchParameter" placeholder="Tienumero" autocomplete="off">
+              <button id="executeRoadSearch" class="btn-primary">Hae</button>
             </div>
+
             <div id="table-labels" style="padding-bottom: 4px">
               <label class="label" style="width:138px">Tie</label>
               <label class="label" style="width:242px">Tien nimi</label>

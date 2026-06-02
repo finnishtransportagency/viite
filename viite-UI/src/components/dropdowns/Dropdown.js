@@ -6,8 +6,7 @@ export function dropdown(config) {
       defaultValue = '',
       options = [],
       disabled = false,
-      style = '',
-      onChange = null
+      style = ''
     } = config;
 
     const disabledAttr = disabled ? 'disabled' : '';
@@ -26,10 +25,9 @@ export function dropdown(config) {
         const idAttr = option.id ? `id="${option.id}"` : '';
         return `<option value="${option.value}" ${isSelected} ${isDisabled} ${idAttr}>${option.text || option.value}</option>`;
       }
+      console.warn('dropdown: unknown option shape', option);
       return '';
     }).join('');
-
-    const onChangeAttr = onChange ? `onchange="${onChange}"` : '';
 
     return `
       <select 
@@ -37,7 +35,6 @@ export function dropdown(config) {
         ${classAttr}
         ${styleAttr}
         ${disabledAttr}
-        ${onChangeAttr}
       >
         ${optionsHtml}
       </select>

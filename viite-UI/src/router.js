@@ -7,6 +7,9 @@ import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { selectLayer, refreshMap } from '@model/ApplicationModel.js';
 
+const LAYER_LINK_PROPERTY = 'linkProperty';
+const LAYER_ROAD_ADDRESS_PROJECT = 'roadAddressProject';
+
 export function URLRouter(map, backend, models) {
   const Router = Backbone.Router.extend({
       initialize: function () {
@@ -16,15 +19,11 @@ export function URLRouter(map, backend, models) {
         });
 
         this.route(/^([A-Za-z]+)\/?$/, function (layer) {
-          if (layer === 'linkProperty') {
-            selectLayer('linkProperty');
-          } else {
-            selectLayer(layer);
-          }
+          selectLayer(layer);
         });
 
         this.route(/^$/, function () {
-          selectLayer('linkProperty');
+          selectLayer(LAYER_LINK_PROPERTY);
         });
       },
 
@@ -38,7 +37,7 @@ export function URLRouter(map, backend, models) {
       },
 
       linkProperty: function (linkId) {
-        selectLayer('linkProperty');
+        selectLayer(LAYER_LINK_PROPERTY);
         backend.getRoadAddressByLinkId(linkId, function (response) {
           if (response.success) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
@@ -50,29 +49,36 @@ export function URLRouter(map, backend, models) {
       },
 
       linkPropertyByMml: function (mmlId) {
-        selectLayer('linkProperty');
+        selectLayer(LAYER_LINK_PROPERTY);
         backend.getRoadLinkByMmlId(mmlId, function (response) {
+          if (!response || !response.middlePoint) {
+            console.error('Failed to load road link by MML id:', mmlId);
+            return;
+          }
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
           map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-          map.getView().setZoom(12);
+          map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
         });
       },
 
       linkPropertyByMtk: function (mtkid) {
-        selectLayer('linkProperty');
+        selectLayer(LAYER_LINK_PROPERTY);
         backend.getRoadLinkByMtkId(mtkid, function (response) {
+          if (!response || response.x === undefined) {
+            console.error('Failed to load road link by MTK id:', mtkid);
+            return;
+          }
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
           map.getView().setCenter([response.x, response.y]);
-          map.getView().setZoom(12);
+          map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
         });
       },
       roadAddressProject: function (projectId) {
-        selectLayer('roadAddressProject');
-        eventbus.trigger('underConstructionProjectRoads:toggleVisibility', false);
+        selectLayer(LAYER_ROAD_ADDRESS_PROJECT);
         const parsedProjectId = parseInt(projectId, 10);
         eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       },
@@ -95,43 +101,50 @@ export function URLRouter(map, backend, models) {
     Backbone.history.start();
 
     eventbus.on('linkProperties:unselected', function () {
-      router.navigate('linkProperty');
+      router.navigate(LAYER_LINK_PROPERTY);
     });
 
     eventbus.on('roadAddressProject:selected', function (id, _layerName, _selectedLayer) {
-      router.navigate(`roadAddressProject/${id}`);
+      router.navigate(`${LAYER_ROAD_ADDRESS_PROJECT}/${id}`);
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if (!_.isEmpty(models.selectedLinkProperty.get())) {
         if (_.isArray(linkProperty)) {
-          router.navigate(`linkProperty/${_.head(linkProperty).linkId}`);
+          router.navigate(`${LAYER_LINK_PROPERTY}/${_.head(linkProperty).linkId}`);
         } else {
-          router.navigate(`linkProperty/${linkProperty.linkId}`);
+          router.navigate(`${LAYER_LINK_PROPERTY}/${linkProperty.linkId}`);
         }
       }
     });
 
+    const navigateToSelectedProject = function (linkId, project) {
+      const baseUrl = `${LAYER_ROAD_ADDRESS_PROJECT}/${project.id}`;
+      const linkIdUrl = linkId ? `/${linkId}` : '';
+      router.navigate(`${baseUrl}${linkIdUrl}`);
+      const initialCenter = map.getView().getCenter();
+      const hasProjectCoords = !_.isUndefined(project.coordX) && project.coordX !== 0 &&
+        !_.isUndefined(project.coordY) && project.coordY !== 0 &&
+        !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0;
+      if (hasProjectCoords) {
+        selectLayer(LAYER_LINK_PROPERTY, false);
+        map.getView().setCenter([project.coordX, project.coordY]);
+        map.getView().setZoom(project.zoomLevel);
+      } else if (typeof linkId !== 'undefined') {
+        selectLayer(LAYER_LINK_PROPERTY, false);
+        backend.getProjectLinkByLinkId(linkId, function (response) {
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+        });
+      }
+      const newCenter = map.getView().getCenter();
+      if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
+        refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
+      }
+    };
+
     eventbus.on('linkProperties:selectedProject', function (linkId, project) {
       if (typeof project.id !== 'undefined') {
-        const baseUrl = `roadAddressProject/${project.id}`;
-        const linkIdUrl = linkId ? `/${linkId}` : '';
-        router.navigate(`${baseUrl}${linkIdUrl}`);
-        const initialCenter = map.getView().getCenter();
-        if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
-          selectLayer('linkProperty', false);
-          map.getView().setCenter([project.coordX, project.coordY]);
-          map.getView().setZoom(project.zoomLevel);
-        } else if (typeof linkId !== 'undefined') {
-          selectLayer('linkProperty', false);
-          backend.getProjectLinkByLinkId(linkId, function (response) {
-            map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-          });
-        }
-        const newCenter = map.getView().getCenter();
-        if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
-          refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
-        }
+        navigateToSelectedProject(linkId, project);
       }
     });
 
@@ -140,10 +153,9 @@ export function URLRouter(map, backend, models) {
     });
 
     eventbus.on('layer:selected', function (layer) {
-      let layerAdjusted = layer;
-      if (layer.indexOf('/') === -1) {
-        layerAdjusted = layer.concat('/');
-      }
+      const layerAdjusted = layer.includes('/') ? layer : layer.concat('/');
       router.navigate(layerAdjusted);
     });
+
+    return router;
 }

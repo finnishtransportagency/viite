@@ -20,8 +20,6 @@ $('#form-container').html(html);
 startDatePicker.initialize('#start-date-slot');
 */
 export function DatePicker(options) {
-  const momentLib = window.moment;
-  const PikadayCtor = window.Pikaday;
     const defaults = {
       id: '',
       className: 'form-control date-picker-input',
@@ -39,6 +37,31 @@ export function DatePicker(options) {
 
     const config = { ...defaults, ...options };
     let picker = null;
+    let $inputRef = null; // Reference to the input element for value manipulation to avoid targetting other date pickers if multiple instances are used on the same page
+
+    // Build minDate/maxDate options from config using the provided moment instance
+    const buildDateRange = function (momentLib) {
+      const opts = {};
+      if (config.minDate) {
+        opts.minDate = momentLib(config.minDate, dateutil.FINNISH_DATE_FORMAT).toDate();
+      }
+      if (config.maxDate) {
+        opts.maxDate = momentLib(config.maxDate, dateutil.FINNISH_DATE_FORMAT).toDate();
+      }
+      return opts;
+    };
+
+    // Attach input/change event listeners to an element
+    const bindChangeEvents = function ($el) {
+      $el.on('input', function () {
+        $(this).change();
+      });
+      $el.on('change', function () {
+        if (config.onChange) {
+          config.onChange($(this).val());
+        }
+      });
+    };
 
     const render = function () {
       const disabledAttr = config.disabled ? 'disabled' : '';
@@ -56,23 +79,37 @@ export function DatePicker(options) {
             value="${config.value}"
             ${disabledAttr}
             ${requiredAttr}
-            onkeypress="return event.charCode >= 48 && event.charCode <= 57 || event.charCode === 46"
           />
         </div>
       `;
     };
 
     const initialize = function (container) {
+      const momentLib = window.moment;
+      const PikadayCtor = window.Pikaday;
       const $container = $(container);
       $container.html(render());
 
       const $input = $container.find('input');
+      $inputRef = $input;
       
       if (config.id) {
         $input.attr('id', config.id);
       }
 
-      const pickerOptions = {
+      // Restrict input to digits and dots
+      $input.on('keypress', function (e) {
+        const char = String.fromCharCode(e.which);
+        if (!((/[\d.]/).test(char)) && e.which !== 13) {
+          e.preventDefault();
+        }
+        if (e.which === 13) {
+          picker.hide();
+          $input.blur();
+        }
+      });
+
+      const pickerOptions = Object.assign({
         field: $input.get(0),
         format: dateutil.FINNISH_DATE_FORMAT,
         firstDay: 1,
@@ -84,74 +121,32 @@ export function DatePicker(options) {
           weekdays: ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'],
           weekdaysShort: ['Su', 'Ma', 'Ti', 'Ke', 'To', 'Pe', 'La']
         }
-      };
+      }, buildDateRange(momentLib));
 
-      if (config.minDate) {
-        const minDate = momentLib(config.minDate, dateutil.FINNISH_DATE_FORMAT);
-        pickerOptions.minDate = minDate.toDate();
-      }
-
-      if (config.maxDate) {
-        const maxDate = momentLib(config.maxDate, dateutil.FINNISH_DATE_FORMAT);
-        pickerOptions.maxDate = maxDate.toDate();
-      }
-
-      if (config.defaultDate) {
-        if (config.setDefaultDate) {
-          pickerOptions.defaultDate = momentLib(config.defaultDate, dateutil.FINNISH_DATE_FORMAT).toDate();
-        }
+      if (config.defaultDate && config.setDefaultDate) {
+        pickerOptions.defaultDate = momentLib(config.defaultDate, dateutil.FINNISH_DATE_FORMAT).toDate();
       }
 
       picker = new PikadayCtor(pickerOptions);
 
-      // Handle enter key press
-      $input.keypress(function (e) {
-        if (e.which === 13) {
-          picker.hide();
-          $input.blur();
-        }
-      });
-
-      // Handle change events
-      $input.on('input', function () {
-        $(this).change();
-      });
-
-      $input.on('change', function () {
-        if (config.onChange) {
-          config.onChange($(this).val());
-        }
-      });
+      bindChangeEvents($input);
 
       return picker;
     };
 
     const addToElement = function (element) {
+      const momentLib = window.moment;
       const $element = $(element);
+      $inputRef = $element;
       
-      const pickerOptions = config.defaultDate ? { defaultDate: config.defaultDate, setDefaultDate: config.setDefaultDate } : {};
-      
-      if (config.minDate) {
-        const minDate = momentLib(config.minDate, dateutil.FINNISH_DATE_FORMAT);
-        pickerOptions.minDate = minDate.toDate();
-      }
-      
-      if (config.maxDate) {
-        const maxDate = momentLib(config.maxDate, dateutil.FINNISH_DATE_FORMAT);
-        pickerOptions.maxDate = maxDate.toDate();
-      }
+      const pickerOptions = Object.assign(
+        config.defaultDate ? { defaultDate: config.defaultDate, setDefaultDate: config.setDefaultDate } : {},
+        buildDateRange(momentLib)
+      );
       
       picker = dateutil.addFinnishDatePicker($element, pickerOptions);
 
-      $element.on('input', function () {
-        $(this).change();
-      });
-
-      $element.on('change', function () {
-        if (config.onChange) {
-          config.onChange($(this).val());
-        }
-      });
+      bindChangeEvents($element);
 
       return picker;
     };
@@ -167,14 +162,13 @@ export function DatePicker(options) {
     };
 
     const getValue = function () {
-      const $input = $(`#${config.id}`);
-      return $input.length ? $input.val() : '';
+      return $inputRef && $inputRef.length ? $inputRef.val() : '';
     };
 
     const setValue = function (value) {
-      const $input = $(`#${config.id}`);
-      if ($input.length) {
-        $input.val(value);
+      if ($inputRef && $inputRef.length) {
+        const momentLib = window.moment;
+        $inputRef.val(value);
         if (picker && value) {
           const date = momentLib(value, dateutil.FINNISH_DATE_FORMAT);
           if (date.isValid()) {
@@ -185,9 +179,8 @@ export function DatePicker(options) {
     };
 
     const setDisabled = function (disabled) {
-      const $input = $(`#${config.id}`);
-      if ($input.length) {
-        $input.prop('disabled', disabled);
+      if ($inputRef && $inputRef.length) {
+        $inputRef.prop('disabled', disabled);
       }
     };
 
@@ -199,7 +192,7 @@ export function DatePicker(options) {
     };
 
     const getElement = function () {
-      return $(`#${config.id}`);
+      return $inputRef || $();
     };
 
     return {
