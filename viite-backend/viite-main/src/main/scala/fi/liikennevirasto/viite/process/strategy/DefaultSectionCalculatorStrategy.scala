@@ -674,12 +674,8 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
     val leftLinksWithAddrMValues = ProjectSectionMValueCalculator.assignLinkValues(leftProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint,
       leftProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.addrMRange.end.toDouble).sorted.lastOption)
 
-    leftLinksWithAddrMValues.foreach(l => println(s"Left link with assigned addrMValue: ${l.linkId} ${l.addrMRange} ${l.originalAddrMRange} ${l.status}"))
-
     val rightLinksWithAddrMValues = ProjectSectionMValueCalculator.assignLinkValues(rightProjectLinks.filter(_.status != RoadAddressChangeType.Unchanged), userDefinedCalibrationPoint,
       rightProjectLinks.filter(pl => pl.status == RoadAddressChangeType.Unchanged).map(_.addrMRange.end.toDouble).sorted.lastOption)
-
-    rightLinksWithAddrMValues.foreach(r => println(s"Right link with assigned addrMValue: ${r.linkId} ${r.addrMRange} ${r.originalAddrMRange} ${r.status}"))
 
     // combine the unchanged links and the adjusted links
     val leftLinks = leftProjectLinks.filter(_.status == RoadAddressChangeType.Unchanged) ++ leftLinksWithAddrMValues
@@ -687,14 +683,6 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
 
     // adjusts tracks to match
     val (trackAdjustedLeftLinks, trackAdjustedRightLinks) = adjustLinksOnTracks(rightLinks, leftLinks, userDefinedCalibrationPoint)
-
-    println("Track adjusted left links:")
-    trackAdjustedLeftLinks.foreach(l => println(s"linkId: ${l.linkId} addrMRange: ${l.addrMRange} status: ${l.status} track: ${l.track} originalTrack: ${l.originalTrack}"))
-    println("Track adjusted right links:")
-    trackAdjustedRightLinks.foreach(r => println(s"linkId: ${r.linkId} addrMRange: ${r.addrMRange} status: ${r.status} track: ${r.track} originalTrack: ${r.originalTrack}"))
-
-
-
 
     val (leftLinksWithUdcps, splittedRightLinks, udcpsFromRightSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(trackAdjustedLeftLinks, trackAdjustedRightLinks)
     val (rightLinksWithUdcps, splittedLeftLinks, udcpsFromLeftSideSplits) = TwoTrackRoadUtils.splitPlsAtStatusChange(splittedRightLinks, leftLinksWithUdcps)
