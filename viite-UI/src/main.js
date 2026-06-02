@@ -4,9 +4,9 @@
  */
 import { setStartupParameters, refreshMap } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
-import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
+import { Header } from '@view/header/Header.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { MainMenu } from '@view/MainMenu.js';
 import { MapView } from '@view/map/MapView.js';
@@ -54,7 +54,11 @@ export function start() {
       nodeCollection: nodeCollection,
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
-    bindEvents();
+
+    eventbus.on('linkProperties:available', function () {
+      Spinner.clear();
+    });
+
     const searchPanel = createSearchPanel();
     jQuery('#map-tools').append(searchPanel.element);
 
@@ -126,11 +130,12 @@ const setupMapLayers = function (map, models) {
   };
 };
 
-const initializeMapPlugins = function (map) {
+const initializeUIelements = function (map, backend, startupParameters) {
   const mapPluginsContainer = jQuery('#map-plugins');
   new ScaleBar(map, mapPluginsContainer);
   new ZoomBox(map, mapPluginsContainer);
   new Footer(map, mapPluginsContainer);
+  new Header(jQuery('#header'), backend, startupParameters);
 };
 
 const initializeMainMenu = function (backend, map, models, roadNameCollection) {
@@ -148,30 +153,7 @@ const initializeMainMenu = function (backend, map, models, roadNameCollection) {
   });
 };
 
-const setupHeaderInfo = function (backend, startupParameters) {
 
-  const toolTip = `<i class="fas fa-info-circle" title="Versio: ${startupParameters.deploy_date}"></i>\n`;
-  const headerTooltip = jQuery('#headerTooltip');
-  headerTooltip.empty();
-  headerTooltip.append(toolTip);
-
-  backend.getRoadLinkDate(function (versionData) {
-    getRoadLinkDateInfo(versionData);
-  });
-
-  const getRoadLinkDateInfo = function (versionData) {
-    const notification = jQuery('#notification');
-    notification.append(Environment.localizedName());
-    notification.append(' Tielinkkiaineisto: ' + versionData.result);
-  };
-
-  if (Environment.name() === 'integration') {
-    new ConfirmPopup('Huom!<br>Olet integraatiotestiympäristössä.', {
-      type: 'alert',
-      okButtonLbl: 'Sulje'
-    });
-  }
-};
 
 const createMapAndLayers = function (models, startupParameters) {
   const tileMaps = new TileMapCollection();
@@ -192,8 +174,7 @@ const initializeApplicationMap = function (backend, models, startupParameters, r
   const layers = mapSetup.layers;
 
   initializeMainMenu(backend, map, models, roadNameCollection);
-  initializeMapPlugins(map);
-  setupHeaderInfo(backend, startupParameters);
+  initializeUIelements(map, backend, startupParameters);
 
   new MapView(map, layers);
 
@@ -207,11 +188,6 @@ const setupProjections = function () {
   ol.proj.proj4.register(proj4);
 };
 
-const bindEvents = function () {
-  eventbus.on('linkProperties:available', function () {
-    Spinner.clear();
-  });
-};
 
 $(function () {
   start();
