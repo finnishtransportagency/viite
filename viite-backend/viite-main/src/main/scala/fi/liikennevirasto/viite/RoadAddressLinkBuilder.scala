@@ -117,6 +117,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => unaddressedRoadLink.administrativeClass
     }
+    if (municipalityCode <= 0) {
+      println(s"Invalid municipality code (${municipalityCode}) for road link with ID ${roadLink.linkId} and unaddressed road link with ID ${unaddressedRoadLink.linkId}, using elinvoimakeskus 0 instead") //TODO: Make sure these hard coded municipality codes are actually what we want.
+    }
+
     RoadAddressLink(
       0,
       0,
@@ -134,7 +138,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       Some("kgv_modified"),
       RoadPart(0, 0),
       Track.Unknown.value,
-      ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK11")), // TODO: THIS IS ONE POSSIBLE WHERE THE EVK0 BUG MIGHT ORIGINATE FROM
+      ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK0")), // TODO: THIS IS ONE POSSIBLE WHERE THE EVK0 BUG MIGHT ORIGINATE FROM
       Discontinuity.Continuous.value,
       AddrMRange(0, 0),
       "",
