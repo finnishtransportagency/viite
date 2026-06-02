@@ -1,5 +1,4 @@
 import { checkbox } from '@components/checkbox/Checkbox.js';
-import { eventbus } from '@utils/eventbus.js';
 import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 
 /* Contains following elements:
@@ -8,132 +7,182 @@ import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 - CrosshairToggle: A checkbox for toggling a crosshair in the center of the map and clicking on the map through it (see MapView.js for details)
 */
 
-export function Footer(map, container) {
+export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {
   const element = '<div class="map-footer"></div>';
   container.append(element);
 
   const footerContainer = container.find('.map-footer');
-  renderTileMapSelector(footerContainer);
-  renderCoordinatesDisplay(footerContainer);
+  renderTileMapSelector(footerContainer, linkPropertyLayer, projectLinkLayer, tileMapCollection);
+  renderCoordinatesDisplay(footerContainer, map);
   createCrosshairToggle(footerContainer.find('.mapplugin.coordinates'), map);
 }
 
-function renderTileMapSelector(container) {
-  const renderLayerOptionCheckbox = (id, label, checked = false) => `
-      <div class="layer-option-visible-wrapper">
-        ${checkbox({
-          id,
-          label,
-          checked
-        })}
-      </div>
-    `;
+function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {
+  const BREAKPOINT_PX = 1470;
 
-  const renderDropdownCheckbox = (value, label) => checkbox({
-    id: `dropdown-${value}`,
-    label,
-    value
-  });
+  const layerOptions = [
+    {
+      id: 'propertyBoundariesVisible',
+      label: 'Näytä kiinteistörajat',
+      checked: false,
+      onChange(checked) {
+        tileMapCollection.setVisible('propertyBorder', checked);
+      }
+    },
+    {
+      id: 'unAddressedRoadsVisible',
+      label: 'Näytä tieosoitteettomat-linkit',
+      checked: true,
+      onChange(checked) {
+        linkPropertyLayer.setVisible('unAddressedRoadLayer', checked);
+        projectLinkLayer.setVisible('unAddressedRoadLayer', checked);
+      }
+    },
+    {
+      id: 'underConstructionVisible',
+      label: 'Näytä rakenteilla-linkit',
+      checked: true,
+      onChange(checked) {
+        linkPropertyLayer.setVisible('underConstructionRoadLayer', checked);
+        projectLinkLayer.setVisible('underConstructionRoadLayer', checked);
+      }
+    },
+    {
+      id: 'roadsVisible',
+      label: 'Näytä tieosoiteverkko',
+      checked: true,
+      onChange() {
+        toggleRoadVisibility();
+        linkPropertyLayer.toggleRoadVisibility();
+        projectLinkLayer.updateRoadVisibility();
+      }
+    },
+    {
+      id: 'regionalBordersVisible',
+      label: 'Näytä maakuntarajat',
+      checked: false,
+      onChange(checked) {
+        tileMapCollection.setVisible('regionsBorder', checked);
+      }
+    }
+  ];
+
+  const renderLayerOptionCheckbox = (option) => `
+    <div class="layer-option-visible-wrapper">
+      ${checkbox({
+        id: `${option.id}Checkbox`,
+        label: option.label,
+        checked: option.checked
+      })}
+    </div>
+  `;
+
+  const renderDropdownCheckbox = (option) =>
+    checkbox({
+      id: `dropdown-${option.id}`,
+      label: option.label,
+      value: option.id
+    });
 
   const element = `
-      <div class="tile-map-selector">
-        <ul>
-          <li data-layerid="terrain" title="Maastokartta">Maastokartta</li>
-          <li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>
-          <li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>
-          <li data-layerid="none" title="Piilota kartta">Piilota kartta</li>
-        </ul>
+    <div class="tile-map-selector">
+      <ul>
+        <li data-layerid="terrain" title="Maastokartta">Maastokartta</li>
+        <li data-layerid="aerial" title="Ortokuvat">Ortokuvat</li>
+        <li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>
+        <li data-layerid="none" title="Piilota kartta">Piilota kartta</li>
+      </ul>
 
-        ${renderLayerOptionCheckbox('propertyBoundariesVisibleCheckbox', 'Näytä kiinteistörajat')}
-        ${renderLayerOptionCheckbox('unAddressedRoadsVisibleCheckbox', 'Näytä tieosoitteettomat-linkit', true)}
-        ${renderLayerOptionCheckbox('underConstructionVisibleCheckbox', 'Näytä rakenteilla-linkit', true)}
-        ${renderLayerOptionCheckbox('roadsVisibleCheckbox', 'Näytä tieosoiteverkko', true)}
-        ${renderLayerOptionCheckbox('regionalBordersVisibleCheckbox', 'Näytä maakuntarajat')}
+      ${layerOptions.map(renderLayerOptionCheckbox).join('')}
 
-        <div class="checkbox-dropdown-wrapper">
-          <button class="dropdown-toggle" aria-expanded="false">Valitse karttavaihtoehdot</button>
-          <div class="checkbox-dropdown">
-            ${renderDropdownCheckbox('propertyBoundariesVisible', 'Näytä kiinteistörajat')}
-            ${renderDropdownCheckbox('unAddressedRoadsVisible', 'Näytä tieosoitteettomat-linkit')}
-            ${renderDropdownCheckbox('underConstructionVisible', 'Näytä rakenteilla-linkit')}
-            ${renderDropdownCheckbox('roadsVisible', 'Näytä tieosoiteverkko')}
-            ${renderDropdownCheckbox('regionalBordersVisible', 'Näytä maakuntarajat')}
-          </div>
+      <div class="checkbox-dropdown-wrapper">
+        <button class="dropdown-toggle" aria-expanded="false">
+          Karttavaihtoehdot
+        </button>
+
+        <div class="checkbox-dropdown">
+          ${layerOptions.map(renderDropdownCheckbox).join('')}
         </div>
       </div>
-    `;
+    </div>
+  `;
 
   container.append(element);
-
-  const BREAKPOINT_PX = 1470;
 
   const $checkboxDropdownWrapper = container.find('.checkbox-dropdown-wrapper');
   const $dropdownToggle = $checkboxDropdownWrapper.find('.dropdown-toggle');
   const $dropdownCheckboxes = $checkboxDropdownWrapper.find('input[type="checkbox"]');
 
-  const dropdownValueToCheckboxId = {
-    propertyBoundariesVisible: 'propertyBoundariesVisibleCheckbox',
-    unAddressedRoadsVisible: 'unAddressedRoadsVisibleCheckbox',
-    underConstructionVisible: 'underConstructionVisibleCheckbox',
-    roadsVisible: 'roadsVisibleCheckbox',
-    regionalBordersVisible: 'regionalBordersVisibleCheckbox'
-  };
+  const getMainCheckboxId = (value) => `${value}Checkbox`;
 
   function syncDropdownCheckboxesFromMain() {
     $dropdownCheckboxes.each(function () {
       const value = $(this).val();
-      const mainCheckbox = container.find(`#${dropdownValueToCheckboxId[value]}`);
-      $(this).prop('checked', Boolean(mainCheckbox.prop('checked')));
+
+      const checked = Boolean(
+        container.find(`#${getMainCheckboxId(value)}`).prop('checked')
+      );
+
+      $(this).prop('checked', checked);
     });
   }
 
   function syncMainCheckboxesFromDropdownAndTrigger() {
     $dropdownCheckboxes.each(function () {
       const value = $(this).val();
-      const mainCheckbox = container.find(`#${dropdownValueToCheckboxId[value]}`);
+
+      const $mainCheckbox = container.find(
+        `#${getMainCheckboxId(value)}`
+      );
+
       const newChecked = Boolean($(this).prop('checked'));
-      const prevChecked = Boolean(mainCheckbox.prop('checked'));
-      if (prevChecked !== newChecked) {
-        mainCheckbox.prop('checked', newChecked);
-        mainCheckbox.trigger('change');
+      const oldChecked = Boolean($mainCheckbox.prop('checked'));
+
+      if (newChecked !== oldChecked) {
+        $mainCheckbox.prop('checked', newChecked);
+        $mainCheckbox.trigger('change');
       }
     });
   }
 
-  container.on('change', '#propertyBoundariesVisibleCheckbox', function () {
-    eventbus.trigger('tileMap:togglepropertyBorder', this.checked);
+  // Register all checkbox handlers from configuration
+  layerOptions.forEach(option => {
+    container.on(
+      'change',
+      `#${option.id}Checkbox`,
+      function () {
+        option.onChange(this.checked);
+      }
+    );
   });
 
-  container.on('change', '#unAddressedRoadsVisibleCheckbox', function () {
-    eventbus.trigger('unAddressedRoads:toggleVisibility', this.checked);
-    eventbus.trigger('unAddressedProjectRoads:toggleVisibility', this.checked);
-  });
-
-  container.on('change', '#underConstructionVisibleCheckbox', function () {
-    eventbus.trigger('underConstructionRoads:toggleVisibility', this.checked);
-    eventbus.trigger('underConstructionProjectRoads:toggleVisibility', this.checked);
-  });
-
-  container.on('change', '#roadsVisibleCheckbox', function () {
-    toggleRoadVisibility();
-    eventbus.trigger('linkProperty:visibilityChanged');
-    eventbus.trigger('roadAddressProject:visibilityChanged');
-  });
-
-  container.on('change', '#regionalBordersVisibleCheckbox', function () {
-    eventbus.trigger('tileMap:toggleRegionalBorders', this.checked);
-  });
+  // Sync dropdown when a main checkbox changes
+  container.on(
+    'change',
+    layerOptions
+      .map(option => `#${option.id}Checkbox`)
+      .join(', '),
+    function () {
+      if (window.innerWidth <= BREAKPOINT_PX) {
+        syncDropdownCheckboxesFromMain();
+      }
+    }
+  );
 
   container.find('li[data-layerid]').on('click', event => {
     container.find('li.selected').removeClass('selected');
+
     const selectedTileMap = $(event.target);
+
     selectedTileMap.addClass('selected');
-    eventbus.trigger('tileMap:selected', selectedTileMap.data('layerid'));
+    tileMapCollection.selectMap(selectedTileMap.data('layerid'));
   });
 
   $dropdownToggle.on('click', function (e) {
     e.stopPropagation();
+
     const isOpen = $checkboxDropdownWrapper.hasClass('open');
+
     if (isOpen) {
       $checkboxDropdownWrapper.removeClass('open');
       $dropdownToggle.attr('aria-expanded', 'false');
@@ -155,22 +204,21 @@ function renderTileMapSelector(container) {
     syncMainCheckboxesFromDropdownAndTrigger();
   });
 
-  container.on('change', '#propertyBoundariesVisibleCheckbox, #unAddressedRoadsVisibleCheckbox, #underConstructionVisibleCheckbox, #roadsVisibleCheckbox, #regionalBordersVisibleCheckbox', function () {
-    if (window.innerWidth <= BREAKPOINT_PX) {
-      syncDropdownCheckboxesFromMain();
-    }
-  });
-
   function updateUIForScreenSize() {
     if (window.innerWidth <= BREAKPOINT_PX) {
       container.find('.layer-option-visible-wrapper').hide();
+
       $checkboxDropdownWrapper.show();
+
       syncDropdownCheckboxesFromMain();
+
       $checkboxDropdownWrapper.removeClass('open');
       $dropdownToggle.attr('aria-expanded', 'false');
     } else {
       container.find('.layer-option-visible-wrapper').show();
+
       $checkboxDropdownWrapper.hide();
+
       $checkboxDropdownWrapper.removeClass('open');
       $dropdownToggle.attr('aria-expanded', 'false');
     }
@@ -180,6 +228,7 @@ function renderTileMapSelector(container) {
 
   window.addEventListener('resize', () => {
     updateUIForScreenSize();
+
     if (window.innerWidth > BREAKPOINT_PX) {
       $checkboxDropdownWrapper.removeClass('open');
       $dropdownToggle.attr('aria-expanded', 'false');
@@ -187,7 +236,7 @@ function renderTileMapSelector(container) {
   });
 }
 
-function renderCoordinatesDisplay(container) {
+function renderCoordinatesDisplay(container, map) {
   const element = `
     <div class="mapplugin coordinates" data-position="4">
       <span class="cbCrsLabel hide-on-medium">ETRS89-TM35FIN</span>
@@ -199,20 +248,22 @@ function renderCoordinatesDisplay(container) {
 
   container.append(element);
 
-  let centerLonLat = { lon: 0, lat: 0 };
-  eventbus.on('map:refresh', (event) => {
-    centerLonLat = event.center;
-    if (centerLonLat) {
-      const latElement = container.find('.cbCoordinate[axis="lat"]');
-      const lonElement = container.find('.cbCoordinate[axis="lon"]');
+  let centerLonLat = map.getView().getCenter() || [0, 0];
 
-      latElement.text(`${latElement.data('label')} ${Math.round(centerLonLat[1])}`);
-      lonElement.text(`${lonElement.data('label')} ${Math.round(centerLonLat[0])}`);
-    }
-  });
+  const updateCoordinates = function () {
+    centerLonLat = map.getView().getCenter() || [0, 0];
+    const latElement = container.find('.cbCoordinate[axis="lat"]');
+    const lonElement = container.find('.cbCoordinate[axis="lon"]');
+
+    latElement.text(`${latElement.data('label')} ${Math.round(centerLonLat[1])}`);
+    lonElement.text(`${lonElement.data('label')} ${Math.round(centerLonLat[0])}`);
+  };
+
+  map.on('moveend', updateCoordinates);
+  updateCoordinates();
 
   $('#mark-coordinates').on('click', () => {
-    eventbus.trigger('coordinates:marked', centerLonLat);
+    map.dispatchEvent({type: 'coordinates:marked', position: centerLonLat});
   });
 }
 

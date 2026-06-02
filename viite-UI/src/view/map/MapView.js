@@ -79,7 +79,11 @@ export function MapView(map, layers) {
       map.getView().setZoom(zoomLevel);
     }, this);
 
-    eventbus.on('coordinates:marked', drawCenterMarker, this);
+    map.on('coordinates:marked', function (event) {
+      if (event && event.position) {
+        drawCenterMarker(event.position);
+      }
+    });
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
       const layerToBeHidden = layers[previouslySelectedLayer];

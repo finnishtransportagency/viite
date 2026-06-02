@@ -584,16 +584,9 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers(layers));
 
-    me.eventListener.listenTo(eventbus, 'underConstructionProjectRoads:toggleVisibility', function (visibility) {
-      underConstructionRoadProjectLayer.setVisible(visibility);
-    });
-    me.eventListener.listenTo(eventbus, 'unAddressedProjectRoads:toggleVisibility', function (visibility) {
-      unAddressedRoadsProjectLayer.setVisible(visibility);
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:visibilityChanged', function () {
-      me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer], getRoadVisibility());
-    });
+    function updateRoadVisibility() {
+      me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer], getRoadVisibility());
+    }
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
       isNotEditingData = notEditingData;
@@ -608,11 +601,24 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     });
 
     me.toggleLayersVisibility(true);
+    function setVisible(name, visible) {
+      const layersByName = {
+        underConstructionRoadLayer: underConstructionRoadProjectLayer,
+        unAddressedRoadLayer: unAddressedRoadsProjectLayer
+      };
+      const targetLayer = layersByName[name];
+      if (targetLayer) {
+        targetLayer.setVisible(visible);
+      }
+    }
+
     me.addLayers(layers);
 
     return {
       show: showLayer,
       hide: hideLayer,
-      clearHighlights: clearHighlights
+      clearHighlights: clearHighlights,
+      setVisible: setVisible,
+      updateRoadVisibility: updateRoadVisibility
     };
 }

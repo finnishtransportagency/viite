@@ -34,8 +34,10 @@ import { Environment } from '@utils/EnvironmentUtils.js';
 export function start() {
   document.title = Environment.browserTitle();
   const backend = new Backend();
+
   backend.getStartupParametersWithCallback(function (startupParameters) {
     setStartupParameters(startupParameters);
+
     const roadCollection = new RoadCollection(backend);
     const projectCollection = new ProjectCollection(backend, startupParameters);
     const roadNameCollection = new RoadNameCollection(backend);
@@ -55,16 +57,13 @@ export function start() {
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
 
-    eventbus.on('linkProperties:available', function () {
-      Spinner.clear();
-    });
-
     const searchPanel = createSearchPanel();
     jQuery('#map-tools').append(searchPanel.element);
 
     backend.getUserRoles();
     setupProjections();
-    const map = initializeApplicationMap(backend, models, startupParameters, roadNameCollection);
+
+    const map = startApplication(backend, models, startupParameters, roadNameCollection);
     new URLRouter(map, backend, models);
     eventbus.trigger('application:initialized');
   });
@@ -80,7 +79,7 @@ $(document).ajaxError(function (event, jqxhr, settings, thrownError) {
 
 const createOpenLayersMap = function (startupParameters, layers) {
   const map = new ol.Map({
-    interactions : ol.interaction.defaults.defaults({doubleClickZoom :false}),
+    interactions: ol.interaction.defaults.defaults({ doubleClickZoom: false }),
     keyboardEventTarget: document,
     target: 'mapdiv',
     layers: layers,
@@ -98,12 +97,15 @@ const createOpenLayersMap = function (startupParameters, layers) {
     duration: 1500,
     condition: function (mapBrowserEvent) {
       const originalEvent = mapBrowserEvent.originalEvent;
+
       return (
         originalEvent.shiftKey &&
         !(originalEvent.metaKey || originalEvent.altKey) &&
-        !originalEvent.ctrlKey);
+        !originalEvent.ctrlKey
+      );
     }
   });
+
   map.getInteractions().forEach(function (interaction) {
     if (interaction instanceof ol.interaction.DragZoom) {
       map.removeInteraction(interaction);
@@ -113,10 +115,11 @@ const createOpenLayersMap = function (startupParameters, layers) {
   shiftDragZoom.setActive(true);
   map.addInteraction(shiftDragZoom);
   map.setProperties({extent: [-548576, 6291456, 1548576, 8388608]});
+
   return map;
 };
 
-const setupMapLayers = function (map, models) {
+const createMapLayers = function (map, models) {
   const roadLayer = new RoadLayer(map);
   const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
   const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection);
@@ -130,15 +133,25 @@ const setupMapLayers = function (map, models) {
   };
 };
 
-const initializeUIelements = function (map, backend, startupParameters) {
-  const mapPluginsContainer = jQuery('#map-plugins');
-  new ScaleBar(map, mapPluginsContainer);
-  new ZoomBox(map, mapPluginsContainer);
-  new Footer(map, mapPluginsContainer);
-  new Header(jQuery('#header'), backend, startupParameters);
+const initializeMap = function (models, startupParameters) {
+
+  const tileMaps = new TileMapCollection();
+  const map = createOpenLayersMap(startupParameters, tileMaps.layers);
+  const layers = createMapLayers(map, models);
+
+  models.projectLinkLayer = layers.roadAddressProject;
+
+  return {map, layers, tileMaps};
 };
 
-const initializeMainMenu = function (backend, map, models, roadNameCollection) {
+const initializeUI = function (map, backend, startupParameters, layers, tileMaps, models, roadNameCollection) {
+  const mapPluginsContainer = jQuery('#map-plugins');
+
+  new ScaleBar(map, mapPluginsContainer);
+  new ZoomBox(map, mapPluginsContainer);
+  new Footer(map, mapPluginsContainer, layers.linkProperty, layers.roadAddressProject, tileMaps);
+  new Header(jQuery('#header'), backend, startupParameters);
+
   new MainMenu({
     selectedLinkProperty: models.selectedLinkProperty,
     eventbus: eventbus,
@@ -153,41 +166,25 @@ const initializeMainMenu = function (backend, map, models, roadNameCollection) {
   });
 };
 
+const startApplication = function (backend, models, startupParameters, roadNameCollection) {
+  const mapContext = initializeMap(
+    models,
+    startupParameters
+  );
 
+  initializeUI(mapContext.map, backend, startupParameters, mapContext.layers, mapContext.tileMaps, models, roadNameCollection);
 
-const createMapAndLayers = function (models, startupParameters) {
-  const tileMaps = new TileMapCollection();
-  const map = createOpenLayersMap(startupParameters, tileMaps.layers);
+  new MapView(mapContext.map, mapContext.layers);
 
-  const layers = setupMapLayers(map, models);
-  models.projectLinkLayer = layers.roadAddressProject;
+  refreshMap(zoomlevels.getViewZoom(mapContext.map), mapContext.map.getLayers().getArray()[0].getExtent());
 
-  return {
-    map: map,
-    layers: layers
-  };
-};
-
-const initializeApplicationMap = function (backend, models, startupParameters, roadNameCollection) {
-  const mapSetup = createMapAndLayers(models, startupParameters);
-  const map = mapSetup.map;
-  const layers = mapSetup.layers;
-
-  initializeMainMenu(backend, map, models, roadNameCollection);
-  initializeUIelements(map, backend, startupParameters);
-
-  new MapView(map, layers);
-
-  refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent());
-
-  return map;
+  return mapContext.map;
 };
 
 const setupProjections = function () {
   proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   ol.proj.proj4.register(proj4);
 };
-
 
 $(function () {
   start();

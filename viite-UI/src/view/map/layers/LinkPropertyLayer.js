@@ -115,6 +115,26 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       unAddressedRoadLayer.setOpacity(opacity);
     };
 
+    const setVisible = function (layerName, visible) {
+      const layersByName = {
+        roadLayer: roadLayer.layer,
+        underConstructionRoadLayer: underConstructionRoadLayer,
+        unAddressedRoadLayer: unAddressedRoadLayer,
+        reservedRoadLayer: reservedRoadLayer,
+        selectedRoadLayer: selectedRoadLayer,
+        directionMarkerLayer: directionMarkerLayer,
+        selectedDirectionMarkerLayer: selectedDirectionMarkerLayer,
+        calibrationPointLayer: calibrationPointLayer
+      };
+      const targetLayer = layersByName[layerName];
+
+      if (targetLayer) {
+        targetLayer.setVisible(visible);
+      }
+    };
+
+    const roadVisibilityLayers = [roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer];
+
     const getStyleForSelection = function (feature) {
       // for normal road links
       if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
@@ -572,16 +592,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
           addFeaturesToSelection(features);
         }
       });
-      eventListener.listenTo(eventbus, 'unAddressedRoads:toggleVisibility', function (visibility) {
-        unAddressedRoadLayer.setVisible(visibility);
-      });
-      eventListener.listenTo(eventbus, 'underConstructionRoads:toggleVisibility', function (visibility) {
-        underConstructionRoadLayer.setVisible(visibility);
-      });
-      eventListener.listenTo(eventbus, 'linkProperty:visibilityChanged', function () {
-        //Exclude underConstruction layers from toggle
-        me.toggleLayersVisibility([roadLayer.layer, directionMarkerLayer, calibrationPointLayer, reservedRoadLayer], getRoadVisibility());
-      });
 
       eventListener.listenTo(eventbus, 'roadLinks:refreshView', function () {
         me.refreshView();
@@ -697,9 +707,21 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     me.addLayers(layers);
     me.layerStarted(me.eventListener);
 
+    function toggleLayersVisibility(layersToToggle, visibility) {
+      _.each(layersToToggle, function (layer) {
+        layer.setVisible(visibility);
+      });
+    }
+
+    function toggleRoadVisibility() {
+      toggleLayersVisibility(roadVisibilityLayers, getRoadVisibility());
+    }
+
     return {
       show: showLayer,
       hide: hideLayer,
+      toggleRoadVisibility: toggleRoadVisibility,
+      setVisible: setVisible,
       minZoomForContent: me.minZoomForContent
     };
 }

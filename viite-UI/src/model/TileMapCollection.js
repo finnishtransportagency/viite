@@ -1,5 +1,3 @@
-import { eventbus } from '@utils/eventbus.js';
-
 /**
  * Creates the background tile layers used by the map view and wires layer visibility events.
  * Manages base maps plus optional property and regional border overlays.
@@ -109,21 +107,19 @@ export function TileMapCollection() {
       });
     };
 
-    const togglePropertyBorderVisibility = function (showPropertyBorder) {
-      propertyBorderLayer.setVisible(showPropertyBorder);
-    };
-
-    const toggleRegionalBordersVisibility = function (showRegionalBorders) {
-      regionBordersLayer.setVisible(showRegionalBorders); 
+    const setVisible = function (layerName, visible) {
+      const layer = tileMapLayers[layerName];
+      if (layer) {
+        layer.setVisible(visible);
+      }
     };
 
     selectMap('background');
-    eventbus.on('tileMap:selected', selectMap);
-    eventbus.on('tileMap:togglepropertyBorder', togglePropertyBorderVisibility);
-    eventbus.on('tileMap:toggleRegionalBorders', toggleRegionalBordersVisibility);
 
     return {
       layers: Object.values(tileMapLayers),
+      selectMap: selectMap,
+      setVisible: setVisible,
       getLayer: function(name) {
         return tileMapLayers[name];
       }
