@@ -21,9 +21,6 @@ function showFormErrors(errors) {
 
 function resetForm() {
     document.getElementById('newUserUsername').value = '';
-    document.getElementById('newUserZoom').value = DEFAULT_COORDINATES.zoom;
-    document.getElementById('newUserEast').value = DEFAULT_COORDINATES.east;
-    document.getElementById('newUserNorth').value = DEFAULT_COORDINATES.north;
     setSelectedRoles('newUserRoles', []);
     setSelectedElinvoimakeskus('newUserElinvoimakeskus', []);
 }
@@ -33,9 +30,9 @@ export const AddUserForm = {
         const { onUserAdded } = options;
         const username = document.getElementById('newUserUsername').value.trim();
         const roles = getSelectedRoles('newUserRoles');
-        const zoom = parseInt(document.getElementById('newUserZoom').value || DEFAULT_COORDINATES.zoom, 10);
-        const east = parseFloat(document.getElementById('newUserEast').value || DEFAULT_COORDINATES.east);
-        const north = parseFloat(document.getElementById('newUserNorth').value || DEFAULT_COORDINATES.north);
+        const zoom = DEFAULT_COORDINATES.zoom;
+        const east = DEFAULT_COORDINATES.east;
+        const north = DEFAULT_COORDINATES.north;
         const elinvoimakeskus = getSelectedElinvoimakeskus('newUserElinvoimakeskus');
 
         const fields = { username, roles, elinvoimakeskus, east, north, zoom };

@@ -9,7 +9,7 @@
  * - Selection types and special configurations
  */
 import { ViiteEnumerations } from "@utils/ViiteEnumerations.js";
-import { eventbus } from "@utils/eventbus.js";
+import { eventbus } from "@utils/Eventbus.js";
 
 const specialSelectionTypes = [
   ViiteEnumerations.SelectionType.Unknown.value

@@ -1,6 +1,6 @@
 import { DynamicLinkNetworkContent as dynamicLinkNetworkContent } from './DynamicLinkNetworkContent.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
-import { Main as UserManagementMain } from './user-management/Main.js';
+import { UserManagagement } from './user-management/UserManagement.js';
 
 // Panel that contains all the tools available for users with admin role
 export function AdminPanel(backend) {
@@ -55,7 +55,7 @@ export function AdminPanel(backend) {
 
             // Initialize the new user management module
             
-            UserManagementMain.init('#userManagementPanelContainer', {});
+            UserManagagement.init('#userManagementPanelContainer', {});
 
             bindEvents();
         };

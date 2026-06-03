@@ -189,7 +189,7 @@ export function ProjectLinkEditor(canUseDevTools) {
         FormState.setNameEdited($('#roadName').val() !== '');
       });
 
-      rootElement.on('change', '#endDistance', (eventData) => {
+      rootElement.on('change', '#endDistance', () => {
         FormState.setUnsavedChanges(true);
       });
 

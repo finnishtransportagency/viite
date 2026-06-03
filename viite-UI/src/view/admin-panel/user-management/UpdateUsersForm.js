@@ -2,21 +2,17 @@
  * UpdateUsersForm - Handles updating existing users
  */
 import { validateUserFieldsAndToastErrors } from './FormValidation.js';
-import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, getSelectedElinvoimakeskus } from './Dropdowns.js';
+import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, getSelectedElinvoimakeskus, setSelectedRoles } from './Dropdowns.js';
 import { showToast } from '@components/toast/Toast.js';
 import { userManagementApi } from '@utils/UserManagementApi.js';
 import { getSessionUsername } from '@model/ApplicationModel.js';
+
+const VIITE_ROLE = 'viite';
 
 const DEFAULT_COORDINATES = {
     zoom: 3,
     east: 440220,
     north: 7175360
-};
-
-const COORD_LIMITS = {
-    east: [50000, 750000],
-    north: [6600000, 7800000],
-    zoom: [1, 10]
 };
 
 /**
@@ -31,6 +27,61 @@ function handleApiResponse(response, successMessage, errorMessage, onSuccess) {
         const reason = (response && response.reason) || errorMessage;
         showToast(reason, { type: 'error' });
     }
+}
+
+function updateToggleViiteButtonState() {
+    const button = document.getElementById('toggleViiteAllButton');
+    const rows = Array.from(document.querySelectorAll('#userTableBody tr'));
+
+    if (!button) return;
+
+    if (!rows.length) {
+        button.disabled = true;
+        button.textContent = 'Anna viite-oikeus kaikille';
+        return;
+    }
+
+    button.disabled = false;
+
+    const allHaveViiteRole = rows.every(function (row) {
+        const roleWrapper = row.querySelector('[data-role-dropdown-id]');
+        if (!roleWrapper) return false;
+
+        const dropdownId = roleWrapper.getAttribute('data-role-dropdown-id');
+        const roles = getSelectedRoles(dropdownId);
+        return roles.includes(VIITE_ROLE);
+    });
+
+    button.textContent = allHaveViiteRole ? 'Poista viite-oikeus kaikilta' : 'Anna viite-oikeus kaikille';
+}
+
+function toggleViiteRoleForAllUsers() {
+    const rows = Array.from(document.querySelectorAll('#userTableBody tr'));
+    if (!rows.length) return;
+
+    const allHaveViiteRole = rows.every(function (row) {
+        const roleWrapper = row.querySelector('[data-role-dropdown-id]');
+        if (!roleWrapper) return false;
+
+        const dropdownId = roleWrapper.getAttribute('data-role-dropdown-id');
+        const roles = getSelectedRoles(dropdownId);
+        return roles.includes(VIITE_ROLE);
+    });
+
+    rows.forEach(function (row) {
+        const roleWrapper = row.querySelector('[data-role-dropdown-id]');
+        if (!roleWrapper) return;
+
+        const dropdownId = roleWrapper.getAttribute('data-role-dropdown-id');
+        const roles = getSelectedRoles(dropdownId);
+        const nextRoles = allHaveViiteRole
+            ? roles.filter(role => role !== VIITE_ROLE)
+            : Array.from(new Set([].concat(roles, VIITE_ROLE)));
+
+        setSelectedRoles(dropdownId, nextRoles);
+    });
+
+    updateToggleViiteButtonState();
 }
 
 export const UpdateUserForm = {
@@ -52,28 +103,13 @@ export const UpdateUserForm = {
 
                 row.dataset.username = user.username;
                 row.dataset.userid = user.id;
+                                row.dataset.zoom = String((user.configuration && user.configuration.zoom) || DEFAULT_COORDINATES.zoom);
+                                row.dataset.east = String((user.configuration && user.configuration.east) || DEFAULT_COORDINATES.east);
+                                row.dataset.north = String((user.configuration && user.configuration.north) || DEFAULT_COORDINATES.north);
 
                 row.innerHTML = `
                     <td>${user.username}</td>
                     <td>${getRoleDropdownHtml(roleDropdownId, user.roles)}</td>
-                    <td>
-                      <input
-                        class="zoom-input existing-user-input form-control"
-                        type="number"
-                        inputmode="numeric"
-                        pattern="[0-9]*"
-                        min="${COORD_LIMITS.zoom[0]}"
-                        max="${COORD_LIMITS.zoom[1]}"
-                        value="${user.configuration.zoom}"
-                        onkeydown="return event.key !== '.' && event.key !== ','"
-                      >
-                    </td>
-                    <td class="coordinate-wrapper">
-                        <label class="user-management-label" for="userNorth-${index}">P:</label>
-                        <input type="number" id="userNorth-${index}" class="coord-input north existing-user-input form-control" value="${user.configuration.north}">
-                        <label class="user-management-label" for="userEast-${index}">I:</label>
-                        <input type="number" id="userEast-${index}" class="coord-input east existing-user-input form-control" value="${user.configuration.east}">
-                    </td>
                     <td>${getElinvoimakeskusDropdownHtml(elinvoimakeskusDropdownId, user.authorizedElinvoimakeskus)}</td>
                     <td><button class="btn btn-danger delete-user" data-username="${user.username}">Poista</button></td>
                 `;
@@ -109,6 +145,8 @@ export const UpdateUserForm = {
                     }
                 });
             });
+
+            updateToggleViiteButtonState();
         });
     },
 
@@ -133,20 +171,15 @@ export const UpdateUserForm = {
             const roles = getSelectedRoles(rolesId);
             const elinvoimakeskus = getSelectedElinvoimakeskus(elinvoimakeskusId);
 
-            const eastRaw = $row.find('input[id^="userEast"]').val();
-            const northRaw = $row.find('input[id^="userNorth"]').val();
-            const zoomRaw = $row.find('.zoom-input').val();
+            const east = parseFloat($row.attr('data-east') || DEFAULT_COORDINATES.east);
+            const north = parseFloat($row.attr('data-north') || DEFAULT_COORDINATES.north);
+            const zoom = parseInt($row.attr('data-zoom') || DEFAULT_COORDINATES.zoom, 10);
 
-            const east = eastRaw === undefined || eastRaw === '' ? DEFAULT_COORDINATES.east : parseFloat(eastRaw);
-            const north = northRaw === undefined || northRaw === '' ? DEFAULT_COORDINATES.north : parseFloat(northRaw);
-            const zoom = zoomRaw === undefined || zoomRaw === '' ? DEFAULT_COORDINATES.zoom : parseInt(zoomRaw, 10);
-
-            const fields = { roles, elinvoimakeskus, east, north, zoom };
+            const fields = { roles, elinvoimakeskus };
             const { valid } = validateUserFieldsAndToastErrors(fields, {
                 checkUsername: false,
                 checkRoles: true,
-                checkElinvoimakeskus: true,
-                checkCoordinates: true
+                checkElinvoimakeskus: true
             }, `Virhe: `);
 
             if (!valid) {
@@ -196,5 +229,18 @@ export const UpdateUserForm = {
             e.preventDefault();
             UpdateUserForm.updateAllUsers(container, options);
         });
+
+        container.off('click', '#toggleViiteAllButton');
+        container.on('click', '#toggleViiteAllButton', function (e) {
+            e.preventDefault();
+            toggleViiteRoleForAllUsers();
+        });
+
+        container.off('change', '[data-role-dropdown-id] input[type="checkbox"]');
+        container.on('change', '[data-role-dropdown-id] input[type="checkbox"]', function () {
+            updateToggleViiteButtonState();
+        });
+
+        updateToggleViiteButtonState();
     }
 };

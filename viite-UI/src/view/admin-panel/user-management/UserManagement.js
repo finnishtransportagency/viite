@@ -1,9 +1,11 @@
 /**
- * View - Contains the main HTML content for user management
+ * UserManagagement - Contains rendering and initialization for user management
  */
+import { AddUserForm } from './AddUserForm.js';
+import { UpdateUserForm } from './UpdateUsersForm.js';
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml } from './Dropdowns.js';
 
-export const View = {
+export const UserManagagement = {
     getContent: function () {
         const defaultRoles = ["viite"];
         const defaultElinvoimakeskus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -54,5 +56,22 @@ export const View = {
               </fieldset>
             </div>
           `;
+    },
+
+    init: function (containerSelector) {
+        const container = document.querySelector(containerSelector);
+
+        if (!container || !AddUserForm || !UpdateUserForm) {
+            return;
+        }
+
+        container.innerHTML = UserManagagement.getContent();
+        AddUserForm.bindEvents(containerSelector, {
+            onUserAdded: function () {
+                UpdateUserForm.fetchUsers({});
+            }
+        });
+        UpdateUserForm.bindEvents(containerSelector, {});
+        UpdateUserForm.fetchUsers({});
     }
 };

@@ -3,24 +3,17 @@
  */
 import { showToast } from '@components/toast/Toast.js';
 
-const COORD_LIMITS = {
-    east: [50000, 750000],
-    north: [6600000, 7800000],
-    zoom: [1, 10]
-};
-
-// Performs validation checks on user fields like username, Elinvoimakeskus, zoom, and map coordinates.
+// Performs validation checks on user fields like username and Elinvoimakeskus.
 // Validation can be conditionally enabled or disabled using the `options` object.
 // eslint-disable-next-line complexity
 export function validateUserFields(fields, options) {
     const {
         checkUsername = true,
-        checkElinvoimakeskus = true,
-        checkCoordinates = true
+        checkElinvoimakeskus = true
     } = options || {};
 
     const errors = {};
-    const { username, elinvoimakeskus, east, north, zoom } = fields;
+    const { username, elinvoimakeskus } = fields;
 
     if (checkUsername) {
         if (!username || !(/^[A-Za-zÅÄÖåäö]/).test(username))
@@ -33,18 +26,6 @@ export function validateUserFields(fields, options) {
 
     if (checkElinvoimakeskus && (!elinvoimakeskus || elinvoimakeskus.length === 0)) {
         errors.elinvoimakeskus = "Valitse vähintään yksi Elinvoimakeskus.";
-    }
-
-    if (checkCoordinates) {
-        if (typeof east !== 'number' || east < COORD_LIMITS.east[0] || east > COORD_LIMITS.east[1]) {
-            errors.east = `Itä-koordinaatin on oltava välillä ${COORD_LIMITS.east[0]} - ${COORD_LIMITS.east[1]}.`;
-        }
-        if (typeof north !== 'number' || north < COORD_LIMITS.north[0] || north > COORD_LIMITS.north[1]) {
-            errors.north = `Pohjois-koordinaatin on oltava välillä ${COORD_LIMITS.north[0]} - ${COORD_LIMITS.north[1]}.`;
-        }
-        if (!Number.isInteger(zoom) || zoom < COORD_LIMITS.zoom[0] || zoom > COORD_LIMITS.zoom[1]) {
-            errors.zoom = `Zoomin on oltava kokonaisluku väliltä ${COORD_LIMITS.zoom[0]}–${COORD_LIMITS.zoom[1]}.`;
-        }
     }
 
     return errors;

@@ -1,8 +1,29 @@
 // Provides API functions for user management operations such as fetching, adding, deleting, and updating users.
+const isFunction = function (candidate) {
+    return typeof candidate === 'function';
+};
+
+const extractErrorMessage = function (jqXHR, defaultMessage) {
+    try {
+        const response = JSON.parse(jqXHR.responseText);
+        if (response && response.reason) {
+            return response.reason;
+        }
+        if (response && response.message) {
+            return response.message;
+        }
+    } catch (e) {
+      console.error(e);
+        // Keep fallback behavior when response is plain text.
+    }
+
+    return (jqXHR && jqXHR.responseText) || defaultMessage;
+};
+
 export const userManagementApi = {
     getAllUsers: function(callback) {
-        $.get('api/viite/users', function(data) {
-            if (_.isFunction(callback)) {
+        return $.get('api/viite/users', function(data) {
+            if (isFunction(callback)) {
                 return callback(data.users);
             }
             return undefined;
@@ -12,7 +33,7 @@ export const userManagementApi = {
     },
 
     addUser: function(newUser, success, failure) {
-        $.ajax({
+        return $.ajax({
             url: 'api/viite/users',
             type: 'POST',
             contentType: 'application/json',
@@ -20,26 +41,18 @@ export const userManagementApi = {
             dataType: 'json',
             success: success,
             error: function(jqXHR) {
-                let errorMessage = 'Virhe käyttäjän luonnissa';
-                try {
-                    const response = JSON.parse(jqXHR.responseText);
-                    if (response && response.reason) {
-                        errorMessage = response.reason;
-                    }
-                } catch (e) {
-                    console.error("Odottamaton virhe", e);
-                }
-                if (_.isFunction(failure)) failure(errorMessage);
+                const errorMessage = extractErrorMessage(jqXHR, 'Virhe käyttäjän luonnissa');
+                if (isFunction(failure)) failure(errorMessage);
             }
         });
     },
 
     deleteUser: function(username, success, failure) {
-        $.ajax({
+        return $.ajax({
             url: `api/viite/users/${encodeURIComponent(username)}`,
             type: 'DELETE',
             success: () => {
-                if (typeof success === 'function') {
+                if (isFunction(success)) {
                     success({
                         success: true,
                         message: `Käyttäjä '${username}' poistettu.`
@@ -48,7 +61,7 @@ export const userManagementApi = {
             },
             error: (e) => {
                 const errorMsg = (e && e.responseText) || 'Virhe käyttäjän poistamisessa';
-                if (typeof failure === 'function') {
+                if (isFunction(failure)) {
                     failure(errorMsg);
                 }
             }
@@ -56,7 +69,7 @@ export const userManagementApi = {
     },
 
     updateUsers: function(users, success, failure) {
-        $.ajax({
+        return $.ajax({
             url: 'api/viite/users',
             type: 'PUT',
             contentType: 'application/json',
@@ -64,7 +77,7 @@ export const userManagementApi = {
             dataType: 'json',
             success: success,
             error: function(jqXHR) {
-                if (_.isFunction(failure)) failure(jqXHR.responseText || 'Virhe käyttäjien päivittämisessä');
+                if (isFunction(failure)) failure(extractErrorMessage(jqXHR, 'Virhe käyttäjien päivittämisessä'));
             }
         });
     }

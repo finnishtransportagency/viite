@@ -1,4 +1,4 @@
-.user-management-content-wrapper {
+.user-management {
     .user-management-form {
         margin-bottom: 30px;
         border: 1px solid #e5e7eb;
@@ -82,7 +82,7 @@
         cursor: pointer;
         background: white;
         display: flex;
-        justify-content: space-between;
+        justify-content: flex-start;
         align-items: center;
         user-select: none;
 
@@ -91,8 +91,17 @@
         }
     }
 
+    .elinvoimakeskus-dropdown-wrapper .dropdown-toggle {
+        min-width: 420px;
+    }
+
     .dropdown-label {
         font-size: 14px;
+        white-space: nowrap;
+    }
+
+    .dropdown-arrow {
+        display: none;
     }
 
     .dropdown-content {
@@ -188,27 +197,6 @@
         }
     }
 
-    .coord-input {
-        width: 80px;
-        padding: 2px 4px;
-        border: 1px solid #d1d5db;
-        border-radius: 3px;
-        font-size: 14px !important;
-
-        &.north {
-            width: 90px;
-        }
-    }
-
-    .zoom-input {
-        font-size: 14px !important;
-        width: 50px;
-    }
-
-    .existing-user-input {
-        height: 37.33px;
-    }
-
     .user-management-label {
         font-size: 14px;
         margin-right: 1px;
@@ -235,44 +223,9 @@
         width: 250px;
     }
 
-    .coordinates-group {
-        display: flex;
-        flex-direction: column;
-        min-width: 320px;
-        gap: 8px;
-
-        > label {
-            display: block;
-            width: 100%;
-            font-weight: 600;
-        }
-    }
-
-    .coordinate-wrapper {
-        display: flex;
-        flex-direction: row;
-        gap: 12px;
-        align-items: center;
-    }
-
-    table > tbody > tr:first-child .coordinate-wrapper {
-        border-top: 0 !important;
-    }
-
-    .coordinate-input {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        min-width: 80px;
-
-        label {
-            min-width: 18px;
-            font-weight: normal;
-            margin: 0;
-        }
-    }
-
     .form-actions {
+        display: flex;
+        gap: 8px;
         align-self: flex-end;
         margin-left: auto;
         margin-top: 8px;

@@ -11,7 +11,6 @@ import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
-import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer, getSelectedTool } from '@model/ApplicationModel.js';
 
 const States = {
