@@ -118,7 +118,7 @@ export function createProjectLinkEditorHTML(dependencies) {
       id: 'dropDown_0',
       options: options,
       defaultValue: defaultOption,
-      style: 'width: 220px;',
+      className: 'project-link-change-type-dropdown',
       disabled: !projectEditable
     });
   };
@@ -178,7 +178,6 @@ export function createProjectLinkEditorHTML(dependencies) {
             ${addRoadNameField(roadName, selected[0].roadNameBlocked, 50)}
           </div>
         </div>
-        <div>Tarkista tekemäsi muutokset. Jos muutokset ok, tallenna.</div>
         ${renderDistanceValue()}
       </div>
     `;
@@ -193,24 +192,9 @@ export function createProjectLinkEditorHTML(dependencies) {
   const renderChangeDirection = (selected, project) => {
     if (!editableStatus.includes(project.statusCode)) return '';
 
-    const reversedInGroup = _.uniq(selected.map(s => s.reversed));
-    const isPartialReversed = reversedInGroup.length > 1;
-    let infoLabel = '';
-
-    if (selected[0].status !== RoadAddressChangeType.New.value) {
-      if (isPartialReversed) {
-        infoLabel = '<label class="form-group change-direction-info">Osittain käännetty</label>';
-      } else if (selected[0].reversed) {
-        infoLabel = '<label class="form-group change-direction-info"><span>&#9745;</span> Käännetty</label>';
-      } else {
-        infoLabel = '<label class="form-group change-direction-info"><span>&#9744;</span> Käännetty</label>';
-      }
-    }
-
     return `
       <div hidden class="form-group changeDirectionDiv change-direction-container">
         <button id="changeDirectionButton" class="form-group changeDirection btn-primary">Käännä tieosan kasvusuunta</button>
-        ${infoLabel}
       </div>`;
   };
 
@@ -226,7 +210,6 @@ export function createProjectLinkEditorHTML(dependencies) {
           ${numberInput('beginDistance', 5, false, '--')}
           <label>LOPUSSA</label>
           ${numberInput('endDistance', 5, false, '--')}
-          <span id="manualCPWarning" class="manualCPWarningSpan">!</span>
         </div>
       </div>`;
   };
@@ -300,6 +283,8 @@ export function createProjectLinkEditorHTML(dependencies) {
   };
 
   const addElinvoimakeskusDropdown = (selectedValue, isDisabled) => {
+
+    // Build dropdown options from EVK enum values, skipping code 0 (unknown) and ordering by numeric code
     const evkOptions = Object.entries(ViiteEnumerations.EVKCodes)
       .filter(([, val]) => val.value !== 0)
       .sort((a, b) => a[1].value - b[1].value)
@@ -325,9 +310,9 @@ export function createProjectLinkEditorHTML(dependencies) {
     return dropdown({
       id: 'discontinuityDropdown',
       className: 'form-select-control',
-      defaultValue: '5',
+      defaultValue: '',
       options: [
-        { value: '5', text: '5 Jatkuva', disabled: true, hidden: true },
+        { value: '', text: '5 Jatkuva', disabled: true, hidden: true },
         { value: '1', text: '1 Tien loppu' },
         { value: '2', text: '2 Epäjatkuva' },
         { value: '3', text: '3 Elinvoimakeskuksen raja' },
@@ -356,12 +341,12 @@ export function createProjectLinkEditorHTML(dependencies) {
 
   const actionButtonsForSelectedLinks = (notDisabled) => {
     return `
-    <div class="footer-project-link-edit" id="actionButtons">
-      <div>
-        <button id="saveButton" class="btn-primary update btn-save action-button" ${notDisabled ? '' : 'disabled'}>Tallenna</button>
-        <button id="cancelButton" class="cancelLink btn-cancel">Peruuta</button>
-      </div>
-    </div>`;
+      <div class="footer-project-link-edit" id="actionButtons">
+        <div>
+          <button id="saveButton" class="btn-primary update btn-save action-button" ${notDisabled ? '' : 'disabled'}>Tallenna</button>
+          <button id="cancelButton" class="cancelLink btn-cancel">Peruuta</button>
+        </div>
+      </div>`;
   };
 
   return {

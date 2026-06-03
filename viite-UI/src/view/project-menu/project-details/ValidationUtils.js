@@ -39,11 +39,11 @@ export function ValidationUtils() {
       return '';
     };
 
-    const isRoadPartInvalid = function (_rootElement) {
+    const isRoadPartInvalid = function (rootElement) {
       const values = [
-        $('#tie').val(),
-        $('#aosa').val(),
-        $('#losa').val()
+        rootElement.find('#tie').val(),
+        rootElement.find('#aosa').val(),
+        rootElement.find('#losa').val()
       ];
 
       const allNumbers = values.every(val => val !== "" && $.isNumeric(val));

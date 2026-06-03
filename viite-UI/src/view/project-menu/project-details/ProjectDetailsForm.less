@@ -75,10 +75,7 @@
 .road-table-cell-center {
   &:extend(.road-table-cell);
   text-align: center;
-  text-wrap: wrap !important;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
+
 }
 
 .road-table-cell-no-wrap {
@@ -151,6 +148,10 @@
   gap: 8px;
 }
 
+.col-5 {
+  width: 5%;
+}
+
 /* Column width styling */
 .col-10 {
   width: 10%;
@@ -160,12 +161,13 @@
   width: 17.5%;
 }
 
-.col-35 {
-  width: 35%;
+.col-25 {
+  width: 25%;
 }
 
 .footer-project-details {
   display: flex;
+  width: 100%;
   justify-content: space-between !important;
   align-items: center;
   gap: 8px;
@@ -174,6 +176,13 @@
     display: flex;
     gap: 8px;
     align-items: center;
+  }
+
+  .footer-right-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
   }
 }
 

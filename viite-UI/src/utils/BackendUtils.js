@@ -247,7 +247,7 @@ export function Backend() {
           });
         }, 1000),
 
-        checkIfRoadpartReserved: function (roadNumber, startPart, endPart, projDate, projectId) {
+        checkIfRoadpartReserved: function (roadNumber, startPart, endPart, projDate, projectId, callback) {
           return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
             roadNumber: roadNumber,
             startPart: startPart,
@@ -255,7 +255,7 @@ export function Backend() {
             projDate: convertDatetoSimpleDate(projDate),
             projectId: projectId
           }).then(function (data) {
-            eventbus.trigger('roadPartsValidation:checkRoadParts', data);
+            if (_.isFunction(callback)) callback(data);
           });
         },
 

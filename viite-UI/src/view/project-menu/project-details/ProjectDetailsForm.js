@@ -11,8 +11,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
-import { zoomlevels } from '@utils/ZoomLevels.js';
-import { selectLayer, refreshMap } from '@model/ApplicationModel.js';
+import { selectLayer } from '@model/ApplicationModel.js';
 
 export function ProjectDetailsForm(callbacks = {}) {
     let startDatePicker = null;
@@ -23,6 +22,7 @@ export function ProjectDetailsForm(callbacks = {}) {
     let hasUnsavedChanges = false;
     let projectValidationFailedHandler = null;
     let projectFailedHandler = null;
+    let projectValidationSucceedHandler = null;
 
     const deleteRoadPartButton = function (roadNumber, roadPartNumber, selector) {
       return `
@@ -68,9 +68,9 @@ export function ProjectDetailsForm(callbacks = {}) {
               <col class="col-10">
               <col class="col-10">
               <col class="col-17-5">
-              <col class="col-17-5">
-              <col class="col-35">
-              <col class="col-10">
+              <col class="col-25">
+              <col class="col-25">
+              <col class="col-5">
             </colgroup>
             <thead class="road-table-header">
               <tr class="road-table-row">
@@ -165,7 +165,7 @@ export function ProjectDetailsForm(callbacks = {}) {
           
           ${!isNewProject ? `
             <div class="new-reserved-roads">
-              ${generateTableStructure('newReservedRoads', 'PROJEKTISSA MUODOSTETUT TIEOSAT:', formedRoadsHtml)}
+              ${generateTableStructure('newReservedRoads', 'PROJEKTISSA MUODOSTETUT TIEOSAT', formedRoadsHtml)}
             </div>
           ` : ''}
         </div>`;
@@ -189,15 +189,17 @@ export function ProjectDetailsForm(callbacks = {}) {
       return `
         <div class="footer-project-details ${!showDelete ? 'no-delete' : ''}" id="actionButtons">
           ${showDelete ? `<span id="deleteProjectSpan" class="deleteSpan">POISTA PROJEKTI <i id="deleteProject_${project.id}" class="fas fa-trash-alt" value="${project.id}"></i></span>` : ''}
-          ${actionButton}
-          ${cancelButton}
+          <div class="footer-right-actions">
+            ${actionButton}
+            ${cancelButton}
+          </div>
         </div>`;
     };
 
     const updateReserveButtonState = function () {
-      const $form = $('#roadAddressProject');
+      const $reservationContainer = $('.reservation-container');
       const validationUtils = new ValidationUtils();
-      const isRoadPartInvalidResult = validationUtils.isRoadPartInvalid($form);
+      const isRoadPartInvalidResult = validationUtils.isRoadPartInvalid($reservationContainer);
       const dateValue = $('#projectStartDate').val() || '';
       const hasDate = dateValue.trim() !== '';
       const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
@@ -388,11 +390,6 @@ export function ProjectDetailsForm(callbacks = {}) {
         eventbus.once('roadAddress:projectSaved', function(result) {
           Spinner.hide();
 
-          // Wait before refreshing the map to ensure the layer is selected
-          setTimeout(function() {
-            refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
-          }, 1800);
-
           if (result && result.success) {
             markAsSaved();
 
@@ -406,6 +403,11 @@ export function ProjectDetailsForm(callbacks = {}) {
 
             if (savedProject) {
               eventbus.trigger('roadAddressProject:openProject', savedProject);
+
+              // This updates the map after saving the project
+              eventbus.once('roadAddressProject:projectFetched', function () {
+                eventbus.trigger('roadAddressProject:fetch');
+              });
             }
 
             if (result.projectAddresses && savedProject) {
@@ -538,35 +540,33 @@ export function ProjectDetailsForm(callbacks = {}) {
         const endPart = $('#losa').val() || '';
         const projectDate = $('#projectStartDate').val() || '';
         const projectId = (currentProject && currentProject.id) ? currentProject.id : 0;
-        
-        // Format data as expected by checkIfReserved method
-        const data = [
-          null, // data[0] - unused
-          { value: projectDate }, // data[1] - project date
-          null, // data[2] - unused
-          { value: roadNumber }, // data[3] - road number
-          { value: startPart }, // data[4] - start part
-          { value: endPart } // data[5] - end part
-        ];
-        data.projectId = projectId;
-        
-        projCollection.checkIfReserved(data);
+
+        projCollection.checkIfReserved({
+          projectId,
+          projectDate,
+          roadNumber,
+          startPart,
+          endPart
+        });
         return false;
       });
     };
 
     const bindReservationEventListeners = function (projCollection, currentProject) {
-      const ProjectStatus = ViiteEnumerations.ProjectStatus;
-      eventbus.off('roadAddress:projectValidationSucceed').on('roadAddress:projectValidationSucceed', function () {
+      if (projectValidationSucceedHandler) {
+        eventbus.off('roadAddress:projectValidationSucceed', projectValidationSucceedHandler);
+      }
+      projectValidationSucceedHandler = function () {
         $('#tie, #aosa, #losa').val('');
-        $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved', currentProject, ProjectStatus));
+        $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved'));
         if ($('#newReservedRoads').length) {
-            $('#newReservedRoads').html(roadPartList(projCollection.getFormedParts(), 'formed', currentProject, ProjectStatus));
+            $('#newReservedRoads').html(roadPartList(projCollection.getFormedParts(), 'formed'));
         }
         updateReserveButtonState();
         markAsChanged(); // Mark project as having unsaved changes when reservation is made
         updateSaveButtonState(currentProject);
-      });
+      };
+      eventbus.on('roadAddress:projectValidationSucceed', projectValidationSucceedHandler);
     };
 
     const bindDeleteRoadPartHandlers = function (projCollection, currentProject) {
@@ -608,7 +608,7 @@ export function ProjectDetailsForm(callbacks = {}) {
           return part.roadNumber.toString() !== roadNumber.toString() || part.roadPartNumber.toString() !== roadPartNumber.toString();
         }));
         
-        refreshRoadPartsDisplay(projCollection, currentProject);
+        refreshRoadPartsDisplay(projCollection);
         updateSaveButtonState(currentProject);
       };
 
@@ -620,7 +620,7 @@ export function ProjectDetailsForm(callbacks = {}) {
         }));
         
         removeRenumberedPart(roadNumber, roadPartNumber);
-        refreshRoadPartsDisplay(projCollection, currentProject);
+        refreshRoadPartsDisplay(projCollection);
         updateSaveButtonState(currentProject);
       };
 
@@ -662,11 +662,10 @@ export function ProjectDetailsForm(callbacks = {}) {
       });
     };
 
-    const refreshRoadPartsDisplay = function (projCollection, currentProject) {
-        const ProjectStatus = ViiteEnumerations.ProjectStatus;
-        $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved', currentProject, ProjectStatus));
+    const refreshRoadPartsDisplay = function (projCollection) {
+        $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved'));
         if ($('#newReservedRoads').length) {
-            $('#newReservedRoads').html(roadPartList(projCollection.getFormedParts(), 'formed', currentProject, ProjectStatus));
+            $('#newReservedRoads').html(roadPartList(projCollection.getFormedParts(), 'formed'));
         }
     };
 

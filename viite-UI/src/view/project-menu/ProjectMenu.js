@@ -24,7 +24,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const rootElement = $(containerSelector || '#menu-container');
     const eventbus = eventBus;
     const selectedProjectLinkProperty = options.selectedProjectLinkProperty;
-    const menu = options?.menu || null;
+    const menu = options.menu || null;
 
     const clearSelectedProjectLinks = () => {
       if (!selectedProjectLinkProperty) {
@@ -69,7 +69,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
 
     // --- State & Project Management ---
-    let currentState = States.ROAD_ADDRESSING;
+    let currentState = States.CONFIGURATION;
     
     let editFlag = false;
     const project = {
@@ -113,12 +113,11 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
             }
           });
 
-          const ProjectStatus = ViiteEnumerations.ProjectStatus;
           const reservedParts = options.projectCollection ? options.projectCollection.getReservedParts() : [];
           const formedParts = options.projectCollection ? options.projectCollection.getFormedParts() : [];
 
-          const reservedHtml = detailsForm.roadPartList(reservedParts, 'reserved', project.data, ProjectStatus);
-          const formedHtml = detailsForm.roadPartList(formedParts, 'formed', project.data, ProjectStatus);
+          const reservedHtml = detailsForm.roadPartList(reservedParts, 'reserved');
+          const formedHtml = detailsForm.roadPartList(formedParts, 'formed');
 
           contentHtml = detailsForm.renderForm(project.data, project.isNew, reservedHtml, formedHtml);
           footerHtml = detailsForm.renderFooter(project.data, editFlag);
@@ -177,10 +176,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       }
 
       if (currentState === States.CONFIGURATION) {
-        const hasPersistedProject = !_.isUndefined(project.data.id) && project.data.id !== null && project.data.id !== 0;
-        if (hasPersistedProject) {
-          return project.data.name;
-        }
         return project.data.name;
       }
 
@@ -289,26 +284,25 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     };
 
     // --- Listeners ---
-    eventbus.on('projectLink:clicked', function (selected) {
+    const onProjectLinkClicked = function (selected) {
       const currentProject = options.projectCollection ? options.projectCollection.getCurrentProject() : null;
       if (currentProject) {
         updateUI(States.LINK_EDIT, currentProject.project, false, { selectedLinks: selected });
       }
-    });
+    };
 
-    eventbus.on('projectLink:errorClicked', function (selected, errorMessage) {
+    const onProjectLinkErrorClicked = function (selected, errorMessage) {
       const currentProject = options.projectCollection ? options.projectCollection.getCurrentProject() : null;
       if (currentProject) {
-        // For error clicks, we still show the link edit form but with error information
         const errorSelectedLinks = Array.isArray(selected) ? selected : [selected];
         updateUI(States.LINK_EDIT, currentProject.project, false, { 
           selectedLinks: errorSelectedLinks, 
           errorMessage: errorMessage 
         });
       }
-    });
+    };
 
-    eventbus.on('roadAddress:projectLinksUpdated', function () {
+    const onProjectLinksUpdated = function () {
       if (options.projectCollection) {
         options.projectCollection.setTmpDirty([]);
         options.projectCollection.setDirty([]);
@@ -321,9 +315,9 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
       Spinner.hide();
       updateUI(States.ROAD_ADDRESSING, project.data, false);
-    });
+    };
 
-    eventbus.on('roadAddress:projectLinksUpdateFailed', function (errorCode) {
+    const onProjectLinksUpdateFailed = function (errorCode) {
       const errorMessages = {
         400: 'Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.',
         401: 'Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.',
@@ -337,41 +331,41 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         type: 'alert',
         okButtonLbl: 'OK'
       });
-    });
+    };
 
-    eventbus.on('roadAddressProject:reOpenCurrent', function () {
+    const onReOpenCurrent = function () {
       updateUI(States.ROAD_ADDRESSING, project.data, false);
-    });
+    };
 
-    eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+    const onProjectLinksCreateSuccess = function () {
       if (options.projectCollection) {
         options.projectCollection.setTmpDirty([]);
       }
       eventbus.trigger('projectChangeTable:refresh');
       updateUI(States.ROAD_ADDRESSING, project.data, false);
-    });
+    };
 
-    eventbus.on('roadAddress:projectSentSuccess', function () {
+    const onProjectSentSuccess = function () {
       showToast('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
       closeProjectMenu();
       eventbus.trigger('roadLinks:refreshView');
-    });
+    };
 
-    eventbus.on('roadAddress:projectSentFailed', function (error) {
+    const onProjectSentFailed = function (error) {
       new ConfirmPopup(error, {
         type: 'alert',
         okButtonLbl: 'OK'
       });
-    });
+    };
 
-    eventbus.on('roadAddress:changeDirectionFailed', function (error) {
+    const onChangeDirectionFailed = function (error) {
       new ConfirmPopup(error, {
         type: 'alert',
         okButtonLbl: 'OK'
       });
-    });
+    };
 
-    eventbus.on('roadAddress:openProject', function (result) {
+    const onOpenProject = function (result) {
       project.data = result.project;
       project.isNew = false;
 
@@ -392,18 +386,43 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         eventbus.trigger('roadAddressProject:deactivateAllSelections');
       }
       Spinner.hide();
-    });
+    };
+
+    eventbus.on('projectLink:clicked',                     onProjectLinkClicked);
+    eventbus.on('projectLink:errorClicked',                onProjectLinkErrorClicked);
+    eventbus.on('roadAddress:projectLinksUpdated',         onProjectLinksUpdated);
+    eventbus.on('roadAddress:projectLinksUpdateFailed',    onProjectLinksUpdateFailed);
+    eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
+    eventbus.on('roadAddress:projectLinksCreateSuccess',   onProjectLinksCreateSuccess);
+    eventbus.on('roadAddress:projectSentSuccess',          onProjectSentSuccess);
+    eventbus.on('roadAddress:projectSentFailed',           onProjectSentFailed);
+    eventbus.on('roadAddress:changeDirectionFailed',       onChangeDirectionFailed);
+    eventbus.on('roadAddress:openProject',                 onOpenProject);
+
+    const destroy = function () {
+      eventbus.off('projectLink:clicked',                     onProjectLinkClicked);
+      eventbus.off('projectLink:errorClicked',                onProjectLinkErrorClicked);
+      eventbus.off('roadAddress:projectLinksUpdated',         onProjectLinksUpdated);
+      eventbus.off('roadAddress:projectLinksUpdateFailed',    onProjectLinksUpdateFailed);
+      eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
+      eventbus.off('roadAddress:projectLinksCreateSuccess',   onProjectLinksCreateSuccess);
+      eventbus.off('roadAddress:projectSentSuccess',          onProjectSentSuccess);
+      eventbus.off('roadAddress:projectSentFailed',           onProjectSentFailed);
+      eventbus.off('roadAddress:changeDirectionFailed',       onChangeDirectionFailed);
+      eventbus.off('roadAddress:openProject',                 onOpenProject);
+    };
 
     return {
       showProjectDetails: (proj, isNew) => updateUI(States.CONFIGURATION, proj, isNew),
       showRoadAddressing: (proj) => updateUI(States.ROAD_ADDRESSING, proj, false),
       setState: (newState, newData = project.data, newIsNew = project.isNew, data = additionalData) => updateUI(newState, newData, newIsNew, data),
       clear: () => { 
-        currentState = States.ROAD_ADDRESSING; 
+        currentState = States.CONFIGURATION; 
         project.data = null;
         project.isNew = false;
         rootElement.empty(); 
       },
-      closeProjectMenu: closeProjectMenu
+      closeProjectMenu: closeProjectMenu,
+      destroy: destroy
     };
 }

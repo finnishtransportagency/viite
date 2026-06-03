@@ -49,7 +49,7 @@ export function ModalContainer(config) {
         let currentTitle = ''; 
 
         // Initialize modal immediately
-        createModal();
+        init();
 
         // Creates the modal header with title, optional help button, and close button
         function createHeader() {
@@ -71,7 +71,7 @@ export function ModalContainer(config) {
 
         // Creates the main modal container with header and content area
 
-        function createModal() {
+        function init() {
             const styleAttr = style ? ` style="${style}"` : '';
             modalElement = $(`<div class="modal-container ${className}"${styleAttr}></div>`).hide();
             const header = createHeader();
@@ -79,8 +79,6 @@ export function ModalContainer(config) {
             
             modalElement.append(header);
             modalElement.append(contentContainer);
-            
-            return modalElement;
         }
 
         // Creates the overlay with dark background and modal window container
@@ -141,14 +139,12 @@ export function ModalContainer(config) {
             }
         }
 
-        // Hides the modal and removes overlay from DOM
+        // Hides the modal and detaches overlay from DOM (overlay is reused on next open)
         function close() {
             
             modalElement.hide();
             if (overlayElement) {
-                modalElement.detach(); // Remove modal from DOM but keep event listeners
-                overlayElement.remove();
-                overlayElement = null;
+                overlayElement.detach();
             }
         }
 

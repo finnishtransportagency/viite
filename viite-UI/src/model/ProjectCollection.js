@@ -652,7 +652,7 @@ export function ProjectCollection(backend, startupParameters) {
 
     eventbus.on('roadAddressProject:startProject', this.getProjectsWithLinksById);
 
-    eventbus.on('roadPartsValidation:checkRoadParts', function (validationResult) {
+    this.handleValidationResponse = function (validationResult) {
       const reservationValidationSucceeded = validationResult.success === true || validationResult.success === 'ok';
       if (reservationValidationSucceeded) {
         addToReservedPartList(validationResult);
@@ -660,7 +660,7 @@ export function ProjectCollection(backend, startupParameters) {
       } else {
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult.error || validationResult.success);
       }
-    });
+    };
 
     eventbus.on('clearproject', function () {
       this.clearRoadAddressProjects();
@@ -705,8 +705,14 @@ export function ProjectCollection(backend, startupParameters) {
     };
 
     this.checkIfReserved = function (data) {
-      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value, 10), data[4].value === '' ? 0 : parseInt(data[4].value, 10), data[5].value === '' ? 0 : parseInt(data[5].value, 10), data[1].value, data.projectId);
-
+      return backend.checkIfRoadpartReserved(
+        data.roadNumber   === '' ? 0 : parseInt(data.roadNumber,  10),
+        data.startPart    === '' ? 0 : parseInt(data.startPart,   10),
+        data.endPart      === '' ? 0 : parseInt(data.endPart,     10),
+        data.projectDate,
+        data.projectId,
+        this.handleValidationResponse
+      );
     };
 
     const ProjectLinkModel = function (data) {

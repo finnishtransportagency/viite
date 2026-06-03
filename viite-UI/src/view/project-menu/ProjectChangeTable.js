@@ -72,11 +72,8 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     `);
 
     function show() {
-      const $container = $('.container');
-      $container.append(changeTable);
+      $('.container').first().append(changeTable);
       initialHeightAutoSized = false;
-      
-      const $changeTableFrame = $('.change-table-frame');
       
       const tableWidthPercent = 60;
       const tableHeight = 280;
@@ -91,7 +88,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       // Center vertically
       const topPos = ($(window).height() - tableHeight) / 2.2;
 
-      $changeTableFrame.css({
+      changeTable.css({
         'top': topPos + 'px',
         'left': leftPos + 'px',
         'width': tableWidthPercent + '%',
@@ -100,7 +97,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       });
 
       resetInteractions();
-      interact($changeTableFrame).unset();
+      interact(changeTable[0]).unset();
       bindEvents();
       getChanges();
       enableTableInteractions();
@@ -111,10 +108,9 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
         return;
       }
 
-      const $changeTableFrame = $('.change-table-frame');
-      const $scrollArea = $changeTableFrame.find('.change-table-dimension-headers');
+      const $scrollArea = changeTable.find('.change-table-dimension-headers');
 
-      if (!$changeTableFrame.length || !$scrollArea.length) {
+      if (!changeTable.length || !$scrollArea.length) {
         return;
       }
 
@@ -125,14 +121,14 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
         return sum + ($(row).outerHeight(true) || 0);
       }, 0);
 
-      const frameChromeHeight = ($changeTableFrame.outerHeight() || 0) - ($scrollArea.height() || 0);
+      const frameChromeHeight = (changeTable.outerHeight() || 0) - ($scrollArea.height() || 0);
       const desiredScrollAreaHeight = headerHeight + (firstRowHeight * visibleRows);
       const minHeight = 280;
       const maxHeight = Math.floor($(window).height() * 0.9);
       const desiredFrameHeight = Math.max(minHeight, Math.min(maxHeight, frameChromeHeight + desiredScrollAreaHeight));
       const centeredTop = Math.max(10, ($(window).height() - desiredFrameHeight) / 2.2);
 
-      $changeTableFrame.css({
+      changeTable.css({
         height: desiredFrameHeight + 'px',
         top: centeredTop + 'px'
       });
@@ -141,24 +137,21 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     }
 
     function hide() {
-      const $changeTableFrame = $('.change-table-frame');
-
       eventbus.trigger('projectChangeTable:closed');
       changeTableOpen = false;
       if (typeof callbacks.onClosed === 'function') {
         callbacks.onClosed();
       }
       resetInteractions();
-      interact($changeTableFrame).unset();
-      $changeTableFrame.remove();
+      interact(changeTable[0]).unset();
+      changeTable.remove();
     }
 
     function resetInteractions() {
-      const dragTable = $('.change-table-frame');
-      if (dragTable && dragTable.length > 0) {
-        dragTable[0].setAttribute('data-x', 0);
-        dragTable[0].setAttribute('data-y', 0);
-        dragTable.css('transform', 'none');
+      if (changeTable && changeTable.length > 0) {
+        changeTable[0].setAttribute('data-x', 0);
+        changeTable[0].setAttribute('data-y', 0);
+        changeTable.css('transform', 'none');
       }
     }
 
@@ -172,8 +165,8 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     function getChanges() {
       const currentProject = projectCollection.getCurrentProject();
       projectChangeInfoModel.getChanges(currentProject.project.id, function () {
-        const source = $('[id=label-source-btn]');
-        const target = $('[id=label-target-btn]');
+        const source = changeTable.find('[id=label-source-btn]');
+        const target = changeTable.find('[id=label-target-btn]');
         if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
           projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
         } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
@@ -298,7 +291,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       return htmlTable;
     }
 
-    function updateHeaderAndValidationState(projectChangeData, hasLengthMismatch, hasNegativeLength, $changeTableHeader, $changeTableFrame) {
+    function updateHeaderAndValidationState(projectChangeData, hasLengthMismatch, hasNegativeLength, $changeTableHeader) {
       const projectDate = new Date(projectChangeData.changeTable.changeDate).toLocaleDateString('fi-FI');
 
       if (!hasLengthMismatch && !hasNegativeLength) {
@@ -309,7 +302,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       }
 
       const currentProject = projectCollection.getCurrentProject();
-      const shouldClearValidations = $changeTableFrame.css('display') === "block" &&
+      const shouldClearValidations = changeTable.css('display') === "block" &&
         currentProject.project.statusCode === ProjectStatus.Incomplete.value &&
         !hasLengthMismatch &&
         !hasNegativeLength;
@@ -329,8 +322,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     function showChangeTable(projectChangeData) {
       let htmlTable = "";
       const warningM = projectChangeData?.warningMessage;
-      const $changeTableHeader = $('.change-table-header');
-      const $changeTableFrame = $('.change-table-frame');
+      const $changeTableHeader = changeTable.find('.change-table-header');
       const hasData = hasChangeTableData(projectChangeData);
 
       if (!_.isUndefined(warningM))
@@ -343,17 +335,15 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
         cacheRowValidations(validation);
         htmlTable = buildChangeRows(projectChangeData.changeTable.changeInfoSeq);
 
-        const $rowChanges = $('.row-changes');
-        $rowChanges.remove();
-        $('.change-table-dimensions tbody').append($(htmlTable));
+        changeTable.find('.row-changes').remove();
+        changeTable.find('.change-table-dimensions tbody').append($(htmlTable));
         autoSizeInitialHeight(projectChangeData.changeTable.changeInfoSeq.length);
 
         changeTableOpen = true;
-        updateHeaderAndValidationState(projectChangeData, validation.hasLengthMismatch, validation.hasNegativeLength, $changeTableHeader, $changeTableFrame);
+        updateHeaderAndValidationState(projectChangeData, validation.hasLengthMismatch, validation.hasNegativeLength, $changeTableHeader);
       } else {
-        const $rowChanges = $('.row-changes');
-        $rowChanges.remove();
-        $('.change-table-dimensions tbody').append($(htmlTable));
+        changeTable.find('.row-changes').remove();
+        changeTable.find('.change-table-dimensions tbody').append($(htmlTable));
         autoSizeInitialHeight(0);
 
         changeTableOpen = true;
@@ -365,30 +355,41 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       callbacks = Object.assign({}, callbacks, newCallbacks || {});
     }
 
+    let onProjectChangesFetched = null;
+
     function bindEvents() {
-      const $rowChanges = $('.row-changes');
-      $rowChanges.remove();
-      eventbus.on('projectChanges:fetched', function (projectChangeData) {
+      changeTable.find('.row-changes').remove();
+      // Remove any previously registered listener before re-binding
+      if (onProjectChangesFetched) {
+        eventbus.off('projectChanges:fetched', onProjectChangesFetched);
+      }
+      onProjectChangesFetched = function (projectChangeData) {
         showChangeTable(projectChangeData);
-      });
+      };
+      eventbus.on('projectChanges:fetched', onProjectChangesFetched);
+
+      const MINIMIZED_HEIGHT = '260px';
+      const MAXIMIZED_HEIGHT = '800px';
+      const SHARED_WIDTH    = '1135px';
+      const MINIMIZED_TOP   = '620px';
+      const MAXIMIZED_TOP   = '50px';
 
       changeTable.on('click', 'button.max', function () {
         resetInteractions();
-        const $changeTableFrame = $('.change-table-frame');
         
         if (windowMaximized) {
-          $changeTableFrame.height('260px');
-          $changeTableFrame.width('1135px');
-          $changeTableFrame.css('top', '620px');
-          $('[id=buttonText]').text("Suurenna ");
-          $('[id=sizeSymbol]').text("□");
+          changeTable.height(MINIMIZED_HEIGHT);
+          changeTable.width(SHARED_WIDTH);
+          changeTable.css('top', MINIMIZED_TOP);
+          changeTable.find('#buttonText').text("Suurenna ");
+          changeTable.find('#sizeSymbol').text("□");
           windowMaximized = false;
         } else {
-          $changeTableFrame.height('800px');
-          $changeTableFrame.width('1135px');
-          $changeTableFrame.css('top', '50px');
-          $('[id=buttonText]').text("Pienennä ");
-          $('[id=sizeSymbol]').text("_");
+          changeTable.height(MAXIMIZED_HEIGHT);
+          changeTable.width(SHARED_WIDTH);
+          changeTable.css('top', MAXIMIZED_TOP);
+          changeTable.find('#buttonText').text("Pienennä ");
+          changeTable.find('#sizeSymbol').text("_");
           windowMaximized = true;
         }
       });
@@ -414,7 +415,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       }
 
       const side = btn.id.match('-(.*)-')[1];
-      const otherBtn = $(`[id=label-${side === 'source' ? 'target' : 'source'}-btn`);
+      const otherBtn = changeTable.find(`[id=label-${side === 'source' ? 'target' : 'source'}-btn`);
       otherBtn.removeClass('fa-sort-down');
       otherBtn.removeClass('fa-sort-up');
       otherBtn.addClass('fa-sort');
@@ -511,7 +512,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
     }
 
     function enableTableInteractions() {
-      interact('.change-table-frame').draggable({
+      interact(changeTable[0]).draggable({
         allowFrom: '.change-table-header',
         onmove: dragListener,
         restrict: {

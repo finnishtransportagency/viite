@@ -56,10 +56,10 @@ export function ProjectLinkEditor(canUseDevTools) {
       
       isEndDistanceModified: function(currentValue) {
         const changedValue = Number(currentValue);
+        if (isNaN(changedValue)) return false;
         const originalValue = Number(this.endDistanceOriginalValue);
-        return !isNaN(changedValue) && 
-               !isNaN(originalValue) && 
-               changedValue !== originalValue;
+        if (isNaN(originalValue)) return true;
+        return changedValue !== originalValue;
       }
     };
 
@@ -132,6 +132,9 @@ export function ProjectLinkEditor(canUseDevTools) {
       rootElement.on('change', '#roadAddressProjectForm #dropDown_0', (e) => {
         FormState.setChangeType(e.target.value);
         updateFormControls(e.target.value, selected, projectCollection, { markDirty: !isInitializing });
+        if (projectChangeTable) {
+          checkInputs(projectChangeTable);
+        }
       });
 
       rootElement.on('change', '#trackCodeDropdown, #administrativeClassDropdown', () => {
@@ -154,7 +157,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 
         if (event.target.id === "tie" && backend && projectCollection && 
             (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
-          rootElement.find('.link-form button.update').prop("disabled", true);
+          rootElement.find('#saveButton').prop('disabled', true);
           const currentProject = projectCollection.getCurrentProject();
           backend.getRoadName($(this).val(), currentProject.project.id, function (data) {
             if (data.roadName) {
@@ -179,7 +182,7 @@ export function ProjectLinkEditor(canUseDevTools) {
         }
       });
 
-      rootElement.on('keyup, input', '#roadName', function () {
+      rootElement.on('keyup input', '#roadName', function () {
         if (projectChangeTable) {
           checkInputs(projectChangeTable);
         }
@@ -188,8 +191,6 @@ export function ProjectLinkEditor(canUseDevTools) {
 
       rootElement.on('change', '#endDistance', (eventData) => {
         FormState.setUnsavedChanges(true);
-        const shouldShowWarning = FormState.isEndDistanceModified(eventData.target.value);
-        $('#manualCPWarning').css('display', shouldShowWarning ? 'inline-block' : 'none');
       });
 
       rootElement.on('click', '.changeDirection', () => {
@@ -296,9 +297,7 @@ export function ProjectLinkEditor(canUseDevTools) {
             : selectedLinks;
           
           if (projectCollection) {
-            const isEndDistanceModified = projectCollection.getTmpDirty().length > 0 
-              ? FormState.isEndDistanceModified($('#endDistance').val())
-              : false;
+            const isEndDistanceModified = FormState.isEndDistanceModified($('#endDistance').val());
               
             projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified);
           }
@@ -306,6 +305,7 @@ export function ProjectLinkEditor(canUseDevTools) {
         return true;
       };
 
+      eventbus.off('roadAddressProject:discardChanges', cancelChanges);
       eventbus.on('roadAddressProject:discardChanges', cancelChanges);
 
       

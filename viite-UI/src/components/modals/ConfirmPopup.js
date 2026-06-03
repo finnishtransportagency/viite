@@ -39,7 +39,7 @@ export function ConfirmPopup(message, options = {}) {
     const alertDiv = `
       <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
         <div class="modal-dialog">
-          <div class="content" style="max-height: 500px; overflow-y: scroll">
+          <div class="content confirm-alert-scrollable">
             ${message}
           </div>
           <div class="actions">

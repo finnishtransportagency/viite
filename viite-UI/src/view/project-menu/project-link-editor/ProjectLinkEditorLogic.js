@@ -27,28 +27,14 @@ export function createProjectLinkEditorLogic(dependencies) {
 
   const checkInputs = (projectChangeTable) => {
     const rootElement = $(menuSelector);
-    const inputs = rootElement.find('input');
-    const pedestrianRoads = 70000;
+    const tieValue = _.trim($('#tie').val() || '');
+    const osaValue = _.trim($('#osa').val() || '');
+    const trackValue = _.trim($('#trackCodeDropdown').val() || '');
+    const roadNameValue = _.trim($('#roadName').val() || '');
+    const filled = tieValue !== '' && osaValue !== '' && trackValue !== '' && trackValue !== '99' && roadNameValue !== '';
 
-    let filled = _.every(inputs, input => {
-      if (input.type !== 'text') return true;
-      if (input.value) return true;
-      const isPedestrian = $('#tie')[0].value >= pedestrianRoads;
-      return isPedestrian && input.id === 'roadName';
-    });
-
-    const trackCodeDropdown = $('#trackCodeDropdown')[0];
-    filled = filled && trackCodeDropdown && trackCodeDropdown.value && trackCodeDropdown.value !== '99';
-
-    const administrativeClassCodeDropdown = $('#administrativeClassDropdown')[0];
-    filled = filled &&
-      administrativeClassCodeDropdown &&
-      administrativeClassCodeDropdown.value &&
-      administrativeClassCodeDropdown.value !== '0' &&
-      administrativeClassCodeDropdown.value !== '99';
-
-    const updateButton = rootElement.find('.link-form button.update');
-    updateButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
+    const saveButton = rootElement.find('#saveButton');
+    saveButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
   };
 
   const changeDropDownValue = (statusCode, selectedLinks) => {
@@ -97,13 +83,15 @@ export function createProjectLinkEditorLogic(dependencies) {
     const beginDistance = $('#beginDistance');
     const endDistance = $('#endDistance');
 
+    // Always reset first so stale values from the previous link never bleed through
+    beginDistance.val('--');
+    endDistance.val('--');
+    formState.setEndDistanceOriginal('--');
+
     if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === CalibrationCode.AtBoth.value) {
       beginDistance.val(selectedLinks[0].addrMRange.start);
-      if (isProjectEditable(projectCollection)) {
-        endDistance.prop('readonly', false).val(selectedLinks[0].addrMRange.end);
-      } else {
-        endDistance.val(selectedLinks[0].addrMRange.end);
-      }
+      endDistance.val(selectedLinks[0].addrMRange.end);
+      formState.setEndDistanceOriginal(selectedLinks[0].addrMRange.end);
     } else {
       const orderedByStartM = _.sortBy(selectedLinks, l => l.addrMRange.start);
       if (orderedByStartM[0].calibrationCode === CalibrationCode.AtBeginning.value) {
@@ -112,11 +100,7 @@ export function createProjectLinkEditorLogic(dependencies) {
 
       const lastLink = orderedByStartM[orderedByStartM.length - 1];
       if (lastLink.calibrationCode === CalibrationCode.AtEnd.value) {
-        if (isProjectEditable(projectCollection)) {
-          endDistance.prop('readonly', false).val(lastLink.addrMRange.end);
-        } else {
-          endDistance.val(lastLink.addrMRange.end);
-        }
+        endDistance.val(lastLink.addrMRange.end);
         formState.setEndDistanceOriginal(lastLink.addrMRange.end);
       }
     }
@@ -152,7 +136,7 @@ export function createProjectLinkEditorLogic(dependencies) {
       newRoadAddress: rootElement.find('.new-road-address'),
       changeDirection: rootElement.find('.changeDirectionDiv'),
       distanceValue: rootElement.find('#distanceValue'),
-      updateButton: rootElement.find('.link-form button.update')
+      updateButton: rootElement.find('#saveButton')
     };
 
     const enableFields = (enabled) => {
@@ -200,6 +184,10 @@ export function createProjectLinkEditorLogic(dependencies) {
           uiElements.changeDirection.prop('hidden', false);
           uiElements.distanceValue.prop('hidden', false);
         } else {
+          // Brand-new link: ensure fields show '--' (no stale values from previous selection)
+          $('#beginDistance').val('--');
+          $('#endDistance').val('--');
+          formState.setEndDistanceOriginal('--');
           uiElements.distanceValue.prop('hidden', false);
         }
         break;

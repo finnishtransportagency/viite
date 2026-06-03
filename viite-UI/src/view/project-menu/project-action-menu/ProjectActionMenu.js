@@ -177,28 +177,28 @@ export function ProjectActionMenu(options) {
       let buttonIndex = 0;
       let errorIndex = 0;
       let errorLines = '';
-      config.coordinates = [];
-      
+      const coordinates = [];
+
       projectErrors.sort((a, b) => a.priority - b.priority);
-      
+
       _.each(projectErrors, function (error) {
         let fixButton = '';
-        const coordinates = getErrorCoordinates(error, links);
+        const coords = getErrorCoordinates(error, links);
         const errorMessage = _.trim((error.errorMessage || '').toString());
         const errorLabel = errorMessage ? `<label class="orange">VIRHE: ${errorMessage}</label>` : '';
-        
-        if (coordinates) {
-          fixButton = `<button id="${buttonIndex}" class="btn-primary projectErrorButton" style="margin-right: 8px;">Korjaa</button>`;
-          config.coordinates.push({index: buttonIndex, html: fixButton, coordinates: coordinates});
+
+        if (coords) {
+          fixButton = `<button id="${buttonIndex}" class="btn-primary projectErrorButton btn-error-fix">Korjaa</button>`;
+          coordinates.push({index: buttonIndex, html: fixButton, coordinates: coords});
           buttonIndex++;
         }
-        
-        const linkIdButton = (error.linkIds && error.linkIds.length > 0) 
+
+        const linkIdButton = (error.linkIds && error.linkIds.length > 0)
           ? `<button id="${errorIndex}" class="btn-primary linkIdList">Linkkien id:t</button>` : '';
-        
+
         // Use divider if not last error
         const divider = (errorIndex < projectErrors.length - 1) ? '<div class="error-divider"></div>' : '';
-        
+
         errorLines += `
           <div class="form-project-errors-list">
             ${errorLabel}
@@ -209,21 +209,24 @@ export function ProjectActionMenu(options) {
             </div>
             ${divider}
           </div>`;
-        
+
         errorIndex++;
       });
-      return errorLines;
+      return { html: errorLines, coordinates };
     };
 
     const errorsList = function (projCollection) {
       if (!projCollection || !projCollection.getProjectErrors) return '';
       const projectErrors = projCollection.getProjectErrors();
-      
+
       if (projectErrors && projectErrors.length > 0) {
         const links = projCollection.getAll ? projCollection.getAll() : [];
+        const { html, coordinates } = getProjectErrors(projectErrors, links);
+        config.coordinates = coordinates;
         return `<label>TARKASTUSILMOITUKSET:</label>
-          <div id="projectErrors">${getProjectErrors(projectErrors, links)}</div>`;
+          <div id="projectErrors">${html}</div>`;
       }
+      config.coordinates = [];
       return '';
     };
 
