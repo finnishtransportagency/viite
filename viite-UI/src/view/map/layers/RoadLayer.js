@@ -4,7 +4,7 @@
  * @param {Object} map - OpenLayers map instance
  * @returns {Object} Layer with refresh and clear methods
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Spinner } from '@components/spinner/Spinner.js';

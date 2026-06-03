@@ -4,7 +4,17 @@
  */
 export const dateutil = {};
   const momentLib = window.moment;
-  const PikadayCtor = window.Pikaday;
+
+  function getPikaday() {
+    if (!window.Pikaday) {
+      throw new Error('Pikaday is required for date picker functionality.');
+    }
+    return window.Pikaday;
+  }
+
+  if (!momentLib) {
+    throw new Error('Moment is required for date utilities.');
+  }
 
   const FINNISH_DATE_FORMAT = 'D.M.YYYY';
   dateutil.FINNISH_DATE_FORMAT = FINNISH_DATE_FORMAT;
@@ -50,7 +60,7 @@ export const dateutil = {};
       ...additionalOptions
     };
 
-    const picker = new PikadayCtor(options);
+    const picker = new (getPikaday())(options);
 
     jqueryElement.keypress(function (e) {
       if (e.which === 13) { // hide on enter key press
@@ -79,17 +89,14 @@ export const dateutil = {};
 
   /** Sets date to the next day */
   dateutil.addOneDayToDate = function (dateObject) {
-    dateObject.setDate(dateObject.getDate() + 1);
+    const nextDay = new Date(dateObject.getTime());
+    nextDay.setDate(nextDay.getDate() + 1);
+    return nextDay;
   };
 
   /** Converts date object to string "yyyy-mm-dd" (ISO 8601)*/
   dateutil.parseDateToString = function (date) {
-    const dayInNumber = date.getDate();
-    const day = dayInNumber < 10 ? `0${dayInNumber.toString()}` : dayInNumber.toString();
-    const monthInNumber = date.getMonth() + 1;
-    const month = monthInNumber < 10 ? `0${monthInNumber.toString()}` : monthInNumber.toString();
-    const year = date.getFullYear().toString();
-    return `${year}-${month}-${day}`;
+    return momentLib(date).format('YYYY-MM-DD');
   };
 
 
@@ -97,19 +104,13 @@ export const dateutil = {};
    *  Convert string (dd.mm.yyyy) to Date
    */
   dateutil.parseDate = function (str) {
-    const [day, month, year] = str.split('.').map(Number);
-    return new Date(year, month - 1, day); // month is 0-based in JS
+    const parsed = momentLib(str, FINNISH_DATE_FORMAT, true);
+    return parsed.isValid() ? parsed.toDate() : null;
   };
 
   /** Creates a string ("dd.mm.yyyy") from current date */
   dateutil.getCurrentDateString = function () {
-    const today = new Date();
-    const dayInNumber = today.getDate();
-    const day = dayInNumber < 10 ? `0${dayInNumber.toString()}` : dayInNumber.toString();
-    const monthInNumber = today.getMonth() + 1;
-    const month = monthInNumber < 10 ? `0${monthInNumber.toString()}` : monthInNumber.toString();
-    const year = today.getFullYear().toString();
-    return `${day}.${month}.${year}`;
+    return momentLib().format('DD.MM.YYYY');
   };
 
 
@@ -125,21 +126,13 @@ export const dateutil = {};
   dateutil.parseCustomDateString = function (input, returnISO = false) {
     if (typeof input !== 'string') throw new Error('Input must be a string');
 
-    const trimmedInput = input.trim(); // Remove any leading/trailing whitespace
-
-    // Use regex to handle any whitespace between date and time
-    const [datePart, timePart] = trimmedInput.split(/\s+/);
-
-    if (!datePart || !timePart) throw new Error('Invalid date-time format');
-
-    const [day, month, year] = datePart.split('.').map(Number);
-    const [hours, minutes, seconds] = timePart.split(':').map(Number);
-
-    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds);
-
-    if (isNaN(dateObj.getTime())) {
+    const normalizedInput = input.trim().replace(/\s+/, ' ');
+    const parsed = momentLib(normalizedInput, 'DD.MM.YYYY HH:mm:ss', true);
+    if (!parsed.isValid()) {
       throw new Error('Invalid date');
     }
+
+    const dateObj = parsed.toDate();
 
     return returnISO ? dateObj.toISOString() : dateObj;
   };

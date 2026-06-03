@@ -7,7 +7,7 @@
  */
 
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
 import { createProjectLinkEditorHTML } from './ProjectLinkEditorHTML.js';
 import { DevAddressTool } from './DevTool.js';

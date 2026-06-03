@@ -8,7 +8,7 @@
  * @param {Object} roadCollection - Road collection manager
  * @returns {Object} Layer with methods for refresh, dirty check, and view management
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';

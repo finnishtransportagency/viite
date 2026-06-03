@@ -3,7 +3,7 @@
  * Keeps Backbone history aligned with map-driven UI actions.
  */
 /* eslint-disable prefer-named-capture-group */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { selectLayer, refreshMap } from '@model/ApplicationModel.js';
 

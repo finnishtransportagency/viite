@@ -1,4 +1,4 @@
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 
 /**
  * SelectedProjectLink - Manages selected project links state

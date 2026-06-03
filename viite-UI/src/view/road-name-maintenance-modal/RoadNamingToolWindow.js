@@ -1,7 +1,7 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 
 export function RoadNamingToolWindow(roadNameCollection) {
     const newId = -1000;

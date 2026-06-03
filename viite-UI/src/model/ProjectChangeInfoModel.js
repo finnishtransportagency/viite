@@ -8,7 +8,7 @@
  * - Backend integration for change history
  * - Warning message handling for changes
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
 export function ProjectChangeInfoModel(backend) {

@@ -2,11 +2,8 @@
  * Resolves the current deployment environment name and base URL from the browser location.
  * Provides localized environment labels for the main UI chrome.
  */
-const urlParts = function () {
-  const url = window.location.href.split('/');
-  return _.filter(url, function (urlPart) {
-    return !_.isEmpty(urlPart);
-  });
+const currentUrl = function () {
+  return new URL(window.location.href);
 };
 
 const name = function () {
@@ -16,12 +13,7 @@ const name = function () {
     'viitedev.testivaylapilvi.fi': 'staging' // DEV
   };
 
-  return environmentName[urlParts()[1]] || 'unknown';
-};
-
-const urlPath = function () {
-  const urlWithoutResource = _.initial(urlParts());
-  return `${_.head(urlWithoutResource)}//${_.tail(urlWithoutResource).join('/')}`;
+  return environmentName[currentUrl().hostname] || 'unknown';
 };
 
 // Environment name shown next to the Viite logo
@@ -32,7 +24,8 @@ const localizedName = function () {
     staging: 'Testiympäristö',
     unknown: 'Kehitysympäristö'
   };
-  return localizedEnvironmentName[Environment.name()];
+  const environment = name();
+  return localizedEnvironmentName[environment];
 };
 
 const browserTitle = function () {
@@ -42,12 +35,12 @@ const browserTitle = function () {
     staging: 'Viite - DEV',
     unknown: 'Viite - LOCAL'
   };
-  return environmentTitle[Environment.name()] || 'Viite';
+  const environment = name();
+  return environmentTitle[environment] || 'Viite';
 };
 
 export const Environment = {
   name: name,
-  urlPath: urlPath,
   localizedName: localizedName,
   browserTitle: browserTitle
 };

@@ -8,7 +8,7 @@
  * - Link property validation and editing
  * - Backend integration for link operations
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { setSelectionType } from '@model/ApplicationModel.js';

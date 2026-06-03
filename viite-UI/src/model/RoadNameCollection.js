@@ -8,7 +8,7 @@
  * - Date range management for road names
  * - Backend integration for road name operations
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 
 export function RoadNameCollection(backend) {
 

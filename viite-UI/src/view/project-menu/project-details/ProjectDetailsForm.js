@@ -8,9 +8,10 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { numberInput } from '@components/number-input/NumberInput.js';
 import { Spinner } from '@components/spinner/Spinner.js';
+import { showToast } from '@components/toast/Toast.js';
 import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 
 export function ProjectDetailsForm(callbacks = {}) {
@@ -141,10 +142,6 @@ export function ProjectDetailsForm(callbacks = {}) {
               </div>
             </div>
 
-            <div class="form-check-date-notifications"> 
-              <p id="projectStartDate-validation-notification"></p>
-            </div>
-
             <div class="form-group">
               <label class="control-label">Lisätiedot</label>
               <textarea class="form-control large-input" id="lisatiedot">${info}</textarea>
@@ -261,6 +258,11 @@ export function ProjectDetailsForm(callbacks = {}) {
       return hasUnsavedChanges;
     };
 
+    const getDateValidationMessage = function(dateValue) {
+      const validationUtils = new ValidationUtils();
+      return validationUtils.checkDateNotification(dateValue || '');
+    };
+
     const getBackendErrorMessage = function(result, fallback) {
       if (!result) return fallback;
       if (typeof result === 'string') return result;
@@ -283,8 +285,6 @@ export function ProjectDetailsForm(callbacks = {}) {
         startDatePicker.addToElement($('#projectStartDate'));
         // Unbind any previous listeners from date picker
         startDatePicker.getElement().off('input change').on('input change', function() {
-          const validationUtils = new ValidationUtils();
-          $('#projectStartDate-validation-notification').text(validationUtils.checkDateNotification($(this).val()));
           updateContinueButtonState(projectData);
           updateReserveButtonState();
           markAsChanged();
@@ -379,6 +379,12 @@ export function ProjectDetailsForm(callbacks = {}) {
           return;
         }
 
+        const dateValidationMessage = getDateValidationMessage(projectData.startDate);
+        if (dateValidationMessage) {
+          showToast(dateValidationMessage, { type: 'warning' });
+          return;
+        }
+
         Spinner.show();
 
         const formData = [
@@ -451,6 +457,12 @@ export function ProjectDetailsForm(callbacks = {}) {
               projectData.name = $('#nimi').val();
               projectData.startDate = $('#projectStartDate').val();
               projectData.additionalInfo = $('#lisatiedot').val();
+
+              const dateValidationMessage = getDateValidationMessage(projectData.startDate);
+              if (dateValidationMessage) {
+                showToast(dateValidationMessage, { type: 'warning' });
+                return;
+              }
 
               const formData = [
                 { value: projectData.name },

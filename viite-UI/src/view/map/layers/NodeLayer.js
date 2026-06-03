@@ -9,7 +9,7 @@
  * @param {Object} roadCollection - Road collection manager
  * @returns {Object} Layer with show/hide methods and minimum zoom level
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';

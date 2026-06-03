@@ -9,7 +9,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 

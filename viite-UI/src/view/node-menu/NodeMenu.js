@@ -2,7 +2,7 @@ import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
 import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
 import { setMainMenuState } from '@view/MainMenu.js';
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { getStartupParameters, selectLayer } from '@model/ApplicationModel.js';
 
 // Exported function reference (initialized later)

@@ -1,6 +1,6 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 
 export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions, setNodeMenuState) {

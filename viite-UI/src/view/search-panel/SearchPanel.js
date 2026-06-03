@@ -1,4 +1,4 @@
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { getLegendDisplayHtml } from './LegendDisplay.js';
 import { SearchBox } from './SearchBox.js';
 import { getSelectedLayer } from '@model/ApplicationModel.js';

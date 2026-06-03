@@ -4,7 +4,7 @@
  * and coordinate selection events.
  */
 
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 import { showToast } from '@components/toast/Toast.js';
 import { searchLocation } from '@model/LocationSearch.js';
 

@@ -1,5 +1,4 @@
-/* eslint-disable new-cap */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 
 export function Backend() {
     let loadingProject;

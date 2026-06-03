@@ -2,7 +2,7 @@
  * Provides shared layer lifecycle helpers for map-related layer controllers.
  * Handles starting, stopping, clearing, and deriving calibration markers from road link data.
  */
-import { eventbus } from '@utils/eventbus.js';
+import { eventbus } from '@utils/Eventbus.js';
 
 export function Layer(map) {
   const me = this;
