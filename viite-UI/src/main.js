@@ -57,13 +57,12 @@ export function start() {
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
 
-    const searchPanel = createSearchPanel();
-    jQuery('#map-tools').append(searchPanel.element);
-
     backend.getUserRoles();
     setupProjections();
 
     const map = startApplication(backend, models, startupParameters, roadNameCollection);
+    const searchPanel = createSearchPanel(map);
+    jQuery('#map-tools').append(searchPanel.element);
     new URLRouter(map, backend, models);
     eventbus.trigger('application:initialized');
   });

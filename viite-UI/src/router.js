@@ -11,6 +11,9 @@ const LAYER_LINK_PROPERTY = 'linkProperty';
 const LAYER_ROAD_ADDRESS_PROJECT = 'roadAddressProject';
 
 export function URLRouter(map, backend, models) {
+  const openNodePointTemplate = models.nodeCollection.openNodePointTemplate;
+  const openJunctionTemplate = models.nodeCollection.openJunctionTemplate;
+
   const Router = Backbone.Router.extend({
       initialize: function () {
 
@@ -84,11 +87,11 @@ export function URLRouter(map, backend, models) {
       },
 
       nodePointTemplate: function (nodePointTemplateId) {
-        eventbus.trigger('nodeSearchTool:clickNodePointTemplate', nodePointTemplateId);
+        openNodePointTemplate(nodePointTemplateId);
       },
 
       junctionTemplate: function (junctionTemplateId) {
-        eventbus.trigger('nodeSearchTool:clickJunctionTemplate', junctionTemplateId);
+        openJunctionTemplate(junctionTemplateId);
       }
     });
 

@@ -4,9 +4,9 @@ import { SearchBox } from './SearchBox.js';
 import { getSelectedLayer } from '@model/ApplicationModel.js';
 
 // Orchestrates search panel rendering and updates legend HTML based on selected layer
-export function SearchPanel() {
+export function SearchPanel(map) {
   const searchPanel = $(`<div class="search-panel"></div>`);
-  const searchBox = new SearchBox();
+  const searchBox = new SearchBox(map);
 
   const legendGroup = $(`
     <div class="panel-group road-links">

@@ -1,6 +1,6 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { setSelectedTool } from '@model/ApplicationModel.js';
+import { isSelectedTool, setSelectedTool } from '@model/ApplicationModel.js';
 
 /**
  * NodeDataMenu - Read-only detail panel for searched node and template data.
@@ -121,9 +121,10 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
 
     const renderFooter = function () {
       bindEvents();
+      const attachToNewNodeClass = isSelectedTool(ViiteEnumerations.Tool.Add.value) ? ' active' : '';
       return `
         <div class="form form-controls node-template-actions">
-          <button id="attachToNewNode" class="btn-primary btn-block">Luo uusi solmu, johon haluat liittää aihiot</button>
+          <button id="attachToNewNode" class="btn-primary btn-block${attachToNewNodeClass}">Luo uusi solmu, johon haluat liittää aihiot</button>
           <div class="node-template-actions-split-row">
             <button class="btn-primary btn-edit-node-save btn-block" disabled>Tallenna</button>
             <button class="cancel btn-secondary btn-edit-templates-cancel btn-block">Peruuta</button>
@@ -161,8 +162,8 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
       });
 
       panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {
-        panelElement.find('#attachToNewNode').addClass('active');
         setSelectedTool(ViiteEnumerations.Tool.Add.value);
+        panelElement.find('#attachToNewNode').toggleClass('active', isSelectedTool(ViiteEnumerations.Tool.Add.value));
       });
     };
 

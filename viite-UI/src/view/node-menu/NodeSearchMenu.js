@@ -2,6 +2,7 @@ import { DataTable, NodeTableUtils } from './DataTable.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
+import { moveMapToCoordinates } from '@view/map/MapView.js';
 
 export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions, setNodeMenuState) {
   const dataTable = new DataTable();
@@ -145,7 +146,20 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
         Spinner.show('node-menu-search');
         clearSearchResults();
         clearUntreatedTemplates();
-        nodeCollection.getNodesByRoadAttributes(getSearchData());
+        (async () => {
+          try {
+            await nodeCollection.getNodesByRoadAttributes(getSearchData());
+            if (!root().length) return;
+            const nodes = nodeCollection.getNodesWithAttributes();
+            setSearchResults(nodes);
+            setClearButtonEnabled(true);
+            nodeCollection.fitMapToSearchResults(map);
+          } catch (error) {
+            console.error('Search failed:', error);
+          } finally {
+            Spinner.hide('node-menu-search');
+          }
+        })();
         break;
       case 'clear':
         clearSearchResults();
@@ -154,9 +168,15 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
         break;
       case 'result-click': {
         event.preventDefault();
-        eventbus.trigger('nodeSearchTool:clickNode', id, map);
         const node = nodeCollection.getNodesWithAttributes()[id];
-        if (node) openSearchNodeWithMapData(node);
+        if (node) {
+          moveMapToCoordinates(map, {
+            lon: node.coordinates.x,
+            lat: node.coordinates.y,
+            zoom: 12
+          });
+          openSearchNodeWithMapData(node);
+        }
         break;
       }
       default:
@@ -166,7 +186,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 
   $(document).on('click', `${ROOT} .node-point-template-link`, function (event) {
     const templateId = Number(event.currentTarget.id);
-    eventbus.trigger('nodeSearchTool:clickNodePointTemplate', { id: templateId });
+    nodeCollection.openNodePointTemplate({ id: templateId });
   });
 
   $(document).on('click', `${ROOT} .junction-template-link`, function (event) {
@@ -180,21 +200,13 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
     };
 
     const coordinates = resolveJunctionPointCoordinatesByRow(templateId, rowData);
-    eventbus.trigger('nodeSearchTool:clickJunctionTemplate', {
+    nodeCollection.openJunctionTemplate({
       id: templateId,
       coordinates: coordinates,
       rowData: rowData
     });
   });
 
-  eventbus.on('nodeSearchTool:fetched', () => {
-    Spinner.hide('node-menu-search');
-    if (!root().length) return;
-    const nodes = nodeCollection.getNodesWithAttributes();
-    setSearchResults(nodes);
-    setClearButtonEnabled(true);
-    if (!_.isEmpty(nodes)) eventbus.trigger('nodeSearchTool:refreshView', map);
-  });
 
   // --- PRIVATE: RENDERING ---
 

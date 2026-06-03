@@ -3,6 +3,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
+import { moveMapToCoordinates } from '@view/map/MapView.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -15,7 +16,6 @@ import { searchLocation } from './LocationSearch.js';
  * - Node point and junction template handling
  */
 export function NodeCollection(backend) {
-    const me = this;
     let nodes = [];
     let nodesWithAttributes = [];
     let mapTemplates = [];
@@ -23,59 +23,72 @@ export function NodeCollection(backend) {
     let userJunctionTemplates = [];
     const saving = 'node-saving';
 
-    this.setMapTemplates = function (templates) {
+    function setMapTemplates(templates) {
       mapTemplates = templates;
-    };
+    }
 
-    this.setUserTemplates = function (nodePointTemplates, junctionTemplates) {
+    function setUserTemplates(nodePointTemplates, junctionTemplates) {
       userNodePointTemplates = nodePointTemplates;
       userJunctionTemplates = junctionTemplates;
-    };
+    }
 
-    this.setNodes = function (list) {
+    function setNodes(list) {
       nodes = list;
-    };
+    }
 
-    this.getNodeByNodeNumber = function (nodeNumber) {
+    function getNodeByNodeNumber(nodeNumber) {
       return _.find(nodes, function (node) {
         return node.nodeNumber === nodeNumber;
       });
-    };
+    }
 
-    this.getNodesWithAttributes = function () {
+    function getNodesWithAttributes() {
       return nodesWithAttributes;
-    };
+    }
 
-    this.setNodesWithAttributes = function (list) {
+    function setNodesWithAttributes(list) {
       nodesWithAttributes = list;
-    };
+    }
 
-    this.getNodesByRoadAttributes = function (roadAttributes) {
-      return backend.getNodesByRoadAttributes(roadAttributes, function (result) {
-        if (result.success) {
-          const searchResult = result.nodes;
-          me.setNodesWithAttributes(searchResult);
-          eventbus.trigger('nodeSearchTool:fetched', searchResult.length);
-        } else {
-          Spinner.hide();
-          new ConfirmPopup(result.errorMessage, { type: "alert" });
-        }
+    // Fits map view to include all nodes returned by the latest node search.
+    function fitMapToSearchResults(map) {
+      if (_.isEmpty(nodesWithAttributes)) return;
+      const coords = [];
+      _.each(nodesWithAttributes, function (node) {
+        coords.push([node.coordinates.x, node.coordinates.y]);
       });
-    };
+      map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
+    }
 
-    this.getNodePointTemplatesByCoordinates = function (coordinates) {
+    function getNodesByRoadAttributes(roadAttributes) {
+      return new Promise((resolve, reject) => {
+        backend.getNodesByRoadAttributes(roadAttributes, function (result) {
+          if (result.success) {
+            const searchResult = result.nodes;
+            setNodesWithAttributes(searchResult);
+            resolve(searchResult);
+          } else {
+            Spinner.hide();
+            new ConfirmPopup(result.errorMessage, { type: "alert" });
+            reject(new Error(result.errorMessage));
+          }
+        });
+      });
+    }
+
+    function getNodePointTemplatesByCoordinates(coordinates) {
       return _.filter(mapTemplates.nodePoints, function (nodePointTemplate) {
         return _.isEqual(nodePointTemplate.coordinates, coordinates);
       });
-    };
+    }
 
-    this.getJunctionTemplateByCoordinates = function (coordinates) {
+    function getJunctionTemplateByCoordinates(coordinates) {
       return _.filter(mapTemplates.junctions, function (junctionTemplate) {
         return _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
           return _.isEqual(junctionPoint.coordinates, coordinates);
         });
       });
-    };
+    }
 
     /**
      * Moves to node/junction template location and handles node data loading.
@@ -87,7 +100,7 @@ export function NodeCollection(backend) {
      * 4. Opens template form with filtered data
      * 5. Updates map with new node/junction template information
      */
-    this.moveToLocation = async function (template) {
+    const moveToLocation = async function (template) {
       if (!template) return;
 
       Spinner.show('moveToLocation');
@@ -103,11 +116,13 @@ export function NodeCollection(backend) {
         const result = searchResults[0];
 
         // Move map to found location with appropriate zoom level
-        eventbus.trigger('coordinates:selected', {
+
+        moveMapToCoordinates(window.currentMap, {
           lon: result.lon,
           lat: result.lat,
           zoom: zoomlevels.minZoomForJunctions
         });
+
 
         // Fetch node data for the selected location
         const fetchedNodesAndJunctions = await new Promise((resolve) => {
@@ -127,8 +142,8 @@ export function NodeCollection(backend) {
           };
 
           // Update data in nodeCollection
-          me.setNodes(fetchedNodesAndJunctions.nodes);
-          me.setMapTemplates(templates);
+          setNodes(fetchedNodesAndJunctions.nodes);
+          setMapTemplates(templates);
 
           // Open template form with filtered data matching reference point
           const coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
@@ -169,8 +184,8 @@ export function NodeCollection(backend) {
         junctions: fetchResult.junctionTemplates
       };
 
-      me.setNodes(resultNodes);
-      me.setMapTemplates(templates);
+      setNodes(resultNodes);
+      setMapTemplates(templates);
 
       eventbus.trigger('node:addNodesToMap', resultNodes, templates, zoom);
     });
@@ -205,33 +220,35 @@ export function NodeCollection(backend) {
     });
 
     eventbus.on('templates:fetched', function (nodePointTemplates, junctionTemplates) {
-      me.setUserTemplates(nodePointTemplates, junctionTemplates);
+      setUserTemplates(nodePointTemplates, junctionTemplates);
     });
 
     eventbus.on('nodeSearchTool:clickNode', function (index, map) {
       const node = nodesWithAttributes[index];
-      map.getView().animate({
-        center: [node.coordinates.x, node.coordinates.y],
-        zoom: 12,
-        duration: 1500
+      moveMapToCoordinates(map, {
+        lon: node.coordinates.x,
+        lat: node.coordinates.y,
+        zoom: 12
       });
     });
 
-    eventbus.on('nodeSearchTool:clickNodePointTemplate', function (payload) {
+    // Opens a node point template by id and moves map to the template location.
+    function openNodePointTemplate(payload) {
       const id = _.isObject(payload) ? payload.id : payload;
       const nodePointTemplate = _.find(userNodePointTemplates, function (template) {
         return template.id === parseInt(id, 10);
       });
       if (_.isUndefined(nodePointTemplate)) {
         backend.getNodePointTemplateById(id, function (nodePointTemplateFetched) {
-          me.moveToLocation(nodePointTemplateFetched);
+          moveToLocation(nodePointTemplateFetched);
         });
       } else {
-        me.moveToLocation(nodePointTemplate);
+        moveToLocation(nodePointTemplate);
       }
-    });
+    }
 
-    eventbus.on('nodeSearchTool:clickJunctionTemplate', function (payload) {
+    // Opens a junction template by id and optional row coordinates, then moves map to it.
+    function openJunctionTemplate(payload) {
       const id = _.isObject(payload) ? payload.id : payload;
       const coordinates = _.isObject(payload) ? payload.coordinates : null;
       const rowData = _.isObject(payload) ? payload.rowData : null;
@@ -269,18 +286,27 @@ export function NodeCollection(backend) {
 
       if (_.isUndefined(fallbackJunctionTemplate)) {
         backend.getJunctionTemplateById(id, function (junctionTemplateFetched) {
-          me.moveToLocation(templateForLocation(junctionTemplateFetched));
+          moveToLocation(templateForLocation(junctionTemplateFetched));
         });
       } else {
-        me.moveToLocation(templateForLocation(fallbackJunctionTemplate));
+        moveToLocation(templateForLocation(fallbackJunctionTemplate));
       }
-    });
+    }
 
-    eventbus.on('nodeSearchTool:refreshView', function (map) {
-      const coords = [];
-      _.each(nodesWithAttributes, function (node) {
-        coords.push([node.coordinates.x, node.coordinates.y]);
-      });
-      map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
-    });
+    return {
+      setMapTemplates: setMapTemplates,
+      setUserTemplates: setUserTemplates,
+      setNodes: setNodes,
+      getNodeByNodeNumber: getNodeByNodeNumber,
+      getNodesWithAttributes: getNodesWithAttributes,
+      setNodesWithAttributes: setNodesWithAttributes,
+      fitMapToSearchResults: fitMapToSearchResults,
+      getNodesByRoadAttributes: getNodesByRoadAttributes,
+      getNodePointTemplatesByCoordinates: getNodePointTemplatesByCoordinates,
+      getJunctionTemplateByCoordinates: getJunctionTemplateByCoordinates,
+      moveToLocation: moveToLocation,
+      openNodePointTemplate: openNodePointTemplate,
+      openJunctionTemplate: openJunctionTemplate
+    };
+
 }

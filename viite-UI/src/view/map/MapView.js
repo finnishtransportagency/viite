@@ -9,6 +9,14 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { setZoomLevel, getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';
 
+export function moveMapToCoordinates(map, position) {
+  let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
+  if (!_.isUndefined(position.zoom))
+    zoomLevel = position.zoom;
+  map.getView().setCenter([position.lon, position.lat]);
+  map.getView().setZoom(zoomLevel);
+}
+
 export function MapView(map, layers) {
     const centerMarkerLayer = new ol.source.Vector({});
     let enableCtrlModifier = false;
@@ -70,14 +78,6 @@ export function MapView(map, layers) {
     eventbus.on('tool:clear', function () {
       map.getViewport().style.cursor = 'default';
     });
-
-    eventbus.on('coordinates:selected', function (position) {
-      let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
-      if (!_.isUndefined(position.zoom))
-        zoomLevel = position.zoom;
-      map.getView().setCenter([position.lon, position.lat]);
-      map.getView().setZoom(zoomLevel);
-    }, this);
 
     map.on('coordinates:marked', function (event) {
       if (event && event.position) {
