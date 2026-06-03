@@ -718,7 +718,9 @@ class RoadAddressService(
       roadAddresses.flatMap { roadAddress =>
         roadLinks.find(_.linkId == roadAddress.linkId).map { roadLink =>
           ChangedRoadAddress(
-            roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)),
+            roadAddress = roadAddress.copyWithGeometry(GeometryUtils.truncateGeometry3D(roadLink.geometry,
+              GeometryUtils.scaleMToGeometry(roadAddress.startMValue, roadLink.length, GeometryUtils.geometryLength(roadLink.geometry)),
+              GeometryUtils.scaleMToGeometry(roadAddress.endMValue,   roadLink.length, GeometryUtils.geometryLength(roadLink.geometry)))),
             link = roadLink
           )
         }
