@@ -28,22 +28,27 @@ export function RoadNameCollection(backend) {
       return roadName;
     };
 
-    this.fetchRoads = function (roadNumber) {
+    this.fetchRoads = function (roadNumber, onFetched) {
       changedIds = [];
-      backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
-        currentRoadNumber = roadNumber;
-        const sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
-          return rd.roadNumber === parseInt(roadNumber, 10);
-        }).map(function (road) {
-          const roadCopy = road;
-          if (road.endDate)
-            roadCopy.endDate = moment(road.endDate, 'DD.MM.YYYY, HH:mm:ss');
-          if (road.startDate)
-            roadCopy.startDate = moment(road.startDate, 'DD.MM.YYYY, HH:mm:ss');
-          return roadCopy;
-        }).sortBy('startDate').value();
-        currentRoadNameData = sortedRoadData;
-        eventbus.trigger("roadNameTool:roadsFetched", sortedRoadData);
+      return new Promise(function (resolve) {
+        backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
+          currentRoadNumber = roadNumber;
+          const sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
+            return rd.roadNumber === parseInt(roadNumber, 10);
+          }).map(function (road) {
+            const roadCopy = road;
+            if (road.endDate)
+              roadCopy.endDate = moment(road.endDate, 'DD.MM.YYYY, HH:mm:ss');
+            if (road.startDate)
+              roadCopy.startDate = moment(road.startDate, 'DD.MM.YYYY, HH:mm:ss');
+            return roadCopy;
+          }).sortBy('startDate').value();
+          currentRoadNameData = sortedRoadData;
+          if (typeof onFetched === 'function') {
+            onFetched(sortedRoadData);
+          }
+          resolve(sortedRoadData);
+        });
       });
     };
 

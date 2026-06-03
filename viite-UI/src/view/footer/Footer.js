@@ -3,8 +3,8 @@ import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 
 /* Contains following elements:
 - TileMapSelector: A set of buttons used for selecting which map background to show
-- CoordinatesDisplay: Displays the coordinates of the center of the map and contains a button for marking those coordinates on the map
-- CrosshairToggle: A checkbox for toggling a crosshair in the center of the map and clicking on the map through it (see MapView.js for details)
+- CoordinatesDisplay: Displays the coordinates of current location and contains a button for marking those coordinates on the map
+- CrosshairToggle: A checkbox for toggling a crosshair in the center of the map and clicking on the map through it to support test automation
 */
 
 export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {

@@ -12,7 +12,7 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { EnumerationUtils } from '@utils/EnumerationUtils.js';
-import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
+import { RoadAddressBrowserForm, createElyEvkSelectorData } from './RoadAddressBrowserForm.js';
 
 export function RoadAddressChangesBrowserWindow(backend) {
   let searchParams = {};
@@ -48,7 +48,7 @@ export function RoadAddressChangesBrowserWindow(backend) {
               return false;
           }
       } else {
-          dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
+          dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp-kk-vvvv");
           return false;
       }
   }
@@ -78,41 +78,6 @@ export function RoadAddressChangesBrowserWindow(backend) {
       return true;
   }
 
-  // Create Elinvoimakeskus/ELY data for the multi-column selector
-  function createElyEvkData() {
-    const evkItems = [];
-    const elyItems = [];
-
-    if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
-        for (const evk in ViiteEnumerations.EVKCodes) {
-            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
-                const evkData = ViiteEnumerations.EVKCodes[evk];
-                evkItems.push({
-                    value: `EVK_${evkData.value}`,
-                    label: `${evkData.value} (${evkData.shortName})`
-                });
-            }
-        }
-    }
-
-    if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
-        for (const ely in ViiteEnumerations.ElyCodes) {
-            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
-                const elyData = ViiteEnumerations.ElyCodes[ely];
-                elyItems.push({
-                    value: `ELY_${elyData.value}`,
-                    label: `${elyData.value} (${elyData.shortName})`
-                });
-            }
-        }
-    }
-
-    return {
-        0: { columnTitle: 'Elinvoimakeskus', items: evkItems },
-        1: { columnTitle: 'ELY', items: elyItems }
-    };
-}
-
   // Instantiate selector and inject it into the Changes form
   function insertElyEvkSelector() {
       // Render selector with id expected by getData()
@@ -120,7 +85,7 @@ export function RoadAddressChangesBrowserWindow(backend) {
           id: 'roadAddrChangesInputEly',
           placeholder: 'Valitse Elinvoimakeskus / ELY',
           width: 240,
-          data: createElyEvkData()
+          data: createElyEvkSelectorData()
       });
 
       // Find the changes form and the end date container to insert after (search within the window container)
@@ -376,12 +341,11 @@ export function RoadAddressChangesBrowserWindow(backend) {
       roadAddrChangesStartDate.setCustomValidity("");
       roadAddrChangesEndDate.setCustomValidity("");
 
-      if (willPassValidations())
-
-          //Sets the end date 1 day ahead, so that the inputted end date will be included in the projectlisting.
+      if (willPassValidations()) {
+          // Sets the end date 1 day ahead, so that the inputted end date is included in project listing.
           dateutil.addOneDayToDate(roadAddrEndDateObject);
-
           fetchRoadAddressChanges(createParams());
+      }
   }
 
   function fetchRoadAddressChanges(params) {
@@ -391,8 +355,10 @@ export function RoadAddressChangesBrowserWindow(backend) {
               Spinner.hide();
               searchParams = params;
               showData(result.changeInfos, createResultTable(result.changeInfos));
-          } else
+          } else {
+              Spinner.hide();
               new ConfirmPopup(result.error, { type: "alert" });
+          }
       });
   }
 
@@ -518,11 +484,13 @@ export function RoadAddressChangesBrowserWindow(backend) {
           content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm()
       });
 
+      const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];
+      if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
+          roadAddressBrowserForm.bindSelectorEvents(formEl);
+      }
+
       if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
           insertElyEvkSelector();
-      }
-      if (elyEvkSelector) {
-          elyEvkSelector.bindEvents();
       }
       bindEvents();
   }

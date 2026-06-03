@@ -4,9 +4,15 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 export function LinkInfo(selectedLinkProperty, menu) {
 
     // Helper to handle null/undefined values by returning a fallback string.
-    function withFallback(val) {
-      if (val === null || val === undefined) return '';
+    function withFallback(val, fallback = '') {
+      if (val === null || val === undefined || Number.isNaN(val)) return fallback;
       return val;
+    }
+
+    function formatRowsNoWrap(values) {
+      return values
+        .map(v => `<span style="white-space: nowrap; display: inline-block;">${withFallback(v)}</span>`)
+        .join('<br>');
     }
 
     function createAttributesFromEnum(enumObj, useName) {
@@ -98,11 +104,20 @@ export function LinkInfo(selectedLinkProperty, menu) {
 
     function lengthDynamicField() {
       const links = selectedLinkProperty.get();
-      const totalLen = _.reduce(links, (acc, l) => {
-          const start = _.get(l, 'addrMRange.start', 0);
-          const end = _.get(l, 'addrMRange.end', 0);
-          return acc + (end - start);
-      }, 0);
+      const hasAllDistances = _.every(links, l => {
+        const start = _.get(l, 'addrMRange.start');
+        const end = _.get(l, 'addrMRange.end');
+        return Number.isFinite(start) && Number.isFinite(end);
+      });
+
+      const totalLen = hasAllDistances
+      ? _.reduce(links, (acc, l) => {
+        const start = _.get(l, 'addrMRange.start');
+        const end = _.get(l, 'addrMRange.end');
+        return acc + (end - start);
+      }, 0)
+      : '';
+
       const label = (links.length === 1) ? 'PITUUS' : 'YHTEENLASKETTU PITUUS';
       return constructField(label, totalLen);
     }
@@ -156,7 +171,7 @@ export function LinkInfo(selectedLinkProperty, menu) {
             </div>
 
             <div class="attribute-section">
-                ${isSingle ? staticField('TIEN NIMI', withFallback(firstLink.roadName)) : constructField('TIEN NIMI', roadNames.length > 0 ? roadNames.map(v => withFallback(v)).join(', ') : roadNumbers.map(v => withFallback(v)).join(', '))}
+                ${isSingle ? staticField('TIEN NIMI', withFallback(firstLink.roadName)) : constructField('TIEN NIMI', roadNames.length > 0 ? roadNames.map(v => withFallback(v)).join(', ') : '')}
                 ${isSingle ? staticField('TIENUMERO', withFallback(firstLink.roadNumber)) : constructField('TIENUMERO', roadNumbers.map(v => withFallback(v)).join(', '))}
                 
                 ${isSameRoad ? dynamicField('TIEOSANUMERO', 'roadPartNumber') : constructField('TIEOSANUMERO', '')}
@@ -165,8 +180,8 @@ export function LinkInfo(selectedLinkProperty, menu) {
                 ${isSamePart ? staticField('LOPPUETÄISYYS', _.get(props, 'addrMRange.end')) : constructField('LOPPUETÄISYYS', '')}
                 
                 ${lengthDynamicField()}
-                ${isSingle ? staticField('Elinvoimakeskus', firstLink.evkCode) : constructField('Elinvoimakeskus', evkCodes.map(v => withFallback(v) + ' ' + decodeAttributes('Elinvoimakeskus', v)).join(', '))}
-                ${isSingle ? staticField('HALLINNOLLINEN LUOKKA', firstLink.administrativeClassId) : constructField('HALLINNOLLINEN LUOKKA', administrativeClasses.map(v => withFallback(v) + ' ' + decodeAttributes('HALLINNOLLINEN LUOKKA', v)).join(', '))}
+                ${isSingle ? staticField('Elinvoimakeskus', firstLink.evkCode) : constructField('Elinvoimakeskus', formatRowsNoWrap(evkCodes.map(v => `${withFallback(v)} ${decodeAttributes('Elinvoimakeskus', v)}`.trim())))}
+                ${isSingle ? staticField('HALLINNOLLINEN LUOKKA', firstLink.administrativeClassId) : constructField('HALLINNOLLINEN LUOKKA', formatRowsNoWrap(administrativeClasses.map(v => `${withFallback(v)} ${decodeAttributes('HALLINNOLLINEN LUOKKA', v)}`.trim())))}
                 ${isSamePart ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '')}
                 ${isSamePart ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '')}
             </div>

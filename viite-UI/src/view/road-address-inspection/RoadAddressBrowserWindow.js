@@ -430,16 +430,9 @@ export function RoadAddressBrowserWindow(backend) {
                       roadAddrSituationDate.setCustomValidity(`Vuosiluvun tulee olla väliltä ${ViiteConstants.MIN_YEAR_INPUT} - ${ViiteConstants.MAX_YEAR_INPUT}`);
                   }
               } else {
-                  roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp.kk.vvvv");
+                  roadAddrSituationDate.setCustomValidity("Päivämäärän tulee olla muodossa pp-kk-vvvv");
               }
           }
-
-          // Clear date error message when typing is started again
-          document.getElementById('roadAddrSituationDate').addEventListener('input', function(event) {
-              const input = event.currentTarget;
-              validateDate(input.value);
-              input.setCustomValidity("");
-          });
 
           function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
               
@@ -475,20 +468,6 @@ export function RoadAddressBrowserWindow(backend) {
               lOsa.setCustomValidity("");
               return true;
           }
-
-
-          // Clear A-osa / L-osa error when either value is changed
-          document.getElementById('roadAddrInputStartPart').addEventListener('input', function(event) {
-              const input = event.currentTarget;
-              validateBeginningAndEndParts(input.value);
-              input.setCustomValidity("");
-          });
-
-          document.getElementById('roadAddrInputEndPart').addEventListener('input', function(event) {
-              const input = event.currentTarget;
-              validateBeginningAndEndParts(input.value);
-              input.setCustomValidity("");
-          });
 
           function willPassValidations() {
               validateDate(roadAddrSituationDate.value);
@@ -604,8 +583,10 @@ export function RoadAddressBrowserWindow(backend) {
                       showNoResultsFoundNotification();
                   }
 
-              } else
+              } else {
+                  Spinner.hide();
                   new ConfirmPopup(result.error, { type: "alert" });
+              }
           });
       }
 
@@ -692,6 +673,35 @@ export function RoadAddressBrowserWindow(backend) {
                   const input = event.currentTarget;
                   if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
                       input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+                  }
+                  const startPart = modal.getContent().find('#roadAddrInputStartPart')[0];
+                  const startValue = startPart ? Number(startPart.value) : NaN;
+                  const endValue = Number(input.value);
+                  if (!isNaN(startValue) && !isNaN(endValue) && startValue > endValue) {
+                      input.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
+                  } else {
+                      input.setCustomValidity("");
+                  }
+              };
+          }
+
+          const situationDateInput = modal.getContent().find('#roadAddrSituationDate')[0];
+          if (situationDateInput) {
+              situationDateInput.oninput = function (event) {
+                  event.currentTarget.setCustomValidity("");
+              };
+          }
+
+          if (startPartInput) {
+              const originalStartPartInput = startPartInput.oninput;
+              startPartInput.oninput = function(event) {
+                  originalStartPartInput(event);
+                  const startValue = Number(event.currentTarget.value);
+                  const endValue = endPartInput ? Number(endPartInput.value) : NaN;
+                  if (endPartInput && !isNaN(startValue) && !isNaN(endValue) && startValue > endValue) {
+                      endPartInput.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
+                  } else if (endPartInput) {
+                      endPartInput.setCustomValidity("");
                   }
               };
           }

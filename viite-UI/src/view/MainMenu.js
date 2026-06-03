@@ -50,7 +50,11 @@ export function MainMenu(options = {}) {
   const roles = getStartupParameters().roles || [];
 
   const menu = new MenuContainer();
-  document.querySelector('#menu-container').appendChild(menu.root);
+  if (!rootElement.length) {
+    console.error('MainMenu: #menu-container was not found');
+    return { setState: () => {} };
+  }
+  rootElement[0].appendChild(menu.root);
 
   const views = {
     linkInfo: new LinkInfo(selectedLinkProperty, menu),
@@ -127,11 +131,23 @@ export function MainMenu(options = {}) {
       formAdminPanelButton: MENU_STATE.ADMIN_PANEL
     };
 
-    rootElement.off('click.mainMenu', 'button');
-    rootElement.on('click.mainMenu', 'button', (event) => {
-      event.preventDefault();
+    const mainMenuButtonSelector = [
+      '#formProjectButton',
+      '#formNameToolButton',
+      '#formNodesAndJunctionsButton',
+      '#formRoadAddressBrowserButton',
+      '#formRoadAddressChangesBrowserButton',
+      '#formRoadNetworkErrorsListButton',
+      '#formAdminPanelButton'
+    ].join(', ');
+
+    rootElement.off('click.mainMenu', mainMenuButtonSelector);
+    rootElement.on('click.mainMenu', mainMenuButtonSelector, (event) => {
       const next = buttonMap[event.currentTarget.id];
-      if (next) setState(next);
+      if (next) {
+        event.preventDefault();
+        setState(next);
+      }
     });
   }
 

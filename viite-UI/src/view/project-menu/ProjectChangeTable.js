@@ -447,11 +447,13 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       return `<td class="project-change-table-dimension-first" colspan="2">
         ${getChangeType(changeInfoSeq.changetype)}
       </td>
-      ${emptyCells(9)}`;    
+      ${emptyCells(8)}
+      <td class="project-change-table-dimension elinvoimakeskus" colspan="2"></td>`;
     }
 
     function getEmptyTarget() {
-      return emptyCells(9);
+      return `${emptyCells(8)}
+      <td class="project-change-table-dimension elinvoimakeskus" colspan="2"></td>`;
     }
 
     function getTargetInfo(changeInfoSeq, rowId) {

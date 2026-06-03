@@ -3,6 +3,48 @@ import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 
+export function createElyEvkSelectorData() {
+  const evkItems = [];
+  const elyItems = [];
+
+  // Add Elinvoimakeskus items to first column
+  if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
+    for (const evk in ViiteEnumerations.EVKCodes) {
+      if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
+        const evkData = ViiteEnumerations.EVKCodes[evk];
+        evkItems.push({
+          value: `EVK_${evkData.value}`,
+          label: `${evkData.value} (${evkData.shortName})`
+        });
+      }
+    }
+  }
+
+  // Add ELY items to second column
+  if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
+    for (const ely in ViiteEnumerations.ElyCodes) {
+      if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
+        const elyData = ViiteEnumerations.ElyCodes[ely];
+        elyItems.push({
+          value: `ELY_${elyData.value}`,
+          label: `${elyData.value} (${elyData.shortName})`
+        });
+      }
+    }
+  }
+
+  return {
+    0: {
+      columnTitle: 'Elinvoimakeskus',
+      items: evkItems
+    },
+    1: {
+      columnTitle: 'ELY',
+      items: elyItems
+    }
+  };
+}
+
 export function RoadAddressBrowserForm() {
 
     // Initialize multi-column selectors
@@ -24,54 +66,12 @@ export function RoadAddressBrowserForm() {
         }
       });
 
-      function createElyEvkData() {
-        const evkItems = [];
-        const elyItems = [];
-  
-        // Add Elinvoimakeskus items to first column
-        if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
-          for (const evk in ViiteEnumerations.EVKCodes) {
-            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
-              const evkData = ViiteEnumerations.EVKCodes[evk];
-              evkItems.push({
-                value: `EVK_${evkData.value}`,
-                label: `${evkData.value} (${evkData.shortName})`
-              });
-            }
-          }
-        }
-  
-        // Add ELY items to second column
-        if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
-          for (const ely in ViiteEnumerations.ElyCodes) {
-            if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
-              const elyData = ViiteEnumerations.ElyCodes[ely];
-              elyItems.push({
-                value: `ELY_${elyData.value}`,
-                label: `${elyData.value} (${elyData.shortName})`
-              });
-            }
-          }
-        }
-  
-        return {
-          0: {
-            columnTitle: 'Elinvoimakeskus',
-            items: evkItems
-          },
-          1: {
-            columnTitle: 'ELY',
-            items: elyItems
-          }
-        };
-      }
-
       // ELY/EVK selector for address browser
       elyEvkSelector = new Selector({
         id: 'roadAddrInputElyEvk',
         placeholder: 'Valitse Elinvoimakeskus / ELY',
         width: 240,
-        data: createElyEvkData()
+        data: createElyEvkSelectorData()
       });
 
       // Target selector for address browser
@@ -124,9 +124,6 @@ export function RoadAddressBrowserForm() {
           </div>
         </form>`;
 
-      // Setup event delegation immediately
-      dateTargetSelector.bindEvents();
-
       return html;
     }
 
@@ -156,10 +153,6 @@ export function RoadAddressBrowserForm() {
             ${createCsvDownloadButton()}
           </div>
         </form>`;
-
-      // Setup event delegation immediately
-      elyEvkSelector.bindEvents();
-      targetSelector.bindEvents();
 
       return html;
     }

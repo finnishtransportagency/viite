@@ -1,7 +1,6 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
-import { eventbus } from '@utils/Eventbus.js';
 
 export function RoadNamingToolWindow(roadNameCollection) {
     const newId = -1000;
@@ -58,11 +57,55 @@ export function RoadNamingToolWindow(roadNameCollection) {
       }
     };
 
-    const searchForRoadNames = () => {
+    const renderRoadData = (roadData, $content) => {
+      let html = '<table id="roadList-table" style="table-layout: fixed; width: 100%;">';
+
+      if (roadData && roadData.length > 0) {
+        roadData.forEach(road => {
+          const writable = !road.endDate;
+          const startDate = road.startDate ? road.startDate.format('DD.MM.YYYY') : '';
+          html += `
+            <tr class="roadList-item">
+              <td style="width: 150px;">${staticFieldRoadNumber(road.roadNumber, road.id)}</td>
+              <td style="width: 250px;">${staticFieldRoadList(road.name, writable, road.id, "roadName", 50)}</td>
+              <td style="width: 110px;">${staticFieldRoadList(startDate, false, road.id, "startDate")}</td>
+              <td style="width: 110px;">${staticFieldRoadList(road.endDate ? road.endDate.format('DD.MM.YYYY') : '', writable, road.id, "endDate")}</td>
+              <td>
+                ${road.endDate ?
+                  `<button class="btn-primary" style="visibility:hidden;">+</button>` :
+                  `<div id="plus_minus_buttons"><button class="btn-primary" id="new-road-name" data-roadId="${road.id}" data-roadNumber="${road.roadNumber}" data-originalStartDate="${startDate}">+</button></div>`
+                }
+              </td>
+            </tr><tr style="border-bottom:1px solid darkgray;"><td colspan="100%"></td></tr>`;
+        });
+
+        html += '</table>';
+        $content.find('#road-list').html(html);
+
+        const lastEndDate = $content.find('input[data-FieldName="endDate"]').last();
+        if (lastEndDate.val() === "") lastEndDate.val("pp.kk.vvvv");
+        lastEndDate.prop("readonly", true);
+        lastEndDate.prop("disabled", true);
+
+        addSaveEvent();
+        toggleSaveButton();
+      } else {
+        $content.find('#road-list').html('');
+      }
+    };
+
+    const searchForRoadNames = async () => {
       const roadParam = $('#roadSearchParameter').val();
       $('.roadList-item').remove();
       $('#saveChangedRoads').remove();
-      roadNameCollection.fetchRoads(roadParam);
+
+      const roadData = await roadNameCollection.fetchRoads(roadParam);
+      if (!modal) {
+        return;
+      }
+
+      const $content = modal.getContent();
+      renderRoadData(roadData, $content);
     };
 
     const addSaveEvent = () => {
@@ -183,41 +226,6 @@ export function RoadNamingToolWindow(roadNameCollection) {
       $content.on('input change', '.form-control, .date-picker-input', (e) => editEvent(e));
       $content.on('click', '#executeRoadSearch', () => searchForRoadNames());
 
-      eventbus.on("roadNameTool:roadsFetched", (roadData) => {
-        let html = '<table id="roadList-table" style="table-layout: fixed; width: 100%;">';
-
-        if (roadData && roadData.length > 0) {
-          roadData.forEach(road => {
-            const writable = !road.endDate;
-            const startDate = road.startDate ? road.startDate.format('DD.MM.YYYY') : '';
-            html += `
-              <tr class="roadList-item">
-                <td style="width: 150px;">${staticFieldRoadNumber(road.roadNumber, road.id)}</td>
-                <td style="width: 250px;">${staticFieldRoadList(road.name, writable, road.id, "roadName", 50)}</td>
-                <td style="width: 110px;">${staticFieldRoadList(startDate, false, road.id, "startDate")}</td>
-                <td style="width: 110px;">${staticFieldRoadList(road.endDate ? road.endDate.format('DD.MM.YYYY') : '', writable, road.id, "endDate")}</td>
-                <td>
-                  ${road.endDate ?
-                    `<button class="btn-primary" style="visibility:hidden;">+</button>` : 
-                    `<div id="plus_minus_buttons"><button class="btn-primary" id="new-road-name" data-roadId="${road.id}" data-roadNumber="${road.roadNumber}" data-originalStartDate="${startDate}">+</button></div>`
-                  }
-                </td>
-              </tr><tr style="border-bottom:1px solid darkgray;"><td colspan="100%"></td></tr>`;
-          });
-
-          html += '</table>';
-          $content.find('#road-list').html(html);
-          
-          const lastEndDate = $content.find('input[data-FieldName="endDate"]').last();
-          if (lastEndDate.val() === "") lastEndDate.val("pp.kk.vvvv");
-          lastEndDate.prop("readonly", true);
-          lastEndDate.prop("disabled", true);
-
-          addSaveEvent();
-          toggleSaveButton();
-        }
-      });
-
       // Handle the "+" button click (delegated via document or $content)
       $(document).off('click', '#new-road-name').on('click', '#new-road-name', (e) => {
         const target = $(e.target);
@@ -266,7 +274,7 @@ export function RoadNamingToolWindow(roadNameCollection) {
       });
 
       modal.open({
-        title: 'Tienimi',
+        title: 'Tiennimen ylläpito',
         content: createNamingToolContent()
       });
       bindEvents();
