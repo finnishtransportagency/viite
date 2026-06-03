@@ -3,9 +3,10 @@ import { eventbus } from '@utils/eventbus.js';
 
 export function Backend() {
     let loadingProject;
-    // var finnishDatePattern = /(\d{2})\.(\d{2})\.(\d{4})/;
     const gettingRoadLinks = null;
     moment.locale('fi');
+
+    const REQUEST_THROTTLE_MS = 1000; // Prevents spamming backend with requests when user is e.g. dragging the map around
 
     // Backend returns an array of EVK shortnames, but frontend expects numbers. So [EVK0] -> [0]
     const convertRoadMaintainersToNumbers = function(projects) {
@@ -23,6 +24,10 @@ export function Backend() {
       });
     };
 
+    // ------------------------------------------------------
+    // Request helpers (debounce / request coordination)
+    // ------------------------------------------------------
+
     function createCallbackRequestor(getParameters) {
       const requestor = latestResponseRequestor(getParameters);
       return function (parameter, callback) {
@@ -33,20 +38,31 @@ export function Backend() {
     function latestResponseRequestor(getParameters) {
       let deferred;
       let request;
+      let debounced;
 
       function doRequest() {
-        if (request)
-          request.abort();
+        if (request) request.abort();
 
-        request = $.ajax(getParameters.apply(undefined, arguments)).done(function (result) {
-          deferred.resolve(result);
-        });
+        request = $.ajax(getParameters.apply(undefined, arguments))
+          .done(function (result) {
+            deferred.resolve(result);
+          })
+          .fail(function (error) {
+            deferred.reject(error);
+          });
+
         return deferred;
       }
 
       return function () {
         deferred = $.Deferred();
-        _.debounce(doRequest, 200).apply(undefined, arguments);
+
+        if (!debounced) {
+          debounced = _.debounce(doRequest, 200);
+        }
+
+        debounced.apply(undefined, arguments);
+
         return deferred;
       };
     }
@@ -56,6 +72,9 @@ export function Backend() {
     }
 
     return {
+        // ------------------------------------------------------
+        // Road network endpoints
+        // ------------------------------------------------------
         startLinkNetworkUpdate: _.throttle(function (data, success, failure) {
           $.ajax({
             contentType: "application/json",
@@ -66,26 +85,32 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getRoadNetworkErrors: _.throttle(function (callback) {
           return $.get('api/viite/roadnetworkerrors', function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
+        // ------------------------------------------------------
+        // Road address browser endpoints
+        // ------------------------------------------------------
         getDataForRoadAddressBrowser: _.throttle(function (params, callback) {
           return $.get('api/viite/roadaddressbrowser', params, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
         
         getDataForRoadAddressChangesBrowser: _.throttle(function (params, callback) {
           return $.get('api/viite/roadaddresschangesbrowser', params, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
         
+        // ------------------------------------------------------
+        // Road link and map fetch endpoints
+        // ------------------------------------------------------
         getRoadLinks: createCallbackRequestor(function (params) {
           const zoom = params.zoom;
           const boundingBox = params.boundingBox;
@@ -111,8 +136,11 @@ export function Backend() {
           return $.get('api/viite/nodesjunctions?zoom=' + zoom + '&bbox=' + boundingBox, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 500),
+        }, REQUEST_THROTTLE_MS),
 
+        // ------------------------------------------------------
+        // Abort / cancellation helpers
+        // ------------------------------------------------------
         abortLoadingProject: function () {
           if (loadingProject) {
             loadingProject.abort();
@@ -127,6 +155,9 @@ export function Backend() {
           }
         },
 
+        // ------------------------------------------------------
+        // Project link and road address lookup endpoints
+        // ------------------------------------------------------
         getProjectLinks: createCallbackRequestor(function (params) {
           const zoom = params.zoom;
           const boundingBox = params.boundingBox;
@@ -140,7 +171,7 @@ export function Backend() {
           return $.getJSON('api/viite/project/links/' + projectId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         revertChangesRoadlink: _.throttle(function (data, success, errorCallback) {
           $.ajax({
@@ -152,37 +183,37 @@ export function Backend() {
             success: success,
             error: errorCallback
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getProjectLinkByLinkId: _.throttle(function (linkId, callback) {
           return $.getJSON('api/viite/project/roadaddress/linkid/' + linkId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getRoadAddressByLinkId: _.throttle(function (linkId, callback) {
           return $.getJSON('api/viite/roadaddress/linkid/' + linkId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getPrefillValuesForLink: _.throttle(function (linkId, currentProjectId, callback) {
           return $.getJSON('api/viite/roadlinks/project/prefill?linkId=' + linkId + '&currentProjectId=' + currentProjectId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getRoadLinkByMmlId: _.throttle(function (mmlId, callback) {
           return $.getJSON('api/viite/roadlinks/mml/' + mmlId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getRoadLinkByMtkId: _.throttle(function (mtkId, callback) {
           return $.getJSON('api/viite/roadlinks/mtkid/' + mtkId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getRoadName: _.debounce(function (roadNumber, projectID, callback) {
           if (projectID !== 0 && roadNumber !== '') {
@@ -196,6 +227,9 @@ export function Backend() {
           }
         }, 500),
 
+        // ------------------------------------------------------
+        // Road address project lifecycle endpoints
+        // ------------------------------------------------------
         saveRoadAddressProject: _.throttle(function (data, success, failure) {
           $.ajax({
             contentType: "application/json",
@@ -206,7 +240,7 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         createRoadAddressProject: _.throttle(function (data, success, failure) {
           $.ajax({
@@ -218,7 +252,7 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         deleteRoadAddressProject: _.throttle(function (projectId, success, failure) {
           $.ajax({
@@ -245,7 +279,7 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         checkIfRoadpartReserved: function (roadNumber, startPart, endPart, projDate, projectId, callback) {
           return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
@@ -259,6 +293,9 @@ export function Backend() {
           });
         },
 
+        // ------------------------------------------------------
+        // Project link mutation endpoints
+        // ------------------------------------------------------
         createProjectLinks: _.throttle(function (data, success, failure) {
           $.ajax({
             contentType: "application/json",
@@ -269,7 +306,7 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         updateProjectLinks: _.throttle(function (data, success, error) {
           $.ajax({
@@ -281,7 +318,7 @@ export function Backend() {
             success: success,
             error: error
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         directionChangeNewRoadlink: _.throttle(function (data, success, failure) {
           $.ajax({
@@ -293,14 +330,17 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
+        // ------------------------------------------------------
+        // Project lists and validation endpoints
+        // ------------------------------------------------------
         getRoadAddressProjects: _.throttle(function (onlyActive, callback) {
           return $.getJSON('api/viite/roadlinks/roadaddress/project/all/' + onlyActive, function (data) {
             const processedData = Array.isArray(data) ? convertRoadMaintainersToNumbers(data) : data;
             return _.isFunction(callback) && callback(processedData);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getRoadAddressProjectStates: _.throttle(function (projectIDs, callback) {
           // TODO: Fix 414 Request-URI Too Large.
@@ -310,7 +350,7 @@ export function Backend() {
           return $.getJSON('api/viite/roadlinks/roadaddress/project/states/' + projectIDs, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getProjectsWithLinksById: function (id, callback) {
           // Abort any previous request
@@ -334,7 +374,7 @@ export function Backend() {
 
         getChangeTable: _.throttle(function (id, callback) {
           $.getJSON('api/viite/project/getchangetable/' + id, callback);
-        }, 500),
+        }, REQUEST_THROTTLE_MS),
 
         recalculateAndValidateProject: function (id, callback) {
           $.getJSON('api/viite/project/recalculateProject/' + id, callback);
@@ -344,6 +384,9 @@ export function Backend() {
           $.getJSON('api/viite/project/validateProject/' + id, callback);
         },
 
+        // ------------------------------------------------------
+        // Eventbus-driven fetch endpoints
+        // ------------------------------------------------------
         getJunctionPointEditableStatus: function (ids, jp) {
           $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
             eventbus.trigger('junctionPoint:editableStatusFetched', response, jp);
@@ -356,11 +399,14 @@ export function Backend() {
           });
         },
 
+        // ------------------------------------------------------
+        // Startup and search endpoints
+        // ------------------------------------------------------
         getRoadLinkDate: _.throttle(function (callback) {
           return $.get('api/viite/getRoadLinkDate', function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getStartupParametersWithCallback: function (callback) {
           const url = 'api/viite/startupParameters';
@@ -382,6 +428,9 @@ export function Backend() {
           });
         },
 
+        // ------------------------------------------------------
+        // Road name endpoints
+        // ------------------------------------------------------
         getRoadAddressesByRoadNumber: createCallbackRequestor(function (roadNumber) {
           return {
             url: 'api/viite/roadnames?roadNumber=' + roadNumber
@@ -398,31 +447,34 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
+        // ------------------------------------------------------
+        // Node and template endpoints
+        // ------------------------------------------------------
         getNodesByRoadAttributes: _.throttle(function (roadAttributes, callback) {
           return $.get('api/viite/nodes', roadAttributes, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getTemplates: _.throttle(function (callback) {
           return $.get('api/viite/templates', function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getNodePointTemplateById: _.throttle(function (nodePointTemplateId, callback) {
           return $.getJSON('api/viite/node-point-templates/' + nodePointTemplateId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         getJunctionTemplateById: _.throttle(function (junctionTemplateId, callback) {
           return $.getJSON('api/viite/junction-templates/' + junctionTemplateId, function (data) {
             return _.isFunction(callback) && callback(data);
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         createNodeInfo: _.throttle(function (data, success, failure) {
           $.ajax({
@@ -434,7 +486,7 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000),
+        }, REQUEST_THROTTLE_MS),
 
         updateNodeInfo: _.throttle(function (data, success, failure) {
           $.ajax({
@@ -446,6 +498,7 @@ export function Backend() {
             success: success,
             error: failure
           });
-        }, 1000)
+        }, REQUEST_THROTTLE_MS)
     };
 }
+
