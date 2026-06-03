@@ -1,11 +1,11 @@
-// Orchestrates search panel rendering and updates legend HTML by selected layer.
 import { eventbus } from '@utils/eventbus.js';
 import { getLegendDisplayHtml } from './LegendDisplay.js';
 import { SearchBox } from './SearchBox.js';
 import { getSelectedLayer } from '@model/ApplicationModel.js';
 
+// Orchestrates search panel rendering and updates legend HTML based on selected layer
 export function SearchPanel() {
-  const searchPanel = $('<div class="search-panel"></div>');
+  const searchPanel = $(`<div class="search-panel"></div>`);
   const searchBox = new SearchBox();
 
   const legendGroup = $(`

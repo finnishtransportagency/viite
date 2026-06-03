@@ -4,7 +4,6 @@ export function createProjectLinkEditorLogic(dependencies) {
   const {
     RoadAddressChangeType,
     CalibrationCode,
-    editableStatus,
     formState,
     menuSelector = '#menu-container'
   } = dependencies;
@@ -18,11 +17,6 @@ export function createProjectLinkEditorLogic(dependencies) {
     const roadAddressChangeType = selection[0].status;
     const targetRoadAddressChangeType = _.find(RoadAddressChangeType, ls => ls.description === option || (option === '' && ls.value === 99));
     return transitionModifiers(targetRoadAddressChangeType, roadAddressChangeType);
-  };
-
-  const isProjectEditable = (projectCollection) => {
-    if (!projectCollection || !projectCollection.getCurrentProject()) return false;
-    return _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
   };
 
   const checkInputs = (projectChangeTable) => {
@@ -79,7 +73,7 @@ export function createProjectLinkEditorLogic(dependencies) {
     }
   };
 
-  const fillDistanceValues = (selectedLinks, projectCollection) => {
+  const fillDistanceValues = (selectedLinks) => {
     const beginDistance = $('#beginDistance');
     const endDistance = $('#endDistance');
 
