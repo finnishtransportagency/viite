@@ -1290,7 +1290,11 @@ class ProjectService(
           if (modifiedLink.geometry.nonEmpty) {
             val kgvGeometry = kgvRoadLinks.find(roadLink => roadLink.linkId == modifiedLink.linkId && roadLink.linkSource == ra.linkGeomSource)
             if (kgvGeometry.nonEmpty) {
-              val geom = GeometryUtils.truncateGeometry3D(kgvGeometry.get.geometry, ra.startMValue, ra.endMValue)
+              val kgvGeom = kgvGeometry.get
+              val kgvGeomLength = GeometryUtils.geometryLength(kgvGeom.geometry)
+              val geom = GeometryUtils.truncateGeometry3D(kgvGeom.geometry,
+                GeometryUtils.scaleMToGeometry(ra.startMValue, kgvGeom.length, kgvGeomLength),
+                GeometryUtils.scaleMToGeometry(ra.endMValue,   kgvGeom.length, kgvGeomLength))
               projectLinkDAO.updateProjectLinkValues(projectId, ra.copy(geometry = geom))
             } else {
               projectLinkDAO.updateProjectLinkValues(projectId, ra, updateGeom = false)
@@ -2079,7 +2083,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   private def updateGeometryOfOriginalProjectLink(originalProjectLink: ProjectLink): Option[ProjectLink] = {
     val kgvRoadLinks = roadLinkService.getCurrentAndComplementaryRoadLinks(Set(originalProjectLink.linkId))
     kgvRoadLinks.find(_.linkId == originalProjectLink.linkId).map { kgvGeometry =>
-      val updatedGeom = GeometryUtils.truncateGeometry3D(kgvGeometry.geometry, originalProjectLink.startMValue, originalProjectLink.endMValue)
+      val kgvGeomLength = GeometryUtils.geometryLength(kgvGeometry.geometry)
+      val updatedGeom = GeometryUtils.truncateGeometry3D(kgvGeometry.geometry,
+        GeometryUtils.scaleMToGeometry(originalProjectLink.startMValue, kgvGeometry.length, kgvGeomLength),
+        GeometryUtils.scaleMToGeometry(originalProjectLink.endMValue,   kgvGeometry.length, kgvGeomLength))
       projectLinkDAO.updateProjectLinkGeometry(originalProjectLink.id, updatedGeom)
       originalProjectLink.copy(geometry = updatedGeom)
     }
@@ -2304,7 +2311,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   }
 
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
-    val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
+    val rlGeomLength = GeometryUtils.geometryLength(rl.geometry)
+    val geometry = GeometryUtils.truncateGeometry3D(rl.geometry,
+      GeometryUtils.scaleMToGeometry(ra.startMValue, rl.length, rlGeomLength),
+      GeometryUtils.scaleMToGeometry(ra.endMValue,   rl.length, rlGeomLength))
 
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
       case Some(rp) => {

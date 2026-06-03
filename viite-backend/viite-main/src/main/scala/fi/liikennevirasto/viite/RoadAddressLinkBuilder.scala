@@ -28,7 +28,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   private val modifiedBy = "kgvModified"
 
   def build(roadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
+    val geomLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,
+      GeometryUtils.scaleMToGeometry(roadAddress.startMValue, roadLink.length, geomLength),
+      GeometryUtils.scaleMToGeometry(roadAddress.endMValue,   roadLink.length, geomLength))
     val length = GeometryUtils.geometryLength(geom)
     val roadName = roadAddress.roadName
     val municipalityCode = roadLink.municipalityCode
@@ -109,7 +112,10 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
   }
 
   private def buildRoadLink(roadLink: RoadLink, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(roadLink.length))
+    val geomLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,
+      GeometryUtils.scaleMToGeometry(unaddressedRoadLink.startMValue.getOrElse(0.0), roadLink.length, geomLength),
+      GeometryUtils.scaleMToGeometry(unaddressedRoadLink.endMValue.getOrElse(roadLink.length), roadLink.length, geomLength))
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = roadLink.municipalityCode
     val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
