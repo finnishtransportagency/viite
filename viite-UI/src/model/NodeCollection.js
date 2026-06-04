@@ -4,6 +4,7 @@ import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
+import { addNodesToMap } from '@view/map/layers/NodeLayer.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -22,6 +23,11 @@ export function NodeCollection(backend) {
     let userNodePointTemplates = [];
     let userJunctionTemplates = [];
     const saving = 'node-saving';
+    let map;
+
+    function setMap(m) {
+      map = m;
+    }
 
     function setMapTemplates(templates) {
       mapTemplates = templates;
@@ -117,7 +123,7 @@ export function NodeCollection(backend) {
 
         // Move map to found location with appropriate zoom level
 
-        moveMapToCoordinates(window.currentMap, {
+        moveMapToCoordinates(map, {
           lon: result.lon,
           lat: result.lat,
           zoom: zoomlevels.minZoomForJunctions
@@ -166,7 +172,7 @@ export function NodeCollection(backend) {
           });
 
           // Update map with new node/junction template information
-          eventbus.trigger('node:addNodesToMap', fetchedNodesAndJunctions.nodes, templates, zoomlevels.minZoomForJunctions);
+          addNodesToMap(fetchedNodesAndJunctions.nodes, templates, zoomlevels.minZoomForJunctions);
         }
       } catch (error) {
         console.error('Error in moveToLocation:', error);
@@ -175,6 +181,35 @@ export function NodeCollection(backend) {
         Spinner.hide('moveToLocation');
       }
     };
+
+    function saveNodeToBackend(node, onSuccess, onFail) {
+      const fail = function (message) {
+        onFail(message.errorMessage || 'Solmun tallennus epäonnistui.', saving);
+      };
+
+      if (!_.isUndefined(node)) {
+        Spinner.show(saving);
+        if (node.id) {
+          backend.updateNodeInfo(node, function (result) {
+            if (result.success) {
+              Spinner.hide(saving);
+              onSuccess();
+            } else {
+              fail(result);
+            }
+          }, fail);
+        } else {
+          backend.createNodeInfo(node, function (result) {
+            if (result.success) {
+              Spinner.hide(saving);
+              onSuccess();
+            } else {
+              fail(result);
+            }
+          }, fail);
+        }
+      }
+    }
 
     // Update map with the nodes and junctions of the fetched location
     eventbus.on('node:fetched', function (fetchResult, zoom) {
@@ -187,49 +222,11 @@ export function NodeCollection(backend) {
       setNodes(resultNodes);
       setMapTemplates(templates);
 
-      eventbus.trigger('node:addNodesToMap', resultNodes, templates, zoom);
-    });
-
-    eventbus.on('node:save', function (node) {
-      const fail = function (message) {
-        eventbus.trigger('node:saveFailed', message.errorMessage || 'Solmun tallennus epäonnistui.', saving);
-      };
-
-      if (!_.isUndefined(node)) {
-        Spinner.show(saving);
-        if (node.id) {
-          backend.updateNodeInfo(node, function (result) {
-            if (result.success) {
-              Spinner.hide(saving);
-              eventbus.trigger('node:saveSuccess');
-            } else {
-              fail(result);
-            }
-          }, fail);
-        } else {
-          backend.createNodeInfo(node, function (result) {
-            if (result.success) {
-              Spinner.hide(saving);
-              eventbus.trigger('node:saveSuccess');
-            } else {
-              fail(result);
-            }
-          }, fail);
-        }
-      }
+      addNodesToMap(resultNodes, templates, zoom);
     });
 
     eventbus.on('templates:fetched', function (nodePointTemplates, junctionTemplates) {
       setUserTemplates(nodePointTemplates, junctionTemplates);
-    });
-
-    eventbus.on('nodeSearchTool:clickNode', function (index, map) {
-      const node = nodesWithAttributes[index];
-      moveMapToCoordinates(map, {
-        lon: node.coordinates.x,
-        lat: node.coordinates.y,
-        zoom: 12
-      });
     });
 
     // Opens a node point template by id and moves map to the template location.
@@ -304,6 +301,8 @@ export function NodeCollection(backend) {
       getNodesByRoadAttributes: getNodesByRoadAttributes,
       getNodePointTemplatesByCoordinates: getNodePointTemplatesByCoordinates,
       getJunctionTemplateByCoordinates: getJunctionTemplateByCoordinates,
+      setMap: setMap,
+      saveNodeToBackend: saveNodeToBackend,
       moveToLocation: moveToLocation,
       openNodePointTemplate: openNodePointTemplate,
       openJunctionTemplate: openJunctionTemplate

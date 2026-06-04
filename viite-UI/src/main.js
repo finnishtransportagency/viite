@@ -172,6 +172,7 @@ const startApplication = function (backend, models, startupParameters, roadNameC
   );
 
   initializeUI(mapContext.map, backend, startupParameters, mapContext.layers, mapContext.tileMaps, models, roadNameCollection);
+  models.nodeCollection.setMap(mapContext.map);
 
   new MapView(mapContext.map, mapContext.layers);
 

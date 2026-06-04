@@ -56,7 +56,6 @@ export function MapView(map, layers) {
     eventbus.on('application:initialized layer:fetched', function () {
       const zoom = zoomlevels.getViewZoom(map);
       setZoomLevel(zoom);
-      eventbus.trigger('map:initialized', map);
     }, this);
 
     const setCursor = function (tool) {

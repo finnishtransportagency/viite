@@ -564,10 +564,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       calibrationPointLayer.setVisible(isActiveLayer && getRoadVisibility());
     });
 
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:deselectFeaturesSelected', function () {
-      clearHighlights();
-    });
-
     me.eventListener.listenTo(eventbus, 'roadAddressProject:clearAndDisableInteractions', function () {
       clearHighlights();
       removeSelectInteractions();
@@ -590,10 +586,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
       isNotEditingData = notEditingData;
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:deactivateAllSelections', function () {
-      toggleSelectInteractions(false, true);
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:startAllInteractions', function () {

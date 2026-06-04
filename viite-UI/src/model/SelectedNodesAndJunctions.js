@@ -349,11 +349,11 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       close('templates:unselected');
     };
 
-    const saveNode = function () {
+    const saveNode = function (onSuccess, onFail) {
       if (_.isUndefined(current.node)) {
         return;
       }
-      eventbus.trigger('node:save', current.node);
+      nodeCollection.saveNodeToBackend(current.node, onSuccess, onFail);
     };
 
     function updateNodesAndJunctionsMarker(junction) {

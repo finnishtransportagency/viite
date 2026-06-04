@@ -58,8 +58,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       // Restore main UI state
       setMainMenuState('main');
 
-      eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
-      eventbus.trigger('roadAddressProject:deactivateAllSelections');
+
       eventbus.trigger('roadAddressProject:clearOnClose');
       eventbus.trigger('layer:selected', 'linkProperty', null, true);
       clearSelectedProjectLinks();
@@ -188,8 +187,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       editSpan.off('click').on('click', () => {
         eventbus.trigger('projectChangeTable:hide');
         syncRoadAddressingState({ changeTableOpen: false });
-        eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
-        eventbus.trigger('roadAddressProject:deactivateAllSelections');
         selectLayer('linkProperty', true, false);
 
         const projectId = project.data && project.data.id;
@@ -347,7 +344,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const onProjectSentSuccess = function () {
       showToast('Muutoksia viedään tieosoiteverkolle.', { type: 'success' });
       closeProjectMenu();
-      eventbus.trigger('roadLinks:refreshView');
     };
 
     const onProjectSentFailed = function (error) {
@@ -382,7 +378,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
       if (!_.isUndefined(project.data)) {
         eventbus.trigger('linkProperties:selectedProject', result.linkId, project.data);
-        eventbus.trigger('roadAddressProject:deactivateAllSelections');
+
       }
       Spinner.hide();
     };

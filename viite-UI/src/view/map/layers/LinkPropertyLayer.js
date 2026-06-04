@@ -593,10 +593,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
         }
       });
 
-      eventListener.listenTo(eventbus, 'roadLinks:refreshView', function () {
-        me.refreshView();
-      });
-
       eventListener.listenTo(eventListener, 'map:clearLayers', me.clearLayers);
     };
 

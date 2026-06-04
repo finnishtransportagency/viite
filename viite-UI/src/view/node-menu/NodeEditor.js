@@ -311,7 +311,20 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   const bindEvents = ($container) => {
     $container.off('.nodeEditor');
     const revalidate = () => syncActionButtons();
-    const triggerNodeSave = () => selectedNodesAndJunctions.saveNode();
+    const onSaveSuccess = () => {
+      cleanup();
+      selectedNodesAndJunctions.closeNode(false);
+      editorExitHandler('search');
+    };
+
+    const onSaveFail = (errorMessage, spinnerEvent) => {
+      saveInProgress = false;
+      syncActionButtons();
+      Spinner.hide(spinnerEvent);
+      new ConfirmPopup(errorMessage, { type: 'alert' });
+    };
+
+    const triggerNodeSave = () => selectedNodesAndJunctions.saveNode(onSaveSuccess, onSaveFail);
 
     // Field changes → update model + revalidate
     $container.on('input.nodeEditor change.nodeEditor', '#nodeName', function () {
@@ -457,18 +470,6 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
       if (picker) { picker.setDate(originalStartDate); picker.gotoToday(); }
     });
 
-    subscribeEventbus('node:saveSuccess', () => {
-      cleanup();
-      selectedNodesAndJunctions.closeNode(false);
-      editorExitHandler('search');
-    });
-
-    subscribeEventbus('node:saveFailed', (errorMessage, spinnerEvent) => {
-      saveInProgress = false;
-      syncActionButtons();
-      Spinner.hide(spinnerEvent);
-      new ConfirmPopup(errorMessage, { type: 'alert' });
-    });
   };
 
   // ─── Detach confirm message ─────────────────────────────────────────────────
