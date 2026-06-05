@@ -138,27 +138,19 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
       panelElement.off('.nodeDataMenu');
 
       panelElement.on('click.nodeDataMenu', '.btn-open-node-editor', function () {
-        if (_.isFunction(handlers.onEditNode)) {
-          handlers.onEditNode();
-        }
+        handlers.onEditNode();
       });
 
       panelElement.on('click.nodeDataMenu', '.btn-node-display-back', function () {
-        if (_.isFunction(handlers.onBackToSearch)) {
-          handlers.onBackToSearch();
-        }
+        handlers.onBackToSearch();
       });
 
       panelElement.on('click.nodeDataMenu', '.btn-edit-templates-cancel', function () {
-        if (_.isFunction(handlers.onBackToSearch)) {
-          handlers.onBackToSearch();
-        }
+        handlers.onBackToSearch();
       });
 
       panelElement.on('click.nodeDataMenu', '.btn-edit-node-save', function () {
-        if (_.isFunction(handlers.onSaveTemplates)) {
-          handlers.onSaveTemplates();
-        }
+        handlers.onSaveTemplates();
       });
 
       panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {

@@ -2,6 +2,12 @@ import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 
+let openTemplatesBridge = function () {};
+
+export function openSelectedNodesAndJunctionTemplates(templatesToOpen) {
+  openTemplatesBridge(templatesToOpen);
+}
+
 /**
  * SelectedNodesAndJunctions - Manages selected nodes and junctions state
  * 
@@ -59,6 +65,8 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       }
       setNodeMenuState('display-templates', current.templates);
     }
+
+    openTemplatesBridge = openTemplates; // Bridge function to allow opening templates from outside this module
 
     const getCurrentTemplates = function () {
       return current.templates;
@@ -360,13 +368,10 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       eventbus.trigger('change:node', current.node, junction);
     }
 
-    eventbus.on('selectedNodesAndJunctions:openTemplates', function (templatesToOpen) {
-      openTemplates(templatesToOpen);
-    });
-
     return {
       openNode: openNode,
       initializeCurrentNode: initializeCurrentNode,
+      openTemplates: openTemplates,
       openNodePointTemplate: openNodePointTemplate,
       openJunctionTemplate: openJunctionTemplate,
       getCurrentNode: getCurrentNode,

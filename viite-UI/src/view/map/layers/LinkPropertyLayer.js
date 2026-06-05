@@ -17,6 +17,12 @@ import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { specialSelectionTypes, getSelectionType, getSelectedLayer, getRoadVisibility, selectionTypeIs } from '@model/ApplicationModel.js';
 
+let fetchLinkPropertiesBridge = function () {};
+
+export function fetchLinkPropertiesForCurrentMap() {
+  return fetchLinkPropertiesBridge();
+}
+
 export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
     Layer.call(this, map);
     const me = this;
@@ -614,10 +620,10 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'linkProperty:fetch', function () {
+    const fetchLinkProperties = function () {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
-    });
+    };
 
     me.eventListener.listenTo(eventbus, 'linkProperties:activateInteractions', function () {
       toggleSelectInteractions(true, true);
@@ -663,7 +669,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       } else {
         setGeneralOpacity(1);
         showLayer();
-        eventbus.trigger('linkProperty:fetch');
+        fetchLinkProperties();
       }
       // Exclude unAddressedRoadLayer from general visibility toggle since it has its own checkbox control
       const nonAdressedOrConstructionLayers = layers.filter(function(layerItem) {
@@ -702,6 +708,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     me.toggleLayersVisibility(layers, true);
     me.addLayers(layers);
     me.layerStarted(me.eventListener);
+    fetchLinkPropertiesBridge = fetchLinkProperties;
 
     function toggleLayersVisibility(layersToToggle, visibility) {
       _.each(layersToToggle, function (layer) {

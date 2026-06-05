@@ -1,10 +1,10 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
 
-export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions, setNodeMenuState) {
+export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions, setNodeMenuState = function () {}) {
   const dataTable = new DataTable();
   const ROOT = '.node-search-root';
   let pendingSearchNodeNumber = null;
@@ -36,21 +36,19 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
     const completeNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
     if (hasCompleteNodeData(completeNode)) {
       selectedNodesAndJunctions.openNode(completeNode);
-      if (_.isFunction(setNodeMenuState)) {
-        setNodeMenuState('editor', completeNode, selectedNodesAndJunctions.getCurrentTemplates());
-      }
+      setNodeMenuState('editor', completeNode, selectedNodesAndJunctions.getCurrentTemplates());
       return;
     }
     pendingSearchNodeNumber = searchNode.nodeNumber;
-    eventbus.once('node:fetched', () => {
+    (async () => {
+      await nodeCollection.fetchAndApplyNodesAndJunctions(zoomlevels.getViewZoom(map) + 1);
       if (pendingSearchNodeNumber !== searchNode.nodeNumber) return;
+
       const fetchedNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
       const nodeToOpen = hasCompleteNodeData(fetchedNode) ? fetchedNode : searchNode;
       selectedNodesAndJunctions.openNode(nodeToOpen);
-      if (_.isFunction(setNodeMenuState)) {
-        setNodeMenuState('editor', nodeToOpen, selectedNodesAndJunctions.getCurrentTemplates());
-      }
-    });
+      setNodeMenuState('editor', nodeToOpen, selectedNodesAndJunctions.getCurrentTemplates());
+    })();
   }
 
   function fetchAndRenderTemplates() {
@@ -59,7 +57,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
       const nodePointTemplates = _.get(data, 'nodePointTemplates', []);
       const junctionTemplates = _.get(data, 'junctionTemplates', []);
       storedTemplates = { nodePoints: nodePointTemplates, junctions: junctionTemplates };
-      eventbus.trigger('templates:fetched', nodePointTemplates, junctionTemplates);
+      nodeCollection.setUserTemplates(nodePointTemplates, junctionTemplates);
       setUntreatedTemplates(nodePointTemplates, junctionTemplates);
       Spinner.hide('node-menu-templates');
     });
@@ -153,7 +151,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
             const nodes = nodeCollection.getNodesWithAttributes();
             setSearchResults(nodes);
             setClearButtonEnabled(true);
-            nodeCollection.fitMapToSearchResults(map);
+            nodeCollection.fitMapToSearchResults();
           } catch (error) {
             console.error('Search failed:', error);
           } finally {

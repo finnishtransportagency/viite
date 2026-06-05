@@ -20,13 +20,21 @@ import { NodeMarker } from '../markers/NodeMarker.js';
 import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
 import { getSessionUserRoles, getSelectedTool, setSelectedTool, refreshMap, isSelectedTool, getSelectedLayer } from '@model/ApplicationModel.js';
 
-let addNodesToMapBridge = null;
+let addNodesToMapBridge = function () {};
+let fetchNodesAndJunctionsBridge = function () { return Promise.resolve(null); };
+let fetchAndApplyNodesAndJunctionsBridge = function () { return Promise.resolve(null); };
 
 // This  wrapper function is needed to expose the renderNodesToMap functon
 export function addNodesToMap(nodes, templates, zoom) {
-  if (_.isFunction(addNodesToMapBridge)) {
-    addNodesToMapBridge(nodes, templates, zoom);
-  }
+  addNodesToMapBridge(nodes, templates, zoom);
+}
+
+export function fetchNodesAndJunctionsFromCurrentMap(zoom) {
+  return fetchNodesAndJunctionsBridge(zoom);
+}
+
+export function fetchAndApplyNodesAndJunctionsForCurrentMap(zoom) {
+  return fetchAndApplyNodesAndJunctionsBridge(zoom);
 }
 
 export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection) {
@@ -430,6 +438,21 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
     });
 
+    // Update cursor style based on node selection state and hover
+    map.on('pointermove', function (evt) {
+      const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
+      const isHoveringNode = featureAtPixel && (featureAtPixel.node || featureAtPixel.nodePointTemplate);
+      const currentNode = selectedNodesAndJunctions.getCurrentNode();
+      
+      if (isHoveringNode) {
+        // If a node is selected, show grab cursor; otherwise show pointer cursor
+        map.getViewport().style.cursor = currentNode ? 'grab' : 'pointer';
+      } else {
+        // Reset to default cursor when not hovering over a node
+        map.getViewport().style.cursor = 'default';
+      }
+    });
+
 
     const selectFeaturesToHighlight = function (vector, featuresToHighlight, otherFeatures) {
       vector.selected.clear();
@@ -752,10 +775,25 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
     });
 
-    me.eventListener.listenTo(eventbus, 'nodeLayer:fetch', function (callback) {
+    const fetchNodesAndJunctions = function (zoom) {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
-      roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, callback);
-    });
+      const targetZoom = _.isNumber(zoom) ? zoom : zoomlevels.getViewZoom(map) + 1;
+
+      return new Promise((resolve) => {
+        roadCollection.fetchWithNodes(
+          map.getView().calculateExtent(map.getSize()).join(','),
+          targetZoom,
+          function (fetchedNodesAndJunctions) {
+            resolve(fetchedNodesAndJunctions);
+          }
+        );
+      });
+    };
+
+    const fetchAndApplyNodesAndJunctions = function (zoom) {
+      const targetZoom = _.isNumber(zoom) ? zoom : zoomlevels.getViewZoom(map) + 1;
+      return nodeCollection.fetchAndApplyNodesAndJunctions(targetZoom);
+    };
 
     me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
       refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
@@ -778,15 +816,16 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       } else if (layer === 'node') {
         setGeneralOpacity(1);
         addInteractions();
-        eventbus.trigger('nodeLayer:fetch');
+        fetchAndApplyNodesAndJunctions();
       }
     });
 
     this.refreshView = function () {
       // Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
-      roadCollection.fetchWithNodes(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map));
-      roadLayer.layer.changed();
+      fetchAndApplyNodesAndJunctions(zoomlevels.getViewZoom(map)).then(function () {
+        roadLayer.layer.changed();
+      });
     };
 
     this.layerStarted = function (eventListener) {
@@ -913,6 +952,8 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     }
 
     addNodesToMapBridge = renderNodesToMap;
+    fetchNodesAndJunctionsBridge = fetchNodesAndJunctions;
+    fetchAndApplyNodesAndJunctionsBridge = fetchAndApplyNodesAndJunctions;
 
     const showLayer = function () {
       me.start();
@@ -930,6 +971,8 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     return {
       show: showLayer,
       hide: hideLayer,
+      fetchNodesAndJunctions: fetchNodesAndJunctions,
+      fetchAndApplyNodesAndJunctions: fetchAndApplyNodesAndJunctions,
       addNodesToMap: renderNodesToMap,
       minZoomForContent: me.minZoomForContent
     };

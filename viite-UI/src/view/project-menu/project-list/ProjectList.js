@@ -145,8 +145,9 @@ export function ProjectList(options = {}) {
         clearInterval(pollProjects);
         ensureProjectMenu();
         if (status === projectStatus.ErrorInViite.value) {
-          options.projectCollection.reOpenProjectById(id);
-          eventbus.once("roadAddressProject:reOpenedProject", () => openProjectSteps(id));
+          options.projectCollection.reOpenProjectById(id, {
+            onReOpenedProject: () => openProjectSteps(id)
+          });
         } else {
           openProjectSteps(id);
         }
@@ -185,7 +186,10 @@ export function ProjectList(options = {}) {
     };
 
     const fetchProjects = () => {
-      options.projectCollection.getProjects(state.onlyActive);
+      options.projectCollection.getProjects(state.onlyActive, (projects) => {
+        state.projects = projects.filter(p => p.statusCode !== projectStatus.Deleted.value);
+        stopLoading();
+      });
     };
 
     const openProjectSteps = (projectId) => {
@@ -296,10 +300,6 @@ export function ProjectList(options = {}) {
       $container.on('input', '#userNameBox', (e) => { state.filterBox.input = e.target.value; render(); });
       $container.on('change', '#OldAcceptedProjectsVisibleCheckbox', (e) => { state.onlyActive = !e.target.checked; fetchProjects(); });
 
-      eventbus.off('roadAddressProjects:fetched').on('roadAddressProjects:fetched', (projects) => {
-        state.projects = projects.filter(p => p.statusCode !== projectStatus.Deleted.value);
-        stopLoading();
-      });
     }
 
     function show() {
@@ -334,7 +334,6 @@ export function ProjectList(options = {}) {
 
     function cleanup() {
       hide();
-      eventbus.off('roadAddressProjects:fetched roadAddressProjectStates:fetched');
     }
 
     return { show, hide, cleanup, getElement: () => $container };

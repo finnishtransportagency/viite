@@ -23,11 +23,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
   const getContainer = () => {
-    if (_.isFunction(containerElement)) {
-      const resolved = containerElement();
-      return resolved ? $(resolved) : $('#menu-container');
-    }
-    return containerElement ? $(containerElement) : $('#menu-container');
+    const resolved = _.result({ containerElement }, 'containerElement');
+    return resolved ? $(resolved) : $('#menu-container');
   };
 
   const getNodeType = (value) =>

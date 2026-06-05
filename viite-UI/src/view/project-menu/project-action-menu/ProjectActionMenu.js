@@ -8,9 +8,9 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
+import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/Eventbus.js';
-import { zoomlevels } from '@utils/ZoomLevels.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 
 const changeTableByProjectCollection = new WeakMap();
@@ -43,7 +43,6 @@ export function ProjectActionMenu(options) {
     const mainMenu = options.mainMenu;
     const activeEventbus = injectedEventbus || eventbus;
     const projectChangeTable = getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection);
-    let onProjectErrorsUpdatedHandler;
 
     const state = Object.assign({
       hasErrors: false,
@@ -293,9 +292,7 @@ export function ProjectActionMenu(options) {
             recalculated: !hasErrors
           });
 
-          const extent = map.getView().calculateExtent(map.getSize()).join(',');
-          const zoom = zoomlevels.getViewZoom(map) + 1;
-          projectCollection.fetch(extent, zoom, currentProject.project.id, projectCollection.getPublishableStatus());
+          fetchProjectLinksForCurrentMap();
         } else {
           new ConfirmPopup(response.errorMessage, {
             type: 'alert',
@@ -359,8 +356,19 @@ export function ProjectActionMenu(options) {
     const handleSendClick = function () {
       new ConfirmPopup("Haluatko hyväksyä projektin muutokset osaksi tieosoiteverkkoa?", {
         successCallback: () => {
-          projectCollection.publishProject();
-          closeProjectMode(true, true);
+          projectCollection.publishProject({
+            onProjectSentSuccess: function () {
+              if (typeof options.onProjectSentSuccess === 'function') {
+                options.onProjectSentSuccess();
+              }
+              closeProjectMode(true, true);
+            },
+            onProjectSentFailed: function (error) {
+              if (typeof options.onProjectSentFailed === 'function') {
+                options.onProjectSentFailed(error);
+              }
+            }
+          });
         }
       });
     };
@@ -426,16 +434,8 @@ export function ProjectActionMenu(options) {
         }
       });
 
-      if (_.isFunction(onProjectErrorsUpdatedHandler)) {
-        activeEventbus.off('roadAddressProject:writeProjectErrors', onProjectErrorsUpdatedHandler);
-      }
-
-      onProjectErrorsUpdatedHandler = function () {
-        evaluateButtonStates();
-        refresh();
-      };
-
-      activeEventbus.on('roadAddressProject:writeProjectErrors', onProjectErrorsUpdatedHandler);
+      evaluateButtonStates();
+      refresh();
     };
 
     return {

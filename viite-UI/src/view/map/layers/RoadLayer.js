@@ -10,6 +10,9 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
+import { fetchLinkPropertiesForCurrentMap } from './LinkPropertyLayer.js';
+import { fetchAndApplyNodesAndJunctionsForCurrentMap } from './NodeLayer.js';
+import { fetchProjectLinksForCurrentMap } from './ProjectLinkLayer.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
 export function RoadLayer(map) {
@@ -132,13 +135,13 @@ export function RoadLayer(map) {
         */
         switch (getSelectedLayer()) {
           case 'linkProperty':
-            eventbus.trigger('linkProperty:fetch');
+            fetchLinkPropertiesForCurrentMap();
             break;
           case 'roadAddressProject':
-            eventbus.trigger('roadAddressProject:fetch');
+            fetchProjectLinksForCurrentMap();
             break;
           case 'node':
-            eventbus.trigger('nodeLayer:fetch');
+            fetchAndApplyNodesAndJunctionsForCurrentMap();
             break;
           default:
             break;

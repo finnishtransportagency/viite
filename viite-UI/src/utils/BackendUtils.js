@@ -280,7 +280,7 @@ export function Backend() {
           });
         }, REQUEST_THROTTLE_MS),
 
-        checkIfRoadpartReserved: function (roadNumber, startPart, endPart, projDate, projectId, callback) {
+        checkIfRoadpartReserved: function (roadNumber, startPart, endPart, projDate, projectId, callback = function () {}) {
           return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
             roadNumber: roadNumber,
             startPart: startPart,
@@ -288,7 +288,7 @@ export function Backend() {
             projDate: convertDatetoSimpleDate(projDate),
             projectId: projectId
           }).then(function (data) {
-            if (_.isFunction(callback)) callback(data);
+            callback(data);
           });
         },
 
@@ -351,7 +351,7 @@ export function Backend() {
           });
         }, REQUEST_THROTTLE_MS),
 
-        getProjectsWithLinksById: function (id, callback) {
+        getProjectsWithLinksById: function (id, callback = function () {}) {
           // Abort any previous request
           if (loadingProject) {
             loadingProject.abort();
@@ -361,7 +361,7 @@ export function Backend() {
           loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id)
             .done(function (data) {
               // eslint-disable-next-line callback-return
-              if (_.isFunction(callback)) callback(data);
+              callback(data);
             })
             .always(function () {
               // Clear reference when request completes

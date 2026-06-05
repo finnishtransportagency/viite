@@ -17,6 +17,12 @@ import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/ApplicationModel.js';
 
+let fetchProjectLinksBridge = function () {};
+
+export function fetchProjectLinksForCurrentMap() {
+  return fetchProjectLinksBridge();
+}
+
 export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
     const layerName = 'roadAddressProject';
     Layer.call(this, map);
@@ -395,25 +401,28 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       else return false;
     }
 
-    me.eventListener.listenTo(eventbus, 'projectLink:projectLinksCreateSuccess', function () {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
-    });
-
-    me.eventListener.listenTo(eventbus, 'changeProjectDirection:clicked', function () {
-      projectLinkLayer.getSource().clear();
-      directionMarkerLayer.getSource().clear();
-      me.eventListener.listenToOnce(eventbus, 'roadAddressProject:fetched', function () {
-        selectedProjectLinkProperty.open(getSelectedId(selectedProjectLinkProperty.get()[0]), selectedProjectLinkProperty.isMultiLink());
+    const onProjectLinksFetched = function () {
+      eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
+      me.redraw();
+      _.defer(function () {
+        highlightFeatures();
       });
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
-    });
+    };
 
-    me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function (response) {
-      isNotEditingData = true;
-      selectedProjectLinkProperty.setDirty(false);
-      eventbus.trigger('roadAddress:projectLinksUpdated', response);
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
-    });
+    const fetchProjectLinksWith = function (options = {}) {
+      const boundingBox = _.isUndefined(options.boundingBox) ? map.getView().calculateExtent(map.getSize()).join(',') : options.boundingBox;
+      const zoom = _.isUndefined(options.zoom) ? zoomlevels.getViewZoom(map) + 1 : options.zoom;
+      let projectId = options.projectId;
+      if (_.isUndefined(projectId)) {
+        const currentProject = projectCollection.getCurrentProject();
+        projectId = _.isUndefined(currentProject) ? undefined : currentProject.project.id;
+      }
+      const isPublishable = _.isUndefined(options.isPublishable) ? projectCollection.getPublishableStatus() : options.isPublishable;
+      const onFetched = _.isUndefined(options.onFetched) ? onProjectLinksFetched : options.onFetched;
+
+      projectCollection.fetch(boundingBox, zoom, projectId, isPublishable, onFetched);
+    };
+
 
     /**
      * This function is responsible for adding features to the correct layers that they belong to.
@@ -517,35 +526,19 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:selected', function (projId) {
-      me.eventListener.listenToOnce(eventbus, 'roadAddressProject:projectFetched', function (projectInfo) {
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map), projectInfo.id, projectInfo.publishable);
-      });
-      projectCollection.getProjectsWithLinksById(projId);
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:fetch', function () {
-      const projectId = _.isUndefined(projectCollection.getCurrentProject()) ? undefined : projectCollection.getCurrentProject().project.id;
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, projectId, projectCollection.getPublishableStatus());
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
-      eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
-      me.redraw();
-      _.defer(function () {
-        highlightFeatures();
+      projectCollection.getProjectsWithLinksById(projId, function (projectInfo) {
+        fetchProjectLinksWith({
+          boundingBox: map.getView().calculateExtent(map.getSize()),
+          zoom: zoomlevels.getViewZoom(map),
+          projectId: projectInfo.id,
+          isPublishable: projectInfo.publishable
+        });
       });
     });
 
-    me.eventListener.listenTo(eventbus, 'roadAddress:projectLinksEdited', function () {
-      me.redraw();
-      _.defer(function () {
-        highlightFeatures();
-      });
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:projectLinkSaved', function (projectId, isPublishable) {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()), zoomlevels.getViewZoom(map) + 1, projectId, isPublishable);
-    });
+    const fetchProjectLinks = function () {
+      fetchProjectLinksWith();
+    };
 
     me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
       isActiveLayer = layer === 'roadAddressProject';
@@ -568,6 +561,8 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       clearHighlights();
       removeSelectInteractions();
     });
+
+    fetchProjectLinksBridge = fetchProjectLinks;
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:enableInteractions', function () {
       addSelectInteractions();

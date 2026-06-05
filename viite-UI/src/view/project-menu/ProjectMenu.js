@@ -12,6 +12,7 @@ import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
 import { selectLayer, getSelectedTool } from '@model/ApplicationModel.js';
+import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 
 const States = {
     CONFIGURATION:   'CONFIGURATION',
@@ -30,18 +31,10 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         return;
       }
 
-      if (_.isFunction(selectedProjectLinkProperty.cleanIds)) {
-        selectedProjectLinkProperty.cleanIds();
-      }
-      if (_.isFunction(selectedProjectLinkProperty.clean)) {
-        selectedProjectLinkProperty.clean();
-      }
-      if (_.isFunction(selectedProjectLinkProperty.setDirty)) {
-        selectedProjectLinkProperty.setDirty(false);
-      }
-      if (_.isFunction(selectedProjectLinkProperty.clearFeaturesToKeep)) {
-        selectedProjectLinkProperty.clearFeaturesToKeep();
-      }
+      selectedProjectLinkProperty.cleanIds();
+      selectedProjectLinkProperty.clean();
+      selectedProjectLinkProperty.setDirty(false);
+      selectedProjectLinkProperty.clearFeaturesToKeep();
     };
 
     const closeProjectMenu = ({ noSave = false } = {}) => {
@@ -131,7 +124,9 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
             mainMenu: options.mainMenu,
             closeProjectMenu: closeProjectMenu,
             initialState: roadAddressingState,
-            onStateChange: syncRoadAddressingState
+            onStateChange: syncRoadAddressingState,
+            onProjectSentSuccess: onProjectSentSuccess,
+            onProjectSentFailed: onProjectSentFailed
           });
 
           contentHtml = actionMenu.renderContent();
@@ -190,7 +185,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         selectLayer('linkProperty', true, false);
 
         const projectId = project.data && project.data.id;
-        if (projectId && options.projectCollection && _.isFunction(options.projectCollection.getProjectsWithLinksById)) {
+        if (projectId && options.projectCollection) {
           Spinner.show();
           options.projectCollection.getProjectsWithLinksById(projectId)
             .then((result) => {
@@ -217,7 +212,15 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         // Unbind to prevent duplicate handlers
         saveButton.off('click').on('click', () => {
           if (options.projectCollection && activeChild) {
-            activeChild.validateAndSave(options.projectCollection, additionalData.selectedLinks);
+            activeChild.validateAndSave(options.projectCollection, additionalData.selectedLinks, {
+              onProjectLinksUpdated,
+              onProjectLinksUpdateFailed,
+              onProjectLinksCreateSuccess,
+              onChangeDirectionFailed
+            }, {
+              projectLinkLayer: options.projectLinkLayer,
+              selectedProjectLinkProperty: options.selectedProjectLinkProperty
+            });
           }
         });
         
@@ -227,6 +230,10 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
               onCancel: function () {
                 updateUI(States.ROAD_ADDRESSING, project.data, false);
               }
+            }, {
+              projectCollection: options.projectCollection,
+              projectLinkLayer: options.projectLinkLayer,
+              selectedProjectLinkProperty: options.selectedProjectLinkProperty
             });
           } else {
             updateUI(States.ROAD_ADDRESSING, project.data, false);
@@ -309,6 +316,9 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         changeTableOpen: false
       });
 
+      // Refresh the project links layer to update colors after saving
+      fetchProjectLinksForCurrentMap();
+
       Spinner.hide();
       updateUI(States.ROAD_ADDRESSING, project.data, false);
     };
@@ -385,25 +395,13 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
     eventbus.on('projectLink:clicked',                     onProjectLinkClicked);
     eventbus.on('projectLink:errorClicked',                onProjectLinkErrorClicked);
-    eventbus.on('roadAddress:projectLinksUpdated',         onProjectLinksUpdated);
-    eventbus.on('roadAddress:projectLinksUpdateFailed',    onProjectLinksUpdateFailed);
     eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
-    eventbus.on('roadAddress:projectLinksCreateSuccess',   onProjectLinksCreateSuccess);
-    eventbus.on('roadAddress:projectSentSuccess',          onProjectSentSuccess);
-    eventbus.on('roadAddress:projectSentFailed',           onProjectSentFailed);
-    eventbus.on('roadAddress:changeDirectionFailed',       onChangeDirectionFailed);
     eventbus.on('roadAddress:openProject',                 onOpenProject);
 
     const destroy = function () {
       eventbus.off('projectLink:clicked',                     onProjectLinkClicked);
       eventbus.off('projectLink:errorClicked',                onProjectLinkErrorClicked);
-      eventbus.off('roadAddress:projectLinksUpdated',         onProjectLinksUpdated);
-      eventbus.off('roadAddress:projectLinksUpdateFailed',    onProjectLinksUpdateFailed);
       eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
-      eventbus.off('roadAddress:projectLinksCreateSuccess',   onProjectLinksCreateSuccess);
-      eventbus.off('roadAddress:projectSentSuccess',          onProjectSentSuccess);
-      eventbus.off('roadAddress:projectSentFailed',           onProjectSentFailed);
-      eventbus.off('roadAddress:changeDirectionFailed',       onChangeDirectionFailed);
       eventbus.off('roadAddress:openProject',                 onOpenProject);
     };
 

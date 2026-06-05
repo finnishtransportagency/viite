@@ -8,6 +8,7 @@
 
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/Eventbus.js';
+import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
 import { createProjectLinkEditorHTML } from './ProjectLinkEditorHTML.js';
 import { DevAddressTool } from './DevTool.js';
@@ -20,11 +21,6 @@ export function ProjectLinkEditor(canUseDevTools) {
     const CalibrationCode = ViiteEnumerations.CalibrationCode;
     const editableStatus = [ViiteEnumerations.ProjectStatus.Incomplete.value, ViiteEnumerations.ProjectStatus.ErrorInViite.value];
     const validEvks = _.map(ViiteEnumerations.EVKCodes, evk => evk);
-    const activeContext = {
-      projectCollection: null,
-      projectLinkLayer: null,
-      selectedProjectLinkProperty: null
-    };
 
     // ==========================================
     // STATE MANAGEMENT
@@ -97,10 +93,17 @@ export function ProjectLinkEditor(canUseDevTools) {
     // ==========================================
     const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable, editContext = {}) {
       const rootElement = $('#menu-container');
+      // Remove all delegated listeners from previous bindEvents calls to prevent accumulation.
+      // Without this, each re-render adds a new handler closure (with a stale `selected` reference),
+      // causing the wrong link's data to be written to dirtyProjectLinks on dropdown change.
+      rootElement.off('.projectLinkEditor');
       let isInitializing = true;
-      activeContext.projectCollection = projectCollection || editContext.projectCollection;
-      activeContext.projectLinkLayer = editContext.projectLinkLayer;
-      activeContext.selectedProjectLinkProperty = editContext.selectedProjectLinkProperty;
+      const bindingContext = {
+        projectCollection: projectCollection || editContext.projectCollection || null,
+        projectLinkLayer: editContext.projectLinkLayer || null,
+        selectedProjectLinkProperty: editContext.selectedProjectLinkProperty || null,
+        onChangeDirectionFailed: editContext.onChangeDirectionFailed || null
+      };
 
       const disableFormInputs = () => {
         if (!project || _.includes(editableStatus, project.statusCode)) {
@@ -113,23 +116,23 @@ export function ProjectLinkEditor(canUseDevTools) {
       };
 
       _.defer(() => {
-        $('#beginDistance').on('change', (changedData) => {
-          if (typeof eventbus !== 'undefined') {
-            eventbus.trigger('projectLink:editedBeginDistance', changedData.target.value);
+        $('#beginDistance').on('change.projectLinkEditor', () => {
+          if (bindingContext.projectCollection) {
+            bindingContext.projectCollection.markEditedBeginDistance();
           }
         });
-        $('#endDistance').on('change', (changedData) => {
-          if (typeof eventbus !== 'undefined') {
-            eventbus.trigger('projectLink:editedEndDistance', changedData.target.value);
+        $('#endDistance').on('change.projectLinkEditor', () => {
+          if (bindingContext.projectCollection) {
+            bindingContext.projectCollection.markEditedEndDistance();
           }
         });
       });
 
-      rootElement.on('change', '#administrativeClassDropdown, .form-select-control', () => {
+      rootElement.on('change.projectLinkEditor', '#administrativeClassDropdown, .form-select-control', () => {
         FormState.setUnsavedChanges(true);
       });
 
-      rootElement.on('change', '#roadAddressProjectForm #dropDown_0', (e) => {
+      rootElement.on('change.projectLinkEditor', '#roadAddressProjectForm #dropDown_0', (e) => {
         FormState.setChangeType(e.target.value);
         updateFormControls(e.target.value, selected, projectCollection, { markDirty: !isInitializing });
         if (projectChangeTable) {
@@ -137,17 +140,17 @@ export function ProjectLinkEditor(canUseDevTools) {
         }
       });
 
-      rootElement.on('change', '#trackCodeDropdown, #administrativeClassDropdown', () => {
+      rootElement.on('change.projectLinkEditor', '#trackCodeDropdown, #administrativeClassDropdown', () => {
         if (projectChangeTable) {
           checkInputs(projectChangeTable);
         }
       });
       
-      rootElement.on('change', '.form-group', () => {
+      rootElement.on('change.projectLinkEditor', '.form-group', () => {
         rootElement.find('.action-selected-field').prop('hidden', false);
       });
 
-      rootElement.on('input', '.form-control.small-input, .number-input', function (event) {
+      rootElement.on('input.projectLinkEditor', '.form-control.small-input, .number-input', function (event) {
         const dropdown_0 = $('#dropDown_0');
         const roadNameField = $('#roadName');
         if (projectChangeTable) {
@@ -182,32 +185,41 @@ export function ProjectLinkEditor(canUseDevTools) {
         }
       });
 
-      rootElement.on('keyup input', '#roadName', function () {
+      rootElement.on('keyup.projectLinkEditor input.projectLinkEditor', '#roadName', function () {
         if (projectChangeTable) {
           checkInputs(projectChangeTable);
         }
         FormState.setNameEdited($('#roadName').val() !== '');
       });
 
-      rootElement.on('change', '#endDistance', () => {
+      rootElement.on('change.projectLinkEditor', '#endDistance', () => {
         FormState.setUnsavedChanges(true);
       });
 
-      rootElement.on('click', '.changeDirection', () => {
+      rootElement.on('click.projectLinkEditor', '.changeDirection', () => {
         if (projectCollection) {
           const projectId = projectCollection.getCurrentProject().project.id;
-          projectCollection.changeNewProjectLinkDirection(projectId, selected);
+          projectCollection.changeNewProjectLinkDirection(projectId, selected, {
+            onChangeProjectDirectionClicked: function () {
+              fetchProjectLinksForCurrentMap();
+            },
+            onChangeDirectionFailed: function (error) {
+              if (typeof bindingContext.onChangeDirectionFailed === 'function') {
+                bindingContext.onChangeDirectionFailed(error);
+              }
+            }
+          });
         }
       });
 
-      rootElement.on('input', '#addrStart, #addrEnd', function () {
+      rootElement.on('input.projectLinkEditor', '#addrStart, #addrEnd', function () {
         const start = Number(document.getElementById("addrStart").value) || 0;
         const end = Number(document.getElementById("addrEnd").value) || 0;
         const res = end - start;
         document.getElementById("addrLength").textContent = res.toString();
       });
 
-      rootElement.on('input', '#origAddrStart, #origAddrEnd', function () {
+      rootElement.on('input.projectLinkEditor', '#origAddrStart, #origAddrEnd', function () {
         const start = Number(document.getElementById("origAddrStart").value) || 0;
         const end = Number(document.getElementById("origAddrEnd").value) || 0;
         const res = end - start;
@@ -245,12 +257,16 @@ export function ProjectLinkEditor(canUseDevTools) {
       if (projectChangeTable) {
         checkInputs(projectChangeTable);
       }
+
+      const discardChangesHandler = () => cancelChanges({}, bindingContext);
+      eventbus.off('roadAddressProject:discardChanges');
+      eventbus.on('roadAddressProject:discardChanges', discardChangesHandler);
     };
 
-      const cancelChanges = (callbacks = {}) => {
-        const projectCollectionRef = activeContext.projectCollection;
-        const projectLinkLayerRef = activeContext.projectLinkLayer;
-        const selectedProjectLinkPropertyRef = activeContext.selectedProjectLinkProperty;
+      const cancelChanges = (callbacks = {}, context = {}) => {
+        const projectCollectionRef = context.projectCollection || null;
+        const projectLinkLayerRef = context.projectLinkLayer || null;
+        const selectedProjectLinkPropertyRef = context.selectedProjectLinkProperty || null;
 
         if (projectCollectionRef) {
           projectCollectionRef.revertRoadAddressChangeType();
@@ -265,7 +281,6 @@ export function ProjectLinkEditor(canUseDevTools) {
           selectedProjectLinkPropertyRef.clean();
         }
 
-        eventbus.trigger('roadAddress:projectLinksEdited');
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
 
         if (typeof callbacks.onCancel === 'function') {
@@ -275,40 +290,42 @@ export function ProjectLinkEditor(canUseDevTools) {
         }
       };
 
-      const validateAndSave = (projectCollection, selectedLinks) => {
+      const validateAndSave = (projectCollection, selectedLinks, callbacks = {}, context = {}) => {
         const statusDropdownValue = $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
+        const tmpDirty = projectCollection ? projectCollection.getTmpDirty() : [];
 
-        if (activeContext.projectLinkLayer) {
-          activeContext.projectLinkLayer.clearHighlights();
+        if (context.projectLinkLayer) {
+          context.projectLinkLayer.clearHighlights();
         }
-        if (activeContext.selectedProjectLinkProperty) {
-          activeContext.selectedProjectLinkProperty.cleanIds();
-          activeContext.selectedProjectLinkProperty.clean();
+        if (context.selectedProjectLinkProperty) {
+          context.selectedProjectLinkProperty.cleanIds();
+          context.selectedProjectLinkProperty.clean();
         }
 
         if (changeType.value === RoadAddressChangeType.Revert.value) {
           if (projectCollection) {
-            projectCollection.revertChangesRoadlink(selectedLinks);
+            projectCollection.revertChangesRoadlink(selectedLinks, {
+              onProjectLinksUpdated: callbacks.onProjectLinksUpdated,
+              onProjectLinksUpdateFailed: callbacks.onProjectLinksUpdateFailed
+            });
           }
         } else {
-          const linksToSave = projectCollection && projectCollection.getTmpDirty().length > 0 
-            ? projectCollection.getTmpDirty() 
-            : selectedLinks;
+          const linksToSave = tmpDirty.length > 0 ? tmpDirty : selectedLinks;
           
           if (projectCollection) {
             const isEndDistanceModified = FormState.isEndDistanceModified($('#endDistance').val());
               
-            projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified);
+            projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified, {
+              onProjectLinksCreateSuccess: callbacks.onProjectLinksCreateSuccess,
+              onProjectLinksUpdated: callbacks.onProjectLinksUpdated,
+              onProjectLinksUpdateFailed: callbacks.onProjectLinksUpdateFailed
+            });
           }
         }
         return true;
       };
 
-      eventbus.off('roadAddressProject:discardChanges', cancelChanges);
-      eventbus.on('roadAddressProject:discardChanges', cancelChanges);
-
-      
     // ==========================================
     // PUBLIC API
     // ==========================================

@@ -83,7 +83,7 @@ export function URLRouter(map, backend, models) {
       roadAddressProject: function (projectId) {
         selectLayer(LAYER_ROAD_ADDRESS_PROJECT);
         const parsedProjectId = parseInt(projectId, 10);
-        eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
+        models.projectCollection.startProject(parsedProjectId);
       },
 
       nodePointTemplate: function (nodePointTemplateId) {

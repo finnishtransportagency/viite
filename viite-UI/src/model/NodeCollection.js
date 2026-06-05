@@ -1,10 +1,10 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
-import { addNodesToMap } from '@view/map/layers/NodeLayer.js';
+import { addNodesToMap, fetchNodesAndJunctionsFromCurrentMap } from '@view/map/layers/NodeLayer.js';
+import { openSelectedNodesAndJunctionTemplates } from './SelectedNodesAndJunctions.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -56,8 +56,33 @@ export function NodeCollection(backend) {
       nodesWithAttributes = list;
     }
 
+    function applyFetchedNodesAndJunctions(fetchResult, zoom) {
+      if (!fetchResult) return;
+
+      const resultNodes = fetchResult.nodes;
+      const templates = {
+        nodePoints: fetchResult.nodePointTemplates,
+        junctions: fetchResult.junctionTemplates
+      };
+
+      setNodes(resultNodes);
+      setMapTemplates(templates);
+
+      addNodesToMap(resultNodes, templates, zoom);
+    }
+
+    async function fetchAndApplyNodesAndJunctions(zoom) {
+      const targetZoom = _.isNumber(zoom)
+        ? zoom
+        : zoomlevels.getViewZoom(map) + 1;
+
+      const fetchResult = await fetchNodesAndJunctionsFromCurrentMap(targetZoom);
+      applyFetchedNodesAndJunctions(fetchResult, targetZoom);
+      return fetchResult;
+    }
+
     // Fits map view to include all nodes returned by the latest node search.
-    function fitMapToSearchResults(map) {
+    function fitMapToSearchResults() {
       if (_.isEmpty(nodesWithAttributes)) return;
       const coords = [];
       _.each(nodesWithAttributes, function (node) {
@@ -131,9 +156,7 @@ export function NodeCollection(backend) {
 
 
         // Fetch node data for the selected location
-        const fetchedNodesAndJunctions = await new Promise((resolve) => {
-          eventbus.trigger('nodeLayer:fetch', resolve);
-        });
+        const fetchedNodesAndJunctions = await fetchAndApplyNodesAndJunctions(zoomlevels.minZoomForJunctions);
 
         if (fetchedNodesAndJunctions && (fetchedNodesAndJunctions.junctionTemplates || fetchedNodesAndJunctions.nodePointTemplates)) {
           const referencePoint = {
@@ -147,10 +170,6 @@ export function NodeCollection(backend) {
             junctions: fetchedNodesAndJunctions.junctionTemplates
           };
 
-          // Update data in nodeCollection
-          setNodes(fetchedNodesAndJunctions.nodes);
-          setMapTemplates(templates);
-
           // Open template form with filtered data matching reference point
           const coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
 
@@ -160,19 +179,16 @@ export function NodeCollection(backend) {
                     Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
           };
 
-          eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
-              nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
-                  return isSameLocation(nodePoint.coordinates, referencePoint);
-              }),
-              junctions: _.filter(templates.junctions, function (junction) {
-                  return _.some(junction.junctionPoints, function (junctionPoint) {
-                      return isSameLocation(junctionPoint.coordinates, referencePoint);
-                  });
-              })
+          openSelectedNodesAndJunctionTemplates({
+            nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
+              return isSameLocation(nodePoint.coordinates, referencePoint);
+            }),
+            junctions: _.filter(templates.junctions, function (junction) {
+              return _.some(junction.junctionPoints, function (junctionPoint) {
+                return isSameLocation(junctionPoint.coordinates, referencePoint);
+              });
+            })
           });
-
-          // Update map with new node/junction template information
-          addNodesToMap(fetchedNodesAndJunctions.nodes, templates, zoomlevels.minZoomForJunctions);
         }
       } catch (error) {
         console.error('Error in moveToLocation:', error);
@@ -210,24 +226,6 @@ export function NodeCollection(backend) {
         }
       }
     }
-
-    // Update map with the nodes and junctions of the fetched location
-    eventbus.on('node:fetched', function (fetchResult, zoom) {
-      const resultNodes = fetchResult.nodes;
-      const templates = {
-        nodePoints: fetchResult.nodePointTemplates,
-        junctions: fetchResult.junctionTemplates
-      };
-
-      setNodes(resultNodes);
-      setMapTemplates(templates);
-
-      addNodesToMap(resultNodes, templates, zoom);
-    });
-
-    eventbus.on('templates:fetched', function (nodePointTemplates, junctionTemplates) {
-      setUserTemplates(nodePointTemplates, junctionTemplates);
-    });
 
     // Opens a node point template by id and moves map to the template location.
     function openNodePointTemplate(payload) {
@@ -297,6 +295,8 @@ export function NodeCollection(backend) {
       getNodeByNodeNumber: getNodeByNodeNumber,
       getNodesWithAttributes: getNodesWithAttributes,
       setNodesWithAttributes: setNodesWithAttributes,
+      applyFetchedNodesAndJunctions: applyFetchedNodesAndJunctions,
+      fetchAndApplyNodesAndJunctions: fetchAndApplyNodesAndJunctions,
       fitMapToSearchResults: fitMapToSearchResults,
       getNodesByRoadAttributes: getNodesByRoadAttributes,
       getNodePointTemplatesByCoordinates: getNodePointTemplatesByCoordinates,

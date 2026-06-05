@@ -135,7 +135,7 @@ export function RoadCollection(backend) {
       backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
         currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
         fetchProcess(currentAllRoadLinks, zoom);
-        return (_.isFunction(callback) && callback(fetchedNodesAndJunctions.fetchedNodes)) || eventbus.trigger('node:fetched', fetchedNodesAndJunctions.fetchedNodes, zoom);
+        return callback(fetchedNodesAndJunctions.fetchedNodes);
       });
     };
 

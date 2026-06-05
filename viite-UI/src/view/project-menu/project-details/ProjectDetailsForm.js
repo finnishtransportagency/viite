@@ -13,6 +13,7 @@ import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
+import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 
 export function ProjectDetailsForm(callbacks = {}) {
     let startDatePicker = null;
@@ -310,11 +311,6 @@ export function ProjectDetailsForm(callbacks = {}) {
       updateReserveButtonState();
       updateSaveButtonState(projectData);
 
-      // Backbone.Events does not support jQuery-style event namespaces.
-      // Keep stable handler references so we can safely rebind on each render.
-      if (projectValidationFailedHandler) {
-        eventbus.off('roadAddress:projectValidationFailed', projectValidationFailedHandler);
-      }
       projectValidationFailedHandler = function(errorMessage) {
         Spinner.hide();
         console.error(errorMessage);
@@ -323,11 +319,7 @@ export function ProjectDetailsForm(callbacks = {}) {
           okButtonLbl: 'OK'
         });
       };
-      eventbus.on('roadAddress:projectValidationFailed', projectValidationFailedHandler);
 
-      if (projectFailedHandler) {
-        eventbus.off('roadAddress:projectFailed', projectFailedHandler);
-      }
       projectFailedHandler = function(error) {
         Spinner.hide();
         new ConfirmPopup(getBackendErrorMessage(error, 'Projektin tallennus epäonnistui.'), {
@@ -335,7 +327,6 @@ export function ProjectDetailsForm(callbacks = {}) {
           okButtonLbl: 'OK'
         });
       };
-      eventbus.on('roadAddress:projectFailed', projectFailedHandler);
 
       if (projCollection && currentProject) {
         bindReservationHandler(projCollection, currentProject);
@@ -393,7 +384,7 @@ export function ProjectDetailsForm(callbacks = {}) {
           { value: projectData.additionalInfo }
         ];
 
-        eventbus.once('roadAddress:projectSaved', function(result) {
+        const onProjectSaved = function(result) {
           Spinner.hide();
 
           if (result && result.success) {
@@ -411,8 +402,8 @@ export function ProjectDetailsForm(callbacks = {}) {
               eventbus.trigger('roadAddressProject:openProject', savedProject);
 
               // This updates the map after saving the project
-              eventbus.once('roadAddressProject:projectFetched', function () {
-                eventbus.trigger('roadAddressProject:fetch');
+              projectCollection.getProjectsWithLinksById(savedProject.id, function () {
+                fetchProjectLinksForCurrentMap();
               });
             }
 
@@ -432,14 +423,22 @@ export function ProjectDetailsForm(callbacks = {}) {
               okButtonLbl: 'OK'
             });
           }
-        });
+        };
 
         if (!projectData.id || projectData.id === 0) {
           // Create new project
-          projectCollection.createProject(formData, map ? map.getView().getResolution() : null);
+          projectCollection.createProject(formData, map ? map.getView().getResolution() : null, {
+            onProjectSaved,
+            onProjectValidationFailed: projectValidationFailedHandler,
+            onProjectFailed: projectFailedHandler
+          });
         } else {
           // Save existing project
-          projectCollection.saveProject(formData, map ? map.getView().getResolution() : null);
+          projectCollection.saveProject(formData, map ? map.getView().getResolution() : null, {
+            onProjectSaved,
+            onProjectValidationFailed: projectValidationFailedHandler,
+            onProjectFailed: projectFailedHandler
+          });
         }
       });
 
@@ -470,7 +469,7 @@ export function ProjectDetailsForm(callbacks = {}) {
                 { value: projectData.additionalInfo }
               ];
 
-              eventbus.once('roadAddress:projectSaved', function(result) {
+              const onProjectSaved = function(result) {
                 Spinner.hide();
                 if (result && result.success) {
                   markAsSaved();
@@ -499,12 +498,20 @@ export function ProjectDetailsForm(callbacks = {}) {
                     okButtonLbl: 'OK'
                   });
                 }
-              });
+              };
 
               if (!currentProject.id || currentProject.id === 0) {
-                projectCollection.createProject(formData, map ? map.getView().getResolution() : null);
+                projectCollection.createProject(formData, map ? map.getView().getResolution() : null, {
+                  onProjectSaved,
+                  onProjectValidationFailed: projectValidationFailedHandler,
+                  onProjectFailed: projectFailedHandler
+                });
               } else {
-                projectCollection.saveProject(formData, map ? map.getView().getResolution() : null);
+                projectCollection.saveProject(formData, map ? map.getView().getResolution() : null, {
+                  onProjectSaved,
+                  onProjectValidationFailed: projectValidationFailedHandler,
+                  onProjectFailed: projectFailedHandler
+                });
               }
 
             },
@@ -559,15 +566,26 @@ export function ProjectDetailsForm(callbacks = {}) {
           roadNumber,
           startPart,
           endPart
+        }, {
+          onProjectValidationSucceed: function () {
+            $('#tie, #aosa, #losa').val('');
+            $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved'));
+            if ($('#newReservedRoads').length) {
+                $('#newReservedRoads').html(roadPartList(projCollection.getFormedParts(), 'formed'));
+            }
+            updateReserveButtonState();
+            markAsChanged();
+            updateSaveButtonState(currentProject);
+          },
+          onProjectValidationFailed: function (error) {
+            projectValidationFailedHandler(error);
+          }
         });
         return false;
       });
     };
 
     const bindReservationEventListeners = function (projCollection, currentProject) {
-      if (projectValidationSucceedHandler) {
-        eventbus.off('roadAddress:projectValidationSucceed', projectValidationSucceedHandler);
-      }
       projectValidationSucceedHandler = function () {
         $('#tie, #aosa, #losa').val('');
         $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved'));
@@ -578,7 +596,6 @@ export function ProjectDetailsForm(callbacks = {}) {
         markAsChanged(); // Mark project as having unsaved changes when reservation is made
         updateSaveButtonState(currentProject);
       };
-      eventbus.on('roadAddress:projectValidationSucceed', projectValidationSucceedHandler);
     };
 
     const bindDeleteRoadPartHandlers = function (projCollection, currentProject) {

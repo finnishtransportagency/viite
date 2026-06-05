@@ -274,7 +274,6 @@ export function createProjectLinkEditorHTML(dependencies) {
       className: 'form-select-small-control',
       defaultValue: value,
       options: [
-        { value: value, text: toShow, disabled: toShow === '--' },
         { value: '0', text: '0' },
         { value: '1', text: '1' },
         { value: '2', text: '2' }
