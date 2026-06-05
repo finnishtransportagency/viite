@@ -52,6 +52,7 @@ export function button({
   className = 'btn-primary',
   type = 'button',
   disabled = false,
+  title = '',
   disabledWhen = null,  // () => boolean — re-evaluated on changes to watchSelector
   watchSelector = null  // CSS selector for elements that trigger re-evaluation
 } = {}) {
@@ -74,5 +75,5 @@ export function button({
   // .off(`.${id}`) removes ALL events under this namespace (click + optional keyup/input).
   _registry.set(id, () => $(document).off(`.${id}`));
 
-  return `<button id="${id}" type="${type}" class="${className}"${disabled ? ' disabled' : ''}>${label}</button>`;
+  return `<button id="${id}" type="${type}" class="${className}"${disabled ? ' disabled' : ''}${title ? ` title="${title}"` : ''}>${label}</button>`;
 }

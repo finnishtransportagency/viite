@@ -104,7 +104,7 @@ export function URLRouter(map, backend, models) {
     Backbone.history.start();
 
     eventbus.on('linkProperties:unselected', function () {
-      router.navigate(LAYER_LINK_PROPERTY);
+      router.navigate('');
     });
 
     eventbus.on('roadAddressProject:selected', function (id, _layerName, _selectedLayer) {

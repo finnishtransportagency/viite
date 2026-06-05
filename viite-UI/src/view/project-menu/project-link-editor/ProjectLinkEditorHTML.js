@@ -195,7 +195,7 @@ export function createProjectLinkEditorHTML(dependencies) {
 
     return `
       <div hidden class="form-group changeDirectionDiv change-direction-container">
-        <button id="changeDirectionButton" class="form-group changeDirection btn-primary">Käännä tieosan kasvusuunta</button>
+        ${button({ id: 'changeDirectionButton', label: 'Käännä tieosan kasvusuunta', className: 'form-group changeDirection btn-primary', onClick: () => {} })}
       </div>`;
   };
 

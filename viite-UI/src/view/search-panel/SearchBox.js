@@ -1,6 +1,7 @@
 import { showToast } from '@components/toast/Toast.js';
 import { searchLocation } from '@model/LocationSearch.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
+import { button } from '@components/button/Button.js';
 
 const TOOLTIP = `Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'),
 tieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),
@@ -23,18 +24,9 @@ export function SearchBox(map) {
     />
   `);
 
-  const clearButton = $(`
-    <button
-      id="clearSearch"
-      class="close wbtn-close clear-btn"
-      aria-label="Tyhjennä haku"
-      title="Tyhjennä haku"
-    >
-      <i class="fas fa-times"></i>
-    </button>
-  `);
+  const clearButton = $(button({ id: 'clearSearch', label: '<i class="fas fa-times"></i>', className: 'close wbtn-close clear-btn', title: 'Tyhjennä haku', onClick: clearSearch })).attr('aria-label', 'Tyhjennä haku');
 
-  const searchButton = $('<button id="executeSearch" class="btn-primary">Hae</button>');
+  const searchButton = $(button({ id: 'executeSearch', label: 'Hae', className: 'btn-primary', onClick: executeSearch }));
 
   const panelHeader = $('<div class="panel-header"></div>');
   const searchResults = $('<ul id="search-results"></ul>');
@@ -144,9 +136,6 @@ export function SearchBox(map) {
         resultsSection.hide();
       }
     });
-
-    searchButton.on('click', executeSearch);
-    clearButton.on('click', clearSearch);
 
     clearButton.hide();
   }

@@ -12,6 +12,7 @@ import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLaye
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
+import { button } from '@components/button/Button.js';
 
 const changeTableByProjectCollection = new WeakMap();
 
@@ -184,16 +185,41 @@ export function ProjectActionMenu(options) {
         let fixButton = '';
         const coords = getErrorCoordinates(error, links);
         const errorMessage = _.trim((error.errorMessage || '').toString());
+        const infoMessage = _.trim((error.info || '').toString());
         const errorLabel = errorMessage ? `<label class="orange">VIRHE: ${errorMessage}</label>` : '';
+        const infoLabel = (infoMessage && infoMessage !== 'N/A') ? `<label class="orange">INFO: ${infoMessage}</label>` : '';
 
         if (coords) {
-          fixButton = `<button id="${buttonIndex}" class="btn-primary projectErrorButton btn-error-fix">Korjaa</button>`;
+          const fixCoords = coords;
+          fixButton = button({
+            id: `project-error-fix-${buttonIndex}`,
+            label: 'Korjaa',
+            className: 'btn-primary btn-error-fix',
+            onClick: () => {
+              if (Array.isArray(fixCoords) && fixCoords.length >= 2 && isFinite(fixCoords[0]) && isFinite(fixCoords[1])) {
+                const view = map.getView();
+                view.animate({ center: fixCoords, zoom: Math.max(view.getZoom(), 15), duration: 0 });
+              } else {
+                new ConfirmPopup('Virheelliset koordinaatit. Ei voida siirtyä kohteeseen.', { type: 'alert', okButtonLbl: 'OK' });
+              }
+            }
+          });
           coordinates.push({index: buttonIndex, html: fixButton, coordinates: coords});
           buttonIndex++;
         }
 
-        const linkIdButton = (error.linkIds && error.linkIds.length > 0)
-          ? `<button id="${errorIndex}" class="btn-primary linkIdList">Linkkien id:t</button>` : '';
+        const errorLinkIds = error.linkIds;
+        const linkIdButton = (errorLinkIds && errorLinkIds.length > 0)
+          ? button({
+              id: `project-error-link-ids-${errorIndex}`,
+              label: 'Linkkien id:t',
+              className: 'btn-primary',
+              onClick: () => {
+                const linkIdText = errorLinkIds.length > 0 ? errorLinkIds.join(', ') : 'Ei linkkejä';
+                new ConfirmPopup(`Linkkien ID:t: ${linkIdText}`, { type: 'alert', okButtonLbl: 'OK' });
+              }
+            })
+          : '';
 
         // Use divider if not last error
         const divider = (errorIndex < projectErrors.length - 1) ? '<div class="error-divider"></div>' : '';
@@ -201,7 +227,7 @@ export function ProjectActionMenu(options) {
         errorLines += `
           <div class="form-project-errors-list">
             ${errorLabel}
-            <label class="orange">INFO: ${error.info ? error.info : 'N/A'}</label>
+            ${infoLabel}
             <div>
                ${fixButton}
                ${linkIdButton}
@@ -241,18 +267,17 @@ export function ProjectActionMenu(options) {
     const renderFooter = function () {
       evaluateButtonStates();
       const btns = config.buttonStates;
-      
-      let validateBtn = '';
-      if (options.canUseDevTools) {
-        validateBtn = `<button id="validate-button" class="${config.cssClasses.validate}" ${btns.validate.disabled ? 'disabled' : ''} title="${btns.validate.title}">Validoi projekti</button>`;
-      }
+
+      const validateBtn = options.canUseDevTools
+        ? button({ id: 'validate-button', label: 'Validoi projekti', className: config.cssClasses.validate, disabled: btns.validate.disabled, title: btns.validate.title, onClick: handleValidateClick })
+        : '';
 
       return `
         <div class="footer-project-action-menu">
           ${validateBtn}
-          <button id="recalculate-button" class="${config.cssClasses.recalculate}" ${btns.recalculate.disabled ? 'disabled' : ''} title="${btns.recalculate.title}">Päivitä etäisyyslukemat</button>
-          <button id="changes-button" class="${config.cssClasses.changes}" ${btns.changes.disabled ? 'disabled' : ''} title="${btns.changes.title}">Avaa projektin yhteenvetotaulukko</button>
-          <button id="send-button" class="${config.cssClasses.send}" ${btns.send.disabled ? 'disabled' : ''} title="${btns.send.title}">Hyväksy tieosoitemuutokset</button>
+          ${button({ id: 'recalculate-button', label: 'Päivitä etäisyyslukemat', className: config.cssClasses.recalculate, disabled: btns.recalculate.disabled, title: btns.recalculate.title, onClick: handleRecalculateClick })}
+          ${button({ id: 'changes-button', label: 'Avaa projektin yhteenvetotaulukko', className: config.cssClasses.changes, disabled: btns.changes.disabled, title: btns.changes.title, onClick: handleChangesClick })}
+          ${button({ id: 'send-button', label: 'Hyväksy tieosoitemuutokset', className: config.cssClasses.send, disabled: btns.send.disabled, title: btns.send.title, onClick: handleSendClick })}
         </div>`;
     };
 
@@ -378,12 +403,6 @@ export function ProjectActionMenu(options) {
     // ==========================================
 
     const bindEvents = function () {
-      const rootElement = $(container);
-      rootElement.off('click', 'button.btn-recalculate').on('click', 'button.btn-recalculate', handleRecalculateClick);
-      rootElement.off('click', 'button.btn-show-changes').on('click', 'button.btn-show-changes', handleChangesClick);
-      rootElement.off('click', 'button.btn-send').on('click', 'button.btn-send', handleSendClick);
-      rootElement.off('click', 'button.btn-validate').on('click', 'button.btn-validate', handleValidateClick);
-
       if (projectChangeTable && typeof projectChangeTable.setCallbacks === 'function') {
         projectChangeTable.setCallbacks({
           onClosed: function () {
@@ -397,42 +416,6 @@ export function ProjectActionMenu(options) {
           }
         });
       }
-      
-      rootElement.off('click', 'button.projectErrorButton').on('click', 'button.projectErrorButton', function() {
-        const buttonId = parseInt($(this).attr('id'), 10);
-        const coordinateData = config.coordinates[buttonId];
-        
-        if (coordinateData && coordinateData.coordinates) {
-          const coordinates = coordinateData.coordinates;
-          if (Array.isArray(coordinates) && coordinates.length >= 2 && isFinite(coordinates[0]) && isFinite(coordinates[1])) {
-            const view = map.getView();
-            view.animate({ center: coordinates, zoom: Math.max(view.getZoom(), 15), duration: 0 });
-          } else {
-            new ConfirmPopup('Virheelliset koordinaatit. Ei voida siirtyä kohteeseen.', {
-              type: 'alert',
-              okButtonLbl: 'OK'
-            });
-          }
-        } else {
-          new ConfirmPopup('Koordinaatit eivät ole saatavilla tälle virheelle.', {
-            type: 'alert',
-            okButtonLbl: 'OK'
-          });
-        }
-      });
-      
-      rootElement.off('click', 'button.linkIdList').on('click', 'button.linkIdList', function() {
-        const errorIndex = parseInt($(this).attr('id'), 10);
-        const projectErrors = projectCollection.getProjectErrors();
-        if (projectErrors && projectErrors[errorIndex] && projectErrors[errorIndex].linkIds) {
-          const linkIds = projectErrors[errorIndex].linkIds;
-          const linkIdText = linkIds.length > 0 ? linkIds.join(', ') : 'Ei linkkejä';
-          new ConfirmPopup(`Linkkien ID:t: ${linkIdText}`, {
-            type: 'alert',
-            okButtonLbl: 'OK'
-          });
-        }
-      });
 
       evaluateButtonStates();
       refresh();

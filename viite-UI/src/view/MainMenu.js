@@ -58,7 +58,7 @@ export function MainMenu(options = {}) {
   rootElement[0].appendChild(menu.root);
 
   const views = {
-    linkInfo: new LinkInfo(selectedLinkProperty, menu),
+    linkInfo: new LinkInfo(selectedLinkProperty),
     projectList: new ProjectList({ ...options, eventbus: activeEventbus, menu }),
     roadNamingTool: new RoadNamingToolWindow(roadNameCollection),
     roadAddressBrowser: new RoadAddressBrowserWindow(backend),
@@ -104,7 +104,7 @@ export function MainMenu(options = {}) {
   const actions = {
     [MENU_STATE.MAIN]: showMain,
     [MENU_STATE.LINK_INFO]: (data) => {
-      menu.setHeader('Tieosoitteen ominaisuustiedot');
+      menu.setHeader('Tieosoitteen ominaisuustiedot', () => selectedLinkProperty.close());
       menu.setFooter();
       menu.setBody(views.linkInfo.render(data));
     },

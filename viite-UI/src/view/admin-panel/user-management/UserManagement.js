@@ -4,6 +4,7 @@
 import { AddUserForm } from './AddUserForm.js';
 import { UpdateUserForm } from './UpdateUsersForm.js';
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml } from './Dropdowns.js';
+import { button } from '@components/button/Button.js';
 
 export const UserManagagement = {
     getContent: function () {
@@ -27,8 +28,8 @@ export const UserManagagement = {
                   <tbody id="userTableBody"></tbody>
                 </table>
                 <div class="form-actions">
-                  <button id="toggleViiteAllButton" class="btn btn-secondary">Anna viite-oikeus kaikille</button>
-                  <button id="updateUsersButton" class="btn btn-primary">Tallenna muutokset</button>
+                  ${button({ id: 'toggleViiteAllButton', label: 'Anna viite-oikeus kaikille', className: 'btn btn-secondary', onClick: () => {} })}
+                  ${button({ id: 'updateUsersButton', label: 'Tallenna muutokset', className: 'btn btn-primary', onClick: () => {} })}
                 </div>
               </div>
 
@@ -51,7 +52,7 @@ export const UserManagagement = {
                   </div>
                 </div>
                 <div class="form-actions">
-                  <button id="addUserButton" class="btn btn-primary">Lisää käyttäjä</button>
+                  ${button({ id: 'addUserButton', label: 'Lisää käyttäjä', className: 'btn btn-primary', onClick: () => {} })}
                 </div>
               </fieldset>
             </div>

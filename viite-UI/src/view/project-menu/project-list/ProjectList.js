@@ -1,5 +1,6 @@
 // Displays road address projects in a table format, allowing sorting, filtering and opening projects.
 // Polls for project state updates every 30 seconds.
+import { button } from '@components/button/Button.js';
 import { checkbox } from '@components/checkbox/Checkbox.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
@@ -138,9 +139,7 @@ export function ProjectList(options = {}) {
       render();
     };
 
-    const handleProjectOpen = ($el) => {
-      const id = parseInt($el.data('id'), 10);
-      const status = parseInt($el.data('status'), 10);
+    const handleProjectOpen = (id, status) => {
       const proceed = () => {
         clearInterval(pollProjects);
         ensureProjectMenu();
@@ -227,7 +226,7 @@ export function ProjectList(options = {}) {
                     ${id === "sortUser" ? `<span class="${filterClass}" id="userFilterSpan"><input type="text" id="userNameBox" placeholder="Käyttäjätunnus" value="${state.filterBox.input}"></span>` : ''}
                   </th>`;
                 }).join('')}
-                <th class="column-actions"><div class="actions"><button class="new btn-primary">Uusi tieosoiteprojekti</button></div></th>
+                <th class="column-actions"><div class="actions">${button({ id: 'new-project-button', label: 'Uusi tieosoiteprojekti', className: 'new btn-primary', onClick: handleCreateNew })}</div></th>
               </tr>
             </thead>
           </table>
@@ -242,8 +241,7 @@ export function ProjectList(options = {}) {
                     <td class="user-cell column-user">${staticField(proj.createdBy)}</td>
                     <td class="date-cell column-date">${staticField(dateutil.dateObjectToFinnishString(toComparableDate(proj.createdDate)))}</td>
                     <td class="status-cell column-status" title="${proj.statusInfo || 'Ei lisätietoja'}">${staticField(proj.statusDescription)}</td>
-                    <td class="actions-cell column-actions"><button class="project-open ${proj.statusCode === projectStatus.ErrorInViite.value ? 'btn-new-error' : 'btn-primary'}" data-id="${proj.id}" data-status="${proj.statusCode}">
-                      ${proj.statusCode === projectStatus.ErrorInViite.value ? 'Avaa uudelleen' : 'Avaa'}</button></td>
+                    <td class="actions-cell column-actions">${button({ id: `project-open-${proj.id}`, label: proj.statusCode === projectStatus.ErrorInViite.value ? 'Avaa uudelleen' : 'Avaa', className: `project-open ${proj.statusCode === projectStatus.ErrorInViite.value ? 'btn-new-error' : 'btn-primary'}`, onClick: () => handleProjectOpen(proj.id, proj.statusCode) })}</td>
                   </tr>`).join('')}
               </tbody>
             </table>
@@ -293,9 +291,7 @@ export function ProjectList(options = {}) {
     function bindEvents() {
       $($container).off('click', '.sort').on('click', '.sort', function(e) { handleSort($(this), e); });
       $($container).off('click', '#filterUser').on('click', '#filterUser', function(e) { handleFilterToggle($(this), e); });
-      $($container).off('click', '.project-open').on('click', '.project-open', function(e) { handleProjectOpen($(this), e); });
       $($container).off('click', '#sync').on('click', '#sync', function(e) { handleSync($(this), e); });
-      $($container).off('click', '.new').on('click', '.new', function(e) { handleCreateNew($(this), e); });
 
       $container.on('input', '#userNameBox', (e) => { state.filterBox.input = e.target.value; render(); });
       $container.on('change', '#OldAcceptedProjectsVisibleCheckbox', (e) => { state.onlyActive = !e.target.checked; fetchProjects(); });

@@ -4,6 +4,7 @@
  * Tracks unsaved changes state and integrates with ProjectMenu for state transitions.
  * Component is rebuilt on each show() to support disposable lifecycle pattern.
  */
+import { button } from '@components/button/Button.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { numberInput } from '@components/number-input/NumberInput.js';
@@ -121,7 +122,7 @@ export function ProjectDetailsForm(callbacks = {}) {
               ${numberInput('losa', 3)}
             </div>
 
-            <button class="btn-primary btn-reserve" disabled>Varaa</button>
+            ${button({ id: 'reserve-button', label: 'Varaa', className: 'btn-primary btn-reserve', disabled: true, onClick: () => {} })}
           </div>
         `;
       };
@@ -176,12 +177,12 @@ export function ProjectDetailsForm(callbacks = {}) {
       const isSaveDisabled = isProjectPublished || isFormIncomplete || !hasUnsavedChanges;
       const showDelete = !isNewProject && ![ProjectStatus.Accepted.value, ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode);
       const actionButton = (isNewProject || !isEditMode)
-        ? `<button id="generalNext" class="save btn-primary btn-save action-button" ${isFormIncomplete ? 'disabled' : ''}>Jatka toimenpiteisiin</button>`
-        : `<button id="saveProject" class="save btn-primary btn-save action-button" ${isSaveDisabled ? 'disabled' : ''}>Tallenna</button>`;
+        ? button({ id: 'generalNext', label: 'Jatka toimenpiteisiin', className: 'save btn-primary btn-save action-button', disabled: isFormIncomplete, onClick: () => {} })
+        : button({ id: 'saveProject', label: 'Tallenna', className: 'save btn-primary btn-save action-button', disabled: isSaveDisabled, onClick: () => {} });
       
       const cancelButton = (isNewProject || !isEditMode)
-        ? `<button id="saveAndCancelDialogue" class="cancel btn-cancel">Poistu</button>`
-        : `<button id="cancelEdit" class="cancel btn-cancel">Peruuta</button>`;
+        ? button({ id: 'saveAndCancelDialogue', label: 'Poistu', className: 'cancel btn-cancel', onClick: () => {} })
+        : button({ id: 'cancelEdit', label: 'Peruuta', className: 'cancel btn-cancel', onClick: () => {} });
       
       return `
         <div class="footer-project-details ${!showDelete ? 'no-delete' : ''}" id="actionButtons">
@@ -203,7 +204,7 @@ export function ProjectDetailsForm(callbacks = {}) {
       const isDateValid = !hasDate || dateRegex.test(dateValue);
       const shouldDisable = isRoadPartInvalidResult || !hasDate || !isDateValid;
       
-      $('.btn-reserve').prop('disabled', shouldDisable);
+      $('#reserve-button').prop('disabled', shouldDisable);
     };
 
     const updateContinueButtonState = function (_project) {
@@ -551,7 +552,7 @@ export function ProjectDetailsForm(callbacks = {}) {
     };
 
     const bindReservationHandler = function (projCollection, currentProject) {
-      $('.btn-reserve').off('click').on('click', function () {
+      $('#reserve-button').off('click').on('click', function () {
         const roadNumber = $('#tie').val() || '';
         const startPart = $('#aosa').val() || '';
         const endPart = $('#losa').val() || '';

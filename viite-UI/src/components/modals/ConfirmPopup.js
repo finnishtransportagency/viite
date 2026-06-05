@@ -1,3 +1,5 @@
+import { button } from '@components/button/Button.js';
+
 // Generic confirm popup component for confirmation and alert dialogs
 /* Usage:
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -23,55 +25,40 @@ export function ConfirmPopup(message, options = {}) {
 
     const optionsMerged = _.merge(defaultOptions, options);
 
-    const confirmDiv = `
-      <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
-        <div class="modal-dialog">
-          <div class="content">
-            ${message}
-          </div>
-          <div class="actions">
-            <button class="btn-primary yes">${optionsMerged.yesButtonLbl}</button>
-            <button class="btn-secondary no">${optionsMerged.noButtonLbl}</button>
-          </div>
-        </div>
-      </div>`;
-
-    const alertDiv = `
-      <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
-        <div class="modal-dialog">
-          <div class="content confirm-alert-scrollable">
-            ${message}
-          </div>
-          <div class="actions">
-            <button class="btn-secondary ok">${optionsMerged.okButtonLbl}</button>
-          </div>
-        </div>
-      </div>`;
-
     const renderConfirmDialog = function () {
-      const template = optionsMerged.type === 'alert' ? alertDiv : confirmDiv;
+      let template;
+      if (optionsMerged.type === 'alert') {
+        template = `
+          <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
+            <div class="modal-dialog">
+              <div class="content confirm-alert-scrollable">
+                ${message}
+              </div>
+              <div class="actions">
+                ${button({ id: 'confirm-popup-ok', label: optionsMerged.okButtonLbl, className: 'btn-secondary ok', onClick: () => { purge(); optionsMerged.okCallback(); } })}
+              </div>
+            </div>
+          </div>`;
+      } else {
+        template = `
+          <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
+            <div class="modal-dialog">
+              <div class="content">
+                ${message}
+              </div>
+              <div class="actions">
+                ${button({ id: 'confirm-popup-yes', label: optionsMerged.yesButtonLbl, className: 'btn-primary yes', onClick: () => { purge(); optionsMerged.successCallback(); } })}
+                ${button({ id: 'confirm-popup-no', label: optionsMerged.noButtonLbl, className: 'btn-secondary no', onClick: () => { purge(); optionsMerged.closeCallback(); } })}
+              </div>
+            </div>
+          </div>`;
+      }
       jQuery('.container').append(template);
-    };
-
-    const bindEvents = function () {
-      jQuery('.confirm-modal .no').on('click', function () {
-        purge();
-        optionsMerged.closeCallback();
-      });
-      jQuery('.confirm-modal .yes').on('click', function () {
-        purge();
-        optionsMerged.successCallback();
-      });
-      jQuery('.confirm-modal .ok').on('click', function () {
-        purge();
-        optionsMerged.okCallback();
-      });
     };
 
     const show = function () {
       purge();
       renderConfirmDialog();
-      bindEvents();
     };
 
     const purge = function () {

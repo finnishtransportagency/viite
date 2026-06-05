@@ -1,6 +1,7 @@
 import { DynamicLinkNetworkContent as dynamicLinkNetworkContent } from './DynamicLinkNetworkContent.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { UserManagagement } from './user-management/UserManagement.js';
+import { button } from '@components/button/Button.js';
 
 // Panel that contains all the tools available for users with admin role
 export function AdminPanel(backend) {
@@ -16,10 +17,10 @@ export function AdminPanel(backend) {
 
             const navBar = `
                 <nav class="navbar">
-                    <button class="tab-button active" data-tab="tab1">Dynaaminen tielinkkiverkko</button>
-                    <button class="tab-button" data-tab="tab2">Käyttäjien hallinta</button>
-                    <button class="tab-button" data-tab="tab3">Alkulataus</button>
-                    <button class="tab-button" data-tab="tab4">Tieosoiteverkon virheet</button>
+                    ${button({ id: 'tab-btn-tab1', label: 'Dynaaminen tielinkkiverkko', className: 'tab-button active', onClick: () => controlTabs($('#tab-btn-tab1'), $('#adminPanelWindowContent'), 'tab1') })}
+                    ${button({ id: 'tab-btn-tab2', label: 'Käyttäjien hallinta', className: 'tab-button', onClick: () => controlTabs($('#tab-btn-tab2'), $('#adminPanelWindowContent'), 'tab2') })}
+                    ${button({ id: 'tab-btn-tab3', label: 'Alkulataus', className: 'tab-button', onClick: () => controlTabs($('#tab-btn-tab3'), $('#adminPanelWindowContent'), 'tab3') })}
+                    ${button({ id: 'tab-btn-tab4', label: 'Tieosoiteverkon virheet', className: 'tab-button', onClick: () => controlTabs($('#tab-btn-tab4'), $('#adminPanelWindowContent'), 'tab4') })}
                 </nav>
             `;
 
@@ -56,41 +57,19 @@ export function AdminPanel(backend) {
             // Initialize the new user management module
             
             UserManagagement.init('#userManagementPanelContainer', {});
-
-            bindEvents();
         };
 
-        const controlTabs = function (clickedButton, contentWrapper) {
+        const controlTabs = function (clickedButton, contentWrapper, targetTabId) {
             if (clickedButton.hasClass('active')) return;
 
             const tabButtons = contentWrapper.find('.navbar .tab-button');
             const tabContents = contentWrapper.find('.content-area .tab-content');
 
-            // Deactivate all buttons and hide all content panes within this window
             tabButtons.removeClass('active');
             tabContents.removeClass('active');
 
             clickedButton.addClass('active');
-
-            // Activate the corresponding content pane
-            // Construct the ID selector (e.g., #tab1) and find it within the contentWrapper
-            const targetTabId = clickedButton.data('tab');
-            const targetTabContent = contentWrapper.find(`#${targetTabId}`);
-            targetTabContent.addClass('active');
-        };
-
-        const bindEvents = function () {
-            // Navbar Tab Button Event Binding
-            const contentWrapper = $('#adminPanelWindowContent');
-
-            // Use event delegation: listen for clicks on the contentWrapper,
-            // but only trigger the function if the click happened on an element
-            // matching '.navbar .tab-button' inside the wrapper.
-            contentWrapper.on('click', '.navbar .tab-button', function () {
-                // 'this' refers to the specific .tab-button that was clicked
-                const clickedButton = $(this);
-                controlTabs(clickedButton, contentWrapper);
-            });
+            contentWrapper.find(`#${targetTabId}`).addClass('active');
         };
 
         return {

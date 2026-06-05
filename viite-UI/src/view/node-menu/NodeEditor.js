@@ -1,3 +1,4 @@
+import { button } from '@components/button/Button.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { Spinner } from '@components/spinner/Spinner.js';
@@ -19,6 +20,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   let activeEventbusHandlers = [];
   let addressEditMode = false;
   let saveInProgress = false;
+  let _boundSaveHandler = _.noop;
+  let _boundCancelHandler = _.noop;
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -88,8 +91,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
 
   const renderFooter = () => `
     <div class="node-editor-footer">
-      <button class="save btn-primary btn-block node-editor-save" disabled>Tallenna</button>
-      <button class="cancel btn-secondary btn-block node-editor-cancel">Peruuta</button>
+      ${button({ id: 'node-editor-save', label: 'Tallenna', className: 'save btn-primary btn-block node-editor-save', disabled: true, onClick: () => _boundSaveHandler() })}
+      ${button({ id: 'node-editor-cancel', label: 'Peruuta', className: 'cancel btn-secondary btn-block node-editor-cancel', onClick: () => _boundCancelHandler() })}
     </div>`;
 
   // ─── Table builders ─────────────────────────────────────────────────────────
@@ -270,13 +273,11 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   };
 
   const setSaveButtonDisabled = (disabled) => {
-    getContainer().find('.node-editor-save').prop('disabled', disabled);
-    $('#menu-container').find('.menu-footer .node-editor-save').prop('disabled', disabled);
+    $('#node-editor-save').prop('disabled', disabled);
   };
 
   const setCancelButtonDisabled = (disabled) => {
-    getContainer().find('.node-editor-cancel').prop('disabled', disabled);
-    $('#menu-container').find('.menu-footer .node-editor-cancel').prop('disabled', disabled);
+    $('#node-editor-cancel').prop('disabled', disabled);
   };
 
   const syncActionButtons = () => {
@@ -297,8 +298,9 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   };
 
   const cleanup = () => {
+    _boundSaveHandler = _.noop;
+    _boundCancelHandler = _.noop;
     getContainer().off('.nodeEditor');
-    $('#menu-container').off('.nodeEditorFooter');
     clearEventbusHandlers();
     eventbus.trigger('nodeEditor:closed');
   };
@@ -429,13 +431,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
       editorExitHandler('templates');
     };
 
-    $container.on('click.nodeEditor', '.node-editor-save', onSave);
-    $container.on('click.nodeEditor', '.node-editor-cancel', onCancel);
-
-    const $panel = $('#menu-container');
-    $panel.off('.nodeEditorFooter');
-    $panel.on('click.nodeEditorFooter', '.node-editor-save', onSave);
-    $panel.on('click.nodeEditorFooter', '.node-editor-cancel', onCancel);
+    _boundSaveHandler = onSave;
+    _boundCancelHandler = onCancel;
 
     // Eventbus: coordinates update, backend responses, save lifecycle
     subscribeEventbus('node:displayCoordinates', (coords) => {
