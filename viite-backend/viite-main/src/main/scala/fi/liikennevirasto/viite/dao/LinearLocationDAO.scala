@@ -157,11 +157,16 @@ object LinearLocation extends SQLSyntaxSupport[LinearLocation] {
           typeCode      = rs.intOpt("cal_end_type").map(CalibrationPointType.apply)
         )
       ),
-      geometry = Seq(
-        Point(x = rs.double("start_x"),y = rs.double("start_y")),
-        Point(x = rs.double("end_x"),  y = rs.double("end_y")
-        )
-      ),
+      geometry = {
+        val sx = rs.doubleOpt("start_x"); val sy = rs.doubleOpt("start_y")
+        val ex = rs.doubleOpt("end_x");   val ey = rs.doubleOpt("end_y")
+        (sx, sy, ex, ey) match {
+          case (Some(x1), Some(y1), Some(x2), Some(y2)) => Seq(Point(x1, y1), Point(x2, y2))
+          case _ =>
+            privateLogger.warn(s"LinearLocation id=${rs.long("id")} has NULL geometry coordinates in the DB — skipping geometry (start_x=$sx, start_y=$sy, end_x=$ex, end_y=$ey)")
+            Seq.empty[Point]
+        }
+      },
       linkGeomSource  = LinkGeomSource(rs.int("source")),
       roadwayNumber   = rs.long("roadway_number"),
       validFrom       = rs.jodaDateTimeOpt("valid_from"),
@@ -847,7 +852,10 @@ class LinearLocationDAO extends BaseDAO {
     val query =
       sql"""
             $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM roadway WHERE valid_to IS NULL AND end_date IS NULL)
+            WHERE loc.valid_to IS NULL
+              AND loc.roadway_number IN (SELECT roadway_number FROM roadway WHERE valid_to IS NULL AND end_date IS NULL)
+              AND loc.geometry IS NOT NULL
+              AND NOT ST_IsEmpty(loc.geometry)
          """
     queryList(query)
   }
