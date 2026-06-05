@@ -24,7 +24,6 @@ export function ProjectDetailsForm(callbacks = {}) {
     let hasUnsavedChanges = false;
     let projectValidationFailedHandler = null;
     let projectFailedHandler = null;
-    let projectValidationSucceedHandler = null;
 
     const deleteRoadPartButton = function (roadNumber, roadPartNumber, selector) {
       return `
@@ -330,7 +329,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 
       if (projCollection && currentProject) {
         bindReservationHandler(projCollection, currentProject);
-        bindReservationEventListeners(projCollection, currentProject);
         bindDeleteRoadPartHandlers(projCollection, currentProject);
       }
       
@@ -583,19 +581,6 @@ export function ProjectDetailsForm(callbacks = {}) {
         });
         return false;
       });
-    };
-
-    const bindReservationEventListeners = function (projCollection, currentProject) {
-      projectValidationSucceedHandler = function () {
-        $('#tie, #aosa, #losa').val('');
-        $('#reservedRoads').html(roadPartList(projCollection.getReservedParts(), 'reserved'));
-        if ($('#newReservedRoads').length) {
-            $('#newReservedRoads').html(roadPartList(projCollection.getFormedParts(), 'formed'));
-        }
-        updateReserveButtonState();
-        markAsChanged(); // Mark project as having unsaved changes when reservation is made
-        updateSaveButtonState(currentProject);
-      };
     };
 
     const bindDeleteRoadPartHandlers = function (projCollection, currentProject) {

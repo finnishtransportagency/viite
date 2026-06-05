@@ -461,19 +461,8 @@ export function RoadAddressChangesBrowserWindow(backend) {
           };
       }
       
-      $content.off('click' + eventNs, '#exportAsCsvFile').on('click' + eventNs, '#exportAsCsvFile', function () {
-          exportDataAsCsvFile();
-          return false; // cancel form submission
-      });
-
       $content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
           modal.close();
-      });
-
-      $content.off('click' + eventNs, '#fetchRoadAddressChanges').on('click' + eventNs, '#fetchRoadAddressChanges', function () {
-          clearResultsAndDisableCsvButton();
-          getData();
-          return false; // cancel form submission
       });
   }
 
@@ -481,7 +470,10 @@ export function RoadAddressChangesBrowserWindow(backend) {
       modal = createModal();
       modal.open({
           title: 'Tieosoitemuutosten katselu',
-          content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm()
+          content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm(
+              () => { clearResultsAndDisableCsvButton(); getData(); },
+              exportDataAsCsvFile
+          )
       });
 
       const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];

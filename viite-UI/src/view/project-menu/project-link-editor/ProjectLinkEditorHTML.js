@@ -1,5 +1,6 @@
 import { dropdown } from '@components/dropdowns/Dropdown.js';
 import { numberInput } from '@components/number-input/NumberInput.js';
+import { button } from '@components/button/Button.js';
 
 export function createProjectLinkEditorHTML(dependencies) {
   const {
@@ -40,9 +41,9 @@ export function createProjectLinkEditorHTML(dependencies) {
       </div>`;
   };
 
-  const renderFooter = (_project, projectCollection) => {
+  const renderFooter = (_project, projectCollection, onSave, onCancel) => {
     const hasChanges = projectCollection ? projectCollection.isDirty() : false;
-    return actionButtonsForSelectedLinks(!hasChanges);
+    return actionButtonsForSelectedLinks(!hasChanges, onSave, onCancel);
   };
 
   const renderStaticInformation = (project, selected) => {
@@ -262,11 +263,9 @@ export function createProjectLinkEditorHTML(dependencies) {
 
   const addTrackCodeDropdown = (trackDefaultValue) => {
     let value = trackDefaultValue;
-    let toShow = trackDefaultValue;
 
     if (trackDefaultValue === '') {
       value = Track.Unknown.value;
-      toShow = '--';
     }
 
     return dropdown({
@@ -322,15 +321,12 @@ export function createProjectLinkEditorHTML(dependencies) {
   };
 
   const administrativeClassDropdown = (defaultValue) => {
-    const adminClassInfo = _.find(AdministrativeClass, obj => obj.value === defaultValue);
-    const labelText = adminClassInfo ? adminClassInfo.displayText : '';
 
     return dropdown({
       id: 'administrativeClassDropdown',
       className: 'form-control administrativeClassAndRoadName',
       defaultValue: defaultValue,
       options: [
-        { value: defaultValue, text: labelText, hidden: true },
         { value: '1', text: '1 Valtio' },
         { value: '2', text: '2 Kunta' },
         { value: '3', text: '3 Yksityinen' }
@@ -338,12 +334,12 @@ export function createProjectLinkEditorHTML(dependencies) {
     });
   };
 
-  const actionButtonsForSelectedLinks = (notDisabled) => {
+  const actionButtonsForSelectedLinks = (notDisabled, onSave, onCancel) => {
     return `
       <div class="footer-project-link-edit" id="actionButtons">
         <div>
-          <button id="saveButton" class="btn-primary update btn-save action-button" ${notDisabled ? '' : 'disabled'}>Tallenna</button>
-          <button id="cancelButton" class="cancelLink btn-cancel">Peruuta</button>
+          ${button({ id: 'saveButton', label: 'Tallenna', className: 'btn-primary update btn-save action-button', disabled: !notDisabled, onClick: onSave })}
+          ${button({ id: 'cancelButton', label: 'Peruuta', className: 'cancelLink btn-cancel', onClick: onCancel })}
         </div>
       </div>`;
   };

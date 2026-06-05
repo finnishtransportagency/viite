@@ -5,7 +5,6 @@ import { showToast } from '@components/toast/Toast.js';
 
 // Performs validation checks on user fields like username and Elinvoimakeskus.
 // Validation can be conditionally enabled or disabled using the `options` object.
-// eslint-disable-next-line complexity
 export function validateUserFields(fields, options) {
     const {
         checkUsername = true,

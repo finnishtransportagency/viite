@@ -54,7 +54,7 @@ export function Backend() {
       }
 
       return function () {
-        deferred = $.Deferred();
+        deferred = new $.Deferred();
 
         if (!debounced) {
           debounced = _.debounce(doRequest, 200);
@@ -360,7 +360,6 @@ export function Backend() {
           // Start new request
           loadingProject = $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id)
             .done(function (data) {
-              // eslint-disable-next-line callback-return
               callback(data);
             })
             .always(function () {

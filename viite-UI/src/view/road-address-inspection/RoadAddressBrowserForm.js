@@ -2,6 +2,7 @@
 import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
+import { button } from '@components/button/Button.js';
 
 export function createElyEvkSelectorData() {
   const evkItems = [];
@@ -94,7 +95,7 @@ export function RoadAddressBrowserForm() {
       });
     }
 
-    function getRoadAddressChangesBrowserForm() {
+    function getRoadAddressChangesBrowserForm(onSearch, onCsvExport) {
       if (!dateTargetSelector) initializeSelectors();
 
       const html = `
@@ -119,15 +120,15 @@ export function RoadAddressBrowserForm() {
           ${createRoadNumberInputField('roadAddrChangesInputRoad')}
           ${createRoadPartNumberInputFields('roadAddrChangesInputStartPart', 'roadAddrChangesInputEndPart')}
           <div class="button-container">
-            ${createSearchButton('fetchRoadAddressChanges')}
-            ${createCsvDownloadButton()}
+            ${createSearchButton('fetchRoadAddressChanges', onSearch)}
+            ${createCsvDownloadButton(onCsvExport)}
           </div>
         </form>`;
 
       return html;
     }
 
-    function getRoadAddressBrowserForm() {
+    function getRoadAddressBrowserForm(onSearch, onCsvExport) {
       if (!elyEvkSelector || !targetSelector) initializeSelectors();
 
       const html = `
@@ -149,8 +150,8 @@ export function RoadAddressBrowserForm() {
             ${targetSelector.render()}
           </div>
           <div class="button-container">
-            ${createSearchButton('fetchRoadAddresses')}
-            ${createCsvDownloadButton()}
+            ${createSearchButton('fetchRoadAddresses', onSearch)}
+            ${createCsvDownloadButton(onCsvExport)}
           </div>
         </form>`;
 
@@ -173,12 +174,12 @@ export function RoadAddressBrowserForm() {
         `<div class="input-container"><label >Losa</label><input class="modern-input" type="number" min="1" max="999" id="${idEnd}"/></div>`;
     }
 
-    function createCsvDownloadButton() {
-      return '<button id="exportAsCsvFile" class="download-csv" disabled>Lataa CSV-tiedostona <i class="fas fa-file-excel"></i></button>';
+    function createCsvDownloadButton(onClick) {
+      return button({ id: 'exportAsCsvFile', label: 'Lataa CSV-tiedostona <i class="fas fa-file-excel"></i>', className: 'download-csv', disabled: true, onClick });
     }
 
-    function createSearchButton(id) {
-      return `<button class="btn-primary" id="${id}"> Hae </button>`;
+    function createSearchButton(id, onClick) {
+      return button({ id, label: 'Hae', className: 'btn-primary', onClick });
     }
 
     return {

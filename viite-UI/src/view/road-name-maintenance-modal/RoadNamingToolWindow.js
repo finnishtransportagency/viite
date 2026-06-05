@@ -1,6 +1,7 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
+import { button } from '@components/button/Button.js';
 
 export function RoadNamingToolWindow(roadNameCollection) {
     const newId = -1000;
@@ -10,12 +11,13 @@ export function RoadNamingToolWindow(roadNameCollection) {
 
     // Generate the base HTML content for the naming tool
     const createNamingToolContent = () => {
+      const searchButton = button({ id: 'executeRoadSearch', label: 'Hae', className: 'btn-primary', onClick: searchForRoadNames });
       return $(`
         <div id="name-search-window" class="form-horizontal naming-list">
           <div class="name-tool-content-new">
             <div class="panel-header">
               <input type="text" class="form-control" id="roadSearchParameter" placeholder="Tienumero" autocomplete="off">
-              <button id="executeRoadSearch" class="btn-primary">Hae</button>
+              ${searchButton}
             </div>
 
             <div id="table-labels" style="padding-bottom: 4px">
@@ -64,18 +66,16 @@ export function RoadNamingToolWindow(roadNameCollection) {
         roadData.forEach(road => {
           const writable = !road.endDate;
           const startDate = road.startDate ? road.startDate.format('DD.MM.YYYY') : '';
+          const plusCell = road.endDate
+            ? `<div></div>`
+            : `<div id="plus_minus_buttons">${button({ id: `new-road-name-${road.id}`, label: '+', className: 'btn-primary', onClick: () => handleNewRoadName(road.id, road.roadNumber, startDate) })}</div>`;
           html += `
             <tr class="roadList-item">
               <td style="width: 150px;">${staticFieldRoadNumber(road.roadNumber, road.id)}</td>
               <td style="width: 250px;">${staticFieldRoadList(road.name, writable, road.id, "roadName", 50)}</td>
               <td style="width: 110px;">${staticFieldRoadList(startDate, false, road.id, "startDate")}</td>
               <td style="width: 110px;">${staticFieldRoadList(road.endDate ? road.endDate.format('DD.MM.YYYY') : '', writable, road.id, "endDate")}</td>
-              <td>
-                ${road.endDate ?
-                  `<button class="btn-primary" style="visibility:hidden;">+</button>` :
-                  `<div id="plus_minus_buttons"><button class="btn-primary" id="new-road-name" data-roadId="${road.id}" data-roadNumber="${road.roadNumber}" data-originalStartDate="${startDate}">+</button></div>`
-                }
-              </td>
+              <td>${plusCell}</td>
             </tr><tr style="border-bottom:1px solid darkgray;"><td colspan="100%"></td></tr>`;
         });
 
@@ -110,18 +110,21 @@ export function RoadNamingToolWindow(roadNameCollection) {
 
     const addSaveEvent = () => {
       if ($('#saveChangedRoads').length === 0) {
-        const saveButton = '<button id="saveChangedRoads" class="btn-primary save btn-save-road-data" disabled>Tallenna</button>';
-        $('#road-list').append(saveButton);
-        $('#saveChangedRoads').on('click', () => {
-          const saveMessage = ($('#newRoadName').length > 0)
-            ? "Tiellä on jo nimi. Haluatko varmasti antaa sille uuden nimen?"
-            : "Tiellä on jo nimi. Haluatko varmasti muokata sitä?";
-
-          new ConfirmPopup(saveMessage, {
-            successCallback: () => roadNameCollection.saveChanges(),
-            closeCallback: () => {}
-          });
-        });
+        $('#road-list').append(button({
+          id: 'saveChangedRoads',
+          label: 'Tallenna',
+          className: 'btn-primary save btn-save-road-data',
+          disabled: true,
+          onClick: () => {
+            const saveMessage = ($('#newRoadName').length > 0)
+              ? "Tielle on jo nimi. Haluatko varmasti antaa sille uuden nimen?"
+              : "Tielle on jo nimi. Haluatko varmasti muokata sitä?";
+            new ConfirmPopup(saveMessage, {
+              successCallback: () => roadNameCollection.saveChanges(),
+              closeCallback: () => {}
+            });
+          }
+        }));
       }
     };
 
@@ -219,49 +222,41 @@ export function RoadNamingToolWindow(roadNameCollection) {
       return { fieldDate, futureDateSinceCurrent: currentUpperLimit, pastDate: lowerStart };
     };
 
+    function handleNewRoadName(originalRoadId, roadNumber, originalStartDate) {
+      $(`#new-road-name-${originalRoadId}`).css("visibility", "hidden");
+      const prevRoadNameInput = $('#road-list tr.roadList-item input[data-FieldName="roadName"]').last();
+      prevRoadNameInput.addClass("input-road-details-readonly").removeClass("form-control").prop("readonly", true);
+
+      $('#roadList-table').append(`
+        <tr class="roadList-item" id="newRoadName" data-originalRoadId="${originalRoadId}" data-roadNumber="${roadNumber}" data-originalStartDate="${originalStartDate}">
+          <td style="width: 150px;">${staticFieldRoadNumber(roadNumber, newId)}</td>
+          <td style="width: 250px;">${staticFieldRoadList("", true, newId, "roadName", 50)}</td>
+          <td style="width: 110px;">${staticFieldRoadList("", true, newId, "startDate")}</td>
+          <td style="width: 110px;">${staticFieldRoadList("", true, newId, "endDate")}</td>
+          <td>${button({ id: `undo-new-road-name-${originalRoadId}`, label: ' \u2014 ', className: 'btn-primary', onClick: () => handleUndoNewRoadName(originalRoadId) })}</td>
+        </tr><tr style="border-bottom:1px solid darkgray;"><td colspan="100%"></td></tr>
+      `);
+
+      $(`.form-control[data-roadId=${newId}][data-FieldName=endDate]`).val("pp.kk.vvvv").prop("readonly", true).prop("disabled", true);
+      retroactivelyAddDatePickers(originalStartDate);
+      toggleSaveButton();
+    }
+
+    function handleUndoNewRoadName(originalRoadId) {
+      roadNameCollection.undoNewRoadName();
+      $(`#new-road-name-${originalRoadId}`).css("visibility", "visible");
+      $('#newRoadName').next('tr').remove();
+      $('#newRoadName').remove();
+      const prevName = $('#road-list tr.roadList-item input[data-FieldName="roadName"]').last();
+      prevName.addClass("form-control").removeClass("input-road-details-readonly").prop("readonly", false);
+      toggleSaveButton();
+    }
+
     function bindEvents() {
       const $content = modal.getContent();
 
       // Use the modal's content container for event delegation
       $content.on('input change', '.form-control, .date-picker-input', (e) => editEvent(e));
-      $content.on('click', '#executeRoadSearch', () => searchForRoadNames());
-
-      // Handle the "+" button click (delegated via document or $content)
-      $(document).off('click', '#new-road-name').on('click', '#new-road-name', (e) => {
-        const target = $(e.target);
-        target.css("visibility", "hidden");
-        const prevRoadNameInput = $('#road-list tr.roadList-item input[data-FieldName="roadName"]').last();
-        prevRoadNameInput.addClass("input-road-details-readonly").removeClass("form-control").prop("readonly", true);
-
-        const originalRoadId = target.attr("data-roadId");
-        const originalStartDate = target.attr("data-originalStartDate");
-        const roadNumber = target.attr("data-roadNumber");
-
-        $('#roadList-table').append(`
-          <tr class="roadList-item" id="newRoadName" data-originalRoadId="${originalRoadId}" data-roadNumber="${roadNumber}" data-originalStartDate="${originalStartDate}">
-            <td style="width: 150px;">${staticFieldRoadNumber(roadNumber, newId)}</td>
-            <td style="width: 250px;">${staticFieldRoadList("", true, newId, "roadName", 50)}</td>
-            <td style="width: 110px;">${staticFieldRoadList("", true, newId, "startDate")}</td>
-            <td style="width: 110px;">${staticFieldRoadList("", true, newId, "endDate")}</td>
-            <td><button class="btn-primary" id="undo-new-road-name" data-roadId="${originalRoadId}"> — </button></td>
-          </tr><tr style="border-bottom:1px solid darkgray;"><td colspan="100%"></td></tr>
-        `);
-
-        $(`.form-control[data-roadId=${newId}][data-FieldName=endDate]`).val("pp.kk.vvvv").prop("readonly", true).prop("disabled", true);
-        retroactivelyAddDatePickers(originalStartDate);
-        toggleSaveButton();
-      });
-
-      $(document).off('click', '#undo-new-road-name').on('click', '#undo-new-road-name', (e) => {
-        const roadId = $(e.target).attr("data-roadId");
-        roadNameCollection.undoNewRoadName();
-        $(`#new-road-name[data-roadId=${roadId}]`).css("visibility", "visible");
-        $('#newRoadName').next('tr').remove();
-        $('#newRoadName').remove();
-        const prevName = $('#road-list tr.roadList-item input[data-FieldName="roadName"]').last();
-        prevName.addClass("form-control").removeClass("input-road-details-readonly").prop("readonly", false);
-        toggleSaveButton();
-      });
     }
 
     function showRoadNamingToolWindow() {

@@ -1,5 +1,6 @@
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { dateutil } from '@utils/DateUtils.js';
+import { button } from '@components/button/Button.js';
 
 // UI elements responsible for triggering and configuring dynamic link network update process
 export function DynamicLinkNetworkContent(backend) {
@@ -38,9 +39,7 @@ export function DynamicLinkNetworkContent(backend) {
                         <input type="checkbox" id="processPerDay">
                         <label for="processPerDay">Päivä kerrallaan</label>
                     </div>
-                    <button id="updateLinkNetwork" class="btn-primary update-link-network-button">
-                        Päivitä tielinkkiverkko
-                    </button>
+                    ${button({ id: 'updateLinkNetwork', label: 'Päivitä tielinkkiverkko', className: 'btn-primary update-link-network-button', onClick: startRoadLinkNetworkUpdate })}
                 </div>
             `;
         }
@@ -149,10 +148,6 @@ export function DynamicLinkNetworkContent(backend) {
 
         function bindEvents(containerSelector) {
             const $container = $(containerSelector);
-
-            $container.on('click', '#updateLinkNetwork', function () {
-                startRoadLinkNetworkUpdate();
-            });
 
             $container.on('change', '#targetDate, #sourceDate', function () {
                 if (dateFieldsFilled()) notifyUserWithDateChangeInfo();

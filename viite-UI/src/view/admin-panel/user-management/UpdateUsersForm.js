@@ -6,6 +6,7 @@ import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml, getSelectedRoles, 
 import { showToast } from '@components/toast/Toast.js';
 import { userManagementApi } from '@utils/UserManagementApi.js';
 import { getSessionUsername } from '@model/ApplicationModel.js';
+import { button } from '@components/button/Button.js';
 
 const VIITE_ROLE = 'viite';
 
@@ -30,18 +31,18 @@ function handleApiResponse(response, successMessage, errorMessage, onSuccess) {
 }
 
 function updateToggleViiteButtonState() {
-    const button = document.getElementById('toggleViiteAllButton');
+    const $btn = document.getElementById('toggleViiteAllButton');
     const rows = Array.from(document.querySelectorAll('#userTableBody tr'));
 
-    if (!button) return;
+    if (!$btn) return;
 
     if (!rows.length) {
-        button.disabled = true;
-        button.textContent = 'Anna viite-oikeus kaikille';
+        $btn.disabled = true;
+        $btn.textContent = 'Anna viite-oikeus kaikille';
         return;
     }
 
-    button.disabled = false;
+    $btn.disabled = false;
 
     const allHaveViiteRole = rows.every(function (row) {
         const roleWrapper = row.querySelector('[data-role-dropdown-id]');
@@ -52,7 +53,7 @@ function updateToggleViiteButtonState() {
         return roles.includes(VIITE_ROLE);
     });
 
-    button.textContent = allHaveViiteRole ? 'Poista viite-oikeus kaikilta' : 'Anna viite-oikeus kaikille';
+    $btn.textContent = allHaveViiteRole ? 'Poista viite-oikeus kaikilta' : 'Anna viite-oikeus kaikille';
 }
 
 function toggleViiteRoleForAllUsers() {
@@ -84,6 +85,30 @@ function toggleViiteRoleForAllUsers() {
     updateToggleViiteButtonState();
 }
 
+function handleDeleteUser(username, options) {
+    const currentUsername = getSessionUsername();
+    if (username === currentUsername) {
+        showToast("Et voi poistaa itseäsi.", { type: 'warning' });
+        return;
+    }
+    if (confirm(`Poistetaanko käyttäjä ${username}?`)) {
+        userManagementApi.deleteUser(
+            username,
+            function (response) {
+                handleApiResponse(
+                    response,
+                    "Käyttäjä poistettu!",
+                    "Virhe poistettaessa käyttäjää.",
+                    () => UpdateUserForm.fetchUsers(options)
+                );
+            },
+            function (errorMessage) {
+                showToast(errorMessage, { type: 'error' });
+            }
+        );
+    }
+}
+
 export const UpdateUserForm = {
     // Fetch all users and render them into the table with editable field
     fetchUsers: function (options = {}) {
@@ -111,39 +136,9 @@ export const UpdateUserForm = {
                     <td>${user.username}</td>
                     <td>${getRoleDropdownHtml(roleDropdownId, user.roles)}</td>
                     <td>${getElinvoimakeskusDropdownHtml(elinvoimakeskusDropdownId, user.authorizedElinvoimakeskus)}</td>
-                    <td><button class="btn btn-danger delete-user" data-username="${user.username}">Poista</button></td>
+                    <td>${button({ id: 'delete-user-' + index, label: 'Poista', className: 'btn btn-danger', onClick: () => handleDeleteUser(user.username, options) })}</td>
                 `;
                 tableBody.appendChild(row);
-            });
-
-            // Set up delete user button logic
-            document.querySelectorAll('.delete-user').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    const username = this.dataset.username;
-                    const currentUsername = getSessionUsername();
-
-                    if (username === currentUsername) {
-                        showToast("Et voi poistaa itseäsi.", { type: 'warning' });
-                        return;
-                    }
-
-                    if (confirm(`Poistetaanko käyttäjä ${username}?`)) {
-                        userManagementApi.deleteUser(
-                            username,
-                            function (response) {
-                                handleApiResponse(
-                                    response,
-                                    "Käyttäjä poistettu!",
-                                    "Virhe poistettaessa käyttäjää.",
-                                    () => UpdateUserForm.fetchUsers(options)
-                                );
-                            },
-                            function (errorMessage) {
-                                showToast(errorMessage, { type: 'error' });
-                            }
-                        );
-                    }
-                });
             });
 
             updateToggleViiteButtonState();
@@ -224,22 +219,16 @@ export const UpdateUserForm = {
         const container = $(containerSelector);
         if (!container.length) return;
 
-        container.off('click', '#updateUsersButton');
-        container.on('click', '#updateUsersButton', function (e) {
-            e.preventDefault();
-            UpdateUserForm.updateAllUsers(container, options);
-        });
+        container.find('#updateUsersButton').replaceWith(
+            $(button({ id: 'updateUsersButton', label: 'Tallenna muutokset', className: 'btn btn-primary', onClick: () => UpdateUserForm.updateAllUsers(container, options) }))
+        );
 
-        container.off('click', '#toggleViiteAllButton');
-        container.on('click', '#toggleViiteAllButton', function (e) {
-            e.preventDefault();
-            toggleViiteRoleForAllUsers();
-        });
+        container.find('#toggleViiteAllButton').replaceWith(
+            $(button({ id: 'toggleViiteAllButton', label: 'Anna viite-oikeus kaikille', className: 'btn btn-secondary', onClick: toggleViiteRoleForAllUsers }))
+        );
 
         container.off('change', '[data-role-dropdown-id] input[type="checkbox"]');
-        container.on('change', '[data-role-dropdown-id] input[type="checkbox"]', function () {
-            updateToggleViiteButtonState();
-        });
+        container.on('change', '[data-role-dropdown-id] input[type="checkbox"]', updateToggleViiteButtonState);
 
         updateToggleViiteButtonState();
     }

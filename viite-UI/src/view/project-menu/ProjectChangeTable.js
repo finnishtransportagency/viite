@@ -164,15 +164,19 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 
     function getChanges() {
       const currentProject = projectCollection.getCurrentProject();
-      projectChangeInfoModel.getChanges(currentProject.project.id, function () {
-        const source = changeTable.find('[id=label-source-btn]');
-        const target = changeTable.find('[id=label-target-btn]');
-        if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
-          projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
-        } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
-          projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
-        }
-      });
+      projectChangeInfoModel.getChanges(
+        currentProject.project.id,
+        function () {
+          const source = changeTable.find('[id=label-source-btn]');
+          const target = changeTable.find('[id=label-target-btn]');
+          if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
+            projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
+          } else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
+            projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
+          }
+        },
+        showChangeTable
+      );
     }
 
     // Most validation logic is in the backend, but we have some redundancy here to highlight errors that might have slipped past initial validation
@@ -355,18 +359,8 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       callbacks = Object.assign({}, callbacks, newCallbacks || {});
     }
 
-    let onProjectChangesFetched = null;
-
     function bindEvents() {
       changeTable.find('.row-changes').remove();
-      // Remove any previously registered listener before re-binding
-      if (onProjectChangesFetched) {
-        eventbus.off('projectChanges:fetched', onProjectChangesFetched);
-      }
-      onProjectChangesFetched = function (projectChangeData) {
-        showChangeTable(projectChangeData);
-      };
-      eventbus.on('projectChanges:fetched', onProjectChangesFetched);
 
       const MINIMIZED_HEIGHT = '260px';
       const MAXIMIZED_HEIGHT = '800px';
@@ -421,7 +415,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
       otherBtn.addClass('fa-sort');
 
       const projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
-      eventbus.trigger('projectChanges:fetched', projectChanges);
+      showChangeTable(projectChanges);
     }
 
     function getReversed(changeInfoSeq) {

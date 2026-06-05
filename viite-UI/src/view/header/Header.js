@@ -1,4 +1,3 @@
-import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
 
 export function Header(container, backend, startupParameters) {
@@ -29,11 +28,4 @@ function renderHeaderInfo(container, backend, startupParameters) {
     notification.append(Environment.localizedName());
     notification.append(' Tielinkkiaineisto: ' + versionData.result);
   });
-
-  if (Environment.name() === 'integration') {
-    new ConfirmPopup('Huom!<br>Olet integraatiotestiympäristössä.', {
-      type: 'alert',
-      okButtonLbl: 'Sulje'
-    });
-  }
 }

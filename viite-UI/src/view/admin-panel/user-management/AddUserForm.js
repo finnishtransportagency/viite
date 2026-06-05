@@ -5,6 +5,7 @@ import { getSelectedElinvoimakeskus, getSelectedRoles, setSelectedElinvoimakesku
 import { showToast } from '@components/toast/Toast.js';
 import { validateUserFields } from './FormValidation.js';
 import { userManagementApi } from '@utils/UserManagementApi.js';
+import { button } from '@components/button/Button.js';
 
 const DEFAULT_COORDINATES = {
     zoom: 3,
@@ -76,10 +77,8 @@ export const AddUserForm = {
         const container = $(containerSelector);
         if (!container.length) return;
 
-        container.off('click', '#addUserButton');
-        container.on('click', '#addUserButton', function (e) {
-            e.preventDefault();
-            AddUserForm.handleAddUser(options);
-        });
+        container.find('#addUserButton').replaceWith(
+            $(button({ id: 'addUserButton', label: 'Lisää käyttäjä', className: 'btn btn-primary', onClick: () => AddUserForm.handleAddUser(options) }))
+        );
     }
 };

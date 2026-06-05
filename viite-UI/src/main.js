@@ -2,6 +2,7 @@
  * Main application entry point and initialization module for Viite UI.
  * Handles application startup, map setup, layer management, and component initialization.
  */
+
 import { setStartupParameters, refreshMap } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { Spinner } from '@components/spinner/Spinner.js';
@@ -29,6 +30,7 @@ import { ZoomBox } from '@view/map/markers/ZoomBox.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
 // Starts application
 export function start() {
@@ -177,6 +179,13 @@ const startApplication = function (backend, models, startupParameters, roadNameC
   new MapView(mapContext.map, mapContext.layers);
 
   refreshMap(zoomlevels.getViewZoom(mapContext.map), mapContext.map.getLayers().getArray()[0].getExtent());
+
+  if (Environment.name() === 'integration') {
+    new ConfirmPopup('Huom!<br>Olet integraatiotestiympäristössä.', {
+      type: 'alert',
+      okButtonLbl: 'Sulje'
+    });
+  }
 
   return mapContext.map;
 };

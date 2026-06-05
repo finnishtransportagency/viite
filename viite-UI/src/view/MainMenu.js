@@ -13,6 +13,7 @@ import { RoadAddressChangesBrowserWindow } from '@view/road-address-inspection/R
 import { RoadNamingToolWindow } from '@view/road-name-maintenance-modal/RoadNamingToolWindow.js';
 import { RoadNetworkErrorsList } from '@view/road-network-errors-list/RoadNetworkErrorsList.js';
 import { getStartupParameters } from '@model/ApplicationModel.js';
+import { button } from '@components/button/Button.js';
 
 export const MENU_STATE = {
   MAIN: 'main',
@@ -80,16 +81,16 @@ export function MainMenu(options = {}) {
     <div class="main-menu-container">
       <div class="main-menu-button-wrapper">
         ${hasRole('viite') ? `
-          <button id="formProjectButton" class="btn-primary btn-lg">Tieosoiteprojektit</button>
-          <button id="formNameToolButton" class="btn-primary btn-lg">Tiennimen ylläpito</button>
+          ${button({ id: 'formProjectButton', label: 'Tieosoiteprojektit', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.PROJECT) })}
+          ${button({ id: 'formNameToolButton', label: 'Tiennimen ylläpito', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.NAME_TOOL) })}
         ` : ''}
 
-        <button id="formNodesAndJunctionsButton" class="btn-primary btn-lg">Solmut ja liittymät</button>
-        <button id="formRoadAddressBrowserButton" class="btn-primary btn-lg">Tieosoitteiden katselu</button>
-        <button id="formRoadAddressChangesBrowserButton" class="btn-primary btn-lg">Tieosoitemuutosten katselu</button>
+        ${button({ id: 'formNodesAndJunctionsButton', label: 'Solmut ja liittymät', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.NODE) })}
+        ${button({ id: 'formRoadAddressBrowserButton', label: 'Tieosoitteiden katselu', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.ROAD_ADDRESS_BROWSER) })}
+        ${button({ id: 'formRoadAddressChangesBrowserButton', label: 'Tieosoitemuutosten katselu', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.ROAD_ADDRESS_CHANGES) })}
 
-        ${hasRole('operator') ? '<button id="formRoadNetworkErrorsListButton" class="btn-primary btn-lg">Tieosoiteverkon virheet</button>' : ''}
-        ${hasRole('admin') ? '<button id="formAdminPanelButton" class="btn-primary btn-lg">Admin paneeli</button>' : ''}
+        ${hasRole('operator') ? button({ id: 'formRoadNetworkErrorsListButton', label: 'Tieosoiteverkon virheet', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.ROAD_NETWORK_ERRORS) }) : ''}
+        ${hasRole('admin') ? button({ id: 'formAdminPanelButton', label: 'Admin paneeli', className: 'btn-primary btn-lg', onClick: () => setState(MENU_STATE.ADMIN_PANEL) }) : ''}
       </div>
     </div>`;
 
@@ -120,36 +121,7 @@ export function MainMenu(options = {}) {
     (actions[state] || actions[MENU_STATE.MAIN])(data);
   }
 
-  function bindMenuActions() {
-    const buttonMap = {
-      formProjectButton: MENU_STATE.PROJECT,
-      formNameToolButton: MENU_STATE.NAME_TOOL,
-      formNodesAndJunctionsButton: MENU_STATE.NODE,
-      formRoadAddressBrowserButton: MENU_STATE.ROAD_ADDRESS_BROWSER,
-      formRoadAddressChangesBrowserButton: MENU_STATE.ROAD_ADDRESS_CHANGES,
-      formRoadNetworkErrorsListButton: MENU_STATE.ROAD_NETWORK_ERRORS,
-      formAdminPanelButton: MENU_STATE.ADMIN_PANEL
-    };
-
-    const mainMenuButtonSelector = [
-      '#formProjectButton',
-      '#formNameToolButton',
-      '#formNodesAndJunctionsButton',
-      '#formRoadAddressBrowserButton',
-      '#formRoadAddressChangesBrowserButton',
-      '#formRoadNetworkErrorsListButton',
-      '#formAdminPanelButton'
-    ].join(', ');
-
-    rootElement.off('click.mainMenu', mainMenuButtonSelector);
-    rootElement.on('click.mainMenu', mainMenuButtonSelector, (event) => {
-      const next = buttonMap[event.currentTarget.id];
-      if (next) {
-        event.preventDefault();
-        setState(next);
-      }
-    });
-  }
+  function bindMenuActions() {}
 
   setMainMenuState = setState;
   menu.setDefaultClose(() => setState(MENU_STATE.MAIN));

@@ -3,6 +3,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { button } from '@components/button/Button.js';
 
 export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions, setNodeMenuState = function () {}) {
   const dataTable = new DataTable();
@@ -85,10 +86,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
     root().find('#untreated-nodes-junctions-content').html('');
   }
 
-  function setClearButtonEnabled(isEnabled) {
-    root().find('#clear-node-search').prop('disabled', !isEnabled);
-  }
-
   function getSearchData() {
     const r = root();
     return _.pickBy({
@@ -96,13 +93,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
       minRoadPartNumber: r.find('#aosa').val() || undefined,
       maxRoadPartNumber: r.find('#losa').val() || undefined
     }, _.identity);
-  }
-
-  function getIsSearchDisabled() {
-    const r = root();
-    const aosa = Number(r.find('#aosa').val()) || 0;
-    const losa = Number(r.find('#losa').val()) || 999;
-    return !r.find('#tie').val() || aosa > losa;
   }
 
   function resolveJunctionPointCoordinatesByRow(templateId, rowData) {
@@ -128,57 +118,54 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
     return _.get(_.first(clickedTemplate.junctionPoints), 'coordinates', null);
   }
 
+  // --- BUTTON LOGIC ---
+
+  function handleSearch() {
+    Spinner.show('node-menu-search');
+    clearSearchResults();
+    clearUntreatedTemplates();
+    (async () => {
+      try {
+        await nodeCollection.getNodesByRoadAttributes(getSearchData());
+        if (!root().length) return;
+        const nodes = nodeCollection.getNodesWithAttributes();
+        setSearchResults(nodes);
+        $('#clear-node-search').prop('disabled', false);
+        nodeCollection.fitMapToSearchResults();
+      } catch (error) {
+        console.error('Search failed:', error);
+      } finally {
+        Spinner.hide('node-menu-search');
+      }
+    })();
+  }
+
+  function handleClear() {
+    clearSearchResults();
+    $('#clear-node-search').prop('disabled', true);
+    fetchAndRenderTemplates();
+  }
+
+  function getIsSearchDisabled() {
+    const r = root();
+    const aosa = Number(r.find('#aosa').val()) || 0;
+    const losa = Number(r.find('#losa').val()) || 999;
+    return r.find('#tie').val() && aosa > losa;
+  }
+
   // EVENT BINDING
 
-  $(document).on('keyup input', `${ROOT} .node-input`, () => {
-    root().find('#node-search-btn').prop('disabled', getIsSearchDisabled());
-  });
-
-  $(document).on('click', `${ROOT} [data-action]`, function (event) {
-    const $btn = $(event.currentTarget);
-    const action = $btn.data('action');
-    const id = $btn.attr('id');
-
-    switch (action) {
-      case 'search':
-        Spinner.show('node-menu-search');
-        clearSearchResults();
-        clearUntreatedTemplates();
-        (async () => {
-          try {
-            await nodeCollection.getNodesByRoadAttributes(getSearchData());
-            if (!root().length) return;
-            const nodes = nodeCollection.getNodesWithAttributes();
-            setSearchResults(nodes);
-            setClearButtonEnabled(true);
-            nodeCollection.fitMapToSearchResults();
-          } catch (error) {
-            console.error('Search failed:', error);
-          } finally {
-            Spinner.hide('node-menu-search');
-          }
-        })();
-        break;
-      case 'clear':
-        clearSearchResults();
-        setClearButtonEnabled(false);
-        fetchAndRenderTemplates();
-        break;
-      case 'result-click': {
-        event.preventDefault();
-        const node = nodeCollection.getNodesWithAttributes()[id];
-        if (node) {
-          moveMapToCoordinates(map, {
-            lon: node.coordinates.x,
-            lat: node.coordinates.y,
-            zoom: 12
-          });
-          openSearchNodeWithMapData(node);
-        }
-        break;
-      }
-      default:
-        break;
+  $(document).on('click', `${ROOT} [data-action="result-click"]`, function (event) {
+    event.preventDefault();
+    const id = $(event.currentTarget).attr('id');
+    const node = nodeCollection.getNodesWithAttributes()[id];
+    if (node) {
+      moveMapToCoordinates(map, {
+        lon: node.coordinates.x,
+        lat: node.coordinates.y,
+        zoom: 12
+      });
+      openSearchNodeWithMapData(node);
     }
   });
 
@@ -220,10 +207,10 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
         <div class="grid-column-input-2"><input type="number" class="form-control node-input" id="aosa" maxlength="3"></div>
         <div class="grid-column-input-3"><input type="number" class="form-control node-input" id="losa" maxlength="3"></div>
         <div class="grid-column-button">
-          <button data-action="search" id="node-search-btn" type="button" class="btn-primary" disabled>Hae solmut</button>
+          ${button({ id: 'node-search-btn', label: 'Hae solmut', onClick: handleSearch, disabled: true, disabledWhen: getIsSearchDisabled, watchSelector: `${ROOT} .node-input` })}
         </div>
         <div class="grid-column-clear-button">
-          <button data-action="clear" id="clear-node-search" type="button" class="btn-secondary btn-clean-node-search" disabled>Tyhjennä tulokset</button>
+          ${button({ id: 'clear-node-search', label: 'Tyhjennä tulokset', onClick: handleClear, className: 'btn-secondary btn-clean-node-search', disabled: true })}
         </div>
       </form>
     `;

@@ -738,18 +738,8 @@ export function RoadAddressBrowserWindow(backend) {
               };
           }
 
-          $content.off('click' + eventNs, '#exportAsCsvFile').on('click' + eventNs, '#exportAsCsvFile', function () {
-              exportDataAsCsvFile();
-              return false; // cancel form submission
-          });
           $content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
               modal.close();
-          });
-
-          $content.off('click' + eventNs, '#fetchRoadAddresses').on('click' + eventNs, '#fetchRoadAddresses', function () {
-              clearResultsAndDisableCsvButton();
-              getData();
-              return false; // cancel form submission
           });
       }
 
@@ -757,7 +747,10 @@ export function RoadAddressBrowserWindow(backend) {
           modal = createModal();
           modal.open({
               title: 'Tieosoitteiden katselu',
-              content: roadAddressBrowserForm.getRoadAddressBrowserForm()
+              content: roadAddressBrowserForm.getRoadAddressBrowserForm(
+                  () => { clearResultsAndDisableCsvButton(); getData(); },
+                  exportDataAsCsvFile
+              )
           });
 
           const formEl = modal.getContent().find('#roadAddressBrowser')[0];

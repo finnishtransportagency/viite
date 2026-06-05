@@ -144,8 +144,36 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
             additionalData.errorMessage,
             links
           );
-          
-          footerHtml = projectLinkEditor.renderFooter(project.data, options.projectCollection);
+
+          const onSave = () => {
+            if (options.projectCollection) {
+              projectLinkEditor.validateAndSave(options.projectCollection, additionalData.selectedLinks, {
+                onProjectLinksUpdated,
+                onProjectLinksUpdateFailed,
+                onProjectLinksCreateSuccess,
+                onChangeDirectionFailed
+              }, {
+                projectLinkLayer: options.projectLinkLayer,
+                selectedProjectLinkProperty: options.selectedProjectLinkProperty
+              });
+            }
+          };
+
+          const onCancel = () => {
+            if (typeof projectLinkEditor.cancelChanges === 'function') {
+              projectLinkEditor.cancelChanges({
+                onCancel: () => updateUI(States.ROAD_ADDRESSING, project.data, false)
+              }, {
+                projectCollection: options.projectCollection,
+                projectLinkLayer: options.projectLinkLayer,
+                selectedProjectLinkProperty: options.selectedProjectLinkProperty
+              });
+            } else {
+              updateUI(States.ROAD_ADDRESSING, project.data, false);
+            }
+          };
+
+          footerHtml = projectLinkEditor.renderFooter(project.data, options.projectCollection, onSave, onCancel);
           childInstance = projectLinkEditor;
           break;
         }
@@ -203,43 +231,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         editFlag = true;
         updateUI(States.CONFIGURATION, project.data, false);
       });
-
-      // Bind save and cancel button events for LINK_EDIT state
-      if (currentState === States.LINK_EDIT) {
-        const saveButton = rootElement.find('#saveButton');
-        const cancelButton = rootElement.find('#cancelButton');
-
-        // Unbind to prevent duplicate handlers
-        saveButton.off('click').on('click', () => {
-          if (options.projectCollection && activeChild) {
-            activeChild.validateAndSave(options.projectCollection, additionalData.selectedLinks, {
-              onProjectLinksUpdated,
-              onProjectLinksUpdateFailed,
-              onProjectLinksCreateSuccess,
-              onChangeDirectionFailed
-            }, {
-              projectLinkLayer: options.projectLinkLayer,
-              selectedProjectLinkProperty: options.selectedProjectLinkProperty
-            });
-          }
-        });
-        
-        cancelButton.off('click').on('click', () => {
-          if (activeChild && typeof activeChild.cancelChanges === 'function') {
-            activeChild.cancelChanges({
-              onCancel: function () {
-                updateUI(States.ROAD_ADDRESSING, project.data, false);
-              }
-            }, {
-              projectCollection: options.projectCollection,
-              projectLinkLayer: options.projectLinkLayer,
-              selectedProjectLinkProperty: options.selectedProjectLinkProperty
-            });
-          } else {
-            updateUI(States.ROAD_ADDRESSING, project.data, false);
-          }
-        });
-      }
 
       // Delegate child-specific event binding
       if (activeChild && typeof activeChild.bindEvents === 'function') {

@@ -31,7 +31,7 @@ export function LinkInfo(selectedLinkProperty, menu) {
           { value: 2, description: "Vasemmanpuoleinen ajorata" }
         ]
       },
-      { id: 'Elinvoimakeskus', attributes: createAttributesFromEnum(ViiteEnumerations.EVKCodes, true) },
+      { id: 'ELINVOIMAKESKUS', attributes: createAttributesFromEnum(ViiteEnumerations.EVKCodes, true) },
       {
         id: 'HALLINNOLLINEN LUOKKA',
         attributes: [

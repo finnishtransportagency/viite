@@ -1,4 +1,5 @@
 import { checkbox } from '@components/checkbox/Checkbox.js';
+import { button } from '@components/button/Button.js';
 import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 
 /* Contains following elements:
@@ -242,7 +243,7 @@ function renderCoordinatesDisplay(container, map) {
       <span class="cbCrsLabel hide-on-medium">ETRS89-TM35FIN</span>
       <span class="cbCoordinate" axis="lat" data-label="P:">P: lat</span>
       <span class="cbCoordinate" axis="lon" data-label="I:">I: lon</span>
-      <button class="btn-coordinate-marker" id="mark-coordinates">Merkitse</button>
+      ${button({ id: 'mark-coordinates', label: 'Merkitse', className: 'btn-coordinate-marker', onClick: () => map.dispatchEvent({ type: 'coordinates:marked', position: centerLonLat }) })}
     </div>
   `;
 
@@ -261,10 +262,6 @@ function renderCoordinatesDisplay(container, map) {
 
   map.on('moveend', updateCoordinates);
   updateCoordinates();
-
-  $('#mark-coordinates').on('click', () => {
-    map.dispatchEvent({type: 'coordinates:marked', position: centerLonLat});
-  });
 }
 
 // Contains double click functionality to support test automation

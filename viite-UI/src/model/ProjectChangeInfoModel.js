@@ -8,8 +8,7 @@
  * - Backend integration for change history
  * - Warning message handling for changes
  */
-import { eventbus } from '@utils/Eventbus.js';
-import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+
 
 export function ProjectChangeInfoModel(backend) {
     const addrMRange = [{
@@ -40,20 +39,11 @@ export function ProjectChangeInfoModel(backend) {
     };
     let projectChanges = {changeTable: changeTable};
 
-    function loadChanges() {
-      const warningM = projectChanges.warningMessage;
-      if (!_.isUndefined(warningM))
-        new ConfirmPopup(warningM, { type: "alert" });
-      if (!_.isUndefined(projectChanges) && projectChanges.discontinuity !== null) {
-        eventbus.trigger('projectChanges:fetched', projectChanges);
-      }
-    }
-
-    function getChanges(projectID, sortFn) {
+    function getChanges(projectID, sortFn, onComplete) {
       backend.getChangeTable(projectID, function (changeData) {
         roadChangeAPIResultParser(changeData);
         sortFn();
-        loadChanges();
+        onComplete(projectChanges);
       });
     }
 

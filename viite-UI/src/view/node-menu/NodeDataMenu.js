@@ -1,28 +1,29 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { isSelectedTool, setSelectedTool } from '@model/ApplicationModel.js';
+import { button } from '@components/button/Button.js';
 
 /**
  * NodeDataMenu - Read-only detail panel for searched node and template data.
  * Shows node/junction tables and exposes buttons that continue into editing flows.
  */
 export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
-    const handlers = {
-        onEditNode: () => {
-            const currentNode = selectedNodesAndJunctions.getCurrentNode();
-            if (currentNode) {
-                setNodeMenuState('editor', currentNode, selectedNodesAndJunctions.getCurrentTemplates());
-            }
-        },
-        onBackToSearch: () => {
-            selectedNodesAndJunctions.closeTemplates();
-            setNodeMenuState('search');
-        },
-        onSaveTemplates: () => {
-            const currentNode = selectedNodesAndJunctions.getCurrentNode();
-            if (currentNode) {
-                selectedNodesAndJunctions.saveNode();
-            }
+    const onEditNode = () => {
+        const currentNode = selectedNodesAndJunctions.getCurrentNode();
+        if (currentNode) {
+            setNodeMenuState('editor', currentNode, selectedNodesAndJunctions.getCurrentTemplates());
+        }
+    };
+
+    const onBackToSearch = () => {
+        selectedNodesAndJunctions.closeTemplates();
+        setNodeMenuState('search');
+    };
+
+    const onSaveTemplates = () => {
+        const currentNode = selectedNodesAndJunctions.getCurrentNode();
+        if (currentNode) {
+            selectedNodesAndJunctions.saveNode();
         }
     };
     const dataTable = new DataTable();
@@ -124,10 +125,10 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
       const attachToNewNodeClass = isSelectedTool(ViiteEnumerations.Tool.Add.value) ? ' active' : '';
       return `
         <div class="form form-controls node-template-actions">
-          <button id="attachToNewNode" class="btn-primary btn-block${attachToNewNodeClass}">Luo uusi solmu, johon haluat liittää aihiot</button>
+          ${button({ id: 'attachToNewNode', label: 'Luo uusi solmu, johon haluat liittää aihiot', className: 'btn-primary btn-block' + attachToNewNodeClass, onClick: () => { setSelectedTool(ViiteEnumerations.Tool.Add.value); $('#attachToNewNode').toggleClass('active', isSelectedTool(ViiteEnumerations.Tool.Add.value)); } })}
           <div class="node-template-actions-split-row">
-            <button class="btn-primary btn-edit-node-save btn-block" disabled>Tallenna</button>
-            <button class="cancel btn-secondary btn-edit-templates-cancel btn-block">Peruuta</button>
+            ${button({ id: 'btn-edit-node-save', label: 'Tallenna', className: 'btn-primary btn-edit-node-save btn-block', disabled: true, onClick: onSaveTemplates })}
+            ${button({ id: 'btn-edit-templates-cancel', label: 'Peruuta', className: 'cancel btn-secondary btn-edit-templates-cancel btn-block', onClick: onBackToSearch })}
           </div>
         </div>
       `;
@@ -137,26 +138,9 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
       const panelElement = $('#menu-container');
       panelElement.off('.nodeDataMenu');
 
-      panelElement.on('click.nodeDataMenu', '.btn-open-node-editor', function () {
-        handlers.onEditNode();
-      });
+      panelElement.on('click.nodeDataMenu', '.btn-open-node-editor', onEditNode);
 
-      panelElement.on('click.nodeDataMenu', '.btn-node-display-back', function () {
-        handlers.onBackToSearch();
-      });
-
-      panelElement.on('click.nodeDataMenu', '.btn-edit-templates-cancel', function () {
-        handlers.onBackToSearch();
-      });
-
-      panelElement.on('click.nodeDataMenu', '.btn-edit-node-save', function () {
-        handlers.onSaveTemplates();
-      });
-
-      panelElement.on('click.nodeDataMenu', '#attachToNewNode', function () {
-        setSelectedTool(ViiteEnumerations.Tool.Add.value);
-        panelElement.find('#attachToNewNode').toggleClass('active', isSelectedTool(ViiteEnumerations.Tool.Add.value));
-      });
+      panelElement.on('click.nodeDataMenu', '.btn-node-display-back', onBackToSearch);
     };
 
     return {
