@@ -402,7 +402,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     }
 
     const onProjectLinksFetched = function () {
-      eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
       me.redraw();
       _.defer(function () {
         highlightFeatures();

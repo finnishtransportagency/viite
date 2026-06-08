@@ -1,6 +1,7 @@
 import { Environment } from '@utils/EnvironmentUtils.js';
 
-export function Header(container, backend, startupParameters) {
+export function Header(backend, startupParameters) {
+  const container = jQuery('#header');
   renderHeader(container);
   renderHeaderInfo(container, backend, startupParameters);
 }

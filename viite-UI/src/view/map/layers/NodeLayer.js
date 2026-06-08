@@ -18,7 +18,7 @@ import { JunctionMarker } from '../markers/JunctionMarker.js';
 import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
 import { NodeMarker } from '../markers/NodeMarker.js';
 import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
-import { getSessionUserRoles, getSelectedTool, setSelectedTool, refreshMap, isSelectedTool, getSelectedLayer } from '@model/ApplicationModel.js';
+import { getSessionUserRoles, getSelectedTool, setSelectedTool, refreshMap, isSelectedTool } from '@model/ApplicationModel.js';
 
 let addNodesToMapBridge = function () {};
 let fetchNodesAndJunctionsBridge = function () { return Promise.resolve(null); };
@@ -829,14 +829,6 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     };
 
     this.layerStarted = function (eventListener) {
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', function () {
-        if (isNodeDragged()) return; // Stop node resetting to original position right after/before zoom
-        if (getSelectedLayer() === 'node') {
-          me.clearLayers(layers);
-        }
-      });
-
-
 
       eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
 

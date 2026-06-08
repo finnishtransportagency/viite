@@ -44,7 +44,8 @@ export function ProjectList(options = {}) {
       backend: options.backend,
       projectChangeTable: actionMenu.getProjectChangeTable(),
       projectChangeInfoModel: options.projectChangeInfoModel,
-      menu: options.menu
+      menu: options.menu,
+      roadCollection: options.roadCollection
     });
 
     return projectMenuInstance;

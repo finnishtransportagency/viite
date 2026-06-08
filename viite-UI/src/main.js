@@ -11,7 +11,7 @@ import { Header } from '@view/header/Header.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { MainMenu } from '@view/MainMenu.js';
 import { MapView } from '@view/map/MapView.js';
-import { createSearchPanel } from '@view/search-panel/SearchPanel.js';
+import { SearchPanel } from '@view/search-panel/SearchPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
@@ -62,11 +62,7 @@ export function start() {
     backend.getUserRoles();
     setupProjections();
 
-    const map = startApplication(backend, models, startupParameters, roadNameCollection);
-    const searchPanel = createSearchPanel(map);
-    jQuery('#map-tools').append(searchPanel.element);
-    new URLRouter(map, backend, models);
-    eventbus.trigger('application:initialized');
+    startApplication(backend, models, startupParameters, roadNameCollection);
   });
 }
 
@@ -151,7 +147,8 @@ const initializeUI = function (map, backend, startupParameters, layers, tileMaps
   new ScaleBar(map, mapPluginsContainer);
   new ZoomBox(map, mapPluginsContainer);
   new Footer(map, mapPluginsContainer, layers.linkProperty, layers.roadAddressProject, tileMaps);
-  new Header(jQuery('#header'), backend, startupParameters);
+  new Header(backend, startupParameters);
+  new SearchPanel(map);
 
   new MainMenu({
     selectedLinkProperty: models.selectedLinkProperty,
@@ -175,9 +172,9 @@ const startApplication = function (backend, models, startupParameters, roadNameC
 
   initializeUI(mapContext.map, backend, startupParameters, mapContext.layers, mapContext.tileMaps, models, roadNameCollection);
   models.nodeCollection.setMap(mapContext.map);
+  models.selectedLinkProperty.setLinkPropertyLayer(mapContext.layers.linkProperty);
 
   new MapView(mapContext.map, mapContext.layers);
-
   refreshMap(zoomlevels.getViewZoom(mapContext.map), mapContext.map.getLayers().getArray()[0].getExtent());
 
   if (Environment.name() === 'integration') {
@@ -187,7 +184,7 @@ const startApplication = function (backend, models, startupParameters, roadNameC
     });
   }
 
-  return mapContext.map;
+  new URLRouter(mapContext.map, backend, models);
 };
 
 const setupProjections = function () {

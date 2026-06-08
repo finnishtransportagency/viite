@@ -103,22 +103,8 @@ export function URLRouter(map, backend, models) {
     Backbone.history.stop();
     Backbone.history.start();
 
-    eventbus.on('linkProperties:unselected', function () {
-      router.navigate('');
-    });
-
     eventbus.on('roadAddressProject:selected', function (id, _layerName, _selectedLayer) {
       router.navigate(`${LAYER_ROAD_ADDRESS_PROJECT}/${id}`);
-    });
-
-    eventbus.on('linkProperties:selected', function (linkProperty) {
-      if (!_.isEmpty(models.selectedLinkProperty.get())) {
-        if (_.isArray(linkProperty)) {
-          router.navigate(`${LAYER_LINK_PROPERTY}/${_.head(linkProperty).linkId}`);
-        } else {
-          router.navigate(`${LAYER_LINK_PROPERTY}/${linkProperty.linkId}`);
-        }
-      }
     });
 
     const navigateToSelectedProject = function (linkId, project) {
@@ -159,6 +145,4 @@ export function URLRouter(map, backend, models) {
       const layerAdjusted = layer.includes('/') ? layer : layer.concat('/');
       router.navigate(layerAdjusted);
     });
-
-    return router;
 }

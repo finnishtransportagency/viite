@@ -8,29 +8,22 @@
  * - Link property validation and editing
  * - Backend integration for link operations
  */
-import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { setSelectionType } from '@model/ApplicationModel.js';
 import { setMainMenuState } from '@view/MainMenu.js';
 
 export function SelectedLinkProperty(roadCollection) {
     let current = [];
     let dirty = false;
-    let featuresToKeep = [];
+    let linkPropertyLayer = null;
 
     const LinkSource = ViiteEnumerations.LinkGeomSource;
-    const SelectionType = ViiteEnumerations.SelectionType;
 
     const close = function () {
       if (!_.isEmpty(current) && !isDirty()) {
-        _.each(current, function (selected) {
-          selected.unselect();
-        });
         setCurrent([]);
         dirty = false;
-        featuresToKeep = [];
-        eventbus.trigger('linkProperties:unselected');
+        linkPropertyLayer?.onLinkPropertyUnselected();
         setMainMenuState('main');
       }
     };
@@ -126,13 +119,10 @@ export function SelectedLinkProperty(roadCollection) {
         const unAddressedRoadLinkModels = roadCollection.getByLinkIds(linkIds);
         const roadLinks = addressedRoadLinkModels.concat(unAddressedRoadLinkModels);
         setCurrent(roadLinks);
-        _.forEach(current, function (selected) {
-          selected.select();
-        });
         roadCollection.setSelectedRoadLinkModels(roadLinks);
         processOlFeatures(visibleFeatures);
         const selectedDisplayData = extractDataForDisplay(get());
-        eventbus.trigger('linkProperties:selected', selectedDisplayData);
+        linkPropertyLayer?.onLinkPropertySelected(selectedDisplayData);
         setMainMenuState('linkInfo', selectedDisplayData);
       }
     };
@@ -143,18 +133,15 @@ export function SelectedLinkProperty(roadCollection) {
       } else {
         openDoubleClick(data);
       }
-      _.forEach(current, function (selected) {
-        selected.select();
-      });
       processOlFeatures(visibleFeatures);
       const selectedDisplayData = extractDataForDisplay(get());
-      eventbus.trigger('linkProperties:selected', selectedDisplayData);
+      linkPropertyLayer?.onLinkPropertySelected(selectedDisplayData);
       setMainMenuState('linkInfo', selectedDisplayData);
     };
 
     function processOlFeatures(visibleFeatures) {
       const selectedFeatures = _.filter(visibleFeatures, function (vf) {
-        return (_.some(get().concat(featuresToKeep), function (s) {
+        return (_.some(get(), function (s) {
           if (s.linearLocationId !== ViiteEnumerations.UnknownRoadId && s.linearLocationId !== ViiteEnumerations.NewRoadId) {
             return s.linearLocationId === vf.linkData.linearLocationId && s.mmlId === vf.linkData.mmlId;
           } else {
@@ -162,33 +149,12 @@ export function SelectedLinkProperty(roadCollection) {
           }
         }));
       });
-      eventbus.trigger('linkProperties:olSelected', selectedFeatures);
+      linkPropertyLayer?.onLinkPropertySelected(selectedFeatures);
     }
-
-    eventbus.on('linkProperties:closed', function () {
-      setSelectionType(SelectionType.All);
-      clearFeaturesToKeep();
-    });
 
     function isDirty() {
       return dirty;
     }
-
-    const setDirty = function (state) {
-      dirty = state;
-    };
-
-    const cancel = function () {
-      dirty = false;
-      _.each(current, function (selected) {
-        selected.cancel();
-      });
-      if (!_.isUndefined(_.head(current))) {
-        const originalData = _.head(current).getData();
-        eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
-        setMainMenuState('linkInfo', _.cloneDeep(originalData));
-      }
-    };
 
     function get() {
       return _.map(current, function (roadLink) {
@@ -200,55 +166,17 @@ export function SelectedLinkProperty(roadCollection) {
       return current.length;
     };
 
-    const getFeaturesToKeep = function () {
-      return _.cloneDeep(featuresToKeep);
-    };
+    const setLinkPropertyLayer = function (layer) { linkPropertyLayer = layer; };
 
-    const addToFeaturesToKeep = function (data4Display) {
-      if (_.isArray(data4Display)) {
-        featuresToKeep = featuresToKeep.concat(data4Display);
-      } else {
-        featuresToKeep.push(data4Display);
-      }
-    };
-
-    function clearFeaturesToKeep() {
-      featuresToKeep = [];
-    }
-
-    const filterFeaturesAfterSimulation = function (features) {
-      const linkIdsToRemove = linkIdsToExclude();
-      if (linkIdsToRemove.length === 0) {
-        return features;
-      } else {
-        return _.reject(features, function (feature) {
-          return _.includes(linkIdsToRemove, feature.linkData.linkId);
-        });
-      }
-    };
-
-    function linkIdsToExclude() {
-      return _.chain(getFeaturesToKeep().concat(roadCollection.getUnaddressedRoadLinkGroups())).map(function (feature) {
-        return feature.linkId;
-      }).uniq().value();
-    }
 
     return {
-      getFeaturesToKeep: getFeaturesToKeep,
-      addToFeaturesToKeep: addToFeaturesToKeep,
-      clearFeaturesToKeep: clearFeaturesToKeep,
+      setLinkPropertyLayer: setLinkPropertyLayer,
       close: close,
       open: open,
       openCtrl: openCtrl,
       isDirty: isDirty,
-      setDirty: setDirty,
-      cancel: cancel,
       get: get,
       count: count,
-      filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
-      linkIdsToExclude: linkIdsToExclude,
-      extractDataForDisplay: extractDataForDisplay,
-      setCurrent: setCurrent,
       canOpenByLinearLocationId: canOpenByLinearLocationId
     };
 }

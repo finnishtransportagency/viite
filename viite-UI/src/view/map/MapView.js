@@ -7,7 +7,7 @@
 import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { setZoomLevel, getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';
+import { getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';
 
 export function moveMapToCoordinates(map, position) {
   let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
@@ -52,11 +52,6 @@ export function MapView(map, layers) {
     const addCenterMarkerLayerToMap = function (mapMarker) {
       mapMarker.addLayer(vectorLayer);
     };
-
-    eventbus.on('application:initialized layer:fetched', function () {
-      const zoom = zoomlevels.getViewZoom(map);
-      setZoomLevel(zoom);
-    }, this);
 
     const setCursor = function (tool) {
       const cursor = {

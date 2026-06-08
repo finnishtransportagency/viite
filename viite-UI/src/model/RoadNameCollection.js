@@ -12,7 +12,6 @@ import { eventbus } from '@utils/Eventbus.js';
 
 export function RoadNameCollection(backend) {
 
-    const me = this;
     const newId = -1000;
     let currentRoadNumber = -1;
     let currentRoadNameData = [];
@@ -28,7 +27,7 @@ export function RoadNameCollection(backend) {
       return roadName;
     };
 
-    this.fetchRoads = function (roadNumber, onFetched) {
+    function fetchRoads(roadNumber, onFetched) {
       changedIds = [];
       return new Promise(function (resolve) {
         backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
@@ -50,47 +49,47 @@ export function RoadNameCollection(backend) {
           resolve(sortedRoadData);
         });
       });
-    };
+    }
 
-    this.setRoadName = function (id, name) {
+    function setRoadName(id, name) {
       const roadName = findCurrentRoadName(id);
       roadName.name = name;
-    };
+    }
 
-    this.setStartDate = function (id, startDate) {
+    function setStartDate(id, startDate) {
       const roadName = findCurrentRoadName(id);
       roadName.startDate = startDate;
-    };
+    }
 
-    this.setEndDate = function (id, endDate) {
+    function setEndDate(id, endDate) {
       const roadName = findCurrentRoadName(id);
       if (endDate === '')
         delete roadName.endDate;
       else
         roadName.endDate = endDate;
-    };
+    }
 
-    this.clear = function () {
+    function clear() {
       currentRoadNameData = [];
       changedIds = [];
       newRoadName = {id: newId};
-    };
+    }
 
-    this.undoNewRoadName = function () {
+    function undoNewRoadName() {
       newRoadName = {id: newId};
       changedIds = _.filter(changedIds, function (id) {
         // eslint-disable-next-line eqeqeq
         return id != newId;
       });
-    };
+    }
 
-    this.saveChanges = function () {
+    function saveChanges() {
       const changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
         return _.includes(changedIds, roadName.id);
       });
       backend.saveRoadNamesChanges(currentRoadNumber, changedData, function (result) {
         if (result.success) {
-          me.clear();
+          clear();
           eventbus.trigger("roadNameTool:saveSuccess");
         } else {
           eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
@@ -98,5 +97,15 @@ export function RoadNameCollection(backend) {
       }, function (result) {
         eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
       });
+    }
+
+    return {
+      fetchRoads: fetchRoads,
+      setRoadName: setRoadName,
+      setStartDate: setStartDate,
+      setEndDate: setEndDate,
+      clear: clear,
+      undoNewRoadName: undoNewRoadName,
+      saveChanges: saveChanges
     };
 }

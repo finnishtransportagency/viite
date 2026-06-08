@@ -5,7 +5,7 @@ import { getSelectedLayer } from '@model/ApplicationModel.js';
 
 // Orchestrates search panel rendering and updates legend HTML based on selected layer
 export function SearchPanel(map) {
-  const searchPanel = $(`<div class="search-panel"></div>`);
+  const container = jQuery('#map-tools');
   const searchBox = new SearchBox(map);
 
   const legendGroup = $(`
@@ -20,8 +20,8 @@ export function SearchPanel(map) {
 
   const legendContent = legendGroup.find('#legendDiv');
 
-  searchPanel.append(searchBox.element);
-  searchPanel.append(legendGroup);
+  container.append(searchBox.element);
+  container.append(legendGroup);
 
   function updateLegendContent(layerName) {
     const layer = layerName || getSelectedLayer();
@@ -36,10 +36,4 @@ export function SearchPanel(map) {
 
   // Initial render
   updateLegendContent(getSelectedLayer());
-
-  return {
-    element: searchPanel
-  };
 }
-
-export const createSearchPanel = SearchPanel;

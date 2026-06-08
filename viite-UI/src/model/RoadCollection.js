@@ -10,78 +10,30 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { eventbus } from '@utils/Eventbus.js';
+import { redrawLinkPropertyLayer, highlightProject } from '@view/map/layers/LinkPropertyLayer.js';
 
 const RoadLinkModel = function (data) {
-  let selected = false;
-  const original = _.cloneDeep(data);
-
-  const getId = function () {
-    return data.roadLinkId || data.linkId;
-  };
-
   const getData = function () {
     return data;
   };
 
-  const getPoints = function () {
-    return _.cloneDeep(data.points);
-  };
-
-  const setLinkProperty = function (name, value) {
-    if (value !== data[name]) {
-      data[name] = value;
-    }
-  };
-
-  const select = function () {
-    selected = true;
-  };
-
-  const unselect = function () {
-    selected = false;
-  };
-
-  const isSelected = function () {
-    return selected;
-  };
-
-  const isCarTrafficRoad = function () {
-    return !_.isUndefined(data.linkType) && !_.includes([8, 9, 21, 99], data.linkType);
-  };
-
-  const cancel = function () {
-    data.trafficDirection = original.trafficDirection;
-    data.functionalClass = original.functionalClass;
-    data.linkType = original.linkType;
-  };
-
   return {
-    getId: getId,
-    getData: getData,
-    getPoints: getPoints,
-    setLinkProperty: setLinkProperty,
-    isSelected: isSelected,
-    isCarTrafficRoad: isCarTrafficRoad,
-    select: select,
-    unselect: unselect,
-    cancel: cancel
+    getData: getData
   };
 };
 
 export function RoadCollection(backend) {
     let currentAllRoadLinks = [];
     let roadLinkGroups = [];
-    let unaddressedRoadLinkGroups = [];
     const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
     const LinkSource = ViiteEnumerations.LinkGeomSource;
-    const lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     let clickedLinearLocationId = 0;
     let selectedRoadLinkModels = [];
     let pendingProjectHighlightId;
 
-    eventbus.on('roadCollection:pendingProjectHighlight', function (projectId) {
+    function setPendingHighlight(projectId) {
       pendingProjectHighlightId = projectId;
-    });
+    }
 
     const roadLinks = function () {
       return _.flatten(roadLinkGroups);
@@ -108,36 +60,33 @@ export function RoadCollection(backend) {
         });
       });
 
-      fetchedGroupThatWasClicked.forEach((roadLink) => {
-        roadLink.select();
-      });
       roadLinkGroups[indexOfGroupToBeUpdated] = fetchedGroupThatWasClicked;
     };
 
-    this.fetch = function (boundingBox, zoom) {
+    function fetch(boundingBox, zoom) {
       backend.getRoadLinks({
         boundingBox: boundingBox, zoom: zoom
       }, function (fetchedRoadLinks) {
         currentAllRoadLinks = fetchedRoadLinks;
         fetchProcess(fetchedRoadLinks, zoom);
       });
-    };
+    }
 
-    this.fetchWholeRoadPart = function (roadNumber, roadPart, selection) {
+    function fetchWholeRoadPart(roadNumber, roadPart, selection) {
       backend.getRoadLinksOfWholeRoadPart({
         roadNumber: roadNumber, roadPartNumber: roadPart
       }, function (fetchedRoadLinks) {
         updateGroupToContainWholeRoadPart(fetchedRoadLinks, selection);
       });
-    };
+    }
 
-    this.fetchWithNodes = function (boundingBox, zoom, callback) {
+    function fetchWithNodes(boundingBox, zoom, callback) {
       backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
         currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
         fetchProcess(currentAllRoadLinks, zoom);
         return callback(fetchedNodesAndJunctions.fetchedNodes);
       });
-    };
+    }
 
     const updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, selection) {
       const fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
@@ -146,7 +95,6 @@ export function RoadCollection(backend) {
         });
       });
 
-      // update the roadlink group (that was clicked) with the newly fetched road links (containing whole road part instead of just the visible part of the road part)
       updateGroup(clickedLinearLocationId, fetchedRoadLinkModels);
       eventbus.trigger('roadCollection:wholeRoadPartFetched', selection);
     };
@@ -158,14 +106,10 @@ export function RoadCollection(backend) {
           return new RoadLinkModel(roadLink);
         });
       });
-      const [fetchedUnaddressed, fetchedWithAddresses] = _.partition(fetchedRoadLinkModels, function (model) {
+      const fetchedWithAddresses = _.reject(fetchedRoadLinkModels, function (model) {
         return _.every(model, function (mod) {
           return mod.getData().roadNumber === 0;
         });
-      });
-
-      unaddressedRoadLinkGroups = _.partition(fetchedUnaddressed, function (group) {
-        return groupDataConstructionTypeFilter(group, lifecycleStatus.UnderConstruction);
       });
 
       if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode) {
@@ -192,10 +136,10 @@ export function RoadCollection(backend) {
       });
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
-      eventbus.trigger('roadLinks:fetched');
+      redrawLinkPropertyLayer();
 
       if (!_.isUndefined(pendingProjectHighlightId)) {
-        eventbus.trigger('linkProperties:highlightSelectedProject', pendingProjectHighlightId);
+        highlightProject(pendingProjectHighlightId);
         pendingProjectHighlightId = undefined;
       }
     };
@@ -212,105 +156,71 @@ export function RoadCollection(backend) {
       }
     };
 
-    const groupDataConstructionTypeFilter = function (group, dataConstructionType) {
-      if (_.isArray(group)) {
-        return _.some(group, function (roadLink) {
-          if (roadLink)
-            return roadLink.getData().lifecycleStatus === dataConstructionType.value;
-          else return false;
-        });
-      } else {
-        return group.getData().lifecycleStatus === dataConstructionType.value;
-      }
-    };
-
-    this.getAll = function () {
+    function getAll() {
       return _.map(roadLinks(), function (roadLink) {
         return roadLink.getData();
       });
-    };
+    }
 
-    this.setClickedLinearLocationId = function (linearlocationId) {
+    function setClickedLinearLocationId(linearlocationId) {
       clickedLinearLocationId = linearlocationId;
-    };
+    }
 
-    this.getUnaddressedRoadLinkGroups = function () {
-      return _.map(_.flatten(_.flatten(unaddressedRoadLinkGroups)), function (roadLink) {
-        return roadLink.getData();
-      });
-    };
-
-    this.get = function (ids) {
-      return _.map(ids, function (id) {
-        return _.find(roadLinks(), function (road) {
-          return road.getId() === id;
-        });
-      });
-    };
-
-    this.getByLinkId = function (ids) {
+    function getByLinkId(ids) {
       const segments = _.filter(roadLinks(), function (road) {
         return road.getData().linkId === ids;
       });
       return segments;
-    };
+    }
 
-    this.getByRoadPartAndAddr = function (roadNumber, roadPart, addr) {
+    function getByRoadPartAndAddr(roadNumber, roadPart, addr) {
       return _.filter(roadLinks(), function (road) {
         return road.getData().roadNumber === roadNumber &&
                 road.getData().roadPartNumber === roadPart &&
                 (road.getData().addrMRange.start === addr || road.getData().addrMRange.end === addr);
       });
-    };
+    }
 
-    this.getByLinkIds = function (ids) {
+    function getByLinkIds(ids) {
       return _.filter(roadLinks(), function (road) {
         return ids.includes(road.getData().linkId);
       });
-    };
+    }
 
-    this.getByLinearLocationId = function (id) {
+    function getByLinearLocationId(id) {
       const segments = _.filter(roadLinks(), function (road) {
         return road.getData().linearLocationId === id;
       });
       return segments;
-    };
+    }
 
-    this.getRoadLinkModelsByLinearLocationIds = function (ids) {
+    function getRoadLinkModelsByLinearLocationIds(ids) {
       return _.filter(roadLinks(), function (roadLink) {
         return ids.includes(roadLink.getData().linearLocationId);
       });
-    };
+    }
 
-    this.getGroupByLinkId = function (linkId) {
+    function getGroupByLinkId(linkId) {
       return _.find(roadLinkGroups, function (roadLinkGroup) {
         return _.some(roadLinkGroup, function (roadLink) {
           return roadLink.getData().linkId === linkId;
         });
       });
-    };
-
-    this.getGroupByLinearLocationId = function (linearLocationId) {
-      return _.find(roadLinkGroups, function (roadLinkGroup) {
-        return _.some(roadLinkGroup, function (roadLink) {
-          return roadLink.getData().linearLocationId === linearLocationId;
-        });
-      });
-    };
+    }
 
     const setRoadLinkGroups = function (groups) {
       roadLinkGroups = groups;
     };
 
-    this.setSelectedRoadLinkModels = function (selectedRoadLinks) {
+    function setSelectedRoadLinkModels(selectedRoadLinks) {
       selectedRoadLinkModels = selectedRoadLinks;
-    };
+    }
 
-    this.reset = function () {
+    function reset() {
       roadLinkGroups = [];
-    };
+    }
 
-    this.findReservedProjectLinks = function (boundingBox, zoomLevel, projectId) {
+    function findReservedProjectLinks(boundingBox, zoomLevel, projectId) {
       backend.getProjectLinks({
         boundingBox: boundingBox,
         zoom: zoomLevel,
@@ -337,5 +247,24 @@ export function RoadCollection(backend) {
         });
         eventbus.trigger('linkProperties:highlightReservedRoads', projectLinkFeatures);
       });
+    }
+
+    return {
+      fetch: fetch,
+      fetchWholeRoadPart: fetchWholeRoadPart,
+      fetchWithNodes: fetchWithNodes,
+      getAll: getAll,
+      setClickedLinearLocationId: setClickedLinearLocationId,
+      getByLinkId: getByLinkId,
+      getByRoadPartAndAddr: getByRoadPartAndAddr,
+      getByLinkIds: getByLinkIds,
+      getByLinearLocationId: getByLinearLocationId,
+      getRoadLinkModelsByLinearLocationIds: getRoadLinkModelsByLinearLocationIds,
+      getGroupByLinkId: getGroupByLinkId,
+      getGroupByLinearLocationId: getGroupByLinearLocationId,
+      setSelectedRoadLinkModels: setSelectedRoadLinkModels,
+      reset: reset,
+      findReservedProjectLinks: findReservedProjectLinks,
+      setPendingHighlight: setPendingHighlight
     };
 }

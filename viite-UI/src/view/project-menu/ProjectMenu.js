@@ -375,7 +375,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
       updateUI(States.CONFIGURATION, project.data, false);
 
-      eventbus.trigger('roadCollection:pendingProjectHighlight', project.data.id);
+      options.roadCollection.setPendingHighlight(project.data.id);
 
       if (!_.isUndefined(project.data)) {
         eventbus.trigger('linkProperties:selectedProject', result.linkId, project.data);

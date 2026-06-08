@@ -2,6 +2,7 @@
  * View - Contains the main HTML content for user management
  */
 import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml } from './Dropdowns.js';
+import { button } from '@/components/button/Button.js';
 
 export const View = {
     getContent: function () {
@@ -25,8 +26,8 @@ export const View = {
                   <tbody id="userTableBody"></tbody>
                 </table>
                 <div class="form-actions">
-                  <button id="toggleViiteAllButton" class="btn btn-secondary">Anna viite-oikeus kaikille</button>
-                  <button id="updateUsersButton" class="btn btn-primary">Tallenna muutokset</button>
+                  ${button({ id: 'toggleViiteAllButton', className: 'btn btn-secondary', text: 'Anna viite-oikeus kaikille' })}
+                  ${button({ id: 'updateUsersButton', className: 'btn btn-primary', text: 'Tallenna muutokset' })}
                 </div>
               </div>
 
@@ -49,7 +50,7 @@ export const View = {
                   </div>
                 </div>
                 <div class="form-actions">
-                  <button id="addUserButton" class="btn btn-primary">Lisää käyttäjä</button>
+                  ${button({ id: 'addUserButton', className: 'btn btn-primary', text: 'Lisää käyttäjä' })}
                 </div>
               </fieldset>
             </div>
