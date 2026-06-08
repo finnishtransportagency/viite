@@ -52,16 +52,46 @@ object GeometryUtils {
       val (truncatedGeometry, onSelection, previousPoint, accumulatedLength) = accu
 
       val (pointsToAdd, enteredSelection) = (measureOnSegment(startMeasure, (previousPoint, point), accumulatedLength), measureOnSegment(endMeasure, (previousPoint, point), accumulatedLength), onSelection) match {
-        case (false, false, true) => (List(point), true)
+        case (false, false, true)  => (List(point), true)
         case (false, false, false) => (Nil, false)
-        case (true, false, _) => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)), point), true)
-        case (false, true, _) => (List(newPointOnSegment(endMeasure - accumulatedLength, (previousPoint, point))), false)
-        case (true, true, _)  => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)),
-                                       newPointOnSegment(endMeasure - accumulatedLength, (previousPoint, point))), false)
+        case (true,  false, _)     => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)), point), true)
+        case (false, true,  _)     => (List(newPointOnSegment(endMeasure   - accumulatedLength, (previousPoint, point))), false)
+        case (true,  true,  _)     => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)),
+                                           newPointOnSegment(endMeasure   - accumulatedLength, (previousPoint, point))), false)
       }
 
       (truncatedGeometry ++ pointsToAdd, enteredSelection, point, point.distance2DTo(previousPoint) + accumulatedLength)
     })._1
+  }
+
+  /**
+   * Scales a road address M-value to the equivalent Euclidean position along a geometry.
+   *
+   * Road links from KGV carry an official horizontal length (<i>linkMLength</i>) that is used
+   * as the M-value range for road addressing.  For most links this value equals the 2D Euclidean
+   * length of the geometry coordinates, but for some links ("correct m-value" links) the two
+   * differ.  Passing an unscaled M-value to [[truncateGeometry3D]] in such cases causes the
+   * geometry to be cut too short.
+   *
+   * Use this function to convert M-values to Euclidean positions before calling
+   * [[truncateGeometry3D]]:
+   * {{{
+   *   val geomLen = GeometryUtils.geometryLength(roadLink.geometry)
+   *   GeometryUtils.truncateGeometry3D(
+   *     roadLink.geometry,
+   *     GeometryUtils.scaleMToGeometry(startMValue, roadLink.length, geomLen),
+   *     GeometryUtils.scaleMToGeometry(endMValue,   roadLink.length, geomLen))
+   * }}}
+   *
+   * @param mValue      The road address M-value to convert.
+   * @param linkMLength The link's official M-length (i.e. [[RoadLink.length]], from KGV
+   *                    <i>horizontallength</i>).
+   * @param geomLength  The geometry's 2D Euclidean length.
+   * @return The Euclidean position along the geometry that corresponds to <i>mValue</i>.
+   */
+  def scaleMToGeometry(mValue: Double, linkMLength: Double, geomLength: Double): Double = {
+    if (linkMLength == 0.0) mValue
+    else mValue / linkMLength * geomLength
   }
 
   def subtractIntervalFromIntervals(intervals: Seq[(Double, Double)], interval: (Double, Double)): Seq[(Double, Double)] = {

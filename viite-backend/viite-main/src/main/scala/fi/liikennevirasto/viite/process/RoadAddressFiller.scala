@@ -132,7 +132,7 @@ object RoadAddressFiller {
     if (roadAddresses.isEmpty) {
       val unaddressedRoadLink =
         UnaddressedRoadLink(roadLink.linkId, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length),
-          GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
+          GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, GeometryUtils.geometryLength(roadLink.geometry)))
 
       Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
     } else {

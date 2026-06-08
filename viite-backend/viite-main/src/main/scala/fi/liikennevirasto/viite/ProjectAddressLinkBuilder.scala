@@ -61,9 +61,12 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
   @Deprecated
   def build(roadLink: RoadLinkLike, projectLink: ProjectLink): ProjectAddressLink = {
 
-    val geom = if (projectLink.isSplit)
-      GeometryUtils.truncateGeometry3D(roadLink.geometry, projectLink.startMValue, projectLink.endMValue)
-    else
+    val geom = if (projectLink.isSplit) {
+      val geomLength = GeometryUtils.geometryLength(roadLink.geometry)
+      GeometryUtils.truncateGeometry3D(roadLink.geometry,
+        GeometryUtils.scaleMToGeometry(projectLink.startMValue, roadLink.length, geomLength),
+        GeometryUtils.scaleMToGeometry(projectLink.endMValue,   roadLink.length, geomLength))
+    } else
       roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
     val roadPart = projectLink.roadPart
