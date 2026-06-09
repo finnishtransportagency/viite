@@ -105,6 +105,12 @@ export function ProjectLinkEditor(canUseDevTools) {
         onChangeDirectionFailed: editContext.onChangeDirectionFailed || null
       };
 
+      const markSelectedLinksDirty = () => {
+        if (bindingContext.projectCollection && _.isArray(selected) && selected.length > 0) {
+          bindingContext.projectCollection.setTmpDirty(selected);
+        }
+      };
+
       const disableFormInputs = () => {
         if (!project || _.includes(editableStatus, project.statusCode)) {
           return;
@@ -130,6 +136,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 
       rootElement.on('change.projectLinkEditor', '#administrativeClassDropdown, .form-select-control', () => {
         FormState.setUnsavedChanges(true);
+        markSelectedLinksDirty();
       });
 
       rootElement.on('change.projectLinkEditor', '#roadAddressProjectForm #dropDown_0', (e) => {
@@ -157,6 +164,7 @@ export function ProjectLinkEditor(canUseDevTools) {
           checkInputs(projectChangeTable);
         }
         FormState.setUnsavedChanges(true);
+        markSelectedLinksDirty();
 
         if (event.target.id === "tie" && backend && projectCollection && 
             (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
@@ -194,6 +202,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 
       rootElement.on('change.projectLinkEditor', '#endDistance', () => {
         FormState.setUnsavedChanges(true);
+        markSelectedLinksDirty();
       });
 
       rootElement.on('click.projectLinkEditor', '.changeDirection', () => {
@@ -257,10 +266,6 @@ export function ProjectLinkEditor(canUseDevTools) {
       if (projectChangeTable) {
         checkInputs(projectChangeTable);
       }
-
-      const discardChangesHandler = () => cancelChanges({}, bindingContext);
-      eventbus.off('roadAddressProject:discardChanges');
-      eventbus.on('roadAddressProject:discardChanges', discardChangesHandler);
     };
 
       const cancelChanges = (callbacks = {}, context = {}) => {

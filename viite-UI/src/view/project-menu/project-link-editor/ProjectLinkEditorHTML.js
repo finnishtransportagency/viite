@@ -101,7 +101,6 @@ export function createProjectLinkEditorHTML(dependencies) {
     ];
 
     const options = [
-      { value: '', text: 'Valitse', id: 'drop_0_' },
       ...changeTypes.map(type => {
         const modifiers = defineOptionModifiers(type.description, selected);
         return {

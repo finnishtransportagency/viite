@@ -11,8 +11,9 @@ import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
-import { selectLayer, getSelectedTool } from '@model/ApplicationModel.js';
-import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
+import { selectLayer } from '@model/ApplicationModel.js';
+import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
+import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 
 const States = {
     CONFIGURATION:   'CONFIGURATION',
@@ -52,8 +53,9 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       setMainMenuState('main');
 
 
-      eventbus.trigger('roadAddressProject:clearOnClose');
-      eventbus.trigger('layer:selected', 'linkProperty', null, true);
+      clearLinkPropertyLayer();
+      clearProjectLinkLayer();
+      setProjectLinkDiscardChanges();
       clearSelectedProjectLinks();
       selectLayer('linkProperty', true, noSave);
     };
@@ -87,6 +89,8 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       let contentHtml = '';
       let footerHtml = '';
       let childInstance = null;
+
+      setProjectLinkDiscardChanges();
 
       switch (currentState) {
         case States.CONFIGURATION: {
@@ -172,6 +176,10 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
               updateUI(States.ROAD_ADDRESSING, project.data, false);
             }
           };
+
+          setProjectLinkDiscardChanges(() => {
+            onCancel();
+          });
 
           footerHtml = projectLinkEditor.renderFooter(project.data, options.projectCollection, onSave, onCancel);
           childInstance = projectLinkEditor;
@@ -266,13 +274,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       project.data = newData;
       project.isNew = newIsNew;
       additionalData = data;
-      
-      // Re-enable link interactions when entering ROAD_ADDRESSING state
-      if (newState === States.ROAD_ADDRESSING) {
-        eventbus.trigger('roadAddressProject:startAllInteractions');
-        // Ensure correct cursor is set by triggering tool change
-        eventbus.trigger('tool:changed', getSelectedTool());
-      }
       
       render();
     };

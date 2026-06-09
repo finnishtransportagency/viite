@@ -8,7 +8,8 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
-import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
+import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
+import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
@@ -286,7 +287,6 @@ export function ProjectActionMenu(options) {
     // ==========================================
 
     const closeProjectMode = (_changeLayerMode, noSave) => {
-      activeEventbus.trigger('roadAddressProject:startAllInteractions');
       activeEventbus.trigger('projectChangeTable:hide');
       projectCollection.clearRoadAddressProjects();
 
@@ -294,7 +294,8 @@ export function ProjectActionMenu(options) {
         closeProjectMenu({ noSave: Boolean(noSave) });
       } else if (mainMenu && typeof mainMenu.setState === 'function') {
 
-        activeEventbus.trigger('roadAddressProject:clearOnClose');
+        clearLinkPropertyLayer();
+        clearProjectLinkLayer();
         mainMenu.setState('main');
         selectLayer('linkProperty', true, noSave);
       }

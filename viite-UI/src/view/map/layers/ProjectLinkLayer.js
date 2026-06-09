@@ -17,11 +17,14 @@ import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/ApplicationModel.js';
 
+// These are used to expose the internal functions to other files
 let fetchProjectLinksBridge = function () {};
-
-export function fetchProjectLinksForCurrentMap() {
-  return fetchProjectLinksBridge();
-}
+let clearOnProjectCloseBridge = function () {};
+let discardChangesBridge = function () {};
+export function fetchProjectLinksForCurrentMap() { return fetchProjectLinksBridge(); }
+export function clearOnProjectClose() { clearOnProjectCloseBridge(); }
+export function setProjectLinkDiscardChanges(handler) { discardChangesBridge = typeof handler === 'function' ? handler : function () {};}
+export function discardProjectLinkChanges() { return discardChangesBridge(); }
 
 export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
     const layerName = 'roadAddressProject';
@@ -108,10 +111,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     const layers = [notReservedInProjectLayer, terminatedProjectLinkLayer, unAddressedRoadsProjectLayer, underConstructionRoadProjectLayer, projectLinkLayer, notHandledProjectLinksLayer, calibrationPointLayer, directionMarkerLayer];
 
-    me.eventListener.listenTo(eventbus,'layers:removeProjectModeFeaturesFromTheLayers', function() {
-      me.removeFeaturesFromLayers(layers);
-    });
-
     const getSelectedId = function (selected) {
       if (!_.isUndefined(selected.id) && selected.id > 0) {
         return selected.id;
@@ -123,7 +122,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     const fireDeselectionConfirmation = function (ctrlPressed, selection, clickType) {
       new ConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
-          eventbus.trigger('roadAddressProject:discardChanges');
+          discardProjectLinkChanges();
           if (!_.isUndefined(selection)) {
             if (clickType === 'single')
               showSingleClickChanges(ctrlPressed, selection);
@@ -181,7 +180,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         if (projectCollection.isDirty()) {
           fireDeselectionConfirmation(modPressed, selection, 'single');
         } else {
-          eventbus.trigger('roadAddressProject:discardChanges');
+          discardProjectLinkChanges();
           if (!_.isUndefined(selection)) {
             showSingleClickChanges(modPressed, selection);
           }
@@ -191,28 +190,39 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     });
 
     function showSingleClickChanges(ctrlPressed, selection) {
+      // Ctrl+click toggles the clicked link group in a multi-selection.
       if (ctrlPressed && !_.isUndefined(selection) && !_.isUndefined(selectedProjectLinkProperty.get())) {
+
         if (canBeAddedToSelection(selection.linkData)) {
-          const clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.linkData));
+
+          const clickedId = getSelectedId(selection.linkData);
+          const clickedIds = projectCollection.getMultiProjectLinks(clickedId);
           let selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return getSelectedId(selected);
           });
-          if (_.includes(selectedLinkIds, getSelectedId(selection.linkData))) {
+          if (_.includes(selectedLinkIds, clickedId)) { // if the clicked link is already selected, remove all links in the same group from selection
             selectedLinkIds = _.without(selectedLinkIds, clickedIds);
-          } else {
+          } else { // if the clicked link is not selected, add all links in the same group to selection
             selectedLinkIds = _.union(selectedLinkIds, clickedIds);
           }
           selectedProjectLinkProperty.openCtrl(selectedLinkIds);
         }
+
         highlightFeatures();
-      } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
+        return;
+      }
+
+      // Single click without pending edits replaces selection and resets temporary dirty state.
+      if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
-      } else {
-        eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
+        return;
       }
+
+      // Background map click discards pending link edits.
+      discardProjectLinkChanges();
     }
 
     const selectDoubleClick = new ol.interaction.Select({
@@ -562,14 +572,13 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     });
 
     fetchProjectLinksBridge = fetchProjectLinks;
+    clearOnProjectCloseBridge = function () {
+      clearHighlights();
+      me.clearLayers(layers);
+    };
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:enableInteractions', function () {
       addSelectInteractions();
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function () {
-      clearHighlights();
-      me.clearLayers(layers);
     });
 
     me.eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers(layers));
@@ -580,10 +589,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
       isNotEditingData = notEditingData;
-    });
-
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:startAllInteractions', function () {
-      toggleSelectInteractions(true, true);
     });
 
     me.toggleLayersVisibility(true);

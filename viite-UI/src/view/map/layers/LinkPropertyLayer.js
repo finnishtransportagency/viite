@@ -17,22 +17,18 @@ import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { specialSelectionTypes, getSelectionType, getSelectedLayer, getRoadVisibility, selectionTypeIs } from '@model/ApplicationModel.js';
 
+// These are used to expose the internal functions to other files
 let fetchLinkPropertiesBridge = function () {};
 let redrawBridge = function () {};
 let highlightProjectBridge = function () {};
+let highlightReservedRoadsBridge = function () {};
+let clearOnProjectCloseBridge = function () {};
 
-export function fetchLinkPropertiesForCurrentMap() {
-  return fetchLinkPropertiesBridge();
-}
-
-// This is needed to expose the fetchLinkPropertiesForCurrentMap function
-export function redrawLinkPropertyLayer() {
-  redrawBridge();
-}
-
-export function highlightProject(featureLinkId) {
-  highlightProjectBridge(featureLinkId);
-}
+export function fetchLinkPropertiesForCurrentMap() { return fetchLinkPropertiesBridge(); }
+export function redrawLinkPropertyLayer() { redrawBridge(); }
+export function highlightProject(featureLinkId) { highlightProjectBridge(featureLinkId); }
+export function highlightReservedRoads(reservedOLFeatures) { highlightReservedRoadsBridge(reservedOLFeatures); }
+export function clearLinkPropertyLayer() { clearOnProjectCloseBridge(); }
 
 export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
     Layer.call(this, map);
@@ -585,40 +581,10 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       }
     };
 
-    this.eventListener.listenTo(eventbus, 'linkProperties:highlightReservedRoads', function (reservedOLFeatures) {
-      const styledFeatures = _.map(reservedOLFeatures, function (feature) {
-        feature.setStyle(roadLinkStyler.getRoadLinkStyles(feature.linkData, map));
-        return feature;
-      });
-      if (getSelectedLayer() === "linkProperty") { //check if user is still in reservation form
-        reservedRoadLayer.getSource().addFeatures(styledFeatures);
-      }
-    });
-
     const fetchLinkProperties = function () {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1);
     };
-
-    this.eventListener.listenTo(eventbus, 'linkProperties:activateInteractions', function () {
-      toggleSelectInteractions(true, true);
-    });
-
-    this.eventListener.listenTo(eventbus, 'linkProperties:deactivateInteractions', function () {
-      toggleSelectInteractions(false, true);
-    });
-
-    this.eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function () {
-      toggleSelectInteractions(false, false);
-    });
-
-    this.eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function () {
-      toggleSelectInteractions(true, false);
-    });
-
-    this.eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections roadAddressProject:startAllInteractions', function () {
-      toggleSelectInteractions(true, true);
-    });
 
     this.eventListener.listenTo(eventbus, 'layer:selected', (layer, previouslySelectedLayer) => {
       isActiveLayer = layer === 'linkProperty';
@@ -658,11 +624,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       }
     }
 
-    this.eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function () {
-      setGeneralOpacity(1);
-      reservedRoadLayer.getSource().clear();
-    });
-
     const showLayer = () => {
       this.start();
       this.layerStarted(this.eventListener);
@@ -686,6 +647,19 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       const boundingBox = map.getView().calculateExtent(map.getSize());
       const zoomLevel = zoomlevels.getViewZoom(map);
       roadCollection.findReservedProjectLinks(boundingBox, zoomLevel, featureLinkId);
+    };
+    highlightReservedRoadsBridge = function (reservedOLFeatures) {
+      const styledFeatures = _.map(reservedOLFeatures, function (feature) {
+        feature.setStyle(roadLinkStyler.getRoadLinkStyles(feature.linkData, map));
+        return feature;
+      });
+      if (getSelectedLayer() === 'linkProperty') {
+        reservedRoadLayer.getSource().addFeatures(styledFeatures);
+      }
+    };
+    clearOnProjectCloseBridge = function () {
+      setGeneralOpacity(1);
+      reservedRoadLayer.getSource().clear();
     };
 
     function toggleLayersVisibility(layersToToggle, visibility) {

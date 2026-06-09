@@ -9,8 +9,7 @@
  */
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { eventbus } from '@utils/Eventbus.js';
-import { redrawLinkPropertyLayer, highlightProject } from '@view/map/layers/LinkPropertyLayer.js';
+import { redrawLinkPropertyLayer, highlightProject, highlightReservedRoads } from '@view/map/layers/LinkPropertyLayer.js';
 
 const RoadLinkModel = function (data) {
   const getData = function () {
@@ -72,11 +71,11 @@ export function RoadCollection(backend) {
       });
     }
 
-    function fetchWholeRoadPart(roadNumber, roadPart, selection) {
+    function fetchWholeRoadPart(roadNumber, roadPart) {
       backend.getRoadLinksOfWholeRoadPart({
         roadNumber: roadNumber, roadPartNumber: roadPart
       }, function (fetchedRoadLinks) {
-        updateGroupToContainWholeRoadPart(fetchedRoadLinks, selection);
+        updateGroupToContainWholeRoadPart(fetchedRoadLinks);
       });
     }
 
@@ -88,7 +87,7 @@ export function RoadCollection(backend) {
       });
     }
 
-    const updateGroupToContainWholeRoadPart = function (fetchedRoadLinks, selection) {
+    const updateGroupToContainWholeRoadPart = function (fetchedRoadLinks) {
       const fetchedRoadLinkModels = _.map(fetchedRoadLinks, function (roadLinkGroup) {
         return _.map(roadLinkGroup, function (roadLink) {
           return new RoadLinkModel(roadLink);
@@ -96,7 +95,6 @@ export function RoadCollection(backend) {
       });
 
       updateGroup(clickedLinearLocationId, fetchedRoadLinkModels);
-      eventbus.trigger('roadCollection:wholeRoadPartFetched', selection);
     };
 
 
@@ -245,7 +243,7 @@ export function RoadCollection(backend) {
           feature.projectId = projectId;
           return feature;
         });
-        eventbus.trigger('linkProperties:highlightReservedRoads', projectLinkFeatures);
+        highlightReservedRoads(projectLinkFeatures);
       });
     }
 
