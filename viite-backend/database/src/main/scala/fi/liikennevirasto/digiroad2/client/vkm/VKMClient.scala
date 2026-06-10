@@ -230,20 +230,27 @@ class VKMClient(endPoint: String, apiKey: String) {
       val parsedJson = parse(responseString)
       val features = (parsedJson \ "features").asInstanceOf[JArray].arr
 
-      features.map { feature =>
+      features.flatMap { feature =>
         val properties = feature \ "properties"
-        val newStartM = (properties \ "m_arvo_alku_kohdepvm").extract[Double]
-        val newEndM = (properties \ "m_arvo_loppu_kohdepvm").extract[Double]
+        val oldLinkId = (properties \ "link_id").extractOpt[String].orNull
+        val newLinkId = (properties \ "link_id_kohdepvm").extractOpt[String].orNull
 
-        TiekamuRoadLinkChange(
-          (properties \ "link_id").extract[String],
-          (properties \ "m_arvo_alku").extract[Double],
-          (properties \ "m_arvo_loppu").extract[Double],
-          (properties \ "link_id_kohdepvm").extract[String],
-          if (newStartM > newEndM) newEndM else newStartM,
-          if (newEndM < newStartM) newStartM else newEndM,
-          getDigitizationChangeValue(newStartM, newEndM)
-        )
+        if (oldLinkId == null || newLinkId == null) {
+          logger.warn(s"Skipping TiekamuRoadLinkChange with null link ID(s): oldLinkId=$oldLinkId, newLinkId=$newLinkId")
+          None
+        } else {
+          val newStartM = (properties \ "m_arvo_alku_kohdepvm").extract[Double]
+          val newEndM = (properties \ "m_arvo_loppu_kohdepvm").extract[Double]
+          Some(TiekamuRoadLinkChange(
+            oldLinkId,
+            (properties \ "m_arvo_alku").extract[Double],
+            (properties \ "m_arvo_loppu").extract[Double],
+            newLinkId,
+            if (newStartM > newEndM) newEndM else newStartM,
+            if (newEndM < newStartM) newStartM else newEndM,
+            getDigitizationChangeValue(newStartM, newEndM)
+          ))
+        }
       }
     }
 
