@@ -15,7 +15,7 @@
       recalculatedAfterChangesFlag = bool;
     });
 
-    eventbus.on('roadAddressProject:projectLinkSaved', function() {
+    eventbus.on('roadAddressProject:projectLinkSaved', function(containsProjectLinks) {
       // Get the current state of the validate button if it exists
       $('#actionButtons').empty();
       const $buttons = $('.project-form.form-controls');
@@ -49,8 +49,13 @@
       // Update button states based on the same logic as in buttonsWhenReOpenCurrent
       const isChangeTableOpen = $('.change-table-frame').is(':visible');
       const hasRecalculated = getRecalculatedAfterChangesFlag();
+      const hasNoProjectLinks = !containsProjectLinks;
 
-      if (projectErrors.length === 0) {
+      if (hasNoProjectLinks) {
+        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
+        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+        formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
+      } else if (projectErrors.length === 0) {
         if (isChangeTableOpen) {
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
           formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
@@ -450,7 +455,10 @@
           buttonsWhenInspectingUneditableProject();
         } else {
           const projectErrors = projectCollection.getProjectErrors();
-          if (projectErrors.length === 0) {
+          const hasNoProjectLinks = projectCollection.getReservedParts().length === 0;
+          if (hasNoProjectLinks) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
+          } else if (projectErrors.length === 0) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
           } else {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true);
@@ -468,10 +476,14 @@
       var buttonsWhenReOpenCurrent = function (projectErrors, highPriorityProjectErrors) {
         eventbus.trigger('roadAddressProject:writeProjectErrors');
         if (highPriorityProjectErrors.length === 0) {
+          const hasNoProjectLinks = projectCollection.getReservedParts().length === 0;
           if ($('.change-table-frame').css('display') === "block") {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
             formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+          } else if (hasNoProjectLinks) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
           } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === false) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");

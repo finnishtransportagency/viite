@@ -154,11 +154,6 @@
       } else if (currentProject !== undefined && currentProject.project.id !== undefined) {
         projectId = currentProject.project.id;
       }
-      console.log("SAVING A PROJECT");
-      console.log("LOOKING FOR ROAD MAINTAINER");
-      console.log("currentProject.project.evk ", currentProject.project.evk);
-      console.log("currentProject.project.roadEvk ", currentProject.project.roadEvk);
-      
 
       var dataJson = {
         id: projectId,
@@ -170,8 +165,6 @@
         reservedPartList: _.map(_.filter(me.getReservedParts(), function (part) {
           return !_.isUndefined(part.currentLength, part.currentEly);
         }), function (part) {
-          console.log("WHAT DOES A PART HAVE ::: ");
-          console.log(part);
           return {
             discontinuity: (part.currentDiscontinuity),
             evk: (part.currentEvk),
@@ -264,7 +257,7 @@
                 me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('projectLink:projectLinksCreateSuccess');
-                eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                eventbus.trigger('roadAddress:projectLinksUpdated', successObject, dataJson);
                 if (successObject.errorMessage) {
                   new ModalConfirm(successObject.errorMessage);
                 }
@@ -279,7 +272,7 @@
                 publishableProject = successObject.publishable;
                 me.setAndWriteProjectErrorsToUser(successObject.projectErrors);
                 me.setFormedParts(successObject.formedInfo);
-                eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+                eventbus.trigger('roadAddress:projectLinksUpdated', successObject, dataJson);
               } else {
                 new ModalConfirm(successObject.errorMessage);
                 applicationModel.removeSpinner();
@@ -448,11 +441,7 @@
     };
 
     this.createProject = function (data, resolution) {
-      console.log("ProjectCollection.createProject :::");
-      console.log(data);
       var roadPartList = _.map(reservedParts, function (part) {
-        console.log("PART IN ROADPARTLIST ::: ");
-        console.log(part);
         return {
           roadNumber: part.roadNumber,
           roadPartNumber: part.roadPartNumber,
@@ -751,7 +740,7 @@
           new ModalConfirm(errorObject.statusText.toString());
         }
         applicationModel.removeSpinner();
-        console.log("Error at deleting rotatingId: " + errorObject);
+        console.error("Error at deleting rotatingId: " + errorObject);
       });
     };
   };

@@ -358,7 +358,7 @@
         return new ModalConfirm(message);
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated', (response) => {
+      eventbus.on('roadAddress:projectLinksUpdated', (response, dataJson) => {
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -368,12 +368,14 @@
         selectedProjectLinkProperty.cleanIds();
         
         const { projectErrors } = response;
+        const containsProjectLinks = !!(dataJson?.linkIds?.length || dataJson?.ids?.length);
+
         // show disabled buttons
         rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
         
         if (Object.keys(projectErrors).length === 0) {
           // if no (high priority) validation errors are present, then show recalculate button and remove title
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", !containsProjectLinks, "");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         } else {
@@ -384,9 +386,9 @@
         eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', false);
         applicationModel.removeSpinner();
         if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
+          eventbus.trigger('roadAddressProject:projectLinkSaved', containsProjectLinks);
         } else {
-          eventbus.trigger('roadAddressProject:projectLinkSaved');
+          eventbus.trigger('roadAddressProject:projectLinkSaved', containsProjectLinks);
         }
       });
 
