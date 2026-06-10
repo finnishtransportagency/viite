@@ -2316,6 +2316,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       GeometryUtils.scaleMToGeometry(ra.startMValue, rl.length, rlGeomLength),
       GeometryUtils.scaleMToGeometry(ra.endMValue,   rl.length, rlGeomLength))
 
+    println(s"HUNTING THE EVK0 ISSUE in ProjectService.newProjectTemplate: Matching to see if reserved part roadPart matches the road address roadPart")
+
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
       case Some(rp) => {
         val currentImpl = rp.roadMaintainer.getOrElse(ra.roadMaintainer)
