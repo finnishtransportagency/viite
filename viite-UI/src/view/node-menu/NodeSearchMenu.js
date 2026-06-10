@@ -4,28 +4,13 @@ import { selectLayer } from '@model/ApplicationModel.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { button } from '@components/button/Button.js';
+import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 
-export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions, setNodeMenuState = function () {}) {
+export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions) {
   const dataTable = new DataTable();
   const ROOT = '.node-search-root';
   let pendingSearchNodeNumber = null;
   let storedTemplates = { nodePoints: [], junctions: [] };
-
-  // --- PUBLIC API ---
-
-  function render() {
-    selectLayer('node');
-    fetchAndRenderTemplates();
-    return `
-      <div class="node-search-root wrapper read-only">
-        ${renderControls()}
-        <div class="node-search-scroll-content">
-          <div id="node-search-results-content"></div>
-          <div id="untreated-nodes-junctions-content"></div>
-        </div>
-      </div>
-    `;
-  }
 
   // --- PRIVATE: DATA & LIFECYCLE ---
 
@@ -37,7 +22,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
     const completeNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
     if (hasCompleteNodeData(completeNode)) {
       selectedNodesAndJunctions.openNode(completeNode);
-      setNodeMenuState('editor', completeNode, selectedNodesAndJunctions.getCurrentTemplates());
+      setNodeMenuState('editor', 'search');
       return;
     }
     pendingSearchNodeNumber = searchNode.nodeNumber;
@@ -48,7 +33,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
       const fetchedNode = nodeCollection.getNodeByNodeNumber(searchNode.nodeNumber);
       const nodeToOpen = hasCompleteNodeData(fetchedNode) ? fetchedNode : searchNode;
       selectedNodesAndJunctions.openNode(nodeToOpen);
-      setNodeMenuState('editor', nodeToOpen, selectedNodesAndJunctions.getCurrentTemplates());
+      setNodeMenuState('editor', 'search');
     })();
   }
 
@@ -299,6 +284,22 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 
   function hasRowsInGroups(groups) {
     return _.some(groups, (group) => (group.rows || []).length > 0);
+  }
+
+  // --- PUBLIC API ---
+
+  function render() {
+    selectLayer('node');
+    fetchAndRenderTemplates();
+    return `
+      <div class="node-search-root wrapper read-only">
+        ${renderControls()}
+        <div class="node-search-scroll-content">
+          <div id="node-search-results-content"></div>
+          <div id="untreated-nodes-junctions-content"></div>
+        </div>
+      </div>
+    `;
   }
 
   return { render };

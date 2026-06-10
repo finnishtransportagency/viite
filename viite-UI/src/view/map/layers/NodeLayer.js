@@ -18,24 +18,42 @@ import { JunctionMarker } from '../markers/JunctionMarker.js';
 import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
 import { NodeMarker } from '../markers/NodeMarker.js';
 import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
-import { getSessionUserRoles, getSelectedTool, setSelectedTool, refreshMap, isSelectedTool } from '@model/ApplicationModel.js';
+import { getSessionUserRoles } from '@model/ApplicationModel.js';
+import {
+  isNodeCreateModeEnabled,
+  setNodeCreateModeEnabled,
+  registerLayerHandler
+} from '@node-menu/NodeDataMenu.js';
 
 let addNodesToMapBridge = function () {};
 let fetchNodesAndJunctionsBridge = function () { return Promise.resolve(null); };
 let fetchAndApplyNodesAndJunctionsBridge = function () { return Promise.resolve(null); };
+let clearHighlightsBridge = function () {};
+let nodeUnselectedBridge = function () {};
+let onNodeChangedBridge = function () {};
+let onTemplatesSelectedBridge = function () {};
+let onJunctionDetachBridge = function () {};
+let onJunctionAttachBridge = function () {};
+let onNodePointDetachBridge = function () {};
+let onNodePointAttachBridge = function () {};
+let onNodeEditorOpenedBridge = function () {};
+let onNodeEditorClosedBridge = function () {};
+let displayCoordinatesHandler = function () {};
 
-// This  wrapper function is needed to expose the renderNodesToMap functon
-export function addNodesToMap(nodes, templates, zoom) {
-  addNodesToMapBridge(nodes, templates, zoom);
-}
-
-export function fetchNodesAndJunctionsFromCurrentMap(zoom) {
-  return fetchNodesAndJunctionsBridge(zoom);
-}
-
-export function fetchAndApplyNodesAndJunctionsForCurrentMap(zoom) {
-  return fetchAndApplyNodesAndJunctionsBridge(zoom);
-}
+export function addNodesToMap(nodes, templates, zoom) { addNodesToMapBridge(nodes, templates, zoom); }
+export function fetchNodesAndJunctionsFromCurrentMap(zoom) { return fetchNodesAndJunctionsBridge(zoom); }
+export function fetchAndApplyNodesAndJunctionsForCurrentMap(zoom) { return fetchAndApplyNodesAndJunctionsBridge(zoom); }
+export function clearNodeLayerHighlights() { clearHighlightsBridge(); }
+export function onNodeLayerUnselected(currentNode, cancel) { nodeUnselectedBridge(currentNode, cancel); }
+export function onNodeChanged(node) { onNodeChangedBridge(node); }
+export function onTemplatesSelected(templates) { onTemplatesSelectedBridge(templates); }
+export function onJunctionDetach(junction) { onJunctionDetachBridge(junction); }
+export function onJunctionAttach(junction) { onJunctionAttachBridge(junction); }
+export function onNodePointDetach(nodePoint) { onNodePointDetachBridge(nodePoint); }
+export function onNodePointAttach(nodePoint) { onNodePointAttachBridge(nodePoint); }
+export function onNodeEditorOpened() { onNodeEditorOpenedBridge(); }
+export function onNodeEditorClosed() { onNodeEditorClosedBridge(); }
+export function registerDisplayCoordinatesHandler(fn) { displayCoordinatesHandler = fn; }
 
 export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection) {
   Layer.call(this, map);
@@ -62,7 +80,6 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     const junctionTemplateVector = dblVector();
 
     let selectedNodeStartingCoordinates = null;
-    let lastSelectedTemplates = null;
 
     const directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
@@ -240,6 +257,29 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       });
     };
 
+    let pendingMapClickHandler = null;
+
+    const applyNodeCreateMode = function (enabled) {
+      toggleSelectInteractions(!enabled);
+
+      if (enabled) {
+        pendingMapClickHandler = function (event) {
+          createNewNodeMarker({ x: event.coordinate[0], y: event.coordinate[1] });
+          pendingMapClickHandler = null;
+        };
+        map.once('singleclick', pendingMapClickHandler);
+        setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
+        return;
+      }
+
+      if (pendingMapClickHandler) {
+        map.un('singleclick', pendingMapClickHandler); // Remove the pending click handler if node create mode is disabled before a click happens
+        pendingMapClickHandler = null;
+      }
+      setProperty([nodeMarkerLayer], 'selectable', true);
+      setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
+    };
+
     /**
      * Type of interactions we want the map to be able to respond.
      * A selected feature is moved to a new/temporary layer out of the default roadLayer.
@@ -280,24 +320,13 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         return !_.isUndefined(selectionTarget.junctionTemplate);
       });
 
-      switch (getSelectedTool()) {
-        case ViiteEnumerations.Tool.Unknown.value:
-          if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
-            selectNode(selectedNode.node);
-            selectedNodeStartingCoordinates = selectedNode.node.coordinates;
-          } else if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
-            selectJunctionTemplate(selectedJunctionTemplate.junctionTemplate);
-          } else if (!_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) {
-            selectNodePointTemplate(selectedNodePointTemplate.nodePointTemplate);
-          }
-          break;
-        case ViiteEnumerations.Tool.Attach.value:
-          if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
-            attachNode(selectedNode.node, selectedNodesAndJunctions.getCurrentTemplates());
-          }
-          break;
-        default:
-          break;
+      if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) { // If a node marker was selected, open the node editor for that node
+        selectNode(selectedNode.node);
+        selectedNodeStartingCoordinates = selectedNode.node.coordinates;
+      } else if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) { // If a junction template marker was selected, open the node editor for that junction template
+        selectJunctionTemplate(selectedJunctionTemplate.junctionTemplate);
+      } else if (!_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) { // If a node point template marker was selected, open the node editor for that node point template
+        selectNodePointTemplate(selectedNodePointTemplate.nodePointTemplate);
       }
     });
 
@@ -353,10 +382,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
 
       if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < maxNodeMovementDistance) {
-        eventbus.trigger('node:displayCoordinates', {
-          x: evt.coordinate[0],
-          y: evt.coordinate[1]
-        });
+        displayCoordinatesHandler({ x: evt.coordinate[0], y: evt.coordinate[1] });
       }
     });
 
@@ -378,8 +404,8 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         selectedNodesAndJunctions.setCoordinates(coordinates);
         selectedNodeStartingCoordinates = coordinates;
       } else {
-        eventbus.trigger('node:displayCoordinates', startingCoordinates);
-        eventbus.trigger('node:repositionNode', selectedNodesAndJunctions.getCurrentNode(), startingCoordinates);
+        displayCoordinatesHandler(startingCoordinates);
+        repositionNodeMarker(selectedNodesAndJunctions.getCurrentNode(), startingCoordinates);
       }
     });
 
@@ -422,11 +448,9 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
     }
 
 
-    // Add the defined interactions to the map after userData has been fetched
-    eventbus.on("userData:fetched", function (userData) {
-      userHasPermissionToEdit = _.includes(userData.roles, 'viite');
-      addInteractions();
-    });
+    // User roles are stored in ApplicationModel during startup.
+    userHasPermissionToEdit = _.includes(getSessionUserRoles(), 'viite');
+    addInteractions();
 
     // Immediately hide overlay when user starts interacting over node/junction to avoid flicker
     map.on('pointerdown', function (evt) {
@@ -440,6 +464,11 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
     // Update cursor style based on node selection state and hover
     map.on('pointermove', function (evt) {
+      if (isNodeCreateModeEnabled()) {
+        map.getViewport().style.cursor = 'crosshair';
+        return;
+      }
+
       const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
       const isHoveringNode = featureAtPixel && (featureAtPixel.node || featureAtPixel.nodePointTemplate);
       const currentNode = selectedNodesAndJunctions.getCurrentNode();
@@ -476,7 +505,7 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
       // Set small delay to prevent bug where wrong menu appears after attaching node
       setTimeout(() => {
-        setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+        setNodeCreateModeEnabled(false);
       }, 10);
     }
 
@@ -561,11 +590,8 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       nodeLayerSelectInteraction.getFeatures().clear();
     }
 
-    me.eventListener.listenTo(eventbus, 'node:unselected', function (current, cancel) {
-      if (!current) {
-        return;
-      }
-      if (cancel) {
+    function handleNodeUnselected(current, cancel) {
+      if (cancel && current) {
         const original = nodeCollection.getNodeByNodeNumber(current.nodeNumber);
         if (original && original.nodeNumber) {
           updateCurrentNodeMarker(original);
@@ -573,45 +599,25 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
           removeCurrentNodeMarker(current);
         }
       }
-    });
-
-    me.eventListener.listenTo(eventbus, 'templates:selected', function (templates) {
-      lastSelectedTemplates = _.cloneDeep(templates);
-      highlightTemplates(templates);
-    });
-
-    me.eventListener.listenTo(eventbus, 'node:unselected templates:unselected', function () {
       clearHighlights();
-    });
+    }
 
-    me.eventListener.listenTo(eventbus, 'templates:unselected', function () {
-      lastSelectedTemplates = null;
-    });
+    clearHighlightsBridge = clearHighlights;
+    nodeUnselectedBridge = handleNodeUnselected;
+    onNodeChangedBridge = function (node) { updateCurrentNodeMarker(node); };
+    onTemplatesSelectedBridge = highlightTemplates;
+    onJunctionDetachBridge = function (junction) { if (!_.isUndefined(junction)) toggleJunctionToTemplate(junction, true); };
+    onJunctionAttachBridge = function (junction) { if (!_.isUndefined(junction)) toggleJunctionToTemplate(junction); };
+    onNodePointDetachBridge = function (nodePoint) { if (!_.isUndefined(nodePoint)) toggleNodePointToTemplate(nodePoint, true); };
+    onNodePointAttachBridge = function (nodePoint) { if (!_.isUndefined(nodePoint)) toggleNodePointToTemplate(nodePoint); };
+    onNodeEditorOpenedBridge = function () { setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false); };
+    onNodeEditorClosedBridge = function () { setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true); };
 
-    me.eventListener.listenTo(eventbus, 'tool:changed', function (tool) {
-      toggleSelectInteractions(!isSelectedTool(ViiteEnumerations.Tool.Add.value));
-      switch (tool) {
-        case ViiteEnumerations.Tool.Unknown.value:
-          me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
-          setProperty([nodeMarkerLayer], 'selectable', true);
-          setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
-          break;
-        case ViiteEnumerations.Tool.Attach.value:
-          me.eventListener.stopListening(eventbus, 'map:clicked', createNewNodeMarker);
-          setProperty([nodeMarkerLayer], 'selectable', true);
-          setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
-          break;
-        case ViiteEnumerations.Tool.Add.value:
-          me.eventListener.listenToOnce(eventbus, 'map:clicked', createNewNodeMarker);
-          setProperty([nodeMarkerLayer, nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
-          break;
-        default:
-          break;
-      }
-    });
+    applyNodeCreateMode(isNodeCreateModeEnabled());
+    registerLayerHandler(applyNodeCreateMode);
 
     function createNewNodeMarker(coords) {
-      const templates = selectedNodesAndJunctions.getCurrentTemplates() || lastSelectedTemplates;
+      const templates = selectedNodesAndJunctions.getCurrentTemplates();
       const node = {
         coordinates: { x: coords.x, y: coords.y },
         type: ViiteEnumerations.NodeType.UnknownNodeType.value,
@@ -623,12 +629,21 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
           return feature.node.id === node.id;
         });
       attachNode(node, templates);
-      eventbus.trigger('node:newNodeCreated', node, templates);
     }
 
     function removeCurrentNodeMarker(node) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
-        if (_.isEqual(nodeFeature.node, node)) {
+        const hasNode = !_.isUndefined(node) && !_.isUndefined(nodeFeature.node);
+        if (!hasNode) {
+          return;
+        }
+
+        const byId = !_.isUndefined(node.id) && !_.isUndefined(nodeFeature.node.id) && nodeFeature.node.id === node.id;
+        const byNodeNumber = !_.isUndefined(node.nodeNumber) && !_.isUndefined(nodeFeature.node.nodeNumber) && nodeFeature.node.nodeNumber === node.nodeNumber;
+        const bothUnsaved = _.isUndefined(node.id) && _.isUndefined(node.nodeNumber) &&
+          _.isUndefined(nodeFeature.node.id) && _.isUndefined(nodeFeature.node.nodeNumber);
+
+        if (byId || byNodeNumber || bothUnsaved || _.isEqual(nodeFeature.node, node)) {
           nodeMarkerSelectedLayer.getSource().removeFeature(nodeFeature);
         }
       });
@@ -717,64 +732,6 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       }
     }
 
-    me.eventListener.listenTo(eventbus, 'junction:mapNumberUpdate', function (junction) {
-      const updateJunctionTemplateNumberOnMap = function (junctionToUpdate) {
-        _.each(junctionTemplateSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          if (_.isEqual(junctionFeature.junctionTemplate.id, junctionToUpdate.id)) {
-            junctionFeature.setProperties({ junctionNumber: junctionToUpdate.junctionNumber });
-          }
-        });
-      };
-
-      const updateJunctionNumberOnMap = function (junctionToMap) {
-        _.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
-          if (_.isEqual(junctionFeature.junction.id, junctionToMap.id)) {
-            junctionFeature.setProperties({ junctionNumber: junctionToMap.junctionNumber });
-          }
-        });
-      };
-
-      if (!_.isUndefined(junction)) {
-        if (_.isUndefined(junction.nodeNumber)) {
-          updateJunctionTemplateNumberOnMap(junction);
-        } else {
-          updateJunctionNumberOnMap(junction);
-        }
-      }
-    });
-
-    me.eventListener.listenTo(eventbus, 'nodeEditor:opened', function () {
-      setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', false);
-    });
-
-    me.eventListener.listenTo(eventbus, 'nodeEditor:closed', function () {
-      setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
-    });
-
-    me.eventListener.listenTo(eventbus, 'junction:detach', function (junction) {
-      if (!_.isUndefined(junction)) {
-        toggleJunctionToTemplate(junction, true);
-      }
-    });
-
-    me.eventListener.listenTo(eventbus, 'junction:attach', function (junction) {
-      if (!_.isUndefined(junction)) {
-        toggleJunctionToTemplate(junction);
-      }
-    });
-
-    me.eventListener.listenTo(eventbus, 'nodePoint:detach', function (nodePointToDetach) {
-      if (!_.isUndefined(nodePointToDetach)) {
-        toggleNodePointToTemplate(nodePointToDetach, true);
-      }
-    });
-
-    me.eventListener.listenTo(eventbus, 'nodePoint:attach', function (nodePointToAttach) {
-      if (!_.isUndefined(nodePointToAttach)) {
-        toggleNodePointToTemplate(nodePointToAttach);
-      }
-    });
-
     const fetchNodesAndJunctions = function (zoom) {
       map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
       const targetZoom = _.isNumber(zoom) ? zoom : zoomlevels.getViewZoom(map) + 1;
@@ -795,18 +752,13 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
       return nodeCollection.fetchAndApplyNodesAndJunctions(targetZoom);
     };
 
-    me.eventListener.listenTo(eventbus, 'nodeLayer:refreshView', function () {
-      refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
-    });
-
-    me.eventListener.listenTo(eventbus, 'node:repositionNode', function (node, coordinates) {
+    function repositionNodeMarker(node, coordinates) {
       _.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
         if (nodeFeature.node.id === node.id) {
           nodeFeature.setGeometry(new ol.geom.Point([coordinates.x, coordinates.y]));
         }
       });
-      return false;
-    });
+    }
 
     me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
       toggleSelectInteractions(layer === 'node');
@@ -832,10 +784,6 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
 
       eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
 
-      eventListener.listenTo(eventbus, 'change:node', function (node, _junction) {
-        updateCurrentNodeMarker(node);
-      });
-
       // Handle node & junction info popup on overlay update
       eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
         if (isOverlaySuppressed() || isNodeDragged()) {
@@ -856,7 +804,6 @@ export function NodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollect
         let filteredNodePointTemplates = templates.nodePoints;
 
         if (currentNode) {
-          eventbus.trigger('node:fetchCoordinates', nodeCollection.getNodeByNodeNumber(currentNode.nodeNumber));
           filteredNodes = _.filter(nodes, function (node) {
             return node.id !== currentNode.id;
           });

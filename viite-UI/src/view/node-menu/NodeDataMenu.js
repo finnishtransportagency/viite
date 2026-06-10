@@ -1,17 +1,43 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
-import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { isSelectedTool, setSelectedTool } from '@model/ApplicationModel.js';
 import { button } from '@components/button/Button.js';
+import { setNodeMenuState } from '@node-menu/NodeMenu.js';
+
+let nodeCreateMode = false;
+let _layerHandler = null;
+
+export function registerLayerHandler(fn) {
+  _layerHandler = fn;
+}
+
+export function isNodeCreateModeEnabled() {
+  return nodeCreateMode;
+}
+
+export function setNodeCreateModeEnabled(enabled) {
+  const nextValue = Boolean(enabled);
+  if (nodeCreateMode === nextValue) return nodeCreateMode;
+
+  nodeCreateMode = nextValue;
+  $('#attachToNewNode').toggleClass('active', nodeCreateMode);
+  if (_layerHandler) _layerHandler(nodeCreateMode);
+  return nodeCreateMode;
+}
+
+export function toggleNodeCreateMode() {
+  return setNodeCreateModeEnabled(!nodeCreateMode);
+}
+
 
 /**
  * NodeDataMenu - Read-only detail panel for searched node and template data.
  * Shows node/junction tables and exposes buttons that continue into editing flows.
  */
-export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
+export function NodeDataMenu(selectedNodesAndJunctions) {
+
     const onEditNode = () => {
         const currentNode = selectedNodesAndJunctions.getCurrentNode();
         if (currentNode) {
-            setNodeMenuState('editor', currentNode, selectedNodesAndJunctions.getCurrentTemplates());
+          setNodeMenuState('editor', 'templates');
         }
     };
 
@@ -122,10 +148,15 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
 
     const renderFooter = function () {
       bindEvents();
-      const attachToNewNodeClass = isSelectedTool(ViiteEnumerations.Tool.Add.value) ? ' active' : '';
+      const attachToNewNodeClass = isNodeCreateModeEnabled() ? ' active' : '';
       return `
         <div class="form form-controls node-template-actions">
-          ${button({ id: 'attachToNewNode', label: 'Luo uusi solmu, johon haluat liittää aihiot', className: 'btn-primary btn-block' + attachToNewNodeClass, onClick: () => { setSelectedTool(ViiteEnumerations.Tool.Add.value); $('#attachToNewNode').toggleClass('active', isSelectedTool(ViiteEnumerations.Tool.Add.value)); } })}
+          ${button({ 
+            id: 'attachToNewNode',
+            label: 'Luo uusi solmu, johon haluat liittää aihiot',
+            className: 'btn-primary btn-block' + attachToNewNodeClass,
+            onClick: () => { toggleNodeCreateMode(); } 
+          })}
           <div class="node-template-actions-split-row">
             ${button({ id: 'btn-edit-node-save', label: 'Tallenna', className: 'btn-primary btn-edit-node-save btn-block', disabled: true, onClick: onSaveTemplates })}
             ${button({ id: 'btn-edit-templates-cancel', label: 'Peruuta', className: 'cancel btn-secondary btn-edit-templates-cancel btn-block', onClick: onBackToSearch })}
@@ -137,9 +168,7 @@ export function NodeDataMenu(selectedNodesAndJunctions, setNodeMenuState) {
     const bindEvents = function () {
       const panelElement = $('#menu-container');
       panelElement.off('.nodeDataMenu');
-
       panelElement.on('click.nodeDataMenu', '.btn-open-node-editor', onEditNode);
-
       panelElement.on('click.nodeDataMenu', '.btn-node-display-back', onBackToSearch);
     };
 

@@ -8,8 +8,6 @@
  * - Date range management for road names
  * - Backend integration for road name operations
  */
-import { eventbus } from '@utils/Eventbus.js';
-
 export function RoadNameCollection(backend) {
 
     const newId = -1000;
@@ -83,19 +81,21 @@ export function RoadNameCollection(backend) {
       });
     }
 
-    function saveChanges() {
+    function saveChanges(callbacks = {}) {
+      const onSaveSuccess = _.isFunction(callbacks.onSaveSuccess) ? callbacks.onSaveSuccess : _.noop;
+      const onSaveUnsuccessful = _.isFunction(callbacks.onSaveUnsuccessful) ? callbacks.onSaveUnsuccessful : _.noop;
       const changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
         return _.includes(changedIds, roadName.id);
       });
       backend.saveRoadNamesChanges(currentRoadNumber, changedData, function (result) {
         if (result.success) {
           clear();
-          eventbus.trigger("roadNameTool:saveSuccess");
+          onSaveSuccess(result);
         } else {
-          eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
+          onSaveUnsuccessful(result.errorMessage, result);
         }
       }, function (result) {
-        eventbus.trigger("roadNameTool:saveUnsuccessful", result.errorMessage);
+        onSaveUnsuccessful(result.errorMessage, result);
       });
     }
 

@@ -6,22 +6,29 @@ import { DataTable, NodeTableUtils } from '@node-menu/DataTable.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { setNodeMenuState } from '@node-menu/NodeMenu.js';
+import { onNodeEditorOpened, onNodeEditorClosed, registerDisplayCoordinatesHandler } from '@view/map/layers/NodeLayer.js';
 
 /**
  * NodeEditor - Editable node form with detach, validation and save flows.
  * Supports editing node metadata, junction numbers and junction ET values.
  */
-export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, containerElement, permissionToEditNodes) {
+export function NodeEditor(
+  selectedNodesAndJunctions,
+  backend,
+  roadCollection,
+  containerElement,
+  permissionToEditNodes
+) {
   const dis = permissionToEditNodes ? '' : 'disabled';
   const dataTable = new DataTable();
 
   let picker;
-  let editorExitHandler = _.noop;
   let activeEventbusHandlers = [];
   let addressEditMode = false;
   let saveInProgress = false;
-  let _boundSaveHandler = _.noop;
-  let _boundCancelHandler = _.noop;
+  let sourceTemplates;
+  let cancelExitTarget = 'templates';
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -89,10 +96,67 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
       </div>`;
   };
 
+      const onSave = () => {
+      if (saveInProgress) {
+        return;
+      }
+
+      saveInProgress = true;
+      syncActionButtons();
+
+      if (selectedNodesAndJunctions.isObsoleteNode())
+        new ConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
+          successCallback: triggerNodeSave,
+          closeCallback: () => {
+            saveInProgress = false;
+            syncActionButtons();
+          }
+        });
+      else
+        triggerNodeSave();
+    };
+
+    const exitEditor = (targetMenu) => {
+      if (targetMenu === 'templates') {
+        const templatesToShow = selectedNodesAndJunctions.getCurrentTemplates() || sourceTemplates;
+        if (!templatesToShow) {
+          setNodeMenuState('search');
+          return;
+        }
+
+        selectedNodesAndJunctions.openTemplates(templatesToShow);
+        setNodeMenuState('display-templates');
+        return;
+      }
+
+      setNodeMenuState('search');
+    };
+
+    const onSaveSuccess = () => {
+      cleanup();
+      selectedNodesAndJunctions.closeNode(false);
+      exitEditor('search');
+    };
+
+    const onSaveFail = (errorMessage, spinnerEvent) => {
+      saveInProgress = false;
+      syncActionButtons();
+      Spinner.hide(spinnerEvent);
+      new ConfirmPopup(errorMessage, { type: 'alert' });
+    };
+
+    const triggerNodeSave = () => selectedNodesAndJunctions.saveNode(onSaveSuccess, onSaveFail);
+
+    const onCancel = () => {
+      cleanup();
+      selectedNodesAndJunctions.closeNode(true);
+      exitEditor(cancelExitTarget);
+    };
+
   const renderFooter = () => `
     <div class="node-editor-footer">
-      ${button({ id: 'node-editor-save', label: 'Tallenna', className: 'save btn-primary btn-block node-editor-save', disabled: true, onClick: () => _boundSaveHandler() })}
-      ${button({ id: 'node-editor-cancel', label: 'Peruuta', className: 'cancel btn-secondary btn-block node-editor-cancel', onClick: () => _boundCancelHandler() })}
+      ${button({ id: 'node-editor-save', label: 'Tallenna', className: 'save btn-primary btn-block node-editor-save', disabled: true, onClick: () => onSave() })}
+      ${button({ id: 'node-editor-cancel', label: 'Peruuta', className: 'cancel btn-secondary btn-block node-editor-cancel', onClick: () => onCancel() })}
     </div>`;
 
   // ─── Table builders ─────────────────────────────────────────────────────────
@@ -272,13 +336,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
     return invalid;
   };
 
-  const setSaveButtonDisabled = (disabled) => {
-    $('#node-editor-save').prop('disabled', disabled);
-  };
-
-  const setCancelButtonDisabled = (disabled) => {
-    $('#node-editor-cancel').prop('disabled', disabled);
-  };
+  const setSaveButtonDisabled = (disabled) => { $('#node-editor-save').prop('disabled', disabled); };
+  const setCancelButtonDisabled = (disabled) => { $('#node-editor-cancel').prop('disabled', disabled); };
 
   const syncActionButtons = () => {
     setSaveButtonDisabled(saveInProgress || formIsInvalid());
@@ -298,11 +357,9 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   };
 
   const cleanup = () => {
-    _boundSaveHandler = _.noop;
-    _boundCancelHandler = _.noop;
     getContainer().off('.nodeEditor');
     clearEventbusHandlers();
-    eventbus.trigger('nodeEditor:closed');
+    onNodeEditorClosed();
   };
 
   // ─── Event binding ──────────────────────────────────────────────────────────
@@ -310,20 +367,6 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
   const bindEvents = ($container) => {
     $container.off('.nodeEditor');
     const revalidate = () => syncActionButtons();
-    const onSaveSuccess = () => {
-      cleanup();
-      selectedNodesAndJunctions.closeNode(false);
-      editorExitHandler('search');
-    };
-
-    const onSaveFail = (errorMessage, spinnerEvent) => {
-      saveInProgress = false;
-      syncActionButtons();
-      Spinner.hide(spinnerEvent);
-      new ConfirmPopup(errorMessage, { type: 'alert' });
-    };
-
-    const triggerNodeSave = () => selectedNodesAndJunctions.saveNode(onSaveSuccess, onSaveFail);
 
     // Field changes → update model + revalidate
     $container.on('input.nodeEditor change.nodeEditor', '#nodeName', function () {
@@ -405,37 +448,8 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
       $container.find('#edit-junction-point-addresses').toggleClass('active', addressEditMode);
     });
 
-    const onSave = () => {
-      if (saveInProgress) {
-        return;
-      }
-
-      saveInProgress = true;
-      syncActionButtons();
-
-      if (selectedNodesAndJunctions.isObsoleteNode())
-        new ConfirmPopup('Tämä toiminto päättää solmun, tallennetaanko muutokset?', {
-          successCallback: triggerNodeSave,
-          closeCallback: () => {
-            saveInProgress = false;
-            syncActionButtons();
-          }
-        });
-      else
-        triggerNodeSave();
-    };
-
-    const onCancel = () => {
-      cleanup();
-      selectedNodesAndJunctions.closeNode(true);
-      editorExitHandler('templates');
-    };
-
-    _boundSaveHandler = onSave;
-    _boundCancelHandler = onCancel;
-
-    // Eventbus: coordinates update, backend responses, save lifecycle
-    subscribeEventbus('node:displayCoordinates', (coords) => {
+    
+    registerDisplayCoordinatesHandler((coords) => {
       $('#node-coordinates').text(`${Math.round(coords.y)}, ${Math.round(coords.x)}`);
     });
 
@@ -452,12 +466,6 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
       const input = $container.find(`#junction-point-address-input-${idString}`)[0];
       if (input) { input.setCustomValidity(errorMessage); input.reportValidity(); }
       revalidate();
-    });
-
-    subscribeEventbus('junctionPoint:editableStatusFetched', (response, jp) => {
-      const $input = $container.find(`#junction-point-address-input-${jp.id}`);
-      if (!$input.length) return;
-      $input.attr('disabled', !response.isEditable).attr('title', response.isEditable ? '' : (response.validationMessage || ''));
     });
 
     subscribeEventbus('reset:startDate', (originalStartDate) => {
@@ -480,9 +488,10 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
 
   // ─── Public API ─────────────────────────────────────────────────────────────
 
-  const showNode = (currentNode, templates, handlers) => {
+  const showNode = (currentNode, templates, options = {}) => {
     cleanup();
-    editorExitHandler  = handlers?.onExit || _.noop;
+    sourceTemplates    = templates;
+    cancelExitTarget   = options.cancelTarget || 'templates';
     addressEditMode    = false;
     saveInProgress     = false;
 
@@ -513,7 +522,11 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
     // Request editable status for all junction point address inputs
     $container.find('[id^=junction-point-address-input-]').each(function () {
       const id = $(this).attr('junctionPointId');
-      backend.getJunctionPointEditableStatus(id, { id });
+      backend.getJunctionPointEditableStatus(id, function (response) {
+        const $input = $container.find(`#junction-point-address-input-${id}`);
+        if (!$input.length) return;
+        $input.attr('disabled', !response.isEditable).attr('title', response.isEditable ? '' : (response.validationMessage || ''));
+      });
     });
 
     selectedNodesAndJunctions.addNodePointTemplates(npTemplates);
@@ -543,7 +556,7 @@ export function NodeEditor(selectedNodesAndJunctions, backend, roadCollection, c
 
     bindEvents($container);
     syncActionButtons();
-    eventbus.trigger('nodeEditor:opened');
+    onNodeEditorOpened();
     // Set correct save button state
     _.defer(() => syncActionButtons());
   };

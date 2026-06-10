@@ -3,7 +3,7 @@
  * Handles application startup, map setup, layer management, and component initialization.
  */
 
-import { setStartupParameters, refreshMap } from '@model/ApplicationModel.js';
+import { setStartupParameters, setUserData, refreshMap } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
@@ -59,10 +59,11 @@ export function start() {
       selectedNodesAndJunctions: selectedNodesAndJunctions
     };
 
-    backend.getUserRoles();
-    setupProjections();
-
-    startApplication(backend, models, startupParameters, roadNameCollection);
+    backend.getUserRoles(function (userData) {
+      setUserData(userData);
+      setupProjections();
+      startApplication(backend, models, startupParameters, roadNameCollection);
+    });
   });
 }
 

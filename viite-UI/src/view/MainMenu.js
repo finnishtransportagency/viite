@@ -110,7 +110,7 @@ export function MainMenu(options = {}) {
     },
     [MENU_STATE.PROJECT]: () => views.projectList.show(),
     [MENU_STATE.NAME_TOOL]: () => views.roadNamingTool.show(),
-    [MENU_STATE.NODE]: () => views.nodeMenu.render(),
+    [MENU_STATE.NODE]: () => views.nodeMenu.setNodeMenuState('search'),
     [MENU_STATE.ROAD_ADDRESS_BROWSER]: () => views.roadAddressBrowser.show(),
     [MENU_STATE.ROAD_ADDRESS_CHANGES]: () => views.roadAddressChangesBrowser.show(),
     [MENU_STATE.ROAD_NETWORK_ERRORS]: () => views.roadNetworkErrorsList.show(),

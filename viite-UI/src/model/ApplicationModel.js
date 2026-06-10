@@ -18,7 +18,6 @@ const specialSelectionTypes = [
 const state = {
   zoomLevel: undefined,
   selectedLayer: undefined,
-  selectedTool: ViiteEnumerations.Tool.Unknown.value,
   centerLonLat: undefined,
   selectionType: ViiteEnumerations.SelectionType.All,
   sessionUsername: "",
@@ -69,33 +68,6 @@ function toggleRoadVisibility() {
 
 function getRoadVisibility() {
   return state.roadsVisibility;
-}
-
-function isSelectedTool(tool) {
-  const aliases =
-    ViiteEnumerations.Tool[state.selectedTool]?.alias || [];
-
-  return (
-    tool === state.selectedTool ||
-    _.includes(aliases, tool)
-  );
-}
-
-function setSelectedTool(tool) {
-  if (isSelectedTool(tool)) {
-    state.selectedTool =
-      ViiteEnumerations.Tool.Unknown.value;
-
-    eventbus.trigger("tool:clear");
-  } else {
-    state.selectedTool = tool;
-  }
-
-  eventbus.trigger("tool:changed", state.selectedTool);
-}
-
-function getSelectedTool() {
-  return state.selectedTool;
 }
 
 function getUserGeoLocation() {
@@ -186,10 +158,6 @@ export {
   refreshMap,
 
   getUserGeoLocation,
-
-  setSelectedTool,
-  getSelectedTool,
-  isSelectedTool,
 
   setZoomLevel,
   getZoomLevel,

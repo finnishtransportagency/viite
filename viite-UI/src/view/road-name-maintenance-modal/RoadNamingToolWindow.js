@@ -2,6 +2,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { button } from '@components/button/Button.js';
+import { showToast } from '@components/toast/Toast.js';
 
 export function RoadNamingToolWindow(roadNameCollection) {
     const newId = -1000;
@@ -120,7 +121,15 @@ export function RoadNamingToolWindow(roadNameCollection) {
               ? "Tielle on jo nimi. Haluatko varmasti antaa sille uuden nimen?"
               : "Tielle on jo nimi. Haluatko varmasti muokata sitä?";
             new ConfirmPopup(saveMessage, {
-              successCallback: () => roadNameCollection.saveChanges(),
+              successCallback: () => roadNameCollection.saveChanges({
+                onSaveSuccess: () => {
+                  searchForRoadNames();
+                },
+                onSaveUnsuccessful: (errorMessage) => {
+                  const message = errorMessage || 'Tallennus epäonnistui';
+                  showToast(message, { type: 'error' });
+                }
+              }),
               closeCallback: () => {}
             });
           }

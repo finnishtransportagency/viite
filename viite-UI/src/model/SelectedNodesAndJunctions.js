@@ -1,6 +1,7 @@
 import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
+import { clearNodeLayerHighlights, onNodeLayerUnselected, onNodeChanged, onTemplatesSelected, onJunctionDetach, onJunctionAttach, onNodePointDetach, onNodePointAttach } from '@view/map/layers/NodeLayer.js';
 
 let openTemplatesBridge = function () {};
 
@@ -22,10 +23,11 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     let current = {};
 
     const openNode = function (node, openNodetemplates) {
+      const savedTemplates = openNodetemplates || current.templates;
       current = {};
       setCurrentNode(node);
-      eventbus.trigger('node:selected', current.node, openNodetemplates);
-      setNodeMenuState('editor', current.node, openNodetemplates);
+      current.templates = savedTemplates;
+      setNodeMenuState('editor');
     };
 
     const getCurrentNode = function () {
@@ -59,14 +61,14 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     function openTemplates(templatesToOpen) {
       current = {};
       setCurrentTemplates(templatesToOpen.nodePoints, templatesToOpen.junctions);
-      eventbus.trigger('templates:selected', current.templates);
+      onTemplatesSelected(current.templates);
       if (!current.templates || (_.isEmpty(current.templates.nodePoints) && _.isEmpty(current.templates.junctions))) {
         return;
       }
-      setNodeMenuState('display-templates', current.templates);
+      setNodeMenuState('display-templates');
     }
 
-    openTemplatesBridge = openTemplates; // Bridge function to allow opening templates from outside this module
+    openTemplatesBridge = openTemplates; // Allow opening templates from outside this module
 
     const getCurrentTemplates = function () {
       return current.templates;
@@ -209,13 +211,13 @@ export function SelectedNodesAndJunctions(nodeCollection) {
         _.remove(current.node.junctions, function (j) {
           return j.id === junction.id;
         });
-        eventbus.trigger('junction:detach', junction);
+        onJunctionDetach(junction);
       }
       _.each(nodePoints, function (nodePoint) {
         _.remove(current.node.nodePoints, function (np) {
           return np.id === nodePoint.id;
         });
-        eventbus.trigger('nodePoint:detach', nodePoint);
+        onNodePointDetach(nodePoint);
       });
     };
 
@@ -228,7 +230,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
           return j.id === junction.id;
         }).length === 0) {
           current.node.junctions.push(junction);
-          eventbus.trigger('junction:attach', junction);
+          onJunctionAttach(junction);
         }
       }
       _.each(nodePoints, function (nodePoint) {
@@ -236,7 +238,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
           return np.id === nodePoint.id;
         }).length === 0) {
           current.node.nodePoints.push(nodePoint);
-          eventbus.trigger('nodePoint:attach', nodePoint);
+          onNodePointAttach(nodePoint);
         }
       });
     };
@@ -337,24 +339,20 @@ export function SelectedNodesAndJunctions(nodeCollection) {
       );
     }
 
-    const close = function (options, params, cancel) {
-      eventbus.trigger(options, params, cancel);
-    };
-
     const closeForm = function () {
-      eventbus.trigger('nodeLayer:closeForm', current); // all nodes and junctions forms should listen to this trigger
     };
 
     const closeNode = function (cancel) {
       const currentNode = current && current.node ? current.node : undefined;
-      close('node:unselected', currentNode, cancel);
+      const savedTemplates = current.templates;
+      onNodeLayerUnselected(currentNode, cancel);
       current = {};
-      eventbus.trigger('nodeLayer:refreshView');
+      current.templates = savedTemplates;
     };
 
     const closeTemplates = function () {
       current = {};
-      close('templates:unselected');
+      clearNodeLayerHighlights();
     };
 
     const saveNode = function (onSuccess, onFail) {
@@ -365,7 +363,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
     };
 
     function updateNodesAndJunctionsMarker(junction) {
-      eventbus.trigger('change:node', current.node, junction);
+      onNodeChanged(current.node, junction);
     }
 
     return {

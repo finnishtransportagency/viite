@@ -4,11 +4,15 @@ import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
 import { setMainMenuState } from '@view/MainMenu.js';
 import { getStartupParameters, selectLayer } from '@model/ApplicationModel.js';
 
-// Exported function reference (initialized later)
-export let setNodeMenuState = () => {
-  throw new Error('NodeMenu not initialized yet');
+const stateConfig = {};
+
+export const setNodeMenuState = (newState, cancelTarget) => {
+  const state = stateConfig[newState];
+  if (!state) throw new Error(`Unknown node menu state: ${newState}`);
+  state.render(cancelTarget);
 };
 
+// High-level state manger that decides which menu content to show based on the current state
 export function NodeMenu(
   map,
   nodeCollection,
@@ -22,27 +26,18 @@ export function NodeMenu(
     setMainMenuState('main');
   };
 
-  const setNodeMenuStateInternal = (newState, ...args) => {
-    stateConfig[newState].render(...args);
-  };
-
-  const permissionToEditNodes =
-    getStartupParameters()?.roles?.includes('viite') ?? false;
+  const permissionToEditNodes = getStartupParameters()?.roles?.includes('viite') ?? false;
 
   const searchMenu = new NodeSearchMenu(
     map,
     nodeCollection,
     backend,
-    selectedNodesAndJunctions,
-    setNodeMenuStateInternal
+    selectedNodesAndJunctions
   );
 
-  const dataMenu = new NodeDataMenu(
-    selectedNodesAndJunctions,
-    setNodeMenuStateInternal
-  );
+  const dataMenu = new NodeDataMenu (selectedNodesAndJunctions);
 
-  const nodeEditor = new NodeEditor(
+  const nodeEditor = new NodeEditor (
     selectedNodesAndJunctions,
     backend,
     roadCollection,
@@ -50,7 +45,8 @@ export function NodeMenu(
     permissionToEditNodes
   );
 
-  const stateConfig = {
+  // Maps menu states to their render functions, which are responsible for rendering the correct content and header for each state
+  Object.assign(stateConfig, {
     search: {
       render: () => {
         menu.setHeader('Solmut ja liittymät', closeNodeMenu);
@@ -59,11 +55,8 @@ export function NodeMenu(
       }
     },
     'display-templates': {
-      render: (templates) => {
-        const effectiveTemplates =
-          templates ||
-          selectedNodesAndJunctions.getCurrentTemplates() ||
-          {};
+      render: () => {
+        const effectiveTemplates = selectedNodesAndJunctions.getCurrentTemplates() || {};
 
         menu.setHeader('Aihioiden tiedot', closeNodeMenu);
         menu.setBody(dataMenu.renderBody(effectiveTemplates));
@@ -71,51 +64,16 @@ export function NodeMenu(
       }
     },
     editor: {
-      render: (node, templates) => {
+      render: (cancelTarget = 'templates') => {
+        const node = selectedNodesAndJunctions.getCurrentNode();
+        const templates = selectedNodesAndJunctions.getCurrentTemplates();
         menu.setHeader(nodeEditor.getHeader(), closeNodeMenu);
         menu.setBody('');
-
-        nodeEditor.showNode(node, templates, {
-          onExit: (target) => {
-            if (target === 'templates') {
-              const templatesToShow =
-                templates ||
-                selectedNodesAndJunctions.getCurrentTemplates();
-
-              if (
-                !templatesToShow ||
-                (_.isEmpty(templatesToShow.nodePoints) &&
-                  _.isEmpty(templatesToShow.junctions))
-              ) {
-                setNodeMenuStateInternal('search');
-                return;
-              }
-
-              selectedNodesAndJunctions.openTemplates(templatesToShow);
-
-              setNodeMenuStateInternal(
-                'display-templates',
-                templatesToShow
-              );
-            } else {
-              setNodeMenuStateInternal('search');
-            }
-          }
-        });
-
+        nodeEditor.showNode(node, templates, { cancelTarget });
         menu.setFooter(nodeEditor.renderFooter());
       }
     }
-  };
+  });
 
-  setNodeMenuState = setNodeMenuStateInternal;
-
-  const render = () => {
-    setNodeMenuStateInternal('search');
-  };
-
-  return {
-    setNodeMenuState: setNodeMenuStateInternal,
-    render
-  };
+  return { setNodeMenuState };
 }

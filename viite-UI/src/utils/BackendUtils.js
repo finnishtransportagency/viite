@@ -1,5 +1,3 @@
-import { eventbus } from '@utils/Eventbus.js';
-
 export function Backend() {
     let loadingProject;
     const gettingRoadLinks = null;
@@ -383,17 +381,17 @@ export function Backend() {
         },
 
         // ------------------------------------------------------
-        // Eventbus-driven fetch endpoints
+        // Direct fetch endpoints
         // ------------------------------------------------------
-        getJunctionPointEditableStatus: function (ids, jp) {
-          $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
-            eventbus.trigger('junctionPoint:editableStatusFetched', response, jp);
+        getJunctionPointEditableStatus: function (ids, callback) {
+          return $.get('api/viite/junctions/getEditableStatusOfJunctionPoints?ids=' + ids, function (response) {
+            return _.isFunction(callback) && callback(response);
           });
         },
 
-        getUserRoles: function () {
-          $.get('api/viite/user', function (response) {
-            eventbus.trigger('userData:fetched', response);
+        getUserRoles: function (callback) {
+          return $.get('api/viite/user', function (response) {
+            return _.isFunction(callback) && callback(response);
           });
         },
 

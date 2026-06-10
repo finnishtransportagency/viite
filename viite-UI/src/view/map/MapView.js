@@ -7,7 +7,7 @@
 import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { getRoadVisibility, refreshMap, getSelectedTool } from '@model/ApplicationModel.js';
+import { getRoadVisibility, refreshMap } from '@model/ApplicationModel.js';
 
 export function moveMapToCoordinates(map, position) {
   let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
@@ -53,25 +53,9 @@ export function MapView(map, layers) {
       mapMarker.addLayer(vectorLayer);
     };
 
-    const setCursor = function (tool) {
-      const cursor = {
-        'Attach': 'default',
-        'Add': 'crosshair',
-        'Cut': 'crosshair',
-        'Copy': 'copy',
-        'Default': 'default',
-        'Unknown': 'default'
-      };
-      map.getViewport().style.cursor = tool ? cursor[tool] || 'default' : 'default';
-    };
-
-    eventbus.on('tool:changed', function (tool) {
-      setCursor(tool);
-    });
-
-    eventbus.on('tool:clear', function () {
+    const setDefaultCursor = function () {
       map.getViewport().style.cursor = 'default';
-    });
+    };
 
     map.on('coordinates:marked', function (event) {
       if (event && event.position) {
@@ -92,7 +76,7 @@ export function MapView(map, layers) {
 
     map.on('moveend', function () {
       refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
-      setCursor(getSelectedTool());
+      setDefaultCursor();
     });
 
     map.on('pointermove', function (event) {
@@ -120,7 +104,7 @@ export function MapView(map, layers) {
 
     // When the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function (_evt) {
-      setCursor(getSelectedTool());
+      setDefaultCursor();
     });
 
     $('body').on('keydown', function (evt) {
@@ -130,8 +114,8 @@ export function MapView(map, layers) {
 
     $('body').on('keyup', function (evt) {
       if (_.includes(metaKeyCodes, evt.which) && evt.originalEvent.key !== ViiteEnumerations.SelectKeyName) // ctrl key up
-        setCursor(getSelectedTool());
+        setDefaultCursor();
     });
 
-  setCursor(getSelectedTool());
+  setDefaultCursor();
 }
