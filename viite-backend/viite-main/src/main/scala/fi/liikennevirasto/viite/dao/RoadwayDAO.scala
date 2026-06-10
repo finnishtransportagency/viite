@@ -1070,7 +1070,7 @@ class RoadwayDAO extends BaseDAO {
         SELECT DISTINCT ra.road_part_number
         FROM roadway ra
         WHERE road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
-            AND end_date IS NULL
+            AND (end_date IS NULL OR end_date >= $startDate)
             AND ra.road_part_number NOT IN (
         SELECT DISTINCT pl.road_part_number
         FROM project_link pl

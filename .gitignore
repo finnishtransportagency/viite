@@ -21,4 +21,5 @@ WebContent/
 revision.properties
 bonecp.properties
 .env
+.env*
 /.db
