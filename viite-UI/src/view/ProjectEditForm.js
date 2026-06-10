@@ -669,6 +669,7 @@
         if (changeLayerMode) {
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
+          Backbone.history.navigate('linkProperty/'); // Force layer refresh to avoid wrong state (VIITE-3961)
         }
       };
 
