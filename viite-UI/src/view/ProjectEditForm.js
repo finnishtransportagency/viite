@@ -368,7 +368,7 @@
         selectedProjectLinkProperty.cleanIds();
         
         const { projectErrors } = response;
-        const containsProjectLinks = !!(dataJson?.linkIds?.length || dataJson?.ids?.length);
+        const containsProjectLinks = !!(dataJson && (dataJson.linkIds && dataJson.linkIds.length || dataJson.ids && dataJson.ids.length));
 
         // show disabled buttons
         rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
