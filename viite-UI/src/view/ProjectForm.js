@@ -446,9 +446,9 @@
         formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
       };
 
-      var hasNoProjectlinks = function () {
+      var hasNoProjectLinks = function () {
         return projectCollection.getReservedParts().length === 0 && projectCollection.getFormedParts().length === 0;
-      }
+      };
 
       /**
        * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened.
