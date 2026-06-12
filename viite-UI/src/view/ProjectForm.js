@@ -446,6 +446,10 @@
         formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
       };
 
+      var hasNoProjectlinks = function () {
+        return projectCollection.getReservedParts().length === 0 && projectCollection.getFormedParts().length === 0;
+      }
+
       /**
        * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened.
        * User needs to recalculate project when it's opened, so we enable recalculate button and disable changes button.
@@ -455,8 +459,7 @@
           buttonsWhenInspectingUneditableProject();
         } else {
           const projectErrors = projectCollection.getProjectErrors();
-          const hasNoProjectLinks = projectCollection.getReservedParts().length === 0;
-          if (hasNoProjectLinks) {
+          if (hasNoProjectLinks()) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
           } else if (projectErrors.length === 0) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
@@ -476,12 +479,11 @@
       var buttonsWhenReOpenCurrent = function (projectErrors, highPriorityProjectErrors) {
         eventbus.trigger('roadAddressProject:writeProjectErrors');
         if (highPriorityProjectErrors.length === 0) {
-          const hasNoProjectLinks = projectCollection.getReservedParts().length === 0;
           if ($('.change-table-frame').css('display') === "block") {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
             formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
-          } else if (hasNoProjectLinks) {
+          } else if (hasNoProjectLinks()) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
           } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === false) {

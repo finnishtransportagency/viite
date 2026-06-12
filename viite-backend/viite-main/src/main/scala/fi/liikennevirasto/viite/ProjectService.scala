@@ -2880,31 +2880,18 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     * @return A sequence of validation errors, can be empty.
     */
   def validateProjectById(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
-    def validateWithCalculatedLinks(): Seq[projectValidator.ValidationErrorDetails] = {
+    def validateLinks(): Seq[projectValidator.ValidationErrorDetails] = {
       val project = fetchProjectById(projectId).get
-      val linksBeforeValidation = projectLinkDAO.fetchProjectLinks(projectId)
-
-      // Address-dependent validations require calculated M-values. Recalculate first if needed.
-      // If recalculation fails, log a warning and continue validation with the existing links.
-      if (linksBeforeValidation.exists(_.isNotCalculated)) {
-        try {
-          recalculateProjectLinks(projectId, project.modifiedBy)
-        } catch {
-          case e: Exception =>
-            logger.warn(s"Recalculation failed for project $projectId during validation, continuing with existing link values. ${e.getMessage}", e)
-        }
-      }
-
-      val linksForValidation = projectLinkDAO.fetchProjectLinks(projectId)
-      projectValidator.validateProject(project, linksForValidation)
+      val links   = projectLinkDAO.fetchProjectLinks(projectId)
+      projectValidator.validateProject(project, links)
     }
 
     if (newSession) {
       runWithTransaction {
-        validateWithCalculatedLinks()
+        validateLinks()
       }
     } else {
-      validateWithCalculatedLinks()
+      validateLinks()
     }
   }
 
