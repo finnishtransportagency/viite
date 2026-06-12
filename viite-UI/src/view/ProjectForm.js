@@ -476,8 +476,10 @@
        * Set attributes (disabled, title) of the recalculate, changes & send buttons when project link changes are cancelled
        * ("Peruuta" button is clicked or clicking anywhere on the map when project edit form is open (i.e. closing the form))
        * */
-      var buttonsWhenReOpenCurrent = function (projectErrors, highPriorityProjectErrors) {
-        eventbus.trigger('roadAddressProject:writeProjectErrors');
+      var buttonsWhenReOpenCurrent = function (projectErrors, highPriorityProjectErrors, wasCancelled) {
+        if (!wasCancelled) {
+          eventbus.trigger('roadAddressProject:writeProjectErrors');
+        }
         if (highPriorityProjectErrors.length === 0) {
           if ($('.change-table-frame').css('display') === "block") {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
@@ -631,8 +633,8 @@
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('roadAddressProject:reOpenCurrent', function () {
-        reOpenCurrent();
+      eventbus.on('roadAddressProject:reOpenCurrent', function (wasCancelled) {
+        reOpenCurrent(wasCancelled);
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
@@ -864,19 +866,24 @@
         $('.wrapper').remove();
         eventbus.trigger('roadAddress:projectLinksEdited');
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-        eventbus.trigger('roadAddressProject:reOpenCurrent');
+        eventbus.trigger('roadAddressProject:reOpenCurrent', true);
       };
 
-      var reOpenCurrent = function () {
+      var reOpenCurrent = function (wasCancelled) {
         rootElement.empty();
         selectedProjectLinkProperty.setDirty(false);
-        nextStage();
+        if (wasCancelled) {
+          currentProject.isDirty = false;
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        } else {
+          nextStage();
+        }
         if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
           buttonsWhenInspectingUneditableProject();
         } else {
           var projectErrors = projectCollection.getProjectErrors();
           var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
-          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
+          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors, wasCancelled);
         }
         toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');

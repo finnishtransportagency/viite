@@ -442,12 +442,9 @@
         selectedProjectLinkProperty.clean();
         $('.wrapper').remove();
         
-        // Trigger cleanup events
-        [
-          'roadAddress:projectLinksEdited',
-          'roadAddressProject:toggleEditingRoad',
-          'roadAddressProject:reOpenCurrent'
-        ].forEach(event => eventbus.trigger(event, event.includes('toggleEditingRoad') ? true : undefined));
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+        eventbus.trigger('roadAddressProject:reOpenCurrent', true);
       };
 
       eventbus.on('roadAddressProject:discardChanges', cancelChanges);
