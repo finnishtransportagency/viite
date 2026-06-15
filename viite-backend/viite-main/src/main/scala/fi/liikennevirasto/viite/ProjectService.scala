@@ -2529,9 +2529,18 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       ).map(_.copy(createdBy = project.createdBy))
       )
 
+      println(s"ALL ROADWAYS WITHOUT FILTER ::::: ")
+      roadwaysToInsert.foreach(roadway => println(s"roadway: ${roadway.roadwayNumber}, startDate: ${roadway.startDate}, endDate: ${roadway.endDate}"))
+      println(s"FILTERED ROADWAYS TO INSERT ::::: ")
+      roadwayIds.foreach(r => println(s"roadwayId: $r"))
+
+      println(s"ALL LINEAR LOCATIONS TO INSERT ::::: ${nonTerminatingLinearLocationsToInsert.size}")
+      nonTerminatingLinearLocationsToInsert.foreach(ll => println(s"linear location: ${ll.roadwayNumber}, orderNumber: ${ll.orderNumber}, startMValue: ${ll.startMValue}, endMValue: ${ll.endMValue}"))
+
       // Insert new linear locations excluding linear locations of terminated links
       logger.debug(s"Inserting linear locations: ${nonTerminatingLinearLocationsToInsert.mkString(", ")}")
-      linearLocationDAO.create(nonTerminatingLinearLocationsToInsert, createdBy = project.createdBy)
+      val createdLinearLocationIds = linearLocationDAO.create(nonTerminatingLinearLocationsToInsert, createdBy = project.createdBy)
+      println(s"CREATED LINEAR LOCATION IDS (${createdLinearLocationIds.size}): ${createdLinearLocationIds.mkString(", ")}")
       roadwayIds
     }
 
@@ -2643,10 +2652,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       })
 
       // Exclude linear locations that are terminated from insertion
-      val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
-
+      val (terminatingLinearLocationsToInsert, nonTerminatingLinearLocationsToInsert) = linearLocationsToInsert.partition(ll => terminatedLinkIDs.contains(ll.linkId)) // linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep,
-        nonTerminatingLinearLocationsToInsert, project)
+        linearLocationsToInsert, project)
       handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
@@ -2654,6 +2662,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       val oldRoadParts = projectLinks.map(pl => pl.originalRoadPart)
       val newRoadParts = projectLinks.map(pl => pl.roadPart)
+
       (oldRoadParts ++ newRoadParts).distinct
     } catch {
       case e: ProjectValidationException =>
