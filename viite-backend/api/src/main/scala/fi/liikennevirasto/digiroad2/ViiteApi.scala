@@ -1053,10 +1053,12 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
+            val project = projectService.getSingleProjectById(links.projectId).get
             Map("success" -> true,
               "publishable" -> !response.contains("projectErrors"),
               "projectErrors" -> projectErrors,
-              "errorMessage" -> response.get("errorMessage"))
+              "errorMessage" -> response.get("errorMessage"),
+              "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id)))) // Convert formed parts to API format
           case _ => response
         }
       } catch {
