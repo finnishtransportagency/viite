@@ -2529,18 +2529,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       ).map(_.copy(createdBy = project.createdBy))
       )
 
-      println(s"ALL ROADWAYS WITHOUT FILTER ::::: ")
-      roadwaysToInsert.foreach(roadway => println(s"roadway: ${roadway.roadwayNumber}, startDate: ${roadway.startDate}, endDate: ${roadway.endDate}"))
-      println(s"FILTERED ROADWAYS TO INSERT ::::: ")
-      roadwayIds.foreach(r => println(s"roadwayId: $r"))
-
-      println(s"ALL LINEAR LOCATIONS TO INSERT ::::: ${nonTerminatingLinearLocationsToInsert.size}")
-      nonTerminatingLinearLocationsToInsert.foreach(ll => println(s"linear location: ${ll.roadwayNumber}, orderNumber: ${ll.orderNumber}, startMValue: ${ll.startMValue}, endMValue: ${ll.endMValue}"))
-
       // Insert new linear locations excluding linear locations of terminated links
       logger.debug(s"Inserting linear locations: ${nonTerminatingLinearLocationsToInsert.mkString(", ")}")
-      val createdLinearLocationIds = linearLocationDAO.create(nonTerminatingLinearLocationsToInsert, createdBy = project.createdBy)
-      println(s"CREATED LINEAR LOCATION IDS (${createdLinearLocationIds.size}): ${createdLinearLocationIds.mkString(", ")}")
+      linearLocationDAO.create(nonTerminatingLinearLocationsToInsert, createdBy = project.createdBy)
       roadwayIds
     }
 
