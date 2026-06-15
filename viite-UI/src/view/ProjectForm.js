@@ -445,7 +445,9 @@
       };
 
       var hasNoProjectLinks = function () {
-        return projectCollection.getReservedParts()?.length === 0 && projectCollection.getFormedParts()?.length === 0;
+        var reservedParts = projectCollection.getReservedParts();
+        var formedParts = projectCollection.getFormedParts();
+        return (!reservedParts || reservedParts.length === 0) && (!formedParts || formedParts.length === 0);
       };
 
       /**

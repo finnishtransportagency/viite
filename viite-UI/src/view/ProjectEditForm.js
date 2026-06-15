@@ -368,7 +368,7 @@
         selectedProjectLinkProperty.cleanIds();
         
         const { projectErrors } = response;
-        const containsFormedLinks = dataJson?.linkIds.length > 0 || dataJson?.ids.length > 0;
+        const containsFormedLinks = (dataJson && dataJson.linkIds && dataJson.linkIds.length > 0) || (dataJson && dataJson.ids && dataJson.ids.length > 0);
         rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
         if (Object.keys(projectErrors).length === 0) {
           // if no (high priority) validation errors are present, then show recalculate button and remove title
