@@ -20,7 +20,7 @@ module.exports = {
         "dateutil": "writable",
         "proj4": "writable",
         "interact": "writable",
-        "events": "writable",
+        "events": "writable"
     },
     "parserOptions": {
         "ecmaVersion": 2020,
@@ -51,7 +51,6 @@ module.exports = {
             "error",
             "never"
         ],
-        "consistent-return": "error",
         "consistent-this": ["warn", "me"],
         "curly": "off",
         "default-case": "error",

@@ -256,7 +256,6 @@ export function ProjectCollection(backend, startupParameters) {
     const onProjectLinksUpdated = callbacks.onProjectLinksUpdated || noop;
     const onProjectLinksUpdateFailed = callbacks.onProjectLinksUpdateFailed || noop;
     if (!_.isEmpty(links)) {
-      Spinner.show();
       const coordinates = getUserGeoLocation();
       const data = {
         projectId: currentProject.project.id,
@@ -280,7 +279,6 @@ export function ProjectCollection(backend, startupParameters) {
             onProjectLinksUpdateFailed(response.status);
           }
           new ConfirmPopup(response.errorMessage, { type: 'alert' });
-          Spinner.hide();
         }
       });
     }
@@ -295,7 +293,6 @@ export function ProjectCollection(backend, startupParameters) {
 
     if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
       if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
-        Spinner.show();
         resetEditedDistance();
         const ids = dataJson.ids;
         if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
@@ -311,7 +308,6 @@ export function ProjectCollection(backend, startupParameters) {
               }
             } else {
               new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
-              Spinner.hide();
             }
           });
         } else {
@@ -324,7 +320,6 @@ export function ProjectCollection(backend, startupParameters) {
               onProjectLinksUpdated(successObject);
             } else {
               new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
-              Spinner.hide();
             }
           });
         }
@@ -336,7 +331,7 @@ export function ProjectCollection(backend, startupParameters) {
     }
   };
 
-  function saveProjectLinks(changedLinks, statusCode, touchedEndDistance, callbacks = {}) {
+  function saveProjectLinks(changedLinks, statusCode, touchedEndDistance, callbacks = {}, formData = null) {
     const validUserGivenAddrMValues = function (linkId, userEndAddr) {
       if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
         const roadPartIds = getMultiProjectLinks(linkId);
@@ -381,12 +376,18 @@ export function ProjectCollection(backend, startupParameters) {
     const projectId = projectInfo.id;
     const coordinates = getUserGeoLocation();
     const roadAddressProjectForm = $('#roadAddressProjectForm');
-    const endDistance = $('#endDistance')[0];
+    const endDistance = formData ? { value: formData.endDistance } : ($('#endDistance')[0] || null);
     const hasDevRights = _.includes(startupParameters.roles, 'dev');
 
+    const getFormValue = (selector) => {
+      if (formData && formData[selector] !== undefined) return formData[selector];
+      const el = roadAddressProjectForm.find(selector)[0];
+      return el ? el.value : null;
+    };
+
     const getValueWithId = function (id) {
-      const element = roadAddressProjectForm.find(id)[0];
-      return element && element.value ? Number(element.value) : null;
+      const val = getFormValue(id);
+      return val !== null && val !== '' ? Number(val) : null;
     };
 
     const startAddrMValue = getValueWithId('#addrStart');
@@ -396,9 +397,13 @@ export function ProjectCollection(backend, startupParameters) {
     const startCp = getValueWithId('#startCPDropdown');
     const endCp = getValueWithId('#endCPDropdown');
     const sideCode = getValueWithId('#sideCodeDropdown');
-    const generateNewRoadwayNumber = roadAddressProjectForm.find('#newRoadwayNumber')[0]
-      ? roadAddressProjectForm.find('#newRoadwayNumber')[0].checked
-      : null;
+    let generateNewRoadwayNumber;
+    if (formData) {
+      generateNewRoadwayNumber = formData.newRoadwayNumber !== undefined ? formData.newRoadwayNumber : null;
+    } else {
+      const el = roadAddressProjectForm.find('#newRoadwayNumber')[0];
+      generateNewRoadwayNumber = el ? el.checked : null;
+    }
 
     let devToolData = null;
     if (hasDevRights) {
@@ -429,23 +434,23 @@ export function ProjectCollection(backend, startupParameters) {
       linkIds: linkIds,
       roadAddressChangeType: statusCode,
       projectId: projectId,
-      roadNumber: Number(roadAddressProjectForm.find('#tie')[0].value),
-      roadPartNumber: Number(roadAddressProjectForm.find('#osa')[0].value),
-      trackCode: Number(roadAddressProjectForm.find('#trackCodeDropdown')[0].value),
-      discontinuity: Number(roadAddressProjectForm.find('#discontinuityDropdown')[0].value),
+      roadNumber: Number(getFormValue('#tie')),
+      roadPartNumber: Number(getFormValue('#osa')),
+      trackCode: Number(getFormValue('#trackCodeDropdown')),
+      discontinuity: Number(getFormValue('#discontinuityDropdown')),
       roadEly: Number(0),
-      roadEvk: Number(roadAddressProjectForm.find('#elinvoimakeskus')[0].value),
+      roadEvk: Number(getFormValue('#elinvoimakeskus')),
       roadLinkSource: Number(_.head(changedLinks).roadLinkSource),
-      administrativeClass: Number(roadAddressProjectForm.find('#administrativeClassDropdown')[0].value),
+      administrativeClass: Number(getFormValue('#administrativeClassDropdown')),
       userDefinedEndAddressM: userDefinedEndAddressM,
       coordinates: coordinates,
-      roadName: roadAddressProjectForm.find('#roadName')[0].value,
+      roadName: getFormValue('#roadName'),
       reversed: reversed,
       devToolData: devToolData
     };
     if (dataJson.trackCode === Track.Unknown.value) {
       new ConfirmPopup('Tarkista ajoratakoodi', { type: 'alert' });
-      Spinner.hide();
+      return;
     }
 
     const changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {

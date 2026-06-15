@@ -51,7 +51,8 @@ export function ProjectActionMenu(options) {
       changeTableOpen: false,
       recalculated: false,
       publishable: false,
-      isProjectPublished: false
+      isProjectPublished: false,
+      isSaveInFlight: false
     }, initialState);
 
     const config = {
@@ -90,6 +91,16 @@ export function ProjectActionMenu(options) {
       state.isProjectPublished = currentProject && currentProject.project && 
         (currentProject.project.statusCode !== ProjectStatus.Incomplete.value && 
          currentProject.project.statusCode !== ProjectStatus.ErrorInViite.value);
+
+      // Short-circuit: a save is in-flight — keep all action buttons disabled until the
+      // background map fetch completes and ProjectMenu clears isSaveInFlight.
+      if (state.isSaveInFlight) {
+        const waitTitle = 'Odota tallennuksen valmistumista';
+        config.buttonStates.recalculate = { disabled: true, title: waitTitle };
+        config.buttonStates.changes    = { disabled: true, title: waitTitle };
+        config.buttonStates.send       = { disabled: true, title: waitTitle };
+        return;
+      }
 
       // Published projects: Always disable recalculate, always enable changes
       if (state.isProjectPublished) {

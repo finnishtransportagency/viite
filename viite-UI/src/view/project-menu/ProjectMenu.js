@@ -79,8 +79,13 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       hasErrors: false,
       changeTableOpen: false,
       recalculated: false,
-      publishable: false
+      publishable: false,
+      isSaveInFlight: false
     };
+
+    // Reference to the currently active ProjectActionMenu instance so we can
+    // call updateState() on it after the background fetch completes, without a full re-render.
+    let currentActionMenu = null;
 
     const syncRoadAddressingState = function (newState) {
       roadAddressingState = Object.assign({}, roadAddressingState, newState || {});
@@ -90,6 +95,9 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       let contentHtml = '';
       let footerHtml = '';
       let childInstance = null;
+
+      // Clear stale ActionMenu reference; will be set below if entering ROAD_ADDRESSING
+      currentActionMenu = null;
 
       setProjectLinkDiscardChanges();
 
@@ -141,6 +149,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
           contentHtml = actionMenu.renderContent();
           footerHtml = actionMenu.renderFooter();
+          currentActionMenu = actionMenu;
           childInstance = actionMenu;
           break;
         }
@@ -157,6 +166,40 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
           const onSave = () => {
             if (options.projectCollection) {
+              // Capture all form values before the DOM is replaced by updateUI.
+              const statusDropdownValue = $('#dropDown_0').val();
+              const form = $('#roadAddressProjectForm');
+              const capturedFormData = {
+                '#tie':                         form.find('#tie').val(),
+                '#osa':                         form.find('#osa').val(),
+                '#trackCodeDropdown':           form.find('#trackCodeDropdown').val(),
+                '#discontinuityDropdown':       form.find('#discontinuityDropdown').val(),
+                '#elinvoimakeskus':             form.find('#elinvoimakeskus').val(),
+                '#administrativeClassDropdown': form.find('#administrativeClassDropdown').val(),
+                '#roadName':                    form.find('#roadName').val(),
+                '#addrStart':                   form.find('#addrStart').val(),
+                '#addrEnd':                     form.find('#addrEnd').val(),
+                '#origAddrStart':               form.find('#origAddrStart').val(),
+                '#origAddrEnd':                 form.find('#origAddrEnd').val(),
+                '#startCPDropdown':             form.find('#startCPDropdown').val(),
+                '#endCPDropdown':               form.find('#endCPDropdown').val(),
+                '#sideCodeDropdown':            form.find('#sideCodeDropdown').val(),
+                endDistance:                    form.find('#endDistance').val(),
+                newRoadwayNumber:               form.find('#newRoadwayNumber').prop('checked') || null
+              };
+
+              // Immediately switch to ROAD_ADDRESSING with all buttons disabled so the user
+              // sees the action menu before the HTTP response and map fetch complete.
+              syncRoadAddressingState({
+                recalculated: false,
+                changeTableOpen: false,
+                hasFormedLinks: true,
+                isSaveInFlight: true
+              });
+              eventbus.trigger('roadAddressProject:linksSaving');
+              updateUI(States.ROAD_ADDRESSING, project.data, false);
+
+              // Fire the async save — onProjectLinksUpdated handles the HTTP response.
               projectLinkEditor.validateAndSave(options.projectCollection, additionalData.selectedLinks, {
                 onProjectLinksUpdated,
                 onProjectLinksUpdateFailed,
@@ -165,7 +208,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
               }, {
                 projectLinkLayer: options.projectLinkLayer,
                 selectedProjectLinkProperty: options.selectedProjectLinkProperty
-              });
+              }, statusDropdownValue, capturedFormData);
             }
           };
 
@@ -313,13 +356,17 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         recalculated: false,
         changeTableOpen: false,
         hasFormedLinks: true
+        // isSaveInFlight stays true — cleared only when the background fetch completes (onFetched)
       });
 
-      // Refresh the project links layer to update colors after saving
-      fetchProjectLinksForCurrentMap();
+      // Refresh the project error list in the already-visible ActionMenu without a full re-render.
+      // Button states remain disabled (isSaveInFlight) until the map fetch finishes.
+      if (currentActionMenu) {
+        currentActionMenu.updateState({});
+      }
 
-      Spinner.hide();
-      updateUI(States.ROAD_ADDRESSING, project.data, false);
+      // Fetch updated project links; fires roadAddressProject:fetched when done.
+      fetchProjectLinksForCurrentMap();
     };
 
     const onProjectLinksUpdateFailed = function (errorCode) {
@@ -330,7 +377,12 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         500: 'Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.'
       };
 
-      Spinner.hide();
+      // Clear isSaveInFlight so buttons are re-evaluated
+      syncRoadAddressingState({ isSaveInFlight: false });
+      if (currentActionMenu) {
+        currentActionMenu.updateState({ isSaveInFlight: false });
+      }
+
       new ConfirmPopup(errorMessages[errorCode] ||
         'Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.', {
         type: 'alert',
@@ -394,16 +446,28 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       Spinner.hide();
     };
 
+    // When the background fetch triggered by a link save finishes, re-enable action buttons.
+    // Guarded by isSaveInFlight so regular project-open fetches don't override button state.
+    const onFetched = function () {
+      if (!roadAddressingState.isSaveInFlight) return;
+      syncRoadAddressingState({ isSaveInFlight: false });
+      if (currentActionMenu && currentState === States.ROAD_ADDRESSING) {
+        currentActionMenu.updateState({ isSaveInFlight: false });
+      }
+    };
+
     eventbus.on('projectLink:clicked',                     onProjectLinkClicked);
     eventbus.on('projectLink:errorClicked',                onProjectLinkErrorClicked);
     eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
     eventbus.on('roadAddress:openProject',                 onOpenProject);
+    eventbus.on('roadAddressProject:fetched',              onFetched);
 
     const destroy = function () {
       eventbus.off('projectLink:clicked',                     onProjectLinkClicked);
       eventbus.off('projectLink:errorClicked',                onProjectLinkErrorClicked);
       eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
       eventbus.off('roadAddress:openProject',                 onOpenProject);
+      eventbus.off('roadAddressProject:fetched',              onFetched);
     };
 
     return {

@@ -37,6 +37,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     const lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     let isNotEditingData = true;
     let isActiveLayer = false;
+    let isSaveInFlight = false;
 
     const projectLinkStyler = new ProjectLinkStyler();
 
@@ -380,6 +381,10 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       if (event.dragging) {
         return;
       }
+      if (isSaveInFlight) {
+        const hasFeature = map.hasFeatureAtPixel(pixel, { layerFilter: function (l) { return layers.includes(l); } });
+        map.getViewport().style.cursor = hasFeature ? 'wait' : '';
+      }
       eventbus.trigger('overlay:update', event, pixel);
     });
 
@@ -412,9 +417,12 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     }
 
     const onProjectLinksFetched = function () {
+      isSaveInFlight = false;
+      map.getViewport().style.cursor = '';
       me.redraw();
       _.defer(function () {
         highlightFeatures();
+        eventbus.trigger('roadAddressProject:fetched');
       });
     };
 
@@ -589,6 +597,10 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
       isNotEditingData = notEditingData;
+    });
+
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
+      isSaveInFlight = true;
     });
 
     me.toggleLayersVisibility(true);

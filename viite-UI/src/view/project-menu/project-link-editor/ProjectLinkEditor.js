@@ -295,9 +295,36 @@ export function ProjectLinkEditor(canUseDevTools) {
         }
       };
 
-      const validateAndSave = (projectCollection, selectedLinks, callbacks = {}, context = {}) => {
-        const statusDropdownValue = $('#dropDown_0').val();
+      const validateAndSave = (projectCollection, selectedLinks, callbacks = {}, context = {}, capturedStatusValue = null, preBuiltFormData = null) => {
+        const statusDropdownValue = capturedStatusValue !== null ? capturedStatusValue : $('#dropDown_0').val();
         const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
+        if (!changeType) {
+          console.error('validateAndSave: unknown changeType for dropdown value', statusDropdownValue);
+          return;
+        }
+        // Use pre-captured form data when provided (caller already destroyed the DOM),
+        // otherwise capture from live DOM now.
+        const capturedFormData = preBuiltFormData || (() => {
+          const form = $('#roadAddressProjectForm');
+          return {
+            '#tie':                         form.find('#tie').val(),
+            '#osa':                         form.find('#osa').val(),
+            '#trackCodeDropdown':           form.find('#trackCodeDropdown').val(),
+            '#discontinuityDropdown':       form.find('#discontinuityDropdown').val(),
+            '#elinvoimakeskus':             form.find('#elinvoimakeskus').val(),
+            '#administrativeClassDropdown': form.find('#administrativeClassDropdown').val(),
+            '#roadName':                    form.find('#roadName').val(),
+            '#addrStart':                   form.find('#addrStart').val(),
+            '#addrEnd':                     form.find('#addrEnd').val(),
+            '#origAddrStart':               form.find('#origAddrStart').val(),
+            '#origAddrEnd':                 form.find('#origAddrEnd').val(),
+            '#startCPDropdown':             form.find('#startCPDropdown').val(),
+            '#endCPDropdown':               form.find('#endCPDropdown').val(),
+            '#sideCodeDropdown':            form.find('#sideCodeDropdown').val(),
+            endDistance:                    form.find('#endDistance').val(),
+            newRoadwayNumber:               form.find('#newRoadwayNumber').prop('checked') || null
+          };
+        })();
         const tmpDirty = projectCollection ? projectCollection.getTmpDirty() : [];
 
         if (context.projectLinkLayer) {
@@ -325,7 +352,7 @@ export function ProjectLinkEditor(canUseDevTools) {
               onProjectLinksCreateSuccess: callbacks.onProjectLinksCreateSuccess,
               onProjectLinksUpdated: callbacks.onProjectLinksUpdated,
               onProjectLinksUpdateFailed: callbacks.onProjectLinksUpdateFailed
-            });
+            }, capturedFormData);
           }
         }
         return true;
