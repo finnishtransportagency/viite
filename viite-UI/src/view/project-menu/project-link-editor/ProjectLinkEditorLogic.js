@@ -21,13 +21,20 @@ export function createProjectLinkEditorLogic(dependencies) {
 
   const checkInputs = (projectChangeTable) => {
     const rootElement = $(menuSelector);
+    const saveButton = rootElement.find('#saveButton');
+
+    const selectedChangeType = $('#dropDown_0').val();
+    if (selectedChangeType === RoadAddressChangeType.Revert.description) {
+      saveButton.prop('disabled', projectChangeTable.isChangeTableOpen());
+      return;
+    }
+
     const tieValue = _.trim($('#tie').val() || '');
     const osaValue = _.trim($('#osa').val() || '');
     const trackValue = _.trim($('#trackCodeDropdown').val() || '');
     const roadNameValue = _.trim($('#roadName').val() || '');
     const filled = tieValue !== '' && osaValue !== '' && trackValue !== '' && trackValue !== '99' && roadNameValue !== '';
 
-    const saveButton = rootElement.find('#saveButton');
     saveButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
   };
 
@@ -41,6 +48,8 @@ export function createProjectLinkEditorLogic(dependencies) {
         $(`#dropDown_0 option[value=${RoadAddressChangeType.Unchanged.description}]`).attr('selected', 'selected').change();
         rootElement.find('#distanceValue').prop('hidden', true);
         break;
+      case RoadAddressChangeType.Undefined.value:
+        // fall through: a brand-new (Undefined/99) link can only become New
       case RoadAddressChangeType.New.value:
         dropdown_0_new.attr('selected', 'selected').change();
         rootElement.find('.new-road-address').prop('hidden', false);

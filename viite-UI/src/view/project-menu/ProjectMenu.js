@@ -46,6 +46,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       project.isNew = false;
       editFlag = false;
       additionalData = { selectedLinks: [] };
+      roadAddressingState = { hasErrors: false, changeTableOpen: false, recalculated: false, publishable: false };
       
       // Clean up MenuContainer and release DOM references
 
@@ -121,6 +122,11 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
         }
 
         case States.ROAD_ADDRESSING: {
+          if (roadAddressingState.hasFormedLinks === undefined) {
+            const links = options.projectCollection ? options.projectCollection.getAll() : [];
+            syncRoadAddressingState({ hasFormedLinks: links.some(l => l.status !== 0) });
+          }
+
           const actionMenu = new ProjectActionMenu({
             ...options,
             eventbus: eventbus,
@@ -305,7 +311,8 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
       syncRoadAddressingState({
         recalculated: false,
-        changeTableOpen: false
+        changeTableOpen: false,
+        hasFormedLinks: true
       });
 
       // Refresh the project links layer to update colors after saving
@@ -339,6 +346,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       if (options.projectCollection) {
         options.projectCollection.setTmpDirty([]);
       }
+      syncRoadAddressingState({ hasFormedLinks: true });
       eventbus.trigger('projectChangeTable:refresh');
       updateUI(States.ROAD_ADDRESSING, project.data, false);
     };
@@ -365,6 +373,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const onOpenProject = function (result) {
       project.data = result.project;
       project.isNew = false;
+      syncRoadAddressingState({ hasFormedLinks: undefined });
 
       if (options.projectCollection) {
         options.projectCollection.setAndWriteProjectErrorsToUser(result.projectErrors || []);

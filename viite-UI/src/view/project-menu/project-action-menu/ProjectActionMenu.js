@@ -118,7 +118,9 @@ export function ProjectActionMenu(options) {
           config.buttonStates.recalculate = { disabled: true, title: 'Avaa yhteenveto ensin' };
           config.buttonStates.changes = { disabled: false, title: '' };
         } else {
-          config.buttonStates.recalculate = { disabled: false, title: '' };
+          config.buttonStates.recalculate = state.hasFormedLinks !== false
+            ? { disabled: false, title: '' }
+            : { disabled: true, title: config.disabledTitles.recalculate };
           config.buttonStates.changes = { disabled: true, title: 'Päivitä etäisyyslukemat ensin' };
         }
       }
