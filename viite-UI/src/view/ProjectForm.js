@@ -15,14 +15,13 @@
       recalculatedAfterChangesFlag = bool;
     });
 
-    eventbus.on('roadAddressProject:projectLinkSaved', function(containsProjectLinks) {
+    eventbus.on('roadAddressProject:projectLinkSaved', function(projectId, isPublishable, containsFormedLinks) {
       // Get the current state of the validate button if it exists
       $('#actionButtons').empty();
       const $buttons = $('.project-form.form-controls');
       const $validateButton = $buttons.find('#validate-button');
       const hasValidationButton = $validateButton.length > 0;
       const isValidationButtonVisible = hasValidationButton && $validateButton.is(':visible');
-
 
       // Rebuild the buttons with proper states
       let buttonsHtml = '';
@@ -49,9 +48,8 @@
       // Update button states based on the same logic as in buttonsWhenReOpenCurrent
       const isChangeTableOpen = $('.change-table-frame').is(':visible');
       const hasRecalculated = getRecalculatedAfterChangesFlag();
-      const hasNoProjectLinks = !containsProjectLinks;
 
-      if (hasNoProjectLinks) {
+      if (!containsFormedLinks) {
         formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
         formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
         formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
@@ -447,7 +445,9 @@
       };
 
       var hasNoProjectLinks = function () {
-        return projectCollection.getReservedParts().length === 0 && projectCollection.getFormedParts().length === 0;
+        var reservedParts = projectCollection.getReservedParts();
+        var formedParts = projectCollection.getFormedParts();
+        return (!reservedParts || reservedParts.length === 0) && (!formedParts || formedParts.length === 0);
       };
 
       /**
@@ -631,8 +631,8 @@
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('roadAddressProject:reOpenCurrent', function () {
-        reOpenCurrent();
+      eventbus.on('roadAddressProject:reOpenCurrent', function (wasCancelled) {
+        reOpenCurrent(wasCancelled);
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
@@ -864,13 +864,18 @@
         $('.wrapper').remove();
         eventbus.trigger('roadAddress:projectLinksEdited');
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-        eventbus.trigger('roadAddressProject:reOpenCurrent');
+        eventbus.trigger('roadAddressProject:reOpenCurrent', true);
       };
 
-      var reOpenCurrent = function () {
+      var reOpenCurrent = function (wasCancelled) {
         rootElement.empty();
         selectedProjectLinkProperty.setDirty(false);
-        nextStage();
+        if (wasCancelled) {
+          currentProject.isDirty = false;
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
+        } else {
+          nextStage();
+        }
         if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
           buttonsWhenInspectingUneditableProject();
         } else {

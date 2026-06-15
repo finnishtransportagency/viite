@@ -368,14 +368,11 @@
         selectedProjectLinkProperty.cleanIds();
         
         const { projectErrors } = response;
-        const containsProjectLinks = !!(dataJson && (dataJson.linkIds && dataJson.linkIds.length || dataJson.ids && dataJson.ids.length));
-
-        // show disabled buttons
+        const containsFormedLinks = (dataJson && dataJson.linkIds && dataJson.linkIds.length > 0) || (dataJson && dataJson.ids && dataJson.ids.length > 0);
         rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
-        
         if (Object.keys(projectErrors).length === 0) {
           // if no (high priority) validation errors are present, then show recalculate button and remove title
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", !containsProjectLinks, "");
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", !containsFormedLinks, "");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         } else {
@@ -385,11 +382,7 @@
         // changes made to project links, set recalculated flag to false
         eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', false);
         applicationModel.removeSpinner();
-        if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', containsProjectLinks);
-        } else {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', containsProjectLinks);
-        }
+        eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable, containsFormedLinks);
       });
 
       eventbus.on('roadAddress:projectSentSuccess', () => {
@@ -442,12 +435,9 @@
         selectedProjectLinkProperty.clean();
         $('.wrapper').remove();
         
-        // Trigger cleanup events
-        [
-          'roadAddress:projectLinksEdited',
-          'roadAddressProject:toggleEditingRoad',
-          'roadAddressProject:reOpenCurrent'
-        ].forEach(event => eventbus.trigger(event, event.includes('toggleEditingRoad') ? true : undefined));
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+        eventbus.trigger('roadAddressProject:reOpenCurrent', true);
       };
 
       eventbus.on('roadAddressProject:discardChanges', cancelChanges);

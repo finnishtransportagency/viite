@@ -390,7 +390,7 @@
     me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function (response) {
       isNotEditingData = true;
       selectedProjectLinkProperty.setDirty(false);
-      eventbus.trigger('roadAddress:projectLinksUpdated', response);
+      eventbus.trigger('roadAddress:projectLinksUpdated', response, { linkIds: response.formedInfo || [] });
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
 
