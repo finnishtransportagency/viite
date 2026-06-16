@@ -260,6 +260,7 @@ export function ProjectLinkEditor(canUseDevTools) {
       }
 
       updateForm(selected, projectCollection);
+      updateFormControls($('#dropDown_0').val(), selected, projectCollection, { markDirty: false });
       disableFormInputs();
       isInitializing = false;
       

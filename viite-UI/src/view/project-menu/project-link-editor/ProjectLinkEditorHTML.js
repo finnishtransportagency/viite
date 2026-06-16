@@ -87,10 +87,6 @@ export function createProjectLinkEditorHTML(dependencies) {
   };
 
   const renderChangeTypeSelect = (selected, project) => {
-    const defaultOption = selected[0].status === RoadAddressChangeType.NotHandled.value
-      ? RoadAddressChangeType.NotHandled.description
-      : RoadAddressChangeType.Undefined.description;
-
     const changeTypes = [
       RoadAddressChangeType.Unchanged,
       RoadAddressChangeType.Transfer,
@@ -101,6 +97,7 @@ export function createProjectLinkEditorHTML(dependencies) {
     ];
 
     const options = [
+      { value: '', text: 'Valitse', selected: true },
       ...changeTypes.map(type => {
         const modifiers = defineOptionModifiers(type.description, selected);
         return {
@@ -108,7 +105,7 @@ export function createProjectLinkEditorHTML(dependencies) {
           text: type.displayText,
           id: `drop_0_${type.description}`,
           disabled: modifiers.includes('disabled'),
-          selected: modifiers.includes('selected')
+          selected: false
         };
       })
     ];
@@ -117,7 +114,6 @@ export function createProjectLinkEditorHTML(dependencies) {
     return dropdown({
       id: 'dropDown_0',
       options: options,
-      defaultValue: defaultOption,
       className: 'project-link-change-type-dropdown',
       disabled: !projectEditable
     });

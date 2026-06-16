@@ -39,43 +39,17 @@ export function createProjectLinkEditorLogic(dependencies) {
   };
 
   const changeDropDownValue = (statusCode, selectedLinks) => {
-    const dropdown_0_new = $(`#dropDown_0 option[value=${RoadAddressChangeType.New.description}]`);
-    const rootElement = $(menuSelector);
-
-    switch (statusCode) {
-      case RoadAddressChangeType.Unchanged.value:
-        dropdown_0_new.prop('disabled', true);
-        $(`#dropDown_0 option[value=${RoadAddressChangeType.Unchanged.description}]`).attr('selected', 'selected').change();
-        rootElement.find('#distanceValue').prop('hidden', true);
-        break;
-      case RoadAddressChangeType.Undefined.value:
-        // fall through: a brand-new (Undefined/99) link can only become New
-      case RoadAddressChangeType.New.value:
-        dropdown_0_new.attr('selected', 'selected').change();
-        rootElement.find('.new-road-address').prop('hidden', false);
-        rootElement.find('#distanceValue').prop('hidden', false);
-        if (selectedLinks[0].id !== 0) {
-          rootElement.find('.changeDirectionDiv').prop('hidden', false);
-        }
-        break;
-      case RoadAddressChangeType.Transfer.value:
-        dropdown_0_new.prop('disabled', true);
-        $(`#dropDown_0 option[value=${RoadAddressChangeType.Transfer.description}]`).attr('selected', 'selected').change();
-        rootElement.find('.changeDirectionDiv').prop('hidden', true);
-        rootElement.find('#distanceValue').prop('hidden', true);
-        break;
-      case RoadAddressChangeType.Numbering.value:
-        $(`#dropDown_0 option[value=${RoadAddressChangeType.Numbering.description}]`).attr('selected', 'selected').change();
-        rootElement.find('#distanceValue').prop('hidden', true);
-        break;
-      case RoadAddressChangeType.Terminated.value:
-        $(`#dropDown_0 option[value=${RoadAddressChangeType.Terminated.description}]`).attr('selected', 'selected').change();
-        rootElement.find('#distanceValue').prop('hidden', true);
-        break;
-      default:
-        rootElement.find('#distanceValue').prop('hidden', true);
-        break;
+    if (statusCode === RoadAddressChangeType.Undefined.value) {
+      // Link has no road address: can only become "New"
+      $('#dropDown_0').val(RoadAddressChangeType.New.description);
+    } else if (statusCode !== RoadAddressChangeType.NotHandled.value) {
+      // Link has already been processed: restore its action type
+      const matchingType = _.find(RoadAddressChangeType, t => t.value === statusCode);
+      if (matchingType) {
+        $('#dropDown_0').val(matchingType.description);
+      }
     }
+    // NotHandled (0): reserved but unprocessed — leave at "Valitse" placeholder.
 
     if (selectedLinks && selectedLinks.length > 0) {
       $('#discontinuityDropdown').val(selectedLinks[selectedLinks.length - 1].discontinuity);

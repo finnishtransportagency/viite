@@ -38,6 +38,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     let isNotEditingData = true;
     let isActiveLayer = false;
     let isSaveInFlight = false;
+    let savingProjectLinkIds = [];
 
     const projectLinkStyler = new ProjectLinkStyler();
 
@@ -382,8 +383,12 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         return;
       }
       if (isSaveInFlight) {
-        const hasFeature = map.hasFeatureAtPixel(pixel, { layerFilter: function (l) { return layers.includes(l); } });
-        map.getViewport().style.cursor = hasFeature ? 'wait' : '';
+        const savingFeatureHovered = map.forEachFeatureAtPixel(pixel, function (feature) {
+          return isSavingFeature(feature);
+        }, {
+          layerFilter: function (l) { return layers.includes(l); }
+        });
+        map.getViewport().style.cursor = savingFeatureHovered ? 'wait' : '';
       }
       eventbus.trigger('overlay:update', event, pixel);
     });
@@ -416,8 +421,32 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       else return false;
     }
 
+    function getSavingProjectLinkIds() {
+      return _.chain(projectCollection.getDirty())
+        .map(function (link) {
+          if (!_.isObject(link)) {
+            return link;
+          }
+          return !_.isUndefined(link.id) && link.id > 0 ? link.id : link.linkId;
+        })
+        .filter(function (id) {
+          return !_.isUndefined(id) && !_.isNull(id);
+        })
+        .uniq()
+        .value();
+    }
+
+    function isSavingFeature(feature) {
+      if (_.isUndefined(feature) || _.isUndefined(feature.linkData)) {
+        return false;
+      }
+      const featureId = getSelectedId(feature.linkData);
+      return _.includes(savingProjectLinkIds, featureId);
+    }
+
     const onProjectLinksFetched = function () {
       isSaveInFlight = false;
+      savingProjectLinkIds = [];
       map.getViewport().style.cursor = '';
       me.redraw();
       _.defer(function () {
@@ -601,6 +630,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
       isSaveInFlight = true;
+      savingProjectLinkIds = getSavingProjectLinkIds();
     });
 
     me.toggleLayersVisibility(true);
