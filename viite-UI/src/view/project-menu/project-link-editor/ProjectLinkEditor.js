@@ -143,13 +143,13 @@ export function ProjectLinkEditor(canUseDevTools) {
         FormState.setChangeType(e.target.value);
         updateFormControls(e.target.value, selected, projectCollection, { markDirty: !isInitializing });
         if (projectChangeTable) {
-          checkInputs(projectChangeTable);
+          checkInputs(projectChangeTable, project ? project.statusCode : null);
         }
       });
 
       rootElement.on('change.projectLinkEditor', '#trackCodeDropdown, #administrativeClassDropdown', () => {
         if (projectChangeTable) {
-          checkInputs(projectChangeTable);
+          checkInputs(projectChangeTable, project ? project.statusCode : null);
         }
       });
       
@@ -161,7 +161,7 @@ export function ProjectLinkEditor(canUseDevTools) {
         const dropdown_0 = $('#dropDown_0');
         const roadNameField = $('#roadName');
         if (projectChangeTable) {
-          checkInputs(projectChangeTable);
+          checkInputs(projectChangeTable, project ? project.statusCode : null);
         }
         FormState.setUnsavedChanges(true);
         markSelectedLinksDirty();
@@ -187,7 +187,7 @@ export function ProjectLinkEditor(canUseDevTools) {
               roadNameField.prop('disabled', false);
             }
             if (projectChangeTable) {
-              checkInputs(projectChangeTable);
+              checkInputs(projectChangeTable, project ? project.statusCode : null);
             }
           });
         }
@@ -195,7 +195,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 
       rootElement.on('keyup.projectLinkEditor input.projectLinkEditor', '#roadName', function () {
         if (projectChangeTable) {
-          checkInputs(projectChangeTable);
+          checkInputs(projectChangeTable, project ? project.statusCode : null);
         }
         FormState.setNameEdited($('#roadName').val() !== '');
       });
@@ -265,7 +265,7 @@ export function ProjectLinkEditor(canUseDevTools) {
       isInitializing = false;
       
       if (projectChangeTable) {
-        checkInputs(projectChangeTable);
+        checkInputs(projectChangeTable, project ? project.statusCode : null);
       }
     };
 

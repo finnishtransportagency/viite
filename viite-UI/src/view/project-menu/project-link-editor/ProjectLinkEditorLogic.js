@@ -5,7 +5,8 @@ export function createProjectLinkEditorLogic(dependencies) {
     RoadAddressChangeType,
     CalibrationCode,
     formState,
-    menuSelector = '#menu-container'
+    menuSelector = '#menu-container',
+    editableStatus = [0, 1]
   } = dependencies;
 
   const transitionModifiers = (targetStatus, currentStatus) => {
@@ -19,9 +20,15 @@ export function createProjectLinkEditorLogic(dependencies) {
     return transitionModifiers(targetRoadAddressChangeType, roadAddressChangeType);
   };
 
-  const checkInputs = (projectChangeTable) => {
+  const checkInputs = (projectChangeTable, projectStatus = null) => {
     const rootElement = $(menuSelector);
     const saveButton = rootElement.find('#saveButton');
+
+    // Disable save button if project status is not editable (not in codes 0 or 1)
+    if (projectStatus !== null && !_.includes(editableStatus, projectStatus)) {
+      saveButton.prop('disabled', true);
+      return;
+    }
 
     const selectedChangeType = $('#dropDown_0').val();
     if (selectedChangeType === RoadAddressChangeType.Revert.description) {

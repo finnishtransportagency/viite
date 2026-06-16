@@ -174,7 +174,8 @@ export function ProjectDetailsForm(callbacks = {}) {
       const isProjectPublished = isPublishedProject(project);
       const isFormIncomplete = !(project && project.name && project.startDate);
       const isNewProject = project.name === '';
-      const isSaveDisabled = isProjectPublished || isFormIncomplete || !hasUnsavedChanges;
+      const isProjectNotEditable = !isProjectEditable(project) && !isNewProject;
+      const isSaveDisabled = isProjectPublished || isFormIncomplete || !hasUnsavedChanges || isProjectNotEditable;
       const showDelete = !isNewProject && ![ProjectStatus.Accepted.value, ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode);
       const actionButton = (isNewProject || !isEditMode)
         ? button({ id: 'generalNext', label: 'Jatka toimenpiteisiin', className: 'save btn-primary btn-save action-button', disabled: isFormIncomplete, onClick: () => {} })
@@ -217,6 +218,14 @@ export function ProjectDetailsForm(callbacks = {}) {
       const isDateValid = !hasDate || dateRegex.test(dateValue);
       const shouldDisableButton = isFormIncomplete || !isDateValid;
       $('#generalNext').prop('disabled', shouldDisableButton);
+    };
+
+    const editableStatusCodes = [0, 1]; // ErrorInViite and Incomplete
+    
+    const isProjectEditable = function (projectData) {
+      return projectData && 
+        !_.isUndefined(projectData.statusCode) && 
+        editableStatusCodes.includes(projectData.statusCode);
     };
 
     const isPublishedProject = function (projectData) {
@@ -280,6 +289,17 @@ export function ProjectDetailsForm(callbacks = {}) {
     const bindEvents = function (project, projCollection, currentProject) {
       const projectData = project || { name: '', startDate: '', additionalInfo: '', id: null };
       markAsSaved();
+      
+      // Disable form inputs if project is not editable (status codes other than 0 or 1)
+      const isNewProject = projectData.name === '';
+      if (!isNewProject && !isProjectEditable(projectData)) {
+        const rootElement = $('#menu-container');
+        _.defer(() => {
+          rootElement.find('#roadAddressProject input, #roadAddressProject textarea').prop('disabled', true);
+          rootElement.find('.reservation-container input, .reservation-container button').prop('disabled', true);
+          rootElement.find('#saveProject').prop('disabled', true);
+        });
+      }
       
       // Clean up old listeners before binding new ones (disposable pattern)
       if (startDatePicker) {
@@ -586,7 +606,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 
     const bindDeleteRoadPartHandlers = function (projCollection, currentProject) {
 
-      const isProjectEditable = function () {
+      const canDeleteRoadParts = function () {
         const ProjectStatus = ViiteEnumerations.ProjectStatus;
         const editableStatus = [ProjectStatus.Incomplete.value, ProjectStatus.Unknown.value];
         return _.isUndefined(currentProject) || editableStatus.includes(currentProject.statusCode);
@@ -644,7 +664,7 @@ export function ProjectDetailsForm(callbacks = {}) {
         const roadPartNumber = $(this).attr('data-roadpartnumber') || $(this).data('roadpartnumber');
         const isReserved = $(this).hasClass('reservedList');
 
-        if (isProjectEditable()) {
+        if (canDeleteRoadParts()) {
           const partsList = isReserved ? projCollection.getReservedParts() : projCollection.getFormedParts();
           
           // Verify if the part exists in the collection to determine if confirmation is needed
