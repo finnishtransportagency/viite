@@ -11,10 +11,6 @@
 import { ViiteEnumerations } from "@utils/ViiteEnumerations.js";
 import { eventbus } from "@utils/Eventbus.js";
 
-const specialSelectionTypes = [
-  ViiteEnumerations.SelectionType.Unknown.value
-];
-
 const state = {
   zoomLevel: undefined,
   selectedLayer: undefined,
@@ -31,26 +27,6 @@ const state = {
     mainMenu: undefined
   }
 };
-
-function getSelectionType() {
-  return state.selectionType;
-}
-
-function setSelectionType(type) {
-  state.selectionType = type;
-  eventbus.trigger("selectionType:changed", type);
-}
-
-function selectionTypeIs(type) {
-  if (
-    _.isUndefined(state.selectionType?.value) ||
-    _.isUndefined(type?.value)
-  ) {
-    return false;
-  }
-
-  return state.selectionType.value === type.value;
-}
 
 function setZoomLevel(level) {
   state.zoomLevel = Math.round(level);
@@ -156,30 +132,17 @@ function refreshMap(zoomLevel, bbox, center) {
 
 export {
   refreshMap,
-
   getUserGeoLocation,
-
   setZoomLevel,
   getZoomLevel,
-
   getRoadVisibility,
   toggleRoadVisibility,
-
   selectLayer,
   getSelectedLayer,
-
   getCurrentLocation,
-
-  setSelectionType,
-  getSelectionType,
-  selectionTypeIs,
-
   getSessionUsername,
   getSessionUserRoles,
   setUserData,
-
   setStartupParameters,
-  getStartupParameters,
-
-  specialSelectionTypes
+  getStartupParameters
 };

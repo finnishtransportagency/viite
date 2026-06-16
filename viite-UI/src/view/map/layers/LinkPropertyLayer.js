@@ -15,7 +15,7 @@ import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { Layer } from './Layer.js';
 import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
-import { specialSelectionTypes, getSelectionType, getSelectedLayer, getRoadVisibility, selectionTypeIs } from '@model/ApplicationModel.js';
+import { getSelectedLayer, getRoadVisibility } from '@model/ApplicationModel.js';
 
 // These are used to expose the internal functions to other files
 let fetchLinkPropertiesBridge = function () {};
@@ -40,7 +40,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     const unAddressedRoadLayerVector = new ol.source.Vector({});
     const reservedRoadVector = new ol.source.Vector({});
     const selectedRoadVector = new ol.source.Vector({});
-    const SelectionType = ViiteEnumerations.SelectionType;
     let isActiveLayer = false;
     let cachedMarker = null;
 
@@ -309,22 +308,19 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
     });
 
     map.on('click', function (event) {
-      //The addition of the check for features on point and the selection mode
-      // seem to fix the problem with the clicking on the empty map after being in the defloating process would allow a deselection and enabling of the menus
       if (window.getSelection) {
         window.getSelection().removeAllRanges();
       } //removes selection from forms
       else if (document.selection) {
         document.selection.empty();
       }
+
       const hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function (feature) {
         return feature;
       }));
-      const nonSpecialSelectionType = !_.includes(specialSelectionTypes, getSelectionType().value);
-      if (isActiveLayer) {
-        if (hasFeatureOnPoint && nonSpecialSelectionType) {
-          selectedLinkProperty.close();
-        }
+
+      if (isActiveLayer && hasFeatureOnPoint) {
+        selectedLinkProperty.close();
       }
     });
 
@@ -576,9 +572,6 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       }
       clearHighlights();
       setGeneralOpacity(1);
-      if (selectionTypeIs(SelectionType.Unknown)) {
-        setGeneralOpacity(0.2);
-      }
     };
 
     const fetchLinkProperties = function () {
