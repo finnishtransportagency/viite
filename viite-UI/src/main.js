@@ -3,14 +3,14 @@
  * Handles application startup, map setup, layer management, and component initialization.
  */
 
-import { setStartupParameters, setUserData, refreshMap } from '@model/ApplicationModel.js';
+import { setStartupParameters, setUserData } from '@model/ApplicationModel.js';
 import { Backend } from '@utils/BackendUtils.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
 import { Header } from '@view/header/Header.js';
 import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { MainMenu } from '@view/MainMenu.js';
-import { MapView } from '@view/map/MapView.js';
+import { MapView, refreshMap } from '@view/map/MapView.js';
 import { SearchPanel } from '@view/search-panel/SearchPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { NodeLayer } from '@view/map/layers/NodeLayer.js';

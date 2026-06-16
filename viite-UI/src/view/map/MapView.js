@@ -7,7 +7,46 @@
 import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { getRoadVisibility, refreshMap } from '@model/ApplicationModel.js';
+import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
+
+const mapState = {
+  zoomLevel: undefined,
+  centerLonLat: undefined
+};
+
+export function setZoomLevel(level) {
+  mapState.zoomLevel = Math.round(level);
+}
+
+export function getZoomLevel() {
+  return mapState.zoomLevel;
+}
+
+export function getCurrentLocation() {
+  return mapState.centerLonLat;
+}
+
+export function getUserGeoLocation() {
+  if (!mapState.centerLonLat) return undefined;
+
+  return {
+    x: mapState.centerLonLat[0],
+    y: mapState.centerLonLat[1],
+    zoom: mapState.zoomLevel
+  };
+}
+
+export function refreshMap(zoomLevel, bbox, center) {
+  setZoomLevel(zoomLevel);
+  mapState.centerLonLat = center;
+
+  eventbus.trigger('map:refresh', {
+    selectedLayer: getSelectedLayer(),
+    zoom: mapState.zoomLevel,
+    bbox,
+    center
+  });
+}
 
 export function moveMapToCoordinates(map, position) {
   let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));

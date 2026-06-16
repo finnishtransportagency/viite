@@ -5,7 +5,8 @@
 /* eslint-disable prefer-named-capture-group */
 import { eventbus } from '@utils/Eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { selectLayer, refreshMap } from '@model/ApplicationModel.js';
+import { selectLayer } from '@model/ApplicationModel.js';
+import { refreshMap } from '@view/map/MapView.js';
 
 const LAYER_LINK_PROPERTY = 'linkProperty';
 const LAYER_ROAD_ADDRESS_PROJECT = 'roadAddressProject';

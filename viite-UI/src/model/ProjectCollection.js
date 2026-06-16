@@ -12,7 +12,7 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
-import { getUserGeoLocation } from '@model/ApplicationModel.js';
+import { getUserGeoLocation } from '@view/map/MapView.js';
 
 export function ProjectCollection(backend, startupParameters) {
   const noop = function () {};

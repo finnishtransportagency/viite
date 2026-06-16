@@ -12,7 +12,7 @@ import { Backend } from '@utils/BackendUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { LocationInputParser } from '@utils/LocationInputParser.js';
-import { getCurrentLocation } from '@model/ApplicationModel.js';
+import { getCurrentLocation } from '@view/map/MapView.js';
 
 let backendService;
 

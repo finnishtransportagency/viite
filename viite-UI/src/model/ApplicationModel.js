@@ -12,9 +12,7 @@ import { ViiteEnumerations } from "@utils/ViiteEnumerations.js";
 import { eventbus } from "@utils/Eventbus.js";
 
 const state = {
-  zoomLevel: undefined,
   selectedLayer: undefined,
-  centerLonLat: undefined,
   selectionType: ViiteEnumerations.SelectionType.All,
   sessionUsername: "",
   sessionUserRoles: "",
@@ -28,15 +26,6 @@ const state = {
   }
 };
 
-function setZoomLevel(level) {
-  state.zoomLevel = Math.round(level);
-  eventbus.trigger("zoom:changed", state.zoomLevel);
-}
-
-function getZoomLevel() {
-  return state.zoomLevel;
-}
-
 function toggleRoadVisibility() {
   state.roadsVisibility = !state.roadsVisibility;
   eventbus.trigger("roadsVisibility:changed", state.roadsVisibility);
@@ -46,22 +35,8 @@ function getRoadVisibility() {
   return state.roadsVisibility;
 }
 
-function getUserGeoLocation() {
-  if (!state.centerLonLat) return undefined;
-
-  return {
-    x: state.centerLonLat[0],
-    y: state.centerLonLat[1],
-    zoom: state.zoomLevel
-  };
-}
-
 function getSelectedLayer() {
   return state.selectedLayer;
-}
-
-function getCurrentLocation() {
-  return state.centerLonLat;
 }
 
 function getSessionUsername() {
@@ -118,28 +93,11 @@ function selectLayer(layer, toggleStart, noSave) {
   }
 }
 
-function refreshMap(zoomLevel, bbox, center) {
-  setZoomLevel(zoomLevel);
-  state.centerLonLat = center;
-
-  eventbus.trigger("map:refresh", {
-    selectedLayer: state.selectedLayer,
-    zoom: state.zoomLevel,
-    bbox,
-    center
-  });
-}
-
 export {
-  refreshMap,
-  getUserGeoLocation,
-  setZoomLevel,
-  getZoomLevel,
   getRoadVisibility,
   toggleRoadVisibility,
   selectLayer,
   getSelectedLayer,
-  getCurrentLocation,
   getSessionUsername,
   getSessionUserRoles,
   setUserData,
