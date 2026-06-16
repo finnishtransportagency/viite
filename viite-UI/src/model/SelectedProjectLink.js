@@ -1,5 +1,6 @@
 import { eventbus } from '@utils/Eventbus.js';
-
+import { updateProjectMenu } from '@view/project-menu/ProjectMenu.js';
+import { highlightProjectLinkLayerFeatures } from '@view/map/layers/ProjectLinkLayer.js';
 /**
  * SelectedProjectLink - Manages selected project links state
  * 
@@ -26,7 +27,8 @@ export function SelectedProjectLink(projectLinkCollection) {
         me.ids = [id];
       }
       const linkData = get(id);
-      eventbus.trigger('projectLink:clicked', linkData);
+      updateProjectMenu(linkData);
+      highlightProjectLinkLayerFeatures();
     };
 
     const openWithErrorMessage = function (ids, errorMessage) {
@@ -35,13 +37,8 @@ export function SelectedProjectLink(projectLinkCollection) {
       eventbus.trigger('projectLink:errorClicked', get(ids[0]), errorMessage);
     };
 
-    const isDirty = function () {
-      return dirty;
-    };
-
-    const setDirty = function (value) {
-      dirty = value;
-    };
+    const isDirty = function () { return dirty; };
+    const setDirty = function (value) { dirty = value; };
 
     const openCtrl = function (linkIds) {
       if (linkIds.length === 0) {
@@ -56,7 +53,8 @@ export function SelectedProjectLink(projectLinkCollection) {
         );
         current = current.concat(projectLinkCollection.getProjectLink(added));
         const linkData = get();
-        eventbus.trigger('projectLink:clicked', linkData);
+        updateProjectMenu(linkData);
+        highlightProjectLinkLayerFeatures();
       }
     };
 

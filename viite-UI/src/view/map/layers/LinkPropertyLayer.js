@@ -661,7 +661,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       });
     }
 
-    function toggleRoadVisibility() {
+    function updateRoadVisibility() {
       toggleLayersVisibility(roadVisibilityLayers, getRoadVisibility());
     }
 
@@ -669,7 +669,7 @@ export function LinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadColl
       redraw: redraw,
       show: showLayer,
       hide: hideLayer,
-      toggleRoadVisibility: toggleRoadVisibility,
+      updateRoadVisibility: updateRoadVisibility,
       setVisible: setVisible,
       minZoomForContent: this.minZoomForContent,
       onLinkPropertySelected: (data) => this.onLinkPropertySelected(data),

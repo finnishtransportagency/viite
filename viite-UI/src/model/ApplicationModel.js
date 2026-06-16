@@ -1,19 +1,10 @@
-/**
- * ApplicationModel - Central application state management
- * 
- * Manages global application state including:
- * - Zoom levels and map center
- * - Selected tools and layers
- * - Read-only mode and UI state
- * - Project state and user session
- * - Selection types and special configurations
- */
-import { ViiteEnumerations } from "@utils/ViiteEnumerations.js";
 import { eventbus } from "@utils/Eventbus.js";
+
+// ApplicationModel manages global application state, including selected layer, user session data, and road visibility settings. 
+// It provides functions to get and set these states, and triggers events on changes for other components to react accordingly.
 
 const state = {
   selectedLayer: undefined,
-  selectionType: ViiteEnumerations.SelectionType.All,
   sessionUsername: "",
   sessionUserRoles: "",
   roadsVisibility: true,
@@ -28,7 +19,6 @@ const state = {
 
 function toggleRoadVisibility() {
   state.roadsVisibility = !state.roadsVisibility;
-  eventbus.trigger("roadsVisibility:changed", state.roadsVisibility);
 }
 
 function getRoadVisibility() {
@@ -50,18 +40,10 @@ function getSessionUserRoles() {
 function setUserData(userData) {
   state.sessionUsername = userData.userName;
   state.sessionUserRoles = userData.roles;
-
-  eventbus.trigger("userData:changed", userData);
 }
 
 function setStartupParameters(startupParameters) {
-  state.appContext.startupParameters =
-    startupParameters;
-
-  eventbus.trigger(
-    "startupParameters:changed",
-    startupParameters
-  );
+  state.appContext.startupParameters = startupParameters;
 }
 
 function getStartupParameters() {
@@ -71,25 +53,12 @@ function getStartupParameters() {
 function selectLayer(layer, toggleStart, noSave) {
 
   if (layer !== state.selectedLayer) {
-    const previous = state.selectedLayer;
-
     state.selectedLayer = layer;
+    const previousLayer = state.selectedLayer;
+    eventbus.trigger("layer:selected", layer, previousLayer, toggleStart);
 
-    eventbus.trigger(
-      "layer:selected",
-      layer,
-      previous,
-      toggleStart
-    );
-  } else if (
-    layer === "linkProperty" &&
-    toggleStart
-  ) {
-    eventbus.trigger(
-      "roadLayer:toggleProjectSelectionInForm",
-      layer,
-      noSave
-    );
+  } else if (layer === "linkProperty" && toggleStart) {
+    eventbus.trigger("roadLayer:toggleProjectSelectionInForm", layer, noSave);
   }
 }
 

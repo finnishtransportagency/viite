@@ -21,6 +21,9 @@ const States = {
     LINK_EDIT:       'LINK_EDIT'
   };
 
+let updateProjectMenuBridge = function () {};
+export function updateProjectMenu(selected) { return updateProjectMenuBridge(selected); }
+
 export function ProjectMenu(containerSelector, eventBus, options = {}) {
     const rootElement = $(containerSelector || '#menu-container');
     const eventbus = eventBus;
@@ -328,12 +331,14 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     };
 
     // --- Listeners ---
-    const onProjectLinkClicked = function (selected) {
+    const updateProjectMenuInternal = function (selected) {
       const currentProject = options.projectCollection ? options.projectCollection.getCurrentProject() : null;
       if (currentProject) {
         updateUI(States.LINK_EDIT, currentProject.project, false, { selectedLinks: selected });
       }
     };
+
+    updateProjectMenuBridge = updateProjectMenuInternal;
 
     const onProjectLinkErrorClicked = function (selected, errorMessage) {
       const currentProject = options.projectCollection ? options.projectCollection.getCurrentProject() : null;
@@ -456,14 +461,12 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
       }
     };
 
-    eventbus.on('projectLink:clicked',                     onProjectLinkClicked);
     eventbus.on('projectLink:errorClicked',                onProjectLinkErrorClicked);
     eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
     eventbus.on('roadAddress:openProject',                 onOpenProject);
     eventbus.on('roadAddressProject:fetched',              onFetched);
 
     const destroy = function () {
-      eventbus.off('projectLink:clicked',                     onProjectLinkClicked);
       eventbus.off('projectLink:errorClicked',                onProjectLinkErrorClicked);
       eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
       eventbus.off('roadAddress:openProject',                 onOpenProject);
@@ -471,6 +474,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
     };
 
     return {
+      updateProjectMenu: updateProjectMenuInternal,
       showProjectDetails: (proj, isNew) => updateUI(States.CONFIGURATION, proj, isNew),
       showRoadAddressing: (proj) => updateUI(States.ROAD_ADDRESSING, proj, false),
       setState: (newState, newData = project.data, newIsNew = project.isNew, data = additionalData) => updateUI(newState, newData, newIsNew, data),

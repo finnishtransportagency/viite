@@ -21,10 +21,12 @@ import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/Applica
 let fetchProjectLinksBridge = function () {};
 let clearOnProjectCloseBridge = function () {};
 let discardChangesBridge = function () {};
+let highlightProjectLinkLayerFeaturesBridge = function () {};
 export function fetchProjectLinksForCurrentMap() { return fetchProjectLinksBridge(); }
 export function clearOnProjectClose() { clearOnProjectCloseBridge(); }
 export function setProjectLinkDiscardChanges(handler) { discardChangesBridge = typeof handler === 'function' ? handler : function () {};}
 export function discardProjectLinkChanges() { return discardChangesBridge(); }
+export function highlightProjectLinkLayerFeatures() { return highlightProjectLinkLayerFeaturesBridge(); }
 
 export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
     const layerName = 'roadAddressProject';
@@ -38,7 +40,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     let isNotEditingData = true;
     let isActiveLayer = false;
     let isSaveInFlight = false;
-    let savingProjectLinkIds = [];
 
     const projectLinkStyler = new ProjectLinkStyler();
 
@@ -188,7 +189,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
           }
         }
       }
-      highlightFeatures();
+      highlightProjectLinkLayerFeaturesInternal();
     });
 
     function showSingleClickChanges(ctrlPressed, selection) {
@@ -210,7 +211,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
           selectedProjectLinkProperty.openCtrl(selectedLinkIds);
         }
 
-        highlightFeatures();
+        highlightProjectLinkLayerFeaturesInternal();
         return;
       }
 
@@ -258,7 +259,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         addFeaturesToSelection(selectedFeatures);
         fireDeselectionConfirmation(ctrlPressed, selection, 'double');
       }
-      highlightFeatures();
+      highlightProjectLinkLayerFeaturesInternal();
     });
 
     function showDoubleClickChanges(ctrlPressed, selection) {
@@ -274,7 +275,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
           }
           selectedProjectLinkProperty.openCtrl(selectedLinkIds);
         }
-        highlightFeatures();
+        highlightProjectLinkLayerFeaturesInternal();
       } else if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
@@ -299,7 +300,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         selectionData.elyCode === currentlySelectedSample.elyCode;
     }
 
-    function highlightFeatures() {
+    function highlightProjectLinkLayerFeaturesInternal() {
       clearHighlights();
       const featuresToHighlight = [];
       _.each(projectLinkLayer.getSource().getFeatures()
@@ -332,8 +333,8 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       });
     }
 
-    me.eventListener.listenTo(eventbus, 'projectLink:clicked projectLink:errorClicked', function () {
-      highlightFeatures();
+    me.eventListener.listenTo(eventbus, 'projectLink:errorClicked', function () {
+      highlightProjectLinkLayerFeaturesInternal();
     });
 
     const zoomDoubleClickListener = function (event) {
@@ -383,12 +384,8 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         return;
       }
       if (isSaveInFlight) {
-        const savingFeatureHovered = map.forEachFeatureAtPixel(pixel, function (feature) {
-          return isSavingFeature(feature);
-        }, {
-          layerFilter: function (l) { return layers.includes(l); }
-        });
-        map.getViewport().style.cursor = savingFeatureHovered ? 'wait' : '';
+        const hasFeature = map.hasFeatureAtPixel(pixel, { layerFilter: function (l) { return layers.includes(l); } });
+        map.getViewport().style.cursor = hasFeature ? 'wait' : '';
       }
       eventbus.trigger('overlay:update', event, pixel);
     });
@@ -421,36 +418,12 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       else return false;
     }
 
-    function getSavingProjectLinkIds() {
-      return _.chain(projectCollection.getDirty())
-        .map(function (link) {
-          if (!_.isObject(link)) {
-            return link;
-          }
-          return !_.isUndefined(link.id) && link.id > 0 ? link.id : link.linkId;
-        })
-        .filter(function (id) {
-          return !_.isUndefined(id) && !_.isNull(id);
-        })
-        .uniq()
-        .value();
-    }
-
-    function isSavingFeature(feature) {
-      if (_.isUndefined(feature) || _.isUndefined(feature.linkData)) {
-        return false;
-      }
-      const featureId = getSelectedId(feature.linkData);
-      return _.includes(savingProjectLinkIds, featureId);
-    }
-
     const onProjectLinksFetched = function () {
       isSaveInFlight = false;
-      savingProjectLinkIds = [];
       map.getViewport().style.cursor = '';
       me.redraw();
       _.defer(function () {
-        highlightFeatures();
+        highlightProjectLinkLayerFeaturesInternal();
         eventbus.trigger('roadAddressProject:fetched');
       });
     };
@@ -609,6 +582,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     });
 
     fetchProjectLinksBridge = fetchProjectLinks;
+    highlightProjectLinkLayerFeaturesBridge = highlightProjectLinkLayerFeaturesInternal;
     clearOnProjectCloseBridge = function () {
       clearHighlights();
       me.clearLayers(layers);
@@ -630,7 +604,6 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
       isSaveInFlight = true;
-      savingProjectLinkIds = getSavingProjectLinkIds();
     });
 
     me.toggleLayersVisibility(true);
@@ -648,6 +621,7 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     me.addLayers(layers);
 
     return {
+      highlightProjectLinkLayerFeatures: highlightProjectLinkLayerFeaturesInternal,
       show: showLayer,
       hide: hideLayer,
       clearHighlights: clearHighlights,

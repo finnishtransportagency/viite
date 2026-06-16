@@ -54,7 +54,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
       checked: true,
       onChange() {
         toggleRoadVisibility();
-        linkPropertyLayer.toggleRoadVisibility();
+        linkPropertyLayer.updateRoadVisibility();
         projectLinkLayer.updateRoadVisibility();
       }
     },

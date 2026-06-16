@@ -35,10 +35,6 @@ ViiteEnumerations.lifecycleStatus = {
       UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
   };
 
-ViiteEnumerations.SelectionType = {
-    All: {value: 0, description: "all"},
-    Unknown: {value: 99, description: "unknown"}
-  };
 
 ViiteEnumerations.RoadClass = {
     HighwayClass: {value: 1, description: "HighwayClass"},
