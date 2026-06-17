@@ -381,7 +381,7 @@
         formCommon.toggleAdditionalControls();
         // changes made to project links, set recalculated flag to false
         eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', false);
-        applicationModel.removeSpinner();
+        eventbus.trigger('roadAddressProject:lockLinks', dataJson.ids, dataJson.linkIds); // Lock the saved links against interaction until the background re-fetch redraws them
         eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable, containsFormedLinks);
       });
 
@@ -472,12 +472,40 @@
           const linksToSave = projectCollection.getTmpDirty().length > 0 
             ? projectCollection.getTmpDirty() 
             : selectedProjectLink;
+
+          const lockedIds = _.chain(linksToSave)
+            .map(link => link.id)
+            .filter(id => _.isNumber(id) && id > 0)
+            .uniq()
+            .value();
+          const lockedLinkIds = _.chain(linksToSave)
+            .map(link => link.linkId)
+            .filter(linkId => !_.isUndefined(linkId) && linkId !== null)
+            .uniq()
+            .value();
+
+          // Lock exactly the links being saved so only those links are blocked/cursor-marked.
+          eventbus.trigger('roadAddressProject:lockLinks', lockedIds, lockedLinkIds);
+
           const isEndDistanceModified = projectCollection.getTmpDirty().length > 0 
             ? isEndDistanceTouched() 
             : false;
             
           projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified);
         }
+        projectLinkLayer.clearHighlights();
+        selectedProjectLinkProperty.setCurrent([]);
+        selectedProjectLinkProperty.cleanIds();
+        selectedProjectLinkProperty.clean();
+        selectedProjectLinkProperty.setDirty(false);
+        selectedProjectLink = false;
+        // Close the edit form immediately so the user sees the map without waiting for the HTTP response
+
+        const currentProject = projectCollection.getCurrentProject().project;
+        rootElement.html(emptyTemplateDisabledButtons(currentProject));
+        formCommon.toggleAdditionalControls();
+        // Signal that a save is in-flight so footer buttons go to disabled state
+        eventbus.trigger('roadAddressProject:linksSaving');
         return true;
       };
 
