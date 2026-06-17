@@ -215,7 +215,19 @@
 
     this.revertChangesRoadlink = function (links) {
       if (!_.isEmpty(links)) {
-        applicationModel.addSpinner();
+        // Existing project links are tracked by numeric id, while newly created unsaved links only
+        // have a linkId. Keep both lists so the reverted links stay locked until the refetch redraws them.
+        var revertedLinkIds = _.uniq(
+          links
+            .filter(function (link) { return !(link.id > 0); })
+            .map(function (link) { return link.linkId; })
+        );
+
+        var revertedIds = _.uniq(
+          links
+            .filter(function (link) { return link.id > 0; })
+            .map(function (link) { return link.id; })
+        );
         var coordinates = applicationModel.getUserGeoLocation();
         var data = {
           'projectId': currentProject.project.id,
@@ -232,7 +244,7 @@
             publishableProject = response.publishable;
             me.setAndWriteProjectErrorsToUser(response.projectErrors);
             me.setFormedParts(response.formedInfo);
-            eventbus.trigger('projectLink:revertedChanges', response);
+            eventbus.trigger('projectLink:revertedChanges', response, { ids: revertedIds, linkIds: revertedLinkIds });
           } else {
             if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
               eventbus.trigger('roadAddress:projectLinksUpdateFailed', response.status);
@@ -247,7 +259,6 @@
     var createOrUpdate = function (dataJson) {
       if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
         if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
-          applicationModel.addSpinner();
           resetEditedDistance();
           var ids = dataJson.ids;
           if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
@@ -263,7 +274,6 @@
                 }
               } else {
                 new ModalConfirm(successObject.errorMessage);
-                applicationModel.removeSpinner();
               }
             });
           } else {
@@ -275,7 +285,6 @@
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject, dataJson);
               } else {
                 new ModalConfirm(successObject.errorMessage);
-                applicationModel.removeSpinner();
               }
             });
           }
@@ -417,7 +426,6 @@
       };
       if (dataJson.trackCode === Track.Unknown.value) {
         new ModalConfirm("Tarkista ajoratakoodi");
-        applicationModel.removeSpinner();
       }
 
       var changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {

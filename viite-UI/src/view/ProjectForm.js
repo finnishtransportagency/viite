@@ -10,6 +10,8 @@
 
     // flag to keep track if the project links have been recalculated after the changes made to the project links
     var recalculatedAfterChangesFlag = false;
+    // flag to distinguish a post-save fetch from a regular project-open fetch
+    var isSaveInFlight = false;
 
     eventbus.on('roadAddressProject:setRecalculatedAfterChangesFlag', function (bool) {
       recalculatedAfterChangesFlag = bool;
@@ -72,6 +74,9 @@
         formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
         formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
       }
+
+      // Recalculate must stay disabled during project link processing
+      formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilinkkien käsittely kesken, odota hetki");
 
       // Rebind event handlers
       if (typeof bindEvents === 'function') {
@@ -637,8 +642,33 @@
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
         $('#project-errors').html(errorsList());
-        applicationModel.removeSpinner();
       });
+
+      // Rebuild the footer immediately with disabled recalculate/changes/send buttons when a save is in-flight.
+      // This replaces the Save/Cancel buttons (from emptyTemplateDisabledButtons) before the HTTP response arrives.
+      eventbus.on('roadAddressProject:linksSaving', function () {
+        isSaveInFlight = true;
+        const recalcBtnTitle = 'Projektilinkkien tallennus kesken, odota hetki';
+        const $buttons = $('.project-form.form-controls');
+        const isValidationButtonVisible = $buttons.find('#validate-button').is(':visible');
+        const validateBtn = _.includes(startupParameters.roles, 'dev')
+          ? `<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"${isValidationButtonVisible ? '' : ' hidden="true"'}>Validoi projekti</button>`
+          : '';
+        $buttons.html(`${validateBtn}
+          <button disabled id="recalculate-button" title="${recalcBtnTitle}" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
+          <button disabled id="changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>
+          <button disabled id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>`);
+      });
+
+      // Re-evaluate button states once the fetch after a save has completed.
+      // Guard with isSaveInFlight so regular project-open fetches don't override the existing button state.
+      eventbus.on('roadAddressProject:fetched', function () {
+        if (currentProject && isSaveInFlight) {
+          isSaveInFlight = false;
+          buttonsWhenOpenProject();
+        }
+      });
+
 
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
         applicationModel.setSelectedTool(ViiteEnumerations.Tool.Default.value);
