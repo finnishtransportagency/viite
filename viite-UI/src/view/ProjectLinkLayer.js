@@ -10,7 +10,6 @@
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var isNotEditingData = true;
     var isActiveLayer = false;
-    var isSaveInFlight = false;
 
     // IDs of links currently being saved; locked against selection until the next fetch completes
     var lockedLinkIds = [];
@@ -199,12 +198,12 @@
         var selectedId = getSelectedId(selection.linkData);
         var groupIds = projectCollection.getMultiProjectLinks(selectedId);
         var unlockedGroupIds = _.reject(groupIds, isLockedId);
-        if (unlockedGroupIds.length === 0) {
-          return; // entire group is locked
-        } else if (unlockedGroupIds.length === groupIds.length) {
-          selectedProjectLinkProperty.open(selectedId, true);
-        } else {
-          selectedProjectLinkProperty.openCtrl(unlockedGroupIds);
+        if (unlockedGroupIds.length > 0) {
+          if (unlockedGroupIds.length === groupIds.length) {
+            selectedProjectLinkProperty.open(selectedId, true);
+          } else {
+            selectedProjectLinkProperty.openCtrl(unlockedGroupIds);
+          }
         }
       } else {
         eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
@@ -558,7 +557,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
-      isSaveInFlight = false;
       eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
       me.redraw();
       _.defer(function () {
@@ -610,7 +608,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
-      isSaveInFlight = true;
       clearHighlights();
     });
 
