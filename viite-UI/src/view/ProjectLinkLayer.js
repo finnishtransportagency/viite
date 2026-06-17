@@ -22,6 +22,16 @@
       return lockedLinkIds.length > 0 && _.includes(lockedLinkIds, id);
     };
 
+    // IDs of links currently being saved; locked against selection until the next fetch completes
+    var lockedLinkIds = [];
+    var isLocked = function (linkData) {
+      if (!linkData || lockedLinkIds.length === 0) return false;
+      return _.includes(lockedLinkIds, linkData.id) || _.includes(lockedLinkIds, linkData.linkId);
+    };
+    var isLockedId = function (id) {
+      return lockedLinkIds.length > 0 && _.includes(lockedLinkIds, id);
+    };
+
     var projectLinkStyler = new ProjectLinkStyler();
 
     var calibrationPointVector = new ol.source.Vector({});
@@ -199,12 +209,12 @@
         var selectedId = getSelectedId(selection.linkData);
         var groupIds = projectCollection.getMultiProjectLinks(selectedId);
         var unlockedGroupIds = _.reject(groupIds, isLockedId);
-        if (unlockedGroupIds.length === 0) {
-          return; // entire group is locked
-        } else if (unlockedGroupIds.length === groupIds.length) {
-          selectedProjectLinkProperty.open(selectedId, true);
-        } else {
-          selectedProjectLinkProperty.openCtrl(unlockedGroupIds);
+        if (unlockedGroupIds.length > 0) {
+          if (unlockedGroupIds.length === groupIds.length) {
+            selectedProjectLinkProperty.open(selectedId, true);
+          } else {
+            selectedProjectLinkProperty.openCtrl(unlockedGroupIds);
+          }
         }
       } else {
         eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
@@ -610,7 +620,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
-      isSaveInFlight = true;
       clearHighlights();
     });
 
