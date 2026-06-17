@@ -470,14 +470,12 @@
         if (changeType.value === RoadAddressChangeType.Unchanged.value || changeType.value === RoadAddressChangeType.Numbering.value) {
           
           const isUnchanged = changeType.value === RoadAddressChangeType.Unchanged.value;
-          const isNumbering = changeType.value === RoadAddressChangeType.Numbering.value;
 
           const currentRoadNumber = Number($('#tie').val());
           const currentRoadPartNumber = Number($('#osa').val());
           const currentTrackCode = Number($('#trackCodeDropdown').val());
 
-          const uniqueValues = (key) =>
-            _.chain(selectedProjectLink)
+          const uniqueValues = (key) => _.chain(selectedProjectLink)
               .map(link => Number(link[key]))
               .uniq()
               .value();
@@ -493,7 +491,7 @@
           const hasMismatch = roadNumberMismatch || roadPartNumberMismatch || trackCodeMismatch;
 
           if (hasMismatch) {
-            const formatExpected = (values) => values.length === 1 ? values[0] : values.join(' / ');
+            const formatExpected = (values) => (values.length === 1 ? values[0] : values.join(' / '));
 
             const changes = [roadPartNumberMismatch &&
                 `Muuta osa ${currentRoadPartNumber} -> ${formatExpected(expectedRoadPartNumbers)}`,
