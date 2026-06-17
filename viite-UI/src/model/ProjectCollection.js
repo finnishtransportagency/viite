@@ -273,6 +273,7 @@
                   new ModalConfirm(successObject.errorMessage);
                 }
               } else {
+                eventbus.trigger('roadAddressProject:unlockLinks');
                 new ModalConfirm(successObject.errorMessage);
               }
             });
@@ -284,6 +285,7 @@
                 me.setFormedParts(successObject.formedInfo);
                 eventbus.trigger('roadAddress:projectLinksUpdated', successObject, dataJson);
               } else {
+                eventbus.trigger('roadAddressProject:unlockLinks');
                 new ModalConfirm(successObject.errorMessage);
               }
             });

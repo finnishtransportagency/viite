@@ -556,6 +556,12 @@
       lockedLinkIds = (ids || []).concat(linkIds || []);
     });
 
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:unlockLinks', function () {
+      lockedLinkIds = [];
+      map.getViewport().style.cursor = '';
+      me.redraw();
+    });
+
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
       eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
       me.redraw();
