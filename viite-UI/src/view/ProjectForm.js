@@ -906,12 +906,15 @@
         } else {
           nextStage();
         }
-        if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
-          buttonsWhenInspectingUneditableProject();
-        } else {
-          var projectErrors = projectCollection.getProjectErrors();
-          var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
-          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
+        // Don't update button states if project links are processed, as the buttons should remain in the "saving" state
+        if (!isSaveInFlight) {
+          if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
+            buttonsWhenInspectingUneditableProject();
+          } else {
+            var projectErrors = projectCollection.getProjectErrors();
+            var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
+            buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
+          }
         }
         toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
