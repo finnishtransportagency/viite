@@ -10,7 +10,6 @@
     var lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     var isNotEditingData = true;
     var isActiveLayer = false;
-    var isSaveInFlight = false;
 
     // IDs of links currently being saved; locked against selection until the next fetch completes
     var lockedLinkIds = [];
@@ -568,7 +567,6 @@
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
-      isSaveInFlight = false;
       eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
       me.redraw();
       _.defer(function () {
