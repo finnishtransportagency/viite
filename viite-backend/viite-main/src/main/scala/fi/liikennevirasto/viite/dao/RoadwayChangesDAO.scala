@@ -377,16 +377,6 @@ class RoadwayChangesDAO extends BaseDAO {
 
           val changeTableRows = ProjectDeltaCalculator.generateChangeTableRowsFromProjectLinks(nonTerminatedProjectlinks, allProjectLinks)
 
-          println(s"GENERATED CHANGE TABLE ROWS ::: adjusted: ${changeTableRows.adjustedSections.size} :: original: ${changeTableRows.originalSections.size}")
-
-          changeTableRows.adjustedSections.foreach(section => {
-            println(s"ADJUSTED SECTION ::: roadNumber: ${section.roadNumber} :: track: ${section.track} :: roadPartNumberStart: ${section.roadPartNumberStart} :: roadPartNumberEnd: ${section.roadPartNumberEnd} :: addrMRange: ${section.addrMRange} :: discontinuity: ${section.discontinuity} :: administrativeClass: ${section.administrativeClass} :: roadMaintainer: ${section.roadMaintainer}")
-          })
-
-          changeTableRows.originalSections.foreach(section => {
-            println(s"ORIGINAL SECTION ::: roadNumber: ${section.roadNumber} :: track: ${section.track} :: roadPartNumberStart: ${section.roadPartNumberStart} :: roadPartNumberEnd: ${section.roadPartNumberEnd} :: addrMRange: ${section.addrMRange} :: discontinuity: ${section.discontinuity} :: administrativeClass: ${section.administrativeClass} :: roadMaintainer: ${section.roadMaintainer}")
-          })
-
           // Initialize empty sequence for batch parameters
           var roadwayParams = Seq[Seq[Any]]()
           var linkParams = Seq[Seq[Any]]()
