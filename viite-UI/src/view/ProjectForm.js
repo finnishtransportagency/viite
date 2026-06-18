@@ -564,11 +564,13 @@
         disableAutoComplete();
       });
 
-      eventbus.on('roadAddress:openProject', function (result) {
+      eventbus.on('roadAddress:openProject', function (result, isEdited) {
         currentProject = result.project;
         projectCollection.setAndWriteProjectErrorsToUser(result.projectErrors);
         currentProject.isDirty = false;
-        projectCollection.clearRoadAddressProjects();
+        if (!isEdited) {
+          projectCollection.clearRoadAddressProjects();
+        }
         disableAutoComplete();
         projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.reservedInfo);
@@ -678,7 +680,8 @@
           rootElement.empty();
           setTimeout(function () {
           }, 0);
-          eventbus.trigger('roadAddress:openProject', result);
+          const isEdited = true;
+          eventbus.trigger('roadAddress:openProject', result, isEdited);
           if (applicationModel.isReadOnly()) {
             $('.edit-mode-btn:visible').click();
           }
