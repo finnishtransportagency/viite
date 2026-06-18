@@ -191,6 +191,18 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
                 newRoadwayNumber:               form.find('#newRoadwayNumber').prop('checked') || null
               };
 
+              // Validate Ennallaan / Numerointi constraints while the form is still open.
+              // If invalid the modal is shown and the menu stays open for the user to correct.
+              if (typeof projectLinkEditor.validate === 'function') {
+                const isValid = projectLinkEditor.validate(
+                  additionalData.selectedLinks,
+                  statusDropdownValue,
+                  capturedFormData,
+                  options.projectCollection
+                );
+                if (!isValid) return;
+              }
+
               // Immediately switch to ROAD_ADDRESSING with all buttons disabled so the user
               // sees the action menu before the HTTP response and map fetch complete.
               syncRoadAddressingState({

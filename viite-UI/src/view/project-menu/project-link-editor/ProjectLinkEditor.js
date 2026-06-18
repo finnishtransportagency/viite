@@ -9,6 +9,7 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
+import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
 import { createProjectLinkEditorHTML } from './ProjectLinkEditorHTML.js';
 import { DevAddressTool } from './DevTool.js';
@@ -56,6 +57,48 @@ export function ProjectLinkEditor(canUseDevTools) {
         const originalValue = Number(this.endDistanceOriginalValue);
         if (isNaN(originalValue)) return true;
         return changedValue !== originalValue;
+      }
+    };
+
+    // ==========================================
+    // SESSION STORAGE — ORIGINAL LINK VALUES
+    // ==========================================
+    const originalLinksStorageKey = (projectId) => `original_links_${projectId}`;
+
+    const getStoredOriginalLinks = (projectId) => {
+      const raw = sessionStorage.getItem(originalLinksStorageKey(projectId));
+      if (!raw) return {};
+      try {
+        const parsed = JSON.parse(raw);
+        return _.isObject(parsed) ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    };
+
+    const setStoredOriginalLinks = (projectId, linksByLinkId) => {
+      sessionStorage.setItem(originalLinksStorageKey(projectId), JSON.stringify(linksByLinkId));
+    };
+
+    // Store the road address fields for newly seen links (first-open-wins).
+    // Must be called after each link selection so originals are captured before the user edits.
+    const storeOriginalLinksIfNew = (selected, projectCollection) => {
+      if (!projectCollection || !_.isArray(selected) || selected.length === 0) return;
+      const projectId = projectCollection.getCurrentProject().project.id;
+      const stored = getStoredOriginalLinks(projectId);
+      let hasChanges = false;
+      _.each(selected, (link) => {
+        if (!stored[link.linkId]) {
+          stored[link.linkId] = {
+            roadNumber: link.roadNumber,
+            roadPartNumber: link.roadPartNumber,
+            trackCode: link.trackCode
+          };
+          hasChanges = true;
+        }
+      });
+      if (hasChanges) {
+        setStoredOriginalLinks(projectId, stored);
       }
     };
 
@@ -260,6 +303,7 @@ export function ProjectLinkEditor(canUseDevTools) {
       }
 
       updateForm(selected, projectCollection);
+      storeOriginalLinksIfNew(selected, projectCollection);
       updateFormControls($('#dropDown_0').val(), selected, projectCollection, { markDirty: false });
       disableFormInputs();
       isInitializing = false;
@@ -267,6 +311,68 @@ export function ProjectLinkEditor(canUseDevTools) {
       if (projectChangeTable) {
         checkInputs(projectChangeTable, project ? project.statusCode : null);
       }
+    };
+
+    // ==========================================
+    // VALIDATION: Ennallaan & Numerointi
+    // ==========================================
+    // Must be called before closing the menu so the user can correct errors while the form is still open.
+    // Returns true if the save may proceed, false if a constraint is violated (modal already shown).
+    const validate = (selectedLinks, statusDropdownValue, capturedFormData, projectCollection) => {
+      const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
+      if (!changeType) return true;
+
+      if (
+        changeType.value === RoadAddressChangeType.Unchanged.value ||
+        changeType.value === RoadAddressChangeType.Numbering.value
+      ) {
+        const isUnchanged = changeType.value === RoadAddressChangeType.Unchanged.value;
+
+        const currentRoadNumber     = Number(capturedFormData['#tie']);
+        const currentRoadPartNumber = Number(capturedFormData['#osa']);
+        const currentTrackCode      = Number(capturedFormData['#trackCodeDropdown']);
+
+        const projectId = projectCollection.getCurrentProject().project.id;
+        const storedOriginalLinks = getStoredOriginalLinks(projectId);
+
+        const storedOriginals = selectedLinks.map((link) => {
+          const stored = storedOriginalLinks[link.linkId];
+          return stored || {
+            roadNumber: link.roadNumber,
+            roadPartNumber: link.roadPartNumber,
+            trackCode: link.trackCode
+          };
+        });
+
+        const expectedRoadNumbers     = _.chain(storedOriginals).map(o => Number(o.roadNumber)).uniq().value();
+        const expectedRoadPartNumbers = _.chain(storedOriginals).map(o => Number(o.roadPartNumber)).uniq().value();
+        const expectedTrackCodes      = _.chain(storedOriginals).map(o => Number(o.trackCode)).uniq().value();
+
+        const roadNumberMismatch     = isUnchanged && !expectedRoadNumbers.includes(currentRoadNumber);
+        const roadPartNumberMismatch = isUnchanged && !expectedRoadPartNumbers.includes(currentRoadPartNumber);
+        const trackCodeMismatch      = !expectedTrackCodes.includes(currentTrackCode);
+
+        if (roadNumberMismatch || roadPartNumberMismatch || trackCodeMismatch) {
+          const formatExpected = (values) => values.length === 1 ? values[0] : values.join(' / ');
+
+          const changes = [
+            roadNumberMismatch     && `Muuta tie ${currentRoadNumber} -> ${formatExpected(expectedRoadNumbers)}`,
+            roadPartNumberMismatch && `Muuta osa ${currentRoadPartNumber} -> ${formatExpected(expectedRoadPartNumbers)}`,
+            trackCodeMismatch      && `Muuta ajr ${currentTrackCode} -> ${formatExpected(expectedTrackCodes)}`
+          ].filter(Boolean);
+
+          new ConfirmPopup(
+            `${
+              isUnchanged
+                ? 'Ennallaan-toimenpiteellä tie, osa ja ajr eivät saa muuttua.'
+                : 'Numerointi-toimenpiteellä ajr ei saa muuttua.'
+            }<br>${changes.join('<br>')}`,
+            { type: 'alert' }
+          );
+          return false;
+        }
+      }
+      return true;
     };
 
       const cancelChanges = (callbacks = {}, context = {}) => {
@@ -336,6 +442,8 @@ export function ProjectLinkEditor(canUseDevTools) {
           context.selectedProjectLinkProperty.clean();
         }
 
+        if (!validate(selectedLinks, statusDropdownValue, capturedFormData, projectCollection)) return;
+
         if (changeType.value === RoadAddressChangeType.Revert.value) {
           if (projectCollection) {
             projectCollection.revertChangesRoadlink(selectedLinks, {
@@ -370,6 +478,7 @@ export function ProjectLinkEditor(canUseDevTools) {
       updateForm,
       updateFormControls,
       cancelChanges,
+      validate,
       validateAndSave
     };
 }
