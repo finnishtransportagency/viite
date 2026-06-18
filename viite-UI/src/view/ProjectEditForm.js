@@ -149,6 +149,25 @@
     const isProjectPublishable = () => projectCollection.getPublishableStatus();
     const isProjectEditable = () => _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
 
+    const originalLinksStorageKey = (projectId) => `original_links_${projectId}`;
+
+    // Used for form validation
+    const getStoredOriginalLinks = (projectId) => {
+      // Original link values contains road part, number and track code for each link in the project when it was first opened in the edit form.
+      const originalLinkValues = sessionStorage.getItem(originalLinksStorageKey(projectId));
+      if (!originalLinkValues) return {};
+      try {
+        const parsed = JSON.parse(originalLinkValues);
+        return _.isObject(parsed) ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    };
+
+    const setStoredOriginalLinks = (projectId, linksByLinkId) => {
+      sessionStorage.setItem(originalLinksStorageKey(projectId), JSON.stringify(linksByLinkId));
+    };
+
     const checkInputs = () => {
       const rootElement = $('#feature-attributes');
       const inputs = rootElement.find('input');
@@ -327,6 +346,30 @@
         if (roadwayCheckbox) {
           roadwayCheckbox.dataset.initialValue = roadwayCheckbox.checked ? '1' : '0';
         }
+
+        // Store original road address values in one sessionStorage object per project.
+        // Persist only once per link so later re-open/saves do not overwrite originals.
+        if (selectedProjectLink && selectedProjectLink.length > 0) {
+          const currentProjectId = projectCollection.getCurrentProject().project.id;
+          const storedOriginalLinks = getStoredOriginalLinks(currentProjectId);
+          let hasChanges = false;
+
+          // If any of the selected links are not yet stored in sessionStorage, add them with their current values.
+          _.each(selectedProjectLink, (link) => {
+            if (!storedOriginalLinks[link.linkId]) {
+              storedOriginalLinks[link.linkId] = {
+                roadNumber: link.roadNumber,
+                roadPartNumber: link.roadPartNumber,
+                trackCode: link.trackCode
+              };
+              hasChanges = true;
+            }
+          });
+
+          if (hasChanges) {
+            setStoredOriginalLinks(currentProjectId, storedOriginalLinks);
+          }
+        }
       };
 
       eventbus.on('projectLink:errorClicked', (selected, errorMessage) => {
@@ -479,14 +522,33 @@
           const currentRoadPartNumber = Number($('#osa').val());
           const currentTrackCode = Number($('#trackCodeDropdown').val());
 
-          const uniqueValues = (key) => _.chain(selectedProjectLink)
-              .map(link => Number(link[key]))
-              .uniq()
-              .value();
+          // Get original values for all selected links from sessionStorage.
+          const currentProjectId = projectCollection.getCurrentProject().project.id;
+          const storedOriginalLinks = getStoredOriginalLinks(currentProjectId);
+          const storedOriginals = selectedProjectLink.map((link) => {
+            const stored = storedOriginalLinks[link.linkId];
 
-          const expectedRoadNumbers = uniqueValues('roadNumber');
-          const expectedRoadPartNumbers = uniqueValues('roadPartNumber');
-          const expectedTrackCodes = uniqueValues('trackCode');
+            if (stored) { return stored; }
+
+            return {
+              roadNumber: link.roadNumber,
+              roadPartNumber: link.roadPartNumber,
+              trackCode: link.trackCode
+            };
+          });
+
+          const expectedRoadNumbers = _.chain(storedOriginals)
+            .map(original => Number(original.roadNumber))
+            .uniq()
+            .value();
+          const expectedRoadPartNumbers = _.chain(storedOriginals)
+            .map(original => Number(original.roadPartNumber))
+            .uniq()
+            .value();
+          const expectedTrackCodes = _.chain(storedOriginals)
+            .map(original => Number(original.trackCode))
+            .uniq()
+            .value();
 
           const roadNumberMismatch = isUnchanged && !expectedRoadNumbers.includes(currentRoadNumber);
           const roadPartNumberMismatch = isUnchanged && !expectedRoadPartNumbers.includes(currentRoadPartNumber);
@@ -506,8 +568,6 @@
               trackCodeMismatch &&
                 `Muuta ajr ${currentTrackCode} -> ${formatExpected(expectedTrackCodes)}`
             ].filter(Boolean);
-
-            console.log(`Validation failed with the following changes: ${changes.join('; ')}`);
 
             return new ModalConfirm(
               `${
