@@ -340,10 +340,13 @@
       });
 
       eventbus.on('roadAddress:projectFailed', () => {
+        eventbus.trigger('roadAddressProject:unlockLinks');
         applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectLinksUpdateFailed', (errorCode) => {
+        console.log(`Project links update failed with error code: ${errorCode}`);
+        eventbus.trigger('roadAddressProject:unlockLinks');
         applicationModel.removeSpinner();
         const errorMessages = {
           400: 'Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.',
@@ -423,6 +426,7 @@
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', (result) => {
+        eventbus.trigger('roadAddressProject:unlockLinks');
         new ModalConfirm(result.toString());
       });
 
