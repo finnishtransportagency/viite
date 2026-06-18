@@ -6,7 +6,7 @@ tasks:
       ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
       TUNNEL_SESSION: "db-tunnel-{{.ENV_PROFILE}}"
     silent: true
-    desc: "Open SSM port-forward with ENV_PROFILE=<local|dev|test|prod> (or no-op
+    desc: "Open SSM port-forward with ENV_PROFILE=<local|dev|test|exp|prod> (or no-op
       for direct/local)"
     cmds:
       - |
@@ -63,7 +63,7 @@ tasks:
   ping:
     vars:
       ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
-    desc: "Ping database with ENV_PROFILE=<local|dev|test|prod>"
+    desc: "Ping database with ENV_PROFILE=<local|dev|test|exp|prod>"
     deps:
       - task: connect
         vars:
@@ -116,7 +116,7 @@ tasks:
             "
 
   postgis:
-    desc: "Ensure PostGIS extension exists with ENV_PROFILE=<local|dev|test|prod>"
+    desc: "Ensure PostGIS extension exists with ENV_PROFILE=<local|dev|test|exp|prod>"
     deps:
       - task: connect
         vars:
@@ -144,7 +144,7 @@ tasks:
             -c "SELECT PostGIS_Version();"
 
   create-user-schema:
-    desc: "Create dev users/schemas with ENV_PROFILE=<local|dev|test|prod>"
+    desc: "Create dev users/schemas with ENV_PROFILE=<local|dev|test|exp|prod>"
     deps:
       - task: connect
         vars:
