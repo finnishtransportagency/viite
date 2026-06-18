@@ -28,7 +28,7 @@ tasks:
     vars:
       ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
     desc: "Backup with profile env (.env.common + .env.<profile>), allows
-      local|dev|test|prod"
+      local|dev|test|exp|prod"
     silent: true
     cmds:
       - |
@@ -45,7 +45,7 @@ tasks:
     vars:
       ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
     desc: "Restore with profile env (.env.common + .env.<profile>), allows
-      local|dev|test"
+      local|dev|test|exp"
     silent: true
     cmds:
       - |
@@ -117,21 +117,21 @@ tasks:
         cat <<'EOF'
 
         -- COMMON -----------------------------------
-        * db:connect:                 Open SSM port-forward with ENV_PROFILE=<local|dev|test|prod>
+        * db:connect:                 Open SSM port-forward with ENV_PROFILE=<local|dev|test|exp|prod>
         * db:disconnect:              Stop SSM port-forward (supports ENV_PROFILE)
-        * db:ping:                    Ping database with ENV_PROFILE=<local|dev|test|prod>
-        * db:postgis:                 Ensure PostGIS extension with ENV_PROFILE=<local|dev|test|prod>
+        * db:ping:                    Ping database with ENV_PROFILE=<local|dev|test|exp|prod>
+        * db:postgis:                 Ensure PostGIS extension with ENV_PROFILE=<local|dev|test|exp|prod>
         * db:create-user-schema:      Create dev users/schemas (DEV_USERS=<u1,u2>)
 
         -- BACKUP -----------------------------------
-        * db:backup:                  Backup SOURCE with ENV_PROFILE=<local|dev|test|prod>
+        * db:backup:                  Backup SOURCE with ENV_PROFILE=<local|dev|test|exp|prod>
 
         -- FLYWAY ------------------------------------
-        * db:flyway:migrate:          Flyway migrate with ENV_PROFILE=<local|dev|test|prod>
-        * db:flyway:history:          Show flyway_schema_history with ENV_PROFILE=<local|dev|test|prod>
-        * db:flyway:repair:           Flyway repair checksum with ENV_PROFILE=<local|dev|test|prod>
+        * db:flyway:migrate:          Flyway migrate with ENV_PROFILE=<local|dev|test|exp|prod>
+        * db:flyway:history:          Show flyway_schema_history with ENV_PROFILE=<local|dev|test|exp|prod>
+        * db:flyway:repair:           Flyway repair checksum with ENV_PROFILE=<local|dev|test|exp|prod>
 
         -- RESTORE -----------------------------------
-        * db:restore:                 Restore latest dump with ENV_PROFILE=<local|dev|test>
+        * db:restore:                 Restore latest dump with ENV_PROFILE=<local|dev|test|exp>
 
         EOF
