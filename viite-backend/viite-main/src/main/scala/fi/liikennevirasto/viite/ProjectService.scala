@@ -1780,7 +1780,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             } else
               Seq.empty[ProjectCalibrationPoint]
           })
-
           roadAddressChangeType match {
             case RoadAddressChangeType.Termination =>
               if (devToolData.isDefined) {
@@ -1807,7 +1806,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                   throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
                 }
                 // Check for conflicting actions on the same original road part.
-                val originalRoadPart = toUpdateLinks.head.roadAddressRoadPart
+                val originalRoadPart = toUpdateLinks.head.roadAddressRoadPart.getOrElse(toUpdateLinks.head.roadPart)
                 val roadPartLinks = projectLinkDAO.fetchProjectLinksByOriginalRoadPart(originalRoadPart, projectId)
                 if (roadPartLinks.exists(rpl => rpl.status != RoadAddressChangeType.Renumeration && rpl.status != RoadAddressChangeType.NotHandled)) {
                   throw new ProjectValidationException(ErrorOtherActionWithNumbering)
