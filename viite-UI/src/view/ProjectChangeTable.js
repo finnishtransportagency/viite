@@ -191,7 +191,6 @@
     }
 
     function showChangeTable(projectChangeData) {
-      console.log(projectChangeData);
       var htmlTable = "";
       var warningM = projectChangeData.warningMessage;
       var hasLengthMismatch = false;
