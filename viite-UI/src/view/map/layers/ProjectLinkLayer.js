@@ -39,7 +39,16 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     const lifecycleStatus = ViiteEnumerations.lifecycleStatus;
     let isNotEditingData = true;
     let isActiveLayer = false;
-    let isSaveInFlight = false;
+
+    // IDs of links currently being saved; locked against selection until the next fetch completes
+    let lockedLinkIds = [];
+    const isLocked = function (linkData) {
+      if (!linkData || lockedLinkIds.length === 0) return false;
+      return _.includes(lockedLinkIds, linkData.id) || _.includes(lockedLinkIds, linkData.linkId);
+    };
+    const isLockedId = function (id) {
+      return lockedLinkIds.length > 0 && _.includes(lockedLinkIds, id);
+    };
 
     const projectLinkStyler = new ProjectLinkStyler();
 
@@ -170,6 +179,12 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
             projectRoadAddressChangeTypeIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
         else return false;
       });
+      console.log('[ProjectLinkLayer] singleClick. lockedLinkIds:', lockedLinkIds, 'selection linkData:', selection && selection.linkData ? {id: selection.linkData.id, linkId: selection.linkData.linkId} : null);
+      if (selection && isLocked(selection.linkData)) {
+        console.log('[ProjectLinkLayer] singleClick blocked – link is locked.');
+        selectSingleClick.getFeatures().remove(selection);
+        return;
+      }
       const isDeselectClick = event.selected.length === 0;
       if (modPressed) {
         showDoubleClickChanges(modPressed, selection);
@@ -199,7 +214,8 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         if (canBeAddedToSelection(selection.linkData)) {
 
           const clickedId = getSelectedId(selection.linkData);
-          const clickedIds = projectCollection.getMultiProjectLinks(clickedId);
+          // Filter locked links out of the selection group
+          const clickedIds = projectCollection.getMultiProjectLinks(clickedId).filter(id => !isLockedId(id));
           let selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return getSelectedId(selected);
           });
@@ -220,7 +236,16 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
+        const selectedId = getSelectedId(selection.linkData);
+        const groupIds = projectCollection.getMultiProjectLinks(selectedId);
+        const unlockedGroupIds = _.reject(groupIds, isLockedId);
+        if (unlockedGroupIds.length > 0) {
+          if (unlockedGroupIds.length === groupIds.length) {
+            selectedProjectLinkProperty.open(selectedId, true);
+          } else {
+            selectedProjectLinkProperty.openCtrl(unlockedGroupIds);
+          }
+        }
         return;
       }
 
@@ -251,6 +276,12 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
             selectionTarget.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value)
         );
       });
+      console.log('[ProjectLinkLayer] doubleClick. lockedLinkIds:', lockedLinkIds, 'selection linkData:', selection && selection.linkData ? {id: selection.linkData.id, linkId: selection.linkData.linkId} : null);
+      if (selection && isLocked(selection.linkData)) {
+        console.log('[ProjectLinkLayer] doubleClick blocked – link is locked.');
+        selectDoubleClick.getFeatures().remove(selection);
+        return;
+      }
       if (isNotEditingData) {
         showDoubleClickChanges(ctrlPressed, selection);
       } else {
@@ -383,11 +414,16 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       if (event.dragging) {
         return;
       }
-      if (isSaveInFlight) {
-        const hasFeature = map.hasFeatureAtPixel(pixel, { layerFilter: function (l) { return layers.includes(l); } });
-        map.getViewport().style.cursor = hasFeature ? 'wait' : '';
-      }
       eventbus.trigger('overlay:update', event, pixel);
+      // Set mouse cursor to loading animation if hovering over locked links
+      if (lockedLinkIds.length > 0) {
+        const hasLockedFeature = map.forEachFeatureAtPixel(pixel, function (feature) {
+          return feature.linkData && isLocked(feature.linkData);
+        });
+        map.getViewport().style.cursor = hasLockedFeature ? 'wait' : '';
+      } else {
+        map.getViewport().style.cursor = '';
+      }
     });
 
     const showLayer = function () {
@@ -419,11 +455,12 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
     }
 
     const onProjectLinksFetched = function () {
-      isSaveInFlight = false;
-      map.getViewport().style.cursor = '';
+      console.log('[ProjectLinkLayer] onProjectLinksFetched. Clearing lockedLinkIds:', lockedLinkIds);
       me.redraw();
       _.defer(function () {
         highlightProjectLinkLayerFeaturesInternal();
+        lockedLinkIds = [];
+        map.getViewport().style.cursor = '';
         eventbus.trigger('roadAddressProject:fetched');
       });
     };
@@ -602,8 +639,16 @@ export function ProjectLinkLayer(map, projectCollection, selectedProjectLinkProp
       isNotEditingData = notEditingData;
     });
 
-    me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
-      isSaveInFlight = true;
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:lockLinks', function (ids, linkIds) {
+      lockedLinkIds = (ids || []).concat(linkIds || []);
+      console.log('[ProjectLinkLayer] lockLinks received. ids:', ids, 'linkIds:', linkIds, '=> lockedLinkIds:', lockedLinkIds);
+    });
+
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:unlockLinks', function () {
+      console.log('[ProjectLinkLayer] unlockLinks received. Clearing', lockedLinkIds.length, 'locked ids.');
+      lockedLinkIds = [];
+      map.getViewport().style.cursor = '';
+      me.redraw();
     });
 
     me.toggleLayersVisibility(true);

@@ -13,6 +13,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { getUserGeoLocation } from '@view/map/MapView.js';
+import { eventbus } from '@utils/Eventbus.js';
 
 export function ProjectCollection(backend, startupParameters) {
   const noop = function () {};
@@ -257,6 +258,8 @@ export function ProjectCollection(backend, startupParameters) {
     const onProjectLinksUpdateFailed = callbacks.onProjectLinksUpdateFailed || noop;
     if (!_.isEmpty(links)) {
       const coordinates = getUserGeoLocation();
+      const revertIds = _.uniq(links.filter(l => l.id > 0).map(l => l.id));
+      const revertLinkIds = _.uniq(links.map(l => l.linkId).filter(Boolean));
       const data = {
         projectId: currentProject.project.id,
         roadNumber: links[0].roadNumber,
@@ -266,6 +269,7 @@ export function ProjectCollection(backend, startupParameters) {
         }),
         coordinates: coordinates
       };
+      eventbus.trigger('roadAddressProject:lockLinks', revertIds, revertLinkIds);
       backend.revertChangesRoadlink(data, function (response) {
         if (response.success) {
           dirtyProjectLinkIds = [];
@@ -275,6 +279,7 @@ export function ProjectCollection(backend, startupParameters) {
           onProjectLinksRevertedChanges(response);
           onProjectLinksUpdated(response);
         } else {
+          eventbus.trigger('roadAddressProject:unlockLinks');
           if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
             onProjectLinksUpdateFailed(response.status);
           }
@@ -295,6 +300,7 @@ export function ProjectCollection(backend, startupParameters) {
       if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
         resetEditedDistance();
         const ids = dataJson.ids;
+        eventbus.trigger('roadAddressProject:lockLinks', dataJson.ids, dataJson.linkIds);
         if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
           backend.createProjectLinks(dataJson, function (successObject) {
             if (successObject.success) {
@@ -307,6 +313,7 @@ export function ProjectCollection(backend, startupParameters) {
                 new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
               }
             } else {
+              eventbus.trigger('roadAddressProject:unlockLinks');
               new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
             }
           });
@@ -319,6 +326,7 @@ export function ProjectCollection(backend, startupParameters) {
               onProjectLinkSaved(dataJson.projectId, successObject.publishable);
               onProjectLinksUpdated(successObject);
             } else {
+              eventbus.trigger('roadAddressProject:unlockLinks');
               new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
             }
           });
