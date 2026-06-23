@@ -1780,7 +1780,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             } else
               Seq.empty[ProjectCalibrationPoint]
           })
-        println(s"${roadAddressChangeType}")
           roadAddressChangeType match {
             case RoadAddressChangeType.Termination =>
               if (devToolData.isDefined) {
@@ -1806,8 +1805,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                     roadAddresses.map(ra => (ra.roadPart)).distinct.lengthCompare(1) != 0) {
                   throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
                 }
-                val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadPart, projectId)
-                if (roadPartLinks.exists(rpl => rpl.status == RoadAddressChangeType.Unchanged || rpl.status == RoadAddressChangeType.Transfer || rpl.status == RoadAddressChangeType.New || rpl.status == RoadAddressChangeType.Termination)) {
+                // Check for conflicting actions on the same original road part.
+                val originalRoadPart = toUpdateLinks.head.roadAddressRoadPart.getOrElse(toUpdateLinks.head.roadPart)
+                val roadPartLinks = projectLinkDAO.fetchProjectLinksByOriginalRoadPart(originalRoadPart, projectId)
+                if (roadPartLinks.exists(rpl => rpl.status != RoadAddressChangeType.Renumeration && rpl.status != RoadAddressChangeType.NotHandled)) {
                   throw new ProjectValidationException(ErrorOtherActionWithNumbering)
                 }
                 val (reservationNotNeeded, oldRoadPart) = checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.Renumeration, toUpdateLinks)
