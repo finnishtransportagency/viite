@@ -1062,26 +1062,27 @@ class RoadwayDAO extends BaseDAO {
    * Said delay is no longer present in AWS.
    * TODO: Refactor this function as it's no longer needed.
    * @param roadNumber
-   * @param startDate
+   * @param projectStartDate
    * @return
    */
-  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
+  def getValidRoadParts(roadNumber: Long, projectStartDate: DateTime): List[Long] = {
     val query = sql"""
-        SELECT DISTINCT ra.road_part_number
-        FROM roadway ra
-        WHERE road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
-            AND end_date IS NULL
-            AND ra.road_part_number NOT IN (
-        SELECT DISTINCT pl.road_part_number
-        FROM project_link pl
-            WHERE (
-            SELECT count(DISTINCT pl2.status)
-            FROM project_link pl2
-            WHERE pl2.road_part_number = ra.road_part_number
-            AND pl2.road_number = ra.road_number
-            AND pl.road_number = pl2.road_number)
-         = 1
-         AND pl.status = 5)
+      SELECT DISTINCT ra.road_part_number
+      FROM roadway ra
+      WHERE road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $projectStartDate
+          AND (end_date IS NULL OR end_date >= $projectStartDate)
+          AND ra.road_part_number NOT IN (
+              SELECT DISTINCT pl.road_part_number
+              FROM project_link pl
+              WHERE (
+                  SELECT count(DISTINCT pl2.status)
+                  FROM project_link pl2
+                  WHERE pl2.road_part_number = ra.road_part_number
+                    AND pl2.road_number = ra.road_number
+                    AND pl.road_number = pl2.road_number
+              ) = 1
+              AND pl.status = 5
+          )
       """
     runSelectQuery(query.map(_.long(1)))
   }

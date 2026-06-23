@@ -582,12 +582,12 @@ class RoadAddressService(
     * Gets all the valid road address in the given road number and project start date
     *
     * @param roadNumber The road number
-    * @param startDate  The project start date
+    * @param projectStartDate  The project start date
     * @return Returns road addresses filtered given section
     */
-  def getValidRoadAddressParts(roadNumber: Long, startDate: DateTime): Seq[Long] = {
+  def getValidRoadAddressParts(roadNumber: Long, projectStartDate: DateTime): Seq[Long] = {
     runWithReadOnlySession {
-      roadwayDAO.getValidRoadParts(roadNumber, startDate)
+      roadwayDAO.getValidRoadParts(roadNumber, projectStartDate)
     }
   }
 
