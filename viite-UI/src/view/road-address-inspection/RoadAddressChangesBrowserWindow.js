@@ -9,9 +9,8 @@ import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
-import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 import { RoadAddressBrowserForm, createElyEvkSelectorData } from './RoadAddressBrowserForm.js';
 
 export function RoadAddressChangesBrowserWindow(backend) {
@@ -167,7 +166,7 @@ export function RoadAddressChangesBrowserWindow(backend) {
                                       <td>${results[i].oldRoadPartNumber}</td>
                                       <td>${results[i].oldEndAddrM}</td>
                                       <td>${results[i].oldLength}</td>
-                                      <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
+                                      <td>${getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
                                       <td>${getChangeTypeDisplayText(results[i].changeType)}</td>
                                       <td>${results[i].newEvk}</td>
 
@@ -178,7 +177,7 @@ export function RoadAddressChangesBrowserWindow(backend) {
                                       <td>${results[i].newRoadPartNumber}</td>
                                       <td>${results[i].newAddrMRange.end}</td>
                                       <td>${results[i].newLength}</td>
-                                      <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].newAdministrativeClass)}</td>
+                                      <td>${getAdministrativeClassTextValue(results[i].newAdministrativeClass)}</td>
                                       <td>${results[i].reversed}</td>
                                       <td>${results[i].roadName}</td>
                                       <td>${results[i].projectName}</td>

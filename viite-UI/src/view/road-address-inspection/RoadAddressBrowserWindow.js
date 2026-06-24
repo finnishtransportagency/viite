@@ -4,8 +4,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
-import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { EnumerationUtils } from '@utils/EnumerationUtils.js';
+import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 
 /**
  * RoadAddressBrowserWindow component
@@ -52,7 +51,7 @@ export function RoadAddressBrowserWindow(backend) {
 				results[i].addrMRange.start,
 				results[i].addrMRange.end,
 				results[i].lengthAddrM,
-				EnumerationUtils.getAdministrativeClassTextValue(results[i].administrativeClass),
+				getAdministrativeClassTextValue(results[i].administrativeClass),
 				results[i].startDate
 			];
 		}
@@ -92,7 +91,7 @@ export function RoadAddressBrowserWindow(backend) {
                                           <td>${results[i].addrMRange.start}</td>
                                           <td>${results[i].addrMRange.end}</td>
                                           <td>${results[i].lengthAddrM}</td>
-                                          <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].administrativeClass)}</td>
+                                          <td>${getAdministrativeClassTextValue(results[i].administrativeClass)}</td>
                                           <td>${results[i].startDate}</td>
                                       </tr>`;
 		}

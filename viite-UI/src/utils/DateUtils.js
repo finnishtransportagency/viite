@@ -42,10 +42,6 @@ dateutil.addFinnishDatePicker = function (element, additionalOptions) {
 	return addPicker(jQuery(element),additionalOptions);
 };
 
-dateutil.addSingleDatePicker = function (element, additionalOptions) {
-	return dateutil.addFinnishDatePicker(element, additionalOptions);
-};
-
 function addPicker(jqueryElement, additionalOptions) {
 	const basicOptions = {
 		field: jqueryElement.get(0),
