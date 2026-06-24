@@ -33,7 +33,7 @@ import { Environment } from '@utils/EnvironmentUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
 // Starts application
-export function start() {
+export function startApplication() {
   document.title = Environment.browserTitle();
   const backend = new Backend();
 
@@ -62,7 +62,7 @@ export function start() {
     backend.getUserRoles(function (userData) {
       setUserData(userData);
       setupProjections();
-      startApplication(backend, models, startupParameters, roadNameCollection);
+      initializeApplication(backend, models, startupParameters, roadNameCollection);
     });
   });
 }
@@ -165,7 +165,7 @@ const initializeUI = function (map, backend, startupParameters, layers, tileMaps
   });
 };
 
-const startApplication = function (backend, models, startupParameters, roadNameCollection) {
+const initializeApplication = function (backend, models, startupParameters, roadNameCollection) {
   const mapContext = initializeMap(
     models,
     startupParameters
@@ -193,6 +193,4 @@ const setupProjections = function () {
   ol.proj.proj4.register(proj4);
 };
 
-$(function () {
-  start();
-});
+startApplication();

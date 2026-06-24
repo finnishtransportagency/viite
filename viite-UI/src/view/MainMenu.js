@@ -1,6 +1,6 @@
 /**
  * MainMenu - Renders the main navigation panel and manages top-level UI state.
- * Switches between the main button menu, link info view, and delegated module states.
+ * Switches between the main button menu, link info view, project list, road naming tool, node menu, road address browsers, and admin panel based on user actions.
  */
 
 import { LinkInfo } from './link-info/LinkInfo.js';
@@ -32,7 +32,6 @@ let setMainMenuState = () => {};
 export { setMainMenuState };
 
 export function MainMenu(options = {}) {
-  const rootElement = $('#menu-container');
   const {
     eventbus: activeEventbus,
     selectedLinkProperty,
@@ -42,20 +41,12 @@ export function MainMenu(options = {}) {
     models = {}
   } = options;
 
-  const {
-    nodeCollection,
-    selectedNodesAndJunctions,
-    roadCollection
-  } = models;
+  const { nodeCollection, selectedNodesAndJunctions, roadCollection } = models;
 
   const roles = getStartupParameters().roles || [];
-
   const menu = new MenuContainer();
-  if (!rootElement.length) {
-    console.error('MainMenu: #menu-container was not found');
-    return { setState: () => {} };
-  }
-  rootElement[0].appendChild(menu.root);
+
+  $('#menu-container').append(menu.root);
 
   const views = {
     linkInfo: new LinkInfo(selectedLinkProperty),
@@ -98,7 +89,6 @@ export function MainMenu(options = {}) {
     menu.setHeader();
     menu.setFooter();
     menu.setBody(renderMainMenu());
-    bindMenuActions();
   };
 
   const actions = {
@@ -120,8 +110,6 @@ export function MainMenu(options = {}) {
   function setState(state, data) {
     (actions[state] || actions[MENU_STATE.MAIN])(data);
   }
-
-  function bindMenuActions() {}
 
   setMainMenuState = setState;
   menu.setDefaultClose(() => setState(MENU_STATE.MAIN));

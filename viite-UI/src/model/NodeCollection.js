@@ -307,5 +307,4 @@ export function NodeCollection(backend) {
       openNodePointTemplate: openNodePointTemplate,
       openJunctionTemplate: openJunctionTemplate
     };
-
 }

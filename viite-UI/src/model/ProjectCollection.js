@@ -13,7 +13,6 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { getUserGeoLocation } from '@view/map/MapView.js';
-import { eventbus } from '@utils/Eventbus.js';
 
 export function ProjectCollection(backend, startupParameters) {
   const noop = function () {};
@@ -29,6 +28,10 @@ export function ProjectCollection(backend, startupParameters) {
   let dirtyProjectLinkIds = [];
   let dirtyProjectLinks = [];
   let publishableProject = false;
+  let projectLinkLockHandlers = {
+    lockProjectLinks: noop,
+    unlockProjectLinks: noop
+  };
   const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
   const ProjectStatus = ViiteEnumerations.ProjectStatus;
   const Track = ViiteEnumerations.Track;
@@ -269,7 +272,7 @@ export function ProjectCollection(backend, startupParameters) {
         }),
         coordinates: coordinates
       };
-      eventbus.trigger('roadAddressProject:lockLinks', revertIds, revertLinkIds);
+      projectLinkLockHandlers.lockProjectLinks(revertIds, revertLinkIds);
       backend.revertChangesRoadlink(data, function (response) {
         if (response.success) {
           dirtyProjectLinkIds = [];
@@ -279,7 +282,7 @@ export function ProjectCollection(backend, startupParameters) {
           onProjectLinksRevertedChanges(response);
           onProjectLinksUpdated(response);
         } else {
-          eventbus.trigger('roadAddressProject:unlockLinks');
+          projectLinkLockHandlers.unlockProjectLinks();
           if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
             onProjectLinksUpdateFailed(response.status);
           }
@@ -300,7 +303,7 @@ export function ProjectCollection(backend, startupParameters) {
       if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
         resetEditedDistance();
         const ids = dataJson.ids;
-        eventbus.trigger('roadAddressProject:lockLinks', dataJson.ids, dataJson.linkIds);
+        projectLinkLockHandlers.lockProjectLinks(dataJson.ids, dataJson.linkIds);
         if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
           backend.createProjectLinks(dataJson, function (successObject) {
             if (successObject.success) {
@@ -313,7 +316,7 @@ export function ProjectCollection(backend, startupParameters) {
                 new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
               }
             } else {
-              eventbus.trigger('roadAddressProject:unlockLinks');
+              projectLinkLockHandlers.unlockProjectLinks();
               new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
             }
           });
@@ -326,7 +329,7 @@ export function ProjectCollection(backend, startupParameters) {
               onProjectLinkSaved(dataJson.projectId, successObject.publishable);
               onProjectLinksUpdated(successObject);
             } else {
-              eventbus.trigger('roadAddressProject:unlockLinks');
+              projectLinkLockHandlers.unlockProjectLinks();
               new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
             }
           });
@@ -670,6 +673,13 @@ export function ProjectCollection(backend, startupParameters) {
     dirtyProjectLinks = editRoadLinks;
   }
 
+  function setProjectLinkLockHandlers(handlers = {}) {
+    projectLinkLockHandlers = {
+      lockProjectLinks: typeof handlers.lockProjectLinks === 'function' ? handlers.lockProjectLinks : noop,
+      unlockProjectLinks: typeof handlers.unlockProjectLinks === 'function' ? handlers.unlockProjectLinks : noop
+    };
+  }
+
   function getTmpDirty() {
     return dirtyProjectLinks;
   }
@@ -863,6 +873,7 @@ export function ProjectCollection(backend, startupParameters) {
     pushCoordinates: pushCoordinates,
     clearCoordinates: clearCoordinates,
     setTmpDirty: setTmpDirty,
+    setProjectLinkLockHandlers: setProjectLinkLockHandlers,
     getTmpDirty: getTmpDirty,
     isDirty: isDirty,
     startProject: startProject,
