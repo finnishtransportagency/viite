@@ -16,6 +16,12 @@ import { eventbus } from '@utils/Eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 
+export function enableCloseBtn() {
+  $('#saveAndCancelDialogue, #cancelEdit, .menu-close-btn')
+    .prop('disabled', false)
+    .attr('title', '');
+}
+
 export function ProjectDetailsForm(callbacks = {}) {
     let startDatePicker = null;
     const projectCollection = callbacks.projectCollection;
@@ -182,8 +188,8 @@ export function ProjectDetailsForm(callbacks = {}) {
         : button({ id: 'saveProject', label: 'Tallenna', className: 'save btn-primary btn-save action-button', disabled: isSaveDisabled, onClick: () => {} });
       
       const cancelButton = (isNewProject || !isEditMode)
-        ? button({ id: 'saveAndCancelDialogue', label: 'Poistu', className: 'cancel btn-cancel', onClick: () => {} })
-        : button({ id: 'cancelEdit', label: 'Peruuta', className: 'cancel btn-cancel', onClick: () => {} });
+        ? button({ id: 'saveAndCancelDialogue', label: 'Poistu', className: 'cancel btn-cancel', disabled: true, onClick: () => {} })
+        : button({ id: 'cancelEdit', label: 'Peruuta', className: 'cancel btn-cancel', disabled: true, onClick: () => {} });
       
       return `
         <div class="footer-project-details ${!showDelete ? 'no-delete' : ''}" id="actionButtons">
@@ -286,9 +292,29 @@ export function ProjectDetailsForm(callbacks = {}) {
       }
     };
 
+    const navigateToRootUrl = function () {
+      if (typeof window !== 'undefined' && window.history && typeof window.history.replaceState === 'function') {
+        window.setTimeout(function () {
+          window.history.replaceState(null, document.title, window.location.pathname + window.location.search);
+          if (typeof Backbone !== 'undefined' && Backbone.history) {
+            Backbone.history.fragment = '';
+          }
+        }, 0);
+      }
+    };
+
+    const updateCancelButtonState = function () {
+      const tooltipText = 'Odota kartan päivittymistä.';
+
+      $('#saveAndCancelDialogue, #cancelEdit, .menu-close-btn')
+        .prop('disabled', true)
+        .attr('title', tooltipText);
+    };
+
     const bindEvents = function (project, projCollection, currentProject) {
       const projectData = project || { name: '', startDate: '', additionalInfo: '', id: null };
       markAsSaved();
+      updateCancelButtonState();
       
       // Disable form inputs if project is not editable (status codes other than 0 or 1)
       const isNewProject = projectData.name === '';
@@ -510,6 +536,7 @@ export function ProjectDetailsForm(callbacks = {}) {
                     returnToActions(latestProject);
                   } else {
                     callbacks.closeProjectMenu();
+                    navigateToRootUrl();
                   }
                 } else {
                   new ConfirmPopup(getBackendErrorMessage(result, 'Projektin tallennus epäonnistui.'), {
@@ -544,6 +571,7 @@ export function ProjectDetailsForm(callbacks = {}) {
               // Close without saving - reset layer to default
               selectLayer('linkProperty', true, false);
               callbacks.closeProjectMenu();
+              navigateToRootUrl();
             }
           });
         } else {
@@ -556,6 +584,7 @@ export function ProjectDetailsForm(callbacks = {}) {
           // No unsaved changes, close directly - reset layer to default
           selectLayer('linkProperty', true, false);
           callbacks.closeProjectMenu();
+          navigateToRootUrl();
         }
       });
 

@@ -72,6 +72,7 @@ export function ProjectLinkEditor(canUseDevTools) {
         const parsed = JSON.parse(raw);
         return _.isObject(parsed) ? parsed : {};
       } catch (e) {
+        console.error('Failed to parse stored original links from sessionStorage', e);
         return {};
       }
     };
@@ -353,7 +354,7 @@ export function ProjectLinkEditor(canUseDevTools) {
         const trackCodeMismatch      = !expectedTrackCodes.includes(currentTrackCode);
 
         if (roadNumberMismatch || roadPartNumberMismatch || trackCodeMismatch) {
-          const formatExpected = (values) => values.length === 1 ? values[0] : values.join(' / ');
+          const formatExpected = (values) => (values.length === 1 ? values[0] : values.join(' / '));
 
           const changes = [
             roadNumberMismatch     && `Muuta tie ${currentRoadNumber} -> ${formatExpected(expectedRoadNumbers)}`,

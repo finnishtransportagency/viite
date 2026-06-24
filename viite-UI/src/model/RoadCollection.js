@@ -10,6 +10,7 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { redrawLinkPropertyLayer, highlightProject, highlightReservedRoads } from '@view/map/layers/LinkPropertyLayer.js';
+import { enableCloseBtn } from '@view/project-menu/project-details/ProjectDetailsForm.js';
 
 const RoadLinkModel = function (data) {
   const getData = function () {
@@ -135,6 +136,7 @@ export function RoadCollection(backend) {
 
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       redrawLinkPropertyLayer();
+      enableCloseBtn();
 
       if (!_.isUndefined(pendingProjectHighlightId)) {
         highlightProject(pendingProjectHighlightId);
