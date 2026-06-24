@@ -1,4 +1,4 @@
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { clearNodeLayerHighlights, onNodeLayerUnselected, onNodeChanged, onTemplatesSelected, onJunctionDetach, onJunctionAttach, onNodePointDetach, onNodePointAttach } from '@view/map/layers/NodeLayer.js';

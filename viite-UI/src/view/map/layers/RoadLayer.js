@@ -3,7 +3,7 @@
  * @param {Object} map - OpenLayers map instance
  * @returns {Object} Layer object with methods to manage road link display and interactions
  */
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Spinner } from '@components/spinner/Spinner.js';

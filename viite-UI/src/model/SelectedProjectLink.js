@@ -1,4 +1,4 @@
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { updateProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { highlightProjectLinkLayerFeatures } from '@view/map/layers/ProjectLinkLayer.js';
 /**

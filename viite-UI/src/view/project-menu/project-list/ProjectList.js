@@ -9,7 +9,7 @@ import { ProjectActionMenu } from '@view/project-menu/project-action-menu/Projec
 import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 
 import { getStartupParameters, getSessionUsername } from '@model/ApplicationModel.js';
 

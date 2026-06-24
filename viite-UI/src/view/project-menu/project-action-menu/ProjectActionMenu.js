@@ -11,7 +11,7 @@ import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { button } from '@components/button/Button.js';
 

@@ -7,7 +7,7 @@
  */
 
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';

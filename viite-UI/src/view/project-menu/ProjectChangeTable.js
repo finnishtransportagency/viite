@@ -1,6 +1,6 @@
 // Displays changes made to the project once "avaa projektin yhteenvetotaulukko" button is clicked. It supports sorting and is used for entering project edit/creation menu
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
 export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {

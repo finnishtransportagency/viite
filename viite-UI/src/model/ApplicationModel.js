@@ -1,4 +1,4 @@
-import { eventbus } from "@utils/Eventbus.js";
+import { eventbus } from "@utils/eventbus.js";
 
 // ApplicationModel manages global application state, including selected layer, user session data, and road visibility settings. 
 // It provides functions to get and set these states, and triggers events on changes for other components to react accordingly.

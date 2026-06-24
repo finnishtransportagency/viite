@@ -8,7 +8,7 @@
  * @returns {Object} Layer with redraw method
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { ProjectLinkStyler } from '@view/map/ProjectLinkStyler.js';

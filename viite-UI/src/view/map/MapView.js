@@ -4,7 +4,7 @@
  * @param {Object} map - OpenLayers map instance
  * @param {Object} layers - Active map layers keyed by layer name
  */
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';

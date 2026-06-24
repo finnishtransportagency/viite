@@ -4,7 +4,7 @@ import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { DataTable, NodeTableUtils } from '@node-menu/DataTable.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { eventbus } from '@utils/Eventbus.js';
+import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 
