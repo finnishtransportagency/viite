@@ -53,16 +53,6 @@ class JunctionDAO extends BaseDAO {
       track     = Track(rs.int("track")),
       addrM     = rs.long("addr_m"),
       roadMaintainer = ArealRoadMaintainer.apply(rs.string("road_maintainer"))
-  //    roadMaintainer   = rs.stringOpt("road_maintainer") match {
-  //      case Some(value) => {
-  //        println(s"MAPPING INTO JUNCTION TEMPLATE ROAD MAINTAINER: ${value}")
-  //        ArealRoadMaintainer.apply(value) }
-  //      case None => {
-  //        println(s"HERE WE SEEM TO BE MISSING STUFF :::: ")
-  //        println(s"ROAD PART ::: ${RoadPart(rs.long("road_number"), rs.long("road_part_number"))}")
-  //        println(s"roadMaintainer ::: ${rs.stringOpt("road_maintainer")}")
-  //        ArealRoadMaintainer.apply("EVK14") }// Further debugging of the origin of EVK0 issue
-  //    }
     )
   }
 

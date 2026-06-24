@@ -1780,7 +1780,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             } else
               Seq.empty[ProjectCalibrationPoint]
           })
-        println(s"${roadAddressChangeType}")
           roadAddressChangeType match {
             case RoadAddressChangeType.Termination =>
               if (devToolData.isDefined) {
@@ -1806,8 +1805,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                     roadAddresses.map(ra => (ra.roadPart)).distinct.lengthCompare(1) != 0) {
                   throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
                 }
-                val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadPart, projectId)
-                if (roadPartLinks.exists(rpl => rpl.status == RoadAddressChangeType.Unchanged || rpl.status == RoadAddressChangeType.Transfer || rpl.status == RoadAddressChangeType.New || rpl.status == RoadAddressChangeType.Termination)) {
+                // Check for conflicting actions on the same original road part.
+                val originalRoadPart = toUpdateLinks.head.roadAddressRoadPart.getOrElse(toUpdateLinks.head.roadPart)
+                val roadPartLinks = projectLinkDAO.fetchProjectLinksByOriginalRoadPart(originalRoadPart, projectId)
+                if (roadPartLinks.exists(rpl => rpl.status != RoadAddressChangeType.Renumeration && rpl.status != RoadAddressChangeType.NotHandled)) {
                   throw new ProjectValidationException(ErrorOtherActionWithNumbering)
                 }
                 val (reservationNotNeeded, oldRoadPart) = checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.Renumeration, toUpdateLinks)
@@ -2643,10 +2644,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       })
 
       // Exclude linear locations that are terminated from insertion
-      val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
-
+      val (terminatingLinearLocationsToInsert, nonTerminatingLinearLocationsToInsert) = linearLocationsToInsert.partition(ll => terminatedLinkIDs.contains(ll.linkId)) // linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep,
-        nonTerminatingLinearLocationsToInsert, project)
+        linearLocationsToInsert, project)
       handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
@@ -2654,6 +2654,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       val oldRoadParts = projectLinks.map(pl => pl.originalRoadPart)
       val newRoadParts = projectLinks.map(pl => pl.roadPart)
+
       (oldRoadParts ++ newRoadParts).distinct
     } catch {
       case e: ProjectValidationException =>
@@ -2880,31 +2881,18 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     * @return A sequence of validation errors, can be empty.
     */
   def validateProjectById(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
-    def validateWithCalculatedLinks(): Seq[projectValidator.ValidationErrorDetails] = {
+    def validateLinks(): Seq[projectValidator.ValidationErrorDetails] = {
       val project = fetchProjectById(projectId).get
-      val linksBeforeValidation = projectLinkDAO.fetchProjectLinks(projectId)
-
-      // Address-dependent validations require calculated M-values. Recalculate first if needed.
-      // If recalculation fails, log a warning and continue validation with the existing links.
-      if (linksBeforeValidation.exists(_.isNotCalculated)) {
-        try {
-          recalculateProjectLinks(projectId, project.modifiedBy)
-        } catch {
-          case e: Exception =>
-            logger.warn(s"Recalculation failed for project $projectId during validation, continuing with existing link values. ${e.getMessage}", e)
-        }
-      }
-
-      val linksForValidation = projectLinkDAO.fetchProjectLinks(projectId)
-      projectValidator.validateProject(project, linksForValidation)
+      val links   = projectLinkDAO.fetchProjectLinks(projectId)
+      projectValidator.validateProject(project, links)
     }
 
     if (newSession) {
       runWithTransaction {
-        validateWithCalculatedLinks()
+        validateLinks()
       }
     } else {
-      validateWithCalculatedLinks()
+      validateLinks()
     }
   }
 

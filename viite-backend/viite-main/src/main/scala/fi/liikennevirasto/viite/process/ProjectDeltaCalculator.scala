@@ -210,7 +210,9 @@ object ProjectDeltaCalculator {
     else {
       val sortedProjectLinks = pls.sortBy(_.originalAddrMRange.start)
       val terminatedProjectLinks = sortedProjectLinks.takeWhile {_.status == RoadAddressChangeType.Termination}
-      if (terminatedProjectLinks.nonEmpty)
+      // Only return a boundary link if the terminated section starts at the road-part start (addr 0).
+      // A track whose terminated links begin mid-part must NOT be paired for averaging, because the two tracks cover different address ranges.
+      if (terminatedProjectLinks.nonEmpty && terminatedProjectLinks.head.originalAddrMRange.isRoadPartStart)
         Seq(terminatedProjectLinks.last)
       else
         Seq()

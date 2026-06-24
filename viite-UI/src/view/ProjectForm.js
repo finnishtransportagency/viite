@@ -10,19 +10,20 @@
 
     // flag to keep track if the project links have been recalculated after the changes made to the project links
     var recalculatedAfterChangesFlag = false;
+    // flag to distinguish a post-save fetch from a regular project-open fetch
+    var isSaveInFlight = false;
 
     eventbus.on('roadAddressProject:setRecalculatedAfterChangesFlag', function (bool) {
       recalculatedAfterChangesFlag = bool;
     });
 
-    eventbus.on('roadAddressProject:projectLinkSaved', function() {
+    eventbus.on('roadAddressProject:projectLinkSaved', function(projectId, isPublishable, containsFormedLinks) {
       // Get the current state of the validate button if it exists
       $('#actionButtons').empty();
       const $buttons = $('.project-form.form-controls');
       const $validateButton = $buttons.find('#validate-button');
       const hasValidationButton = $validateButton.length > 0;
       const isValidationButtonVisible = hasValidationButton && $validateButton.is(':visible');
-
 
       // Rebuild the buttons with proper states
       let buttonsHtml = '';
@@ -50,7 +51,11 @@
       const isChangeTableOpen = $('.change-table-frame').is(':visible');
       const hasRecalculated = getRecalculatedAfterChangesFlag();
 
-      if (projectErrors.length === 0) {
+      if (!containsFormedLinks) {
+        formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
+        formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
+        formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
+      } else if (projectErrors.length === 0) {
         if (isChangeTableOpen) {
           formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
           formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
@@ -69,6 +74,9 @@
         formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
         formCommon.setDisabledAndTitleAttributesById("send-button", true, "Projektin tulee läpäistä validoinnit");
       }
+
+      // Recalculate must stay disabled during project link processing
+      formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilinkkien käsittely kesken, odota hetki");
 
       // Rebind event handlers
       if (typeof bindEvents === 'function') {
@@ -441,6 +449,12 @@
         formCommon.setDisabledAndTitleAttributesById("changes-button", false, "");
       };
 
+      var hasNoProjectLinks = function () {
+        var reservedParts = projectCollection.getReservedParts();
+        var formedParts = projectCollection.getFormedParts();
+        return (!reservedParts || reservedParts.length === 0) && (!formedParts || formedParts.length === 0);
+      };
+
       /**
        * Set attributes (disabled, title) of the recalculate and changes buttons when the project is opened.
        * User needs to recalculate project when it's opened, so we enable recalculate button and disable changes button.
@@ -450,7 +464,9 @@
           buttonsWhenInspectingUneditableProject();
         } else {
           const projectErrors = projectCollection.getProjectErrors();
-          if (projectErrors.length === 0) {
+          if (hasNoProjectLinks()) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
+          } else if (projectErrors.length === 0) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
           } else {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true);
@@ -472,6 +488,9 @@
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Etäisyyslukemia ei voida päivittää yhteenvetotaulukon ollessa auki");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Yhteenvetotaulukko on jo auki");
             formCommon.setDisabledAndTitleAttributesById("send-button", false, "");
+          } else if (hasNoProjectLinks()) {
+            formCommon.setDisabledAndTitleAttributesById("recalculate-button", true, "Projektilla ei ole linkkejä");
+            formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
           } else if (projectErrors.length === 0 && getRecalculatedAfterChangesFlag() === false) {
             formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
             formCommon.setDisabledAndTitleAttributesById("changes-button", true, "Projektin tulee läpäistä validoinnit");
@@ -545,11 +564,13 @@
         disableAutoComplete();
       });
 
-      eventbus.on('roadAddress:openProject', function (result) {
+      eventbus.on('roadAddress:openProject', function (result, isEdited) {
         currentProject = result.project;
         projectCollection.setAndWriteProjectErrorsToUser(result.projectErrors);
         currentProject.isDirty = false;
-        projectCollection.clearRoadAddressProjects();
+        if (!isEdited) {
+          projectCollection.clearRoadAddressProjects();
+        }
         disableAutoComplete();
         projectCollection.setCurrentProject(result);
         projectCollection.setReservedParts(result.reservedInfo);
@@ -617,14 +638,39 @@
         applicationModel.removeSpinner();
       });
 
-      eventbus.on('roadAddressProject:reOpenCurrent', function () {
-        reOpenCurrent();
+      eventbus.on('roadAddressProject:reOpenCurrent', function (wasCancelled) {
+        reOpenCurrent(wasCancelled);
       });
 
       eventbus.on('roadAddressProject:writeProjectErrors', function () {
         $('#project-errors').html(errorsList());
-        applicationModel.removeSpinner();
       });
+
+      // Rebuild the footer immediately with disabled recalculate/changes/send buttons when a save is in-flight.
+      // This replaces the Save/Cancel buttons (from emptyTemplateDisabledButtons) before the HTTP response arrives.
+      eventbus.on('roadAddressProject:linksSaving', function () {
+        isSaveInFlight = true;
+        const recalcBtnTitle = 'Projektilinkkien tallennus kesken, odota hetki';
+        const $buttons = $('.project-form.form-controls');
+        const isValidationButtonVisible = $buttons.find('#validate-button').is(':visible');
+        const validateBtn = _.includes(startupParameters.roles, 'dev')
+          ? `<button id="validate-button" title="" class="validate btn btn-block btn-recalculate"${isValidationButtonVisible ? '' : ' hidden="true"'}>Validoi projekti</button>`
+          : '';
+        $buttons.html(`${validateBtn}
+          <button disabled id="recalculate-button" title="${recalcBtnTitle}" class="recalculate btn btn-block btn-recalculate">Päivitä etäisyyslukemat</button>
+          <button disabled id="changes-button" class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>
+          <button disabled id="send-button" class="send btn btn-block btn-send">Hyväksy tieosoitemuutokset</button>`);
+      });
+
+      // Re-evaluate button states once the fetch after a save has completed.
+      // Guard with isSaveInFlight so regular project-open fetches don't override the existing button state.
+      eventbus.on('roadAddressProject:fetched', function () {
+        if (currentProject && isSaveInFlight) {
+          isSaveInFlight = false;
+          buttonsWhenOpenProject();
+        }
+      });
+
 
       rootElement.on('click', '#editProjectSpan', currentProject, function () {
         applicationModel.setSelectedTool(ViiteEnumerations.Tool.Default.value);
@@ -634,7 +680,8 @@
           rootElement.empty();
           setTimeout(function () {
           }, 0);
-          eventbus.trigger('roadAddress:openProject', result);
+          const isEdited = true;
+          eventbus.trigger('roadAddress:openProject', result, isEdited);
           if (applicationModel.isReadOnly()) {
             $('.edit-mode-btn:visible').click();
           }
@@ -850,19 +897,27 @@
         $('.wrapper').remove();
         eventbus.trigger('roadAddress:projectLinksEdited');
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
-        eventbus.trigger('roadAddressProject:reOpenCurrent');
+        eventbus.trigger('roadAddressProject:reOpenCurrent', true);
       };
 
-      var reOpenCurrent = function () {
+      var reOpenCurrent = function (wasCancelled) {
         rootElement.empty();
         selectedProjectLinkProperty.setDirty(false);
-        nextStage();
-        if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
-          buttonsWhenInspectingUneditableProject();
+        if (wasCancelled) {
+          currentProject.isDirty = false;
+          rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
         } else {
-          var projectErrors = projectCollection.getProjectErrors();
-          var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
-          buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
+          nextStage();
+        }
+        // Don't update button states if project links are processed, as the buttons should remain in the "saving" state
+        if (!isSaveInFlight) {
+          if (currentProject.statusCode === 10 || currentProject.statusCode === 11 || currentProject.statusCode === 12) {
+            buttonsWhenInspectingUneditableProject();
+          } else {
+            var projectErrors = projectCollection.getProjectErrors();
+            var highPriorityProjectErrors = projectErrors.filter((error) => error.errorCode === 8);  // errorCode 8 means there are projectLinks in the project with status "NotHandled"
+            buttonsWhenReOpenCurrent(projectErrors, highPriorityProjectErrors);
+          }
         }
         toggleAdditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');

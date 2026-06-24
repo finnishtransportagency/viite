@@ -9,9 +9,9 @@ validate_profile_for_mode() {
   case "$mode" in
     backup|flyway|common)
       case "$profile" in
-        local|dev|test|prod) ;;
+        local|dev|test|exp|prod) ;;
         *)
-          echo "ERROR: Invalid ENV_PROFILE='$profile'. Allowed: local|dev|test|prod"
+          echo "ERROR: Invalid ENV_PROFILE='$profile'. Allowed: local|dev|test|exp|prod"
           return 1
           ;;
       esac
@@ -19,13 +19,13 @@ validate_profile_for_mode() {
 
     restore)
       case "$profile" in
-        local|dev|test) ;;
+        local|dev|test|exp) ;;
         prod)
-          echo "ERROR: ENV_PROFILE=prod is not allowed for restore. Allowed: local|dev|test"
+          echo "ERROR: ENV_PROFILE=prod is not allowed for restore. Allowed: local|dev|test|exp"
           return 1
           ;;
         *)
-          echo "ERROR: Invalid ENV_PROFILE='$profile'. Allowed: local|dev|test"
+          echo "ERROR: Invalid ENV_PROFILE='$profile'. Allowed: local|dev|test|exp"
           return 1
           ;;
       esac

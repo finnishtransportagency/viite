@@ -11,6 +11,16 @@
     var isNotEditingData = true;
     var isActiveLayer = false;
 
+    // IDs of links currently being saved; locked against selection until the next fetch completes
+    var lockedLinkIds = [];
+    var isLocked = function (linkData) {
+      if (!linkData || lockedLinkIds.length === 0) return false;
+      return _.includes(lockedLinkIds, linkData.id) || _.includes(lockedLinkIds, linkData.linkId);
+    };
+    var isLockedId = function (id) {
+      return lockedLinkIds.length > 0 && _.includes(lockedLinkIds, id);
+    };
+
     var projectLinkStyler = new ProjectLinkStyler();
 
     var calibrationPointVector = new ol.source.Vector({});
@@ -144,6 +154,10 @@
             projectRoadAddressChangeTypeIn(selectionTarget.linkData, possibleStatusForSelection) || selectionTarget.linkData.roadClass === RoadClass.NoClass.value);
         else return false;
       });
+      if (selection && isLocked(selection.linkData)) {
+        selectSingleClick.getFeatures().remove(selection);
+        return;
+      }
       if (modPressed) {
         showDoubleClickChanges(modPressed, selection);
       } else if (isNotEditingData) {
@@ -160,7 +174,12 @@
     var showSingleClickChanges = function (ctrlPressed, selection) {
       if (ctrlPressed && !_.isUndefined(selection) && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (canBeAddedToSelection(selection.linkData)) {
-          var clickedIds = projectCollection.getMultiProjectLinks(getSelectedId(selection.linkData));
+
+          // Filter locked links out of selection group
+          var clickedIds = projectCollection
+            .getMultiProjectLinks(getSelectedId(selection.linkData))
+            .filter(id => !isLockedId(id));
+            
           var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function (selected) {
             return getSelectedId(selected);
           });
@@ -176,7 +195,16 @@
         selectedProjectLinkProperty.clean();
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
-        selectedProjectLinkProperty.open(getSelectedId(selection.linkData), true);
+        var selectedId = getSelectedId(selection.linkData);
+        var groupIds = projectCollection.getMultiProjectLinks(selectedId);
+        var unlockedGroupIds = _.reject(groupIds, isLockedId);
+        if (unlockedGroupIds.length > 0) {
+          if (unlockedGroupIds.length === groupIds.length) {
+            selectedProjectLinkProperty.open(selectedId, true);
+          } else {
+            selectedProjectLinkProperty.openCtrl(unlockedGroupIds);
+          }
+        }
       } else {
         eventbus.trigger('roadAddressProject:discardChanges'); // Background map was clicked so discard changes
       }
@@ -205,6 +233,10 @@
             selectionTarget.linkData.lifecycleStatus === lifecycleStatus.UnderConstruction.value)
         );
       });
+      if (selection && isLocked(selection.linkData)) {
+        selectDoubleClick.getFeatures().remove(selection);
+        return;
+      }
       if (isNotEditingData) {
         showDoubleClickChanges(ctrlPressed, selection);
       } else {
@@ -338,6 +370,16 @@
         return;
       }
       eventbus.trigger('overlay:update', event, pixel);
+
+      // Set mouse cursor to loading animation if hovering over locked links
+      if (lockedLinkIds.length > 0) {
+        var hasLockedFeature = map.forEachFeatureAtPixel(pixel, function (feature) {
+          return feature.linkData && isLocked(feature.linkData);
+        });
+        map.getViewport().style.cursor = hasLockedFeature ? 'wait' : '';
+      } else {
+        map.getViewport().style.cursor = '';
+      }
     });
 
     var showLayer = function () {
@@ -387,10 +429,10 @@
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
 
-    me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function (response) {
+    me.eventListener.listenTo(eventbus, 'projectLink:revertedChanges', function (response, revertedLinks) {
       isNotEditingData = true;
       selectedProjectLinkProperty.setDirty(false);
-      eventbus.trigger('roadAddress:projectLinksUpdated', response);
+      eventbus.trigger('roadAddress:projectLinksUpdated', response, revertedLinks || { ids: [], linkIds: [] });
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, undefined, projectCollection.getPublishableStatus());
     });
 
@@ -510,11 +552,23 @@
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), zoomlevels.getViewZoom(map) + 1, projectId, projectCollection.getPublishableStatus());
     });
 
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:lockLinks', function (ids, linkIds) {
+      lockedLinkIds = (ids || []).concat(linkIds || []);
+    });
+
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:unlockLinks', function () {
+      lockedLinkIds = [];
+      map.getViewport().style.cursor = '';
+      me.redraw();
+    });
+
     me.eventListener.listenTo(eventbus, 'roadAddressProject:fetched', function () {
       eventbus.trigger('layers:removeViewModeFeaturesFromTheLayers'); // view mode features should not be shown to user in project mode
       me.redraw();
       _.defer(function () {
         highlightFeatures();
+        lockedLinkIds = [];
+        map.getViewport().style.cursor = '';
       });
     });
 
@@ -557,6 +611,10 @@
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:enableInteractions', function () {
       addSelectInteractions();
+    });
+
+    me.eventListener.listenTo(eventbus, 'roadAddressProject:linksSaving', function () {
+      clearHighlights();
     });
 
     me.eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function () {
