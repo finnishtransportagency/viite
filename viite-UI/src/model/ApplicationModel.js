@@ -50,15 +50,12 @@ function getStartupParameters() {
   return state.appContext.startupParameters;
 }
 
-function selectLayer(layer, toggleStart, noSave) {
+function selectLayer(layer, toggleStart) {
 
   if (layer !== state.selectedLayer) {
-    state.selectedLayer = layer;
     const previousLayer = state.selectedLayer;
+    state.selectedLayer = layer;
     eventbus.trigger("layer:selected", layer, previousLayer, toggleStart);
-
-  } else if (layer === "linkProperty" && toggleStart) {
-    eventbus.trigger("roadLayer:toggleProjectSelectionInForm", layer, noSave);
   }
 }
 

@@ -7,7 +7,6 @@ import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/Eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
-import { onNodeEditorOpened, onNodeEditorClosed, registerDisplayCoordinatesHandler } from '@view/map/layers/NodeLayer.js';
 
 /**
  * NodeEditor - Editable node form with detach, validation and save flows.
@@ -359,7 +358,6 @@ export function NodeEditor(
   const cleanup = () => {
     getContainer().off('.nodeEditor');
     clearEventbusHandlers();
-    onNodeEditorClosed();
   };
 
   // ─── Event binding ──────────────────────────────────────────────────────────
@@ -446,11 +444,6 @@ export function NodeEditor(
       $container.find('.junction-point-address-label-editable').toggle(!addressEditMode);
       $container.find('.junction-point-address-input').toggle(addressEditMode);
       $container.find('#edit-junction-point-addresses').toggleClass('active', addressEditMode);
-    });
-
-    
-    registerDisplayCoordinatesHandler((coords) => {
-      $('#node-coordinates').text(`${Math.round(coords.y)}, ${Math.round(coords.x)}`);
     });
 
     subscribeEventbus('nodeStartDate:setCustomValidity', (_date, errorMessage) => {
@@ -556,7 +549,6 @@ export function NodeEditor(
 
     bindEvents($container);
     syncActionButtons();
-    onNodeEditorOpened();
     // Set correct save button state
     _.defer(() => syncActionButtons());
   };

@@ -8,17 +8,17 @@ import { Backend } from '@utils/BackendUtils.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
 import { Header } from '@view/header/Header.js';
-import { LinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
+import { initLinkPropertyLayer} from '@view/map/layers/LinkPropertyLayer.js';
 import { MainMenu } from '@view/MainMenu.js';
 import { MapView, refreshMap } from '@view/map/MapView.js';
 import { SearchPanel } from '@view/search-panel/SearchPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
-import { NodeLayer } from '@view/map/layers/NodeLayer.js';
+import { initNodeLayer } from '@view/map/layers/NodeLayer.js';
 import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
 import { ProjectCollection } from '@model/ProjectCollection.js';
-import { ProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
+import { initProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { RoadCollection } from '@model/RoadCollection.js';
-import { RoadLayer } from '@view/map/layers/RoadLayer.js';
+import { initRoadLayer } from '@view/map/layers/RoadLayer.js';
 import { RoadNameCollection } from '@model/RoadNameCollection.js';
 import { ScaleBar } from '@view/map/markers/ScaleBar.js';
 import { SelectedLinkProperty } from '@model/SelectedLinkProperty.js';
@@ -118,10 +118,10 @@ const createOpenLayersMap = function (startupParameters, layers) {
 };
 
 const createMapLayers = function (map, models) {
-  const roadLayer = new RoadLayer(map);
-  const projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
-  const linkPropertyLayer = new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection);
-  const nodeLayer = new NodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection);
+  const roadLayer = initRoadLayer(map);
+  const projectLinkLayer = initProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty);
+  const linkPropertyLayer = initLinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection);
+  const nodeLayer = initNodeLayer(map, roadLayer, models.selectedNodesAndJunctions, models.nodeCollection, models.roadCollection);
 
   return {
     road: roadLayer,
