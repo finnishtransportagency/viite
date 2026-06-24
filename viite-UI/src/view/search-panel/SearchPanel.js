@@ -5,10 +5,10 @@ import { getSelectedLayer } from '@model/ApplicationModel.js';
 
 // Orchestrates search panel rendering and updates legend HTML based on selected layer
 export function SearchPanel(map) {
-  const container = jQuery('#map-tools');
-  const searchBox = new SearchBox(map);
+	const container = jQuery('#map-tools');
+	const searchBox = new SearchBox(map);
 
-  const legendGroup = $(`
+	const legendGroup = $(`
     <div class="panel-group road-links">
       <div class="panel road-link">
         <header class="panel-header expanded">Selite</header>
@@ -18,22 +18,22 @@ export function SearchPanel(map) {
       </div>
     </div>`);
 
-  const legendContent = legendGroup.find('#legendDiv');
+	const legendContent = legendGroup.find('#legendDiv');
 
-  container.append(searchBox.element);
-  container.append(legendGroup);
+	container.append(searchBox.element);
+	container.append(legendGroup);
 
-  function updateLegendContent(layerName) {
-    const layer = layerName || getSelectedLayer();
-    legendContent
-      .empty()
-      .append(getLegendDisplayHtml(layer));
-  }
+	function updateLegendContent(layerName) {
+		const layer = layerName || getSelectedLayer();
+		legendContent
+			.empty()
+			.append(getLegendDisplayHtml(layer));
+	}
 
-  eventbus.on('layer:selected', function onLayerSelected(layerName) {
-    updateLegendContent(layerName);
-  });
+	eventbus.on('layer:selected', function onLayerSelected(layerName) {
+		updateLegendContent(layerName);
+	});
 
-  // Initial render
-  updateLegendContent(getSelectedLayer());
+	// Initial render
+	updateLegendContent(getSelectedLayer());
 }

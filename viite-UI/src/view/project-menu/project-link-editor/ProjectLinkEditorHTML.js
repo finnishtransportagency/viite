@@ -3,26 +3,26 @@ import { numberInput } from '@components/number-input/NumberInput.js';
 import { button } from '@components/button/Button.js';
 
 export function createProjectLinkEditorHTML(dependencies) {
-  const {
-    canUseDevTools,
-    RoadAddressChangeType,
-    Track,
-    AdministrativeClass,
-    LinkSources,
-    ViiteEnumerations,
-    editableStatus,
-    defineOptionModifiers,
-    DevAddressTool
-  } = dependencies;
+	const {
+		canUseDevTools,
+		RoadAddressChangeType,
+		Track,
+		AdministrativeClass,
+		LinkSources,
+		ViiteEnumerations,
+		editableStatus,
+		defineOptionModifiers,
+		DevAddressTool
+	} = dependencies;
 
-  const render = (project, selected, errorMessage, links = []) => {
-    const road = {
-      roadNumber: selected[0].roadNumber,
-      roadPartNumber: selected[0].roadPartNumber,
-      trackCode: selected[0].trackCode
-    };
+	const render = (project, selected, errorMessage, links = []) => {
+		const road = {
+			roadNumber: selected[0].roadNumber,
+			roadPartNumber: selected[0].roadPartNumber,
+			trackCode: selected[0].trackCode
+		};
 
-    return `
+		return `
       <div class="edit-control-group project-choice-group">
         ${renderErrorMessage(errorMessage)}
         ${renderStaticInformation(project, selected)}
@@ -39,41 +39,41 @@ export function createProjectLinkEditorHTML(dependencies) {
           ${renderActionSelectedField()}
         </div>
       </div>`;
-  };
+	};
 
-  const renderFooter = (_project, projectCollection, onSave, onCancel) => {
-    const hasChanges = projectCollection ? projectCollection.isDirty() : false;
-    return actionButtonsForSelectedLinks(!hasChanges, onSave, onCancel);
-  };
+	const renderFooter = (_project, projectCollection, onSave, onCancel) => {
+		const hasChanges = projectCollection ? projectCollection.isDirty() : false;
+		return actionButtonsForSelectedLinks(!hasChanges, onSave, onCancel);
+	};
 
-  const renderStaticInformation = (project, selected) => {
-    const roadLinkSources = _.chain(selected)
-      .map(s => s.roadLinkSource)
-      .uniq()
-      .map(a => {
-        const linkGeom = _.find(LinkSources, source => source.value === parseInt(a, 10));
-        return linkGeom === undefined ? LinkSources.Unknown.descriptionFI : linkGeom.descriptionFI;
-      })
-      .uniq()
-      .join(', ')
-      .value();
+	const renderStaticInformation = (project, selected) => {
+		const roadLinkSources = _.chain(selected)
+			.map(s => s.roadLinkSource)
+			.uniq()
+			.map(a => {
+				const linkGeom = _.find(LinkSources, source => source.value === parseInt(a, 10));
+				return linkGeom === undefined ? LinkSources.Unknown.descriptionFI : linkGeom.descriptionFI;
+			})
+			.uniq()
+			.join(', ')
+			.value();
 
-    return `
+		return `
       ${staticField('Lisätty järjestelmään', `${project.createdBy} ${project.startDate}`)}
       ${staticField('Muokattu viimeksi', `${project.modifiedBy} ${project.dateModified}`)}
       ${staticField('Geometrian lähde', roadLinkSources)}
       ${renderLinkId(selected)}
       ${renderLinkLength(selected)}`;
-  };
+	};
 
-  const renderSelectedData = (selected) => {
-    if (!selected[0]) return '';
+	const renderSelectedData = (selected) => {
+		if (!selected[0]) return '';
 
-    const link = selected[0];
-    const startM = Math.min(...selected.map(l => l.addrMRange.start));
-    const endM = Math.max(...selected.map(l => l.addrMRange.end));
+		const link = selected[0];
+		const startM = Math.min(...selected.map(l => l.addrMRange.start));
+		const endM = Math.max(...selected.map(l => l.addrMRange.end));
 
-    return `
+		return `
       <div class="project-edit-selections">
         <div class="project-edit">
           <span>Toimenpiteet,</span>
@@ -84,60 +84,60 @@ export function createProjectLinkEditorHTML(dependencies) {
           ${selected.length > 1 ? `(${selected.length} linkkiä)` : ''}
         </div>
       </div>`;
-  };
+	};
 
-  const renderChangeTypeSelect = (selected, project) => {
-    const changeTypes = [
-      RoadAddressChangeType.Unchanged,
-      RoadAddressChangeType.Transfer,
-      RoadAddressChangeType.New,
-      RoadAddressChangeType.Terminated,
-      RoadAddressChangeType.Numbering,
-      RoadAddressChangeType.Revert
-    ];
+	const renderChangeTypeSelect = (selected, project) => {
+		const changeTypes = [
+			RoadAddressChangeType.Unchanged,
+			RoadAddressChangeType.Transfer,
+			RoadAddressChangeType.New,
+			RoadAddressChangeType.Terminated,
+			RoadAddressChangeType.Numbering,
+			RoadAddressChangeType.Revert
+		];
 
-    const options = [
-      { value: '', text: 'Valitse', selected: true },
-      ...changeTypes.map(type => {
-        const modifiers = defineOptionModifiers(type.description, selected);
-        return {
-          value: type.description,
-          text: type.displayText,
-          id: `drop_0_${type.description}`,
-          disabled: modifiers.includes('disabled'),
-          selected: false
-        };
-      })
-    ];
+		const options = [
+			{ value: '', text: 'Valitse', selected: true },
+			...changeTypes.map(type => {
+				const modifiers = defineOptionModifiers(type.description, selected);
+				return {
+					value: type.description,
+					text: type.displayText,
+					id: `drop_0_${type.description}`,
+					disabled: modifiers.includes('disabled'),
+					selected: false
+				};
+			})
+		];
 
-    const projectEditable = project && editableStatus.includes(project.statusCode);
-    return dropdown({
-      id: 'dropDown_0',
-      options: options,
-      className: 'project-link-change-type-dropdown',
-      disabled: !projectEditable
-    });
-  };
+		const projectEditable = project && editableStatus.includes(project.statusCode);
+		return dropdown({
+			id: 'dropDown_0',
+			options: options,
+			className: 'project-link-change-type-dropdown',
+			disabled: !projectEditable
+		});
+	};
 
-  const renderNewRoadAddressForm = (selected, links, road) => {
-    const roadNumber = road.roadNumber;
-    const track = road.trackCode;
-    const roadName = selected[0].roadName;
+	const renderNewRoadAddressForm = (selected, links, road) => {
+		const roadNumber = road.roadNumber;
+		const track = road.trackCode;
+		const roadName = selected[0].roadName;
 
-    let link = (links && links.length > 0) ? _.head(_.filter(links, l => l.status !== undefined)) : selected[0];
-    if (!link) link = selected[0];
+		let link = (links && links.length > 0) ? _.head(_.filter(links, l => l.status !== undefined)) : selected[0];
+		if (!link) link = selected[0];
 
-    const administrativeClass = link.administrativeClassId ? link.administrativeClassId : AdministrativeClass.Empty.value;
+		const administrativeClass = link.administrativeClassId ? link.administrativeClassId : AdministrativeClass.Empty.value;
 
-    let trackCodeDropdown = track;
-    if (track === Track.Unknown.value) {
-      trackCodeDropdown = (roadNumber >= 20000 && roadNumber <= 39999) ? '0' : '';
-    }
+		let trackCodeDropdown = track;
+		if (track === Track.Unknown.value) {
+			trackCodeDropdown = (roadNumber >= 20000 && roadNumber <= 39999) ? '0' : '';
+		}
 
-    const existingTie = link.roadNumber || roadNumber || '';
-    const existingOsa = link.roadPartNumber || '';
+		const existingTie = link.roadNumber || roadNumber || '';
+		const existingOsa = link.roadPartNumber || '';
 
-    return `
+		return `
       <div class="form-group new-road-address" hidden>
         <div><label class="section-header">TIEOSOITTEEN TIEDOT</label></div>
         <div class="road-address-fields-wrapper">
@@ -177,25 +177,25 @@ export function createProjectLinkEditorHTML(dependencies) {
         ${renderDistanceValue()}
       </div>
     `;
-  };
+	};
 
-  const renderDevTool = (links, project) => {
-    if (!canUseDevTools) return '';
-    const devTool = new DevAddressTool('');
-    return devTool.render(links, project);
-  };
+	const renderDevTool = (links, project) => {
+		if (!canUseDevTools) return '';
+		const devTool = new DevAddressTool('');
+		return devTool.render(links, project);
+	};
 
-  const renderChangeDirection = (selected, project) => {
-    if (!editableStatus.includes(project.statusCode)) return '';
+	const renderChangeDirection = (selected, project) => {
+		if (!editableStatus.includes(project.statusCode)) return '';
 
-    return `
+		return `
       <div hidden class="form-group changeDirectionDiv change-direction-container">
         ${button({ id: 'changeDirectionButton', label: 'Käännä tieosan kasvusuunta', className: 'form-group changeDirection btn-primary', onClick: () => {} })}
       </div>`;
-  };
+	};
 
-  const renderDistanceValue = () => {
-    return `
+	const renderDistanceValue = () => {
+		return `
       <div id="distanceValue" hidden>
         <div class="form-group distance-header">
           <img src="images/calibration-point.svg" class="calibration-point"/>
@@ -208,139 +208,139 @@ export function createProjectLinkEditorHTML(dependencies) {
           ${numberInput('endDistance', 5, false, '--')}
         </div>
       </div>`;
-  };
+	};
 
-  const renderErrorMessage = (errorMessage) => {
-    if (!errorMessage) return '';
-    return `<label class="project-link-error-message">VIRHE: ${errorMessage}</label>`;
-  };
+	const renderErrorMessage = (errorMessage) => {
+		if (!errorMessage) return '';
+		return `<label class="project-link-error-message">VIRHE: ${errorMessage}</label>`;
+	};
 
-  const renderLinkId = (selected) => {
-    if (selected.length !== 1) return '';
-    return staticField('Linkin ID', selected[0].linkId);
-  };
+	const renderLinkId = (selected) => {
+		if (selected.length !== 1) return '';
+		return staticField('Linkin ID', selected[0].linkId);
+	};
 
-  const renderLinkLength = (selected) => {
-    if (selected.length === 1) {
-      const length = Math.round(selected[0].endMValue - selected[0].startMValue);
-      return staticField('Geometrioiden yhteenlaskettu pituus', length);
-    }
-    const combinedLength = selected.reduce((sum, link) => sum + Math.round(link.endMValue - link.startMValue), 0);
-    return `
+	const renderLinkLength = (selected) => {
+		if (selected.length === 1) {
+			const length = Math.round(selected[0].endMValue - selected[0].startMValue);
+			return staticField('Geometrioiden yhteenlaskettu pituus', length);
+		}
+		const combinedLength = selected.reduce((sum, link) => sum + Math.round(link.endMValue - link.startMValue), 0);
+		return `
       <div class="form-group-metadata">
         <p class="form-control-static project-link-static-text">
           Geometrioiden yhteenlaskettu pituus: ${combinedLength}
         </p>
       </div>`;
-  };
+	};
 
-  const renderActionSelectedField = () => {
-    return `
+	const renderActionSelectedField = () => {
+		return `
       <div class="form-group action-selected-field" hidden="true">
         <div class="project-link-static-text">Tarkista tekemäsi muutokset.<br>Jos muutokset ok, tallenna.</div>
       </div>`;
-  };
+	};
 
-  const staticField = (labelText, dataField) => {
-    return `
+	const staticField = (labelText, dataField) => {
+		return `
       <div class="form-group">
         <p class="form-control-static project-link-static-text">${labelText} : ${dataField}</p>
       </div>`;
-  };
+	};
 
-  const addRoadNameField = (name, isBlocked, maxLength) => {
-    const nameToDisplay = (!name || name === 'null') ? '' : name;
-    const disabled = nameToDisplay !== '' && isBlocked;
-    const lengthLimit = maxLength ? `maxlength="${maxLength}"` : '';
-    return `
+	const addRoadNameField = (name, isBlocked, maxLength) => {
+		const nameToDisplay = (!name || name === 'null') ? '' : name;
+		const disabled = nameToDisplay !== '' && isBlocked;
+		const lengthLimit = maxLength ? `maxlength="${maxLength}"` : '';
+		return `
       <input type="text" class="form-control administrativeClassAndRoadName project-link-road-name" id="roadName" value="${nameToDisplay}" ${disabled ? 'disabled' : ''} ${lengthLimit}/>`;
-  };
+	};
 
-  const addTrackCodeDropdown = (trackDefaultValue) => {
-    let value = trackDefaultValue;
+	const addTrackCodeDropdown = (trackDefaultValue) => {
+		let value = trackDefaultValue;
 
-    if (trackDefaultValue === '') {
-      value = Track.Unknown.value;
-    }
+		if (trackDefaultValue === '') {
+			value = Track.Unknown.value;
+		}
 
-    return dropdown({
-      id: 'trackCodeDropdown',
-      className: 'form-select-small-control',
-      defaultValue: value,
-      options: [
-        { value: '0', text: '0' },
-        { value: '1', text: '1' },
-        { value: '2', text: '2' }
-      ]
-    });
-  };
+		return dropdown({
+			id: 'trackCodeDropdown',
+			className: 'form-select-small-control',
+			defaultValue: value,
+			options: [
+				{ value: '0', text: '0' },
+				{ value: '1', text: '1' },
+				{ value: '2', text: '2' }
+			]
+		});
+	};
 
-  const addElinvoimakeskusDropdown = (selectedValue, isDisabled) => {
+	const addElinvoimakeskusDropdown = (selectedValue, isDisabled) => {
 
-    // Build dropdown options from EVK enum values, skipping code 0 (unknown) and ordering by numeric code
-    const evkOptions = Object.entries(ViiteEnumerations.EVKCodes)
-      .filter(([, val]) => val.value !== 0)
-      .sort((a, b) => a[1].value - b[1].value)
-      .map(([, val]) => ({
-        value: val.value,
-        text: `${val.value} ${val.name}`
-      }));
+		// Build dropdown options from EVK enum values, skipping code 0 (unknown) and ordering by numeric code
+		const evkOptions = Object.entries(ViiteEnumerations.EVKCodes)
+			.filter(([, val]) => val.value !== 0)
+			.sort((a, b) => a[1].value - b[1].value)
+			.map(([, val]) => ({
+				value: val.value,
+				text: `${val.value} ${val.name}`
+			}));
 
-    const defaultOption = selectedValue === 0
-      ? { value: '0', text: '0 Tuntematon elinvoimakeskus' }
-      : { value: '', text: 'Valitse elinvoimakeskus' };
+		const defaultOption = selectedValue === 0
+			? { value: '0', text: '0 Tuntematon elinvoimakeskus' }
+			: { value: '', text: 'Valitse elinvoimakeskus' };
 
-    return dropdown({
-      id: 'elinvoimakeskus',
-      className: 'form-select-control',
-      defaultValue: selectedValue === 0 ? '0' : selectedValue,
-      disabled: isDisabled,
-      options: [defaultOption, ...evkOptions]
-    });
-  };
+		return dropdown({
+			id: 'elinvoimakeskus',
+			className: 'form-select-control',
+			defaultValue: selectedValue === 0 ? '0' : selectedValue,
+			disabled: isDisabled,
+			options: [defaultOption, ...evkOptions]
+		});
+	};
 
-  const addDiscontinuityDropdown = () => {
-    return dropdown({
-      id: 'discontinuityDropdown',
-      className: 'form-select-control',
-      defaultValue: '',
-      options: [
-        { value: '', text: '5 Jatkuva', disabled: true, hidden: true },
-        { value: '1', text: '1 Tien loppu' },
-        { value: '2', text: '2 Epäjatkuva' },
-        { value: '3', text: '3 Elinvoimakeskuksen raja' },
-        { value: '4', text: '4 Lievä epäjatkuvuus' },
-        { value: '5', text: '5 Jatkuva' }
-      ]
-    });
-  };
+	const addDiscontinuityDropdown = () => {
+		return dropdown({
+			id: 'discontinuityDropdown',
+			className: 'form-select-control',
+			defaultValue: '',
+			options: [
+				{ value: '', text: '5 Jatkuva', disabled: true, hidden: true },
+				{ value: '1', text: '1 Tien loppu' },
+				{ value: '2', text: '2 Epäjatkuva' },
+				{ value: '3', text: '3 Elinvoimakeskuksen raja' },
+				{ value: '4', text: '4 Lievä epäjatkuvuus' },
+				{ value: '5', text: '5 Jatkuva' }
+			]
+		});
+	};
 
-  const administrativeClassDropdown = (defaultValue) => {
+	const administrativeClassDropdown = (defaultValue) => {
 
-    return dropdown({
-      id: 'administrativeClassDropdown',
-      className: 'form-control administrativeClassAndRoadName',
-      defaultValue: defaultValue,
-      options: [
-        { value: '1', text: '1 Valtio' },
-        { value: '2', text: '2 Kunta' },
-        { value: '3', text: '3 Yksityinen' }
-      ]
-    });
-  };
+		return dropdown({
+			id: 'administrativeClassDropdown',
+			className: 'form-control administrativeClassAndRoadName',
+			defaultValue: defaultValue,
+			options: [
+				{ value: '1', text: '1 Valtio' },
+				{ value: '2', text: '2 Kunta' },
+				{ value: '3', text: '3 Yksityinen' }
+			]
+		});
+	};
 
-  const actionButtonsForSelectedLinks = (notDisabled, onSave, onCancel) => {
-    return `
+	const actionButtonsForSelectedLinks = (notDisabled, onSave, onCancel) => {
+		return `
       <div class="footer-project-link-edit" id="actionButtons">
         <div>
           ${button({ id: 'saveButton', label: 'Tallenna', className: 'btn-primary update btn-save action-button', disabled: !notDisabled, onClick: onSave })}
           ${button({ id: 'cancelButton', label: 'Peruuta', className: 'cancelLink btn-cancel', onClick: onCancel })}
         </div>
       </div>`;
-  };
+	};
 
-  return {
-    render,
-    renderFooter
-  };
+	return {
+		render,
+		renderFooter
+	};
 }

@@ -10,12 +10,12 @@ tai koordinaateilla ('P, I', esim. '6673830, 388774')`;
 
 // Handles road address/location search input, result rendering, and coordinate selection events
 export function SearchBox(map) {
-  const groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
-  const coordinatesDiv = $('<div class="panel"></div>');
+	const groupDiv = $('<div id="searchBox" class="panel-group search-box"></div>');
+	const coordinatesDiv = $('<div class="panel"></div>');
 
-  const inputWrapper = $('<div class="input-wrapper"></div>');
+	const inputWrapper = $('<div class="input-wrapper"></div>');
 
-  const coordinatesInput = $(`
+	const coordinatesInput = $(`
     <input
       type="text"
       class="location-search-input"
@@ -24,125 +24,125 @@ export function SearchBox(map) {
     />
   `);
 
-  const clearButton = $(button({ id: 'clearSearch', label: '<i class="fas fa-times"></i>', className: 'close wbtn-close clear-btn', title: 'Tyhjennä haku', onClick: clearSearch })).attr('aria-label', 'Tyhjennä haku');
+	const clearButton = $(button({ id: 'clearSearch', label: '<i class="fas fa-times"></i>', className: 'close wbtn-close clear-btn', title: 'Tyhjennä haku', onClick: clearSearch })).attr('aria-label', 'Tyhjennä haku');
 
-  const searchButton = $(button({ id: 'executeSearch', label: 'Hae', className: 'btn-primary', onClick: executeSearch }));
+	const searchButton = $(button({ id: 'executeSearch', label: 'Hae', className: 'btn-primary', onClick: executeSearch }));
 
-  const panelHeader = $('<div class="panel-header"></div>');
-  const searchResults = $('<ul id="search-results"></ul>');
-  const resultsSection = $('<div class="panel-section"></div>')
-    .append(searchResults)
-    .hide();
+	const panelHeader = $('<div class="panel-header"></div>');
+	const searchResults = $('<ul id="search-results"></ul>');
+	const resultsSection = $('<div class="panel-section"></div>')
+		.append(searchResults)
+		.hide();
 
-  inputWrapper.append(coordinatesInput, clearButton);
-  panelHeader.append(inputWrapper, searchButton);
-  coordinatesDiv.append(panelHeader, resultsSection);
-  groupDiv.append(coordinatesDiv);
+	inputWrapper.append(coordinatesInput, clearButton);
+	panelHeader.append(inputWrapper, searchButton);
+	coordinatesDiv.append(panelHeader, resultsSection);
+	groupDiv.append(coordinatesDiv);
 
-  function updateClearButtonVisibility() {
-    clearButton.toggle(coordinatesInput.val().trim().length > 0);
-  }
+	function updateClearButtonVisibility() {
+		clearButton.toggle(coordinatesInput.val().trim().length > 0);
+	}
 
-  function showError(message) {
-    resultsSection.hide();
-    clearButton.hide();
+	function showError(message) {
+		resultsSection.hide();
+		clearButton.hide();
 
-    showToast(
-      _.isString(message)
-        ? message
-        : 'Yhteys Viitekehysmuuntimeen epäonnistui',
-      { type: 'error' }
-    );
-  }
+		showToast(
+			_.isString(message)
+				? message
+				: 'Yhteys Viitekehysmuuntimeen epäonnistui',
+			{ type: 'error' }
+		);
+	}
 
-  function selectResult(result) {
-    if (map) {
-      moveMapToCoordinates(map, {
-        lon: result.lon,
-        lat: result.lat
-      });
-    }
-  }
+	function selectResult(result) {
+		if (map) {
+			moveMapToCoordinates(map, {
+				lon: result.lon,
+				lat: result.lat
+			});
+		}
+	}
 
-  function populateSearchResults(results) {
-    const sortedResults = [...results].sort((a, b) => {
-      const municipalityA = a.title.split(', ')[1] || '';
-      const municipalityB = b.title.split(', ')[1] || '';
+	function populateSearchResults(results) {
+		const sortedResults = [...results].sort((a, b) => {
+			const municipalityA = a.title.split(', ')[1] || '';
+			const municipalityB = b.title.split(', ')[1] || '';
 
-      return (
-        municipalityA.localeCompare(municipalityB) ||
+			return (
+				municipalityA.localeCompare(municipalityB) ||
         a.title.localeCompare(b.title) ||
         a.distance - b.distance
-      );
-    });
+			);
+		});
 
-    const items = sortedResults.map(result =>
-      $('<li></li>')
-        .text(result.title)
-        .on('click', () => selectResult(result))
-    );
+		const items = sortedResults.map(result =>
+			$('<li></li>')
+				.text(result.title)
+				.on('click', () => selectResult(result))
+		);
 
-    searchResults.empty().append(items);
+		searchResults.empty().append(items);
 
-    resultsSection.show();
-    updateClearButtonVisibility();
-  }
+		resultsSection.show();
+		updateClearButtonVisibility();
+	}
 
-  function showLoading() {
-    searchResults.text('Haku käynnissä…');
-    resultsSection.show();
-  }
+	function showLoading() {
+		searchResults.text('Haku käynnissä…');
+		resultsSection.show();
+	}
 
-  function executeSearch() {
-    const query = coordinatesInput.val().trim();
+	function executeSearch() {
+		const query = coordinatesInput.val().trim();
 
-    if (!query) {
-      resultsSection.hide();
-      return;
-    }
+		if (!query) {
+			resultsSection.hide();
+			return;
+		}
 
-    showLoading();
+		showLoading();
 
-    searchLocation(query)
-      .then(results => {
-        populateSearchResults(results);
+		searchLocation(query)
+			.then(results => {
+				populateSearchResults(results);
 
-        if (results.length === 1) {
-          selectResult(results[0]);
-        }
-      })
-      .fail(showError);
-  }
+				if (results.length === 1) {
+					selectResult(results[0]);
+				}
+			})
+			.fail(showError);
+	}
 
-  function clearSearch() {
-    coordinatesInput.val('');
-    coordinatesInput.focus();
+	function clearSearch() {
+		coordinatesInput.val('');
+		coordinatesInput.focus();
 
-    resultsSection.hide();
-    clearButton.hide();
-  }
+		resultsSection.hide();
+		clearButton.hide();
+	}
 
-  function bindEvents() {
-    coordinatesInput.on('keydown', event => {
-      if (event.key === 'Enter') {
-        executeSearch();
-      }
-    });
+	function bindEvents() {
+		coordinatesInput.on('keydown', event => {
+			if (event.key === 'Enter') {
+				executeSearch();
+			}
+		});
 
-    coordinatesInput.on('input', () => {
-      updateClearButtonVisibility();
+		coordinatesInput.on('input', () => {
+			updateClearButtonVisibility();
 
-      if (!coordinatesInput.val()) {
-        resultsSection.hide();
-      }
-    });
+			if (!coordinatesInput.val()) {
+				resultsSection.hide();
+			}
+		});
 
-    clearButton.hide();
-  }
+		clearButton.hide();
+	}
 
-  bindEvents();
+	bindEvents();
 
-  return {
-    element: groupDiv
-  };
+	return {
+		element: groupDiv
+	};
 }

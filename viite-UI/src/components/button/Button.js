@@ -33,47 +33,47 @@ const _registry = new Map(); // id -> cleanup fn
 let _observer = null;
 
 function _ensureObserver() {
-  if (_observer) return;
-  _observer = new MutationObserver(() => {
-    for (const [id, cleanup] of _registry) {
-      if (!document.getElementById(id)) {
-        cleanup();
-        _registry.delete(id);
-      }
-    }
-  });
-  _observer.observe(document.body, { childList: true, subtree: true });
+	if (_observer) return;
+	_observer = new MutationObserver(() => {
+		for (const [id, cleanup] of _registry) {
+			if (!document.getElementById(id)) {
+				cleanup();
+				_registry.delete(id);
+			}
+		}
+	});
+	_observer.observe(document.body, { childList: true, subtree: true });
 }
 
 export function button({
-  id = `viite-btn-${Math.random().toString(36).slice(2, 9)}`,
-  label = '',
-  onClick = () => {},
-  className = 'btn-primary',
-  type = 'button',
-  disabled = false,
-  title = '',
-  disabledWhen = null,  // () => boolean — re-evaluated on changes to watchSelector
-  watchSelector = null  // CSS selector for elements that trigger re-evaluation
+	id = `viite-btn-${Math.random().toString(36).slice(2, 9)}`,
+	label = '',
+	onClick = () => {},
+	className = 'btn-primary',
+	type = 'button',
+	disabled = false,
+	title = '',
+	disabledWhen = null,  // () => boolean — re-evaluated on changes to watchSelector
+	watchSelector = null  // CSS selector for elements that trigger re-evaluation
 } = {}) {
-  _ensureObserver();
+	_ensureObserver();
 
-  // If the same id is reused (re-render), remove the previous listeners first.
-  if (_registry.has(id)) {
-    _registry.get(id)();
-    _registry.delete(id);
-  }
+	// If the same id is reused (re-render), remove the previous listeners first.
+	if (_registry.has(id)) {
+		_registry.get(id)();
+		_registry.delete(id);
+	}
 
-  $(document).on(`click.${id}`, `#${id}:not([disabled])`, onClick);
+	$(document).on(`click.${id}`, `#${id}:not([disabled])`, onClick);
 
-  if (disabledWhen && watchSelector) {
-    $(document).on(`keyup.${id} input.${id}`, watchSelector, () => {
-      $(`#${id}`).prop('disabled', disabledWhen());
-    });
-  }
+	if (disabledWhen && watchSelector) {
+		$(document).on(`keyup.${id} input.${id}`, watchSelector, () => {
+			$(`#${id}`).prop('disabled', disabledWhen());
+		});
+	}
 
-  // .off(`.${id}`) removes ALL events under this namespace (click + optional keyup/input).
-  _registry.set(id, () => $(document).off(`.${id}`));
+	// .off(`.${id}`) removes ALL events under this namespace (click + optional keyup/input).
+	_registry.set(id, () => $(document).off(`.${id}`));
 
-  return `<button id="${id}" type="${type}" class="${className}"${disabled ? ' disabled' : ''}${title ? ` title="${title}"` : ''}>${label}</button>`;
+	return `<button id="${id}" type="${type}" class="${className}"${disabled ? ' disabled' : ''}${title ? ` title="${title}"` : ''}>${label}</button>`;
 }

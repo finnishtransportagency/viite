@@ -13,22 +13,22 @@ $('#remove-button').on('click', function () {
 });
 */
 export function ConfirmPopup(message, options = {}) {
-    const defaultOptions = {
-      type: "confirm",
-      okButtonLbl: 'Sulje',
-      yesButtonLbl: 'Kyllä',
-      noButtonLbl: 'Ei',
-      okCallback: function () {},
-      successCallback: function () {},
-      closeCallback: function () {}
-    };
+	const defaultOptions = {
+		type: "confirm",
+		okButtonLbl: 'Sulje',
+		yesButtonLbl: 'Kyllä',
+		noButtonLbl: 'Ei',
+		okCallback: function () {},
+		successCallback: function () {},
+		closeCallback: function () {}
+	};
 
-    const optionsMerged = _.merge(defaultOptions, options);
+	const optionsMerged = _.merge(defaultOptions, options);
 
-    const renderConfirmDialog = function () {
-      let template;
-      if (optionsMerged.type === 'alert') {
-        template = `
+	const renderConfirmDialog = function () {
+		let template;
+		if (optionsMerged.type === 'alert') {
+			template = `
           <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
             <div class="modal-dialog">
               <div class="content confirm-alert-scrollable">
@@ -39,8 +39,8 @@ export function ConfirmPopup(message, options = {}) {
               </div>
             </div>
           </div>`;
-      } else {
-        template = `
+		} else {
+			template = `
           <div class="modal-overlay confirm-modal" id="ConfirmationDialog">
             <div class="modal-dialog">
               <div class="content">
@@ -52,18 +52,18 @@ export function ConfirmPopup(message, options = {}) {
               </div>
             </div>
           </div>`;
-      }
-      jQuery('.container').append(template);
-    };
+		}
+		jQuery('.container').append(template);
+	};
 
-    const show = function () {
-      purge();
-      renderConfirmDialog();
-    };
+	const show = function () {
+		purge();
+		renderConfirmDialog();
+	};
 
-    const purge = function () {
-      jQuery('#ConfirmationDialog').remove();
-    };
+	const purge = function () {
+		jQuery('#ConfirmationDialog').remove();
+	};
 
-    show();
-  }
+	show();
+}

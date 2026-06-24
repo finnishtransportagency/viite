@@ -7,25 +7,25 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function ZoomBox(map, container) {
 
-  const element = `
+	const element = `
     <div class="zoombar" data-position="2">
       <div class="plus"></div>
       <div class="minus"></div>
     </div>
   `;
-  container.append(element);
-  container.find('.plus').click(function () {
-    const zoom = zoomlevels.getViewZoom(map);
-    map.getView().animate({
-      zoom: zoom + 1,
-      duration: 150
-    });
-  });
-  container.find('.minus').click(function () {
-      const zoom = zoomlevels.getViewZoom(map);
-      map.getView().animate({
-        zoom: zoom - 1,
-        duration: 150
-      });
-  });
+	container.append(element);
+	container.find('.plus').click(function () {
+		const zoom = zoomlevels.getViewZoom(map);
+		map.getView().animate({
+			zoom: zoom + 1,
+			duration: 150
+		});
+	});
+	container.find('.minus').click(function () {
+		const zoom = zoomlevels.getViewZoom(map);
+		map.getView().animate({
+			zoom: zoom - 1,
+			duration: 150
+		});
+	});
 }

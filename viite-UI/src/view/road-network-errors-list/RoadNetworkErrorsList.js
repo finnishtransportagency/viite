@@ -8,74 +8,74 @@ import { ModalContainer } from '@components/modals/ModalContainer.js';
 
 // Displays a list of road network errors in a modal window
 export function RoadNetworkErrorsList(backend) {
-  let modalContainer;
-  let isModalActive = false;
+	let modalContainer;
+	let isModalActive = false;
 
-  const showRoadNetworkErrorsListWindow = function () {
+	const showRoadNetworkErrorsListWindow = function () {
 
-      modalContainer = new ModalContainer({
-          onClose: function() {
-              isModalActive = false;
-          }
-      });
-      isModalActive = true;
+		modalContainer = new ModalContainer({
+			onClose: function() {
+				isModalActive = false;
+			}
+		});
+		isModalActive = true;
 
-      modalContainer.open({
-          title: 'Tieverkon virheet',
-          content: '<div style="padding: 20px; text-align: center;">Ladataan...</div>'
-      });
+		modalContainer.open({
+			title: 'Tieverkon virheet',
+			content: '<div style="padding: 20px; text-align: center;">Ladataan...</div>'
+		});
 
-      backend.getRoadNetworkErrors(function(result) {
-          // If modal was closed while loading, ignore this callback
-          if (!isModalActive) {
-              return;
-          }
-          Spinner.hide();
-          const contentWrapper = $('<div style="padding: 20px"></div>');
+		backend.getRoadNetworkErrors(function(result) {
+			// If modal was closed while loading, ignore this callback
+			if (!isModalActive) {
+				return;
+			}
+			Spinner.hide();
+			const contentWrapper = $('<div style="padding: 20px"></div>');
           
-          if (result.success === true) {
+			if (result.success === true) {
 
-              if (result.missingCalibrationPointsFromStart.length > 0 || result.missingCalibrationPointsFromEnd.length > 0)
-                  showMissingCalibrationPoints(result.missingCalibrationPointsFromStart.concat(result.missingCalibrationPointsFromEnd), contentWrapper);
-              if (result.missingCalibrationPointsFromJunctions.length > 0)
-                  showMissingCalibrationPointsForJunctions(result.missingCalibrationPointsFromJunctions, contentWrapper);
-              if (result.linksWithExtraCalibrationPointsOnSameRoadway.length > 0)
-                  showLinksWithExtraCalibrationPointsOnSameRoadway(result.linksWithExtraCalibrationPointsOnSameRoadway, contentWrapper);
-              if (result.linksWithExtraCalibrationPoints.length > 0)
-                  showLinksWithExtraCalibrationPoints(result.linksWithExtraCalibrationPoints, contentWrapper);
-              if (result.missingRoadwayPointsFromStart.length > 0 || result.missingRoadwayPointsFromEnd.length > 0)
-                  showMissingRoadwayPoints(result.missingRoadwayPointsFromStart.concat(result.missingRoadwayPointsFromEnd), contentWrapper);
-              if (result.invalidRoadwayLengths.length > 0)
-                  showInvalidRoadwayLengths(result.invalidRoadwayLengths, contentWrapper);
-              if (result.overlappingRoadways.length > 0)
-                  showOverlappingRoadways(result.overlappingRoadways, contentWrapper);
-              if (result.overlappingRoadwaysOnLinearLocations.length > 0)
-                  showOverlappingRoadwaysOnLinearLocations(result.overlappingRoadwaysOnLinearLocations, contentWrapper);
-              if (contentWrapper.children().length === 0) {
-                  contentWrapper.append('<p>Ei tieverkon virheitä löytynyt.</p>');
-              }
+				if (result.missingCalibrationPointsFromStart.length > 0 || result.missingCalibrationPointsFromEnd.length > 0)
+					showMissingCalibrationPoints(result.missingCalibrationPointsFromStart.concat(result.missingCalibrationPointsFromEnd), contentWrapper);
+				if (result.missingCalibrationPointsFromJunctions.length > 0)
+					showMissingCalibrationPointsForJunctions(result.missingCalibrationPointsFromJunctions, contentWrapper);
+				if (result.linksWithExtraCalibrationPointsOnSameRoadway.length > 0)
+					showLinksWithExtraCalibrationPointsOnSameRoadway(result.linksWithExtraCalibrationPointsOnSameRoadway, contentWrapper);
+				if (result.linksWithExtraCalibrationPoints.length > 0)
+					showLinksWithExtraCalibrationPoints(result.linksWithExtraCalibrationPoints, contentWrapper);
+				if (result.missingRoadwayPointsFromStart.length > 0 || result.missingRoadwayPointsFromEnd.length > 0)
+					showMissingRoadwayPoints(result.missingRoadwayPointsFromStart.concat(result.missingRoadwayPointsFromEnd), contentWrapper);
+				if (result.invalidRoadwayLengths.length > 0)
+					showInvalidRoadwayLengths(result.invalidRoadwayLengths, contentWrapper);
+				if (result.overlappingRoadways.length > 0)
+					showOverlappingRoadways(result.overlappingRoadways, contentWrapper);
+				if (result.overlappingRoadwaysOnLinearLocations.length > 0)
+					showOverlappingRoadwaysOnLinearLocations(result.overlappingRoadwaysOnLinearLocations, contentWrapper);
+				if (contentWrapper.children().length === 0) {
+					contentWrapper.append('<p>Ei tieverkon virheitä löytynyt.</p>');
+				}
               
-          } else {
-              showErrorMessage(result.error, contentWrapper);
-          }
+			} else {
+				showErrorMessage(result.error, contentWrapper);
+			}
           
-          // Update modal content with the results
-          modalContainer.open({
-              title: 'Tieverkon virheet',
-              content: contentWrapper
-          });
-      });
-  };
+			// Update modal content with the results
+			modalContainer.open({
+				title: 'Tieverkon virheet',
+				content: contentWrapper
+			});
+		});
+	};
 
 
-  const showErrorMessage = function (errorMessage, contentWrapper) {
-      contentWrapper.append(`<p>${errorMessage}</p>`);
-  };
+	const showErrorMessage = function (errorMessage, contentWrapper) {
+		contentWrapper.append(`<p>${errorMessage}</p>`);
+	};
 
-  const showMissingCalibrationPoints = function (calibrationPoints, contentWrapper) {
-      contentWrapper.append('<h3>Puuttuvat kalibrointipisteet</h3>');
-      const table = $(
-          `<table class="viite-table">
+	const showMissingCalibrationPoints = function (calibrationPoints, contentWrapper) {
+		contentWrapper.append('<h3>Puuttuvat kalibrointipisteet</h3>');
+		const table = $(
+			`<table class="viite-table">
             <thead>
               <th>Tie</th>
               <th>Osa</th>
@@ -84,24 +84,24 @@ export function RoadNetworkErrorsList(backend) {
             </thead>
             <tbody></tbody>
           </table>`
-      );
-      calibrationPoints.forEach((cp) => {
-          const string = $(
-              `<tr>
+		);
+		calibrationPoints.forEach((cp) => {
+			const string = $(
+				`<tr>
                   <td>${cp.roadNumber}</td>
                   <td>${cp.roadPartNumber}</td>
                   <td>${cp.track}</td>
                   <td>${cp.addrM}</td>
               </tr>`
-          );
-          table.append(string);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(string);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showMissingCalibrationPointsForJunctions = function (calibrationPoints, contentWrapper) {
-      contentWrapper.append('<h3>Liittymiltä puuttuvat kalibrointipisteet</h3>');
-      const table = $(`
+	const showMissingCalibrationPointsForJunctions = function (calibrationPoints, contentWrapper) {
+		contentWrapper.append('<h3>Liittymiltä puuttuvat kalibrointipisteet</h3>');
+		const table = $(`
           <table class="viite-table">
               <thead>
                   <th>Tie</th>
@@ -115,8 +115,8 @@ export function RoadNetworkErrorsList(backend) {
               <tbody></tbody>
           </table>
       `);
-      calibrationPoints.forEach((cp) => {
-          const string = $(`<tr>
+		calibrationPoints.forEach((cp) => {
+			const string = $(`<tr>
                               <td>${cp.roadNumber}</td>
                               <td>${cp.roadPartNumber}</td>
                               <td>${cp.track}</td>
@@ -125,14 +125,14 @@ export function RoadNetworkErrorsList(backend) {
                               <td>${cp.junctionNumber}</td>
                               <td>${cp.junctionPointId}</td>
                           </tr>`);
-          table.append(string);
-      });
-      contentWrapper.append(table);
-  };
+			table.append(string);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showLinksWithExtraCalibrationPointsOnSameRoadway = function (linksWithExtraCalibrationPointsOnSameRoadway, contentWrapper) {
-      contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä samalla roadwayllä (estää kartan päivittymisen)</h3>');
-      const table = $(`
+	const showLinksWithExtraCalibrationPointsOnSameRoadway = function (linksWithExtraCalibrationPointsOnSameRoadway, contentWrapper) {
+		contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä samalla roadwayllä (estää kartan päivittymisen)</h3>');
+		const table = $(`
           <table class="viite-table">
               <thead>
                   <th>Linkin Id</th>
@@ -145,17 +145,17 @@ export function RoadNetworkErrorsList(backend) {
               <tbody></tbody>
           </table>
       `);
-      linksWithExtraCalibrationPointsOnSameRoadway.forEach((link) => {
-          let startEndText;
-          if (link.startEnd === 0) {
-              startEndText = 'Alku';
-          } else if (link.startEnd === 1) {
-              startEndText = 'Loppu';
-          } else {
-              startEndText = link.startEnd;
-          }
-          const tableRow = (
-              `<tr>
+		linksWithExtraCalibrationPointsOnSameRoadway.forEach((link) => {
+			let startEndText;
+			if (link.startEnd === 0) {
+				startEndText = 'Alku';
+			} else if (link.startEnd === 1) {
+				startEndText = 'Loppu';
+			} else {
+				startEndText = link.startEnd;
+			}
+			const tableRow = (
+				`<tr>
                   <td>${link.linkId}</td>
                   <td>${link.roadNumber}</td>
                   <td>${link.roadPartNumber}</td>
@@ -163,16 +163,16 @@ export function RoadNetworkErrorsList(backend) {
                   <td>${link.calibrationPointCount + ' kpl'}</td>
                   <td>${link.calibrationPoints}</td>
               </tr>`
-          );
-          table.append(tableRow);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(tableRow);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showLinksWithExtraCalibrationPoints = function (linksWithExtraCalibrationPoints, contentWrapper) {
-      contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä</h3>');
-      const table = $(
-          `<table class="viite-table">
+	const showLinksWithExtraCalibrationPoints = function (linksWithExtraCalibrationPoints, contentWrapper) {
+		contentWrapper.append('<h3>Linkit joilla on ylimääräisiä kalibrointipisteitä</h3>');
+		const table = $(
+			`<table class="viite-table">
             <thead>
               <th>Linkin Id</th>
               <th>Tie</th>
@@ -183,18 +183,18 @@ export function RoadNetworkErrorsList(backend) {
             </thead>
             <tbody></tbody>
           </table>`
-      );
-      linksWithExtraCalibrationPoints.forEach((link) => {
-          let startEndText;
-          if (link.startEnd === 0) {
-              startEndText = 'Alku';
-          } else if (link.startEnd === 1) {
-              startEndText = 'Loppu';
-          } else {
-              startEndText = link.startEnd;
-          }
-          const tableRow = $(
-              `<tr>
+		);
+		linksWithExtraCalibrationPoints.forEach((link) => {
+			let startEndText;
+			if (link.startEnd === 0) {
+				startEndText = 'Alku';
+			} else if (link.startEnd === 1) {
+				startEndText = 'Loppu';
+			} else {
+				startEndText = link.startEnd;
+			}
+			const tableRow = $(
+				`<tr>
                   <td>${link.linkId}</td>
                   <td>${link.roadNumber}</td>
                   <td>${link.roadPartNumber}</td>
@@ -202,16 +202,16 @@ export function RoadNetworkErrorsList(backend) {
                   <td>${link.calibrationPointCount + ' kpl'}</td>
                   <td>${link.calibrationPoints}</td>
               </tr>`
-          );
-          table.append(tableRow);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(tableRow);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showMissingRoadwayPoints = function (roadwayPoints, contentWrapper) {
-      contentWrapper.append('<h3>Tieosalta puuttuvat roadwaypointit</h3>');
-      const table = (
-          `<table class="viite-table">
+	const showMissingRoadwayPoints = function (roadwayPoints, contentWrapper) {
+		contentWrapper.append('<h3>Tieosalta puuttuvat roadwaypointit</h3>');
+		const table = (
+			`<table class="viite-table">
             <thead>
               <th>Tie</th>
               <th>Osa</th>
@@ -220,25 +220,25 @@ export function RoadNetworkErrorsList(backend) {
             </thead>
             <tbody></tbody>
           </table>`
-      );
-      roadwayPoints.forEach((rwp) => {
-          const tableRow = $(
-              `<tr>
+		);
+		roadwayPoints.forEach((rwp) => {
+			const tableRow = $(
+				`<tr>
                   <td>${rwp.roadNumber}</td>
                   <td>${rwp.roadPartNumber}</td>
                   <td>${rwp.track}</td>
                   <td>${rwp.addrM}</td>
               </tr>`
-          );
-          table.append(tableRow);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(tableRow);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showInvalidRoadwayLengths = function (invalidRoadways, contentWrapper) {
-      contentWrapper.append('<h3>Vääränpituiset roadwayt</h3>');
-      const table = $(
-          `<table class="viite-table">
+	const showInvalidRoadwayLengths = function (invalidRoadways, contentWrapper) {
+		contentWrapper.append('<h3>Vääränpituiset roadwayt</h3>');
+		const table = $(
+			`<table class="viite-table">
             <thead>
               <th>Tie</th>
               <th>Osa</th>
@@ -250,10 +250,10 @@ export function RoadNetworkErrorsList(backend) {
             </thead>
             <tbody></tbody>
           </table>`
-      );
-      invalidRoadways.forEach((rw) => {
-          const tableRow = $(
-              `<tr>
+		);
+		invalidRoadways.forEach((rw) => {
+			const tableRow = $(
+				`<tr>
                   <td>${rw.roadNumber}</td>
                   <td>${rw.roadPartNumber}</td>
                   <td>${rw.track}</td>
@@ -262,16 +262,16 @@ export function RoadNetworkErrorsList(backend) {
                   <td>${rw.length}</td>
                   <td>${rw.roadwayNumber}</td>
               </tr>`
-          );
-          table.append(tableRow);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(tableRow);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showOverlappingRoadways = function (overlappingRoadways, contentWrapper) {
-      contentWrapper.append('<h3>Päällekkäiset roadwayt</h3>');
-      const table = $(
-          `<table class="viite-table">
+	const showOverlappingRoadways = function (overlappingRoadways, contentWrapper) {
+		contentWrapper.append('<h3>Päällekkäiset roadwayt</h3>');
+		const table = $(
+			`<table class="viite-table">
             <thead>
               <th>Tie</th>
               <th>Osa</th>
@@ -282,10 +282,10 @@ export function RoadNetworkErrorsList(backend) {
             </thead>
             <tbody></tbody>
           </table>`
-      );
-      overlappingRoadways.forEach((rw) => {
-          const tableRow = $(
-              `<tr>
+		);
+		overlappingRoadways.forEach((rw) => {
+			const tableRow = $(
+				`<tr>
                   <td>${rw.roadNumber}</td>
                   <td>${rw.roadPartNumber}</td>
                   <td>${rw.track}</td>
@@ -293,16 +293,16 @@ export function RoadNetworkErrorsList(backend) {
                   <td>${rw.addrMRange.end}</td>
                   <td>${rw.roadwayNumber}</td>
               </tr>`
-          );
-          table.append(tableRow);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(tableRow);
+		});
+		contentWrapper.append(table);
+	};
 
-  const showOverlappingRoadwaysOnLinearLocations = function (overlappingRoadways, contentWrapper) {
-      contentWrapper.append('<h3>Päällekkäiset roadwayt lineaarilokaatioilla</h3>');
-      const table = $(
-        `<table class="viite-table">
+	const showOverlappingRoadwaysOnLinearLocations = function (overlappingRoadways, contentWrapper) {
+		contentWrapper.append('<h3>Päällekkäiset roadwayt lineaarilokaatioilla</h3>');
+		const table = $(
+			`<table class="viite-table">
           <thead>
             <th>Tie</th>
             <th>Osa</th>
@@ -315,10 +315,10 @@ export function RoadNetworkErrorsList(backend) {
           </thead>
           <tbody></tbody>
         </table>`
-      );
-      overlappingRoadways.forEach((rw) => {
-          const tableRow = (
-              `<tr>
+		);
+		overlappingRoadways.forEach((rw) => {
+			const tableRow = (
+				`<tr>
                 <td>${rw.roadNumber}</td>
                 <td>${rw.roadPartNumber}</td>
                 <td>${rw.track}</td>
@@ -328,13 +328,13 @@ export function RoadNetworkErrorsList(backend) {
                 <td>${rw.linearLocationId}</td>
                 <td>${rw.linkId}</td>
               </tr>`
-          );
-          table.append(tableRow);
-      });
-      contentWrapper.append(table);
-  };
+			);
+			table.append(tableRow);
+		});
+		contentWrapper.append(table);
+	};
 
-  return {
-      show: showRoadNetworkErrorsListWindow
-  };
+	return {
+		show: showRoadNetworkErrorsListWindow
+	};
 }

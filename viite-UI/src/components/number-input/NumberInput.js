@@ -10,10 +10,10 @@ const html = `
 `;
 */
 export function numberInput(id, maxChars = null, isDisabled = false, value = '') {
-    const disabledAttr = isDisabled ? 'readonly="readonly"' : '';
-    const maxAttr = maxChars ? `maxlength="${maxChars}"` : '';
+	const disabledAttr = isDisabled ? 'readonly="readonly"' : '';
+	const maxAttr = maxChars ? `maxlength="${maxChars}"` : '';
     
-    return `
+	return `
       <input type="text" 
         class="number-input"
         id="${id}"

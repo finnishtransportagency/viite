@@ -10,33 +10,33 @@ import { numberInput } from '@components/number-input/NumberInput.js';
  */
 export function DevAddressTool(prefix) {
 
-    const render = function (links) {
-      const startOfSection = Math.min(...links.map((link) => Number(link.addrMRange.start)));
-      const endOfSection   = Math.max(...links.map((link) => Number(link.addrMRange.end)));
-      const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalStartAddressM)));
-      const originalEndOfSection   = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
-      let sideCodeDropDown = '';
+	const render = function (links) {
+		const startOfSection = Math.min(...links.map((link) => Number(link.addrMRange.start)));
+		const endOfSection   = Math.max(...links.map((link) => Number(link.addrMRange.end)));
+		const originalStartOfSection = Math.min(...links.map((link) => Number(link.originalStartAddressM)));
+		const originalEndOfSection   = Math.max(...links.map((link) => Number(link.originalEndAddressM)));
+		let sideCodeDropDown = '';
 
-      if (links.length === 1) {
-        const sideCodeValue = links[0].sideCode;
-        const label = `<label class="dev-label">Linkin SideCode</label>`;
+		if (links.length === 1) {
+			const sideCodeValue = links[0].sideCode;
+			const label = `<label class="dev-label">Linkin SideCode</label>`;
         
-        const sideCodeConfig = {
-          id: 'sideCodeDropdown',
-          className: `${prefix}form-control administrativeClassAndRoadName`,
-          defaultValue: sideCodeValue,
-          options: [
-            { value: '9', text: 'Unknown' },
-            { value: '2', text: 'Towards Digitizing' },
-            { value: '3', text: 'Against Digitizing' }
-          ]
-        };
+			const sideCodeConfig = {
+				id: 'sideCodeDropdown',
+				className: `${prefix}form-control administrativeClassAndRoadName`,
+				defaultValue: sideCodeValue,
+				options: [
+					{ value: '9', text: 'Unknown' },
+					{ value: '2', text: 'Towards Digitizing' },
+					{ value: '3', text: 'Against Digitizing' }
+				]
+			};
         
-        const dropDown = dropdown(sideCodeConfig);
-        sideCodeDropDown = `${label}${dropDown}`;
-      }
+			const dropDown = dropdown(sideCodeConfig);
+			sideCodeDropDown = `${label}${dropDown}`;
+		}
 
-      return `
+		return `
         <div class="dev-address-tool" hidden="true">
           <div class="dev-address-tool-wrapper">
             <div>
@@ -45,30 +45,30 @@ export function DevAddressTool(prefix) {
             <div class="dev-wrapper-column">
               <label class="dev-label">CP linkin alussa</label>
               ${dropdown({
-                id: 'startCPDropdown',
-                className: `${prefix}form-control administrativeClassAndRoadName`,
-                defaultValue: '0',
-                options: [
-                  { value: '0', text: 'NoCp' },
-                  { value: '1', text: 'UserDefinedCP' },
-                  { value: '2', text: 'JunctionPointCP' },
-                  { value: '3', text: 'RoadAddressCP' }
-                ]
-              })}
+		id: 'startCPDropdown',
+		className: `${prefix}form-control administrativeClassAndRoadName`,
+		defaultValue: '0',
+		options: [
+			{ value: '0', text: 'NoCp' },
+			{ value: '1', text: 'UserDefinedCP' },
+			{ value: '2', text: 'JunctionPointCP' },
+			{ value: '3', text: 'RoadAddressCP' }
+		]
+	})}
             </div>
             <div class="dev-wrapper-column">
               <label class="dev-label">CP linkin lopussa</label>
               ${dropdown({
-                id: 'endCPDropdown',
-                className: `${prefix}form-control administrativeClassAndRoadName`,
-                defaultValue: '0',
-                options: [
-                  { value: '0', text: 'NoCp' },
-                  { value: '1', text: 'UserDefinedCP' },
-                  { value: '2', text: 'JunctionPointCP' },
-                  { value: '3', text: 'RoadAddressCP' }
-                ]
-              })}
+		id: 'endCPDropdown',
+		className: `${prefix}form-control administrativeClassAndRoadName`,
+		defaultValue: '0',
+		options: [
+			{ value: '0', text: 'NoCp' },
+			{ value: '1', text: 'UserDefinedCP' },
+			{ value: '2', text: 'JunctionPointCP' },
+			{ value: '3', text: 'RoadAddressCP' }
+		]
+	})}
             </div>
             <label class="dev-label">Uusi osoite:</label>
             <div class="dev-address-field-wrapper">
@@ -105,10 +105,10 @@ export function DevAddressTool(prefix) {
             </div>
           </div>
         </div>`;
-    };
+	};
 
-    // Public API
-    return {
-      render: render
-    };
-  }
+	// Public API
+	return {
+		render: render
+	};
+}

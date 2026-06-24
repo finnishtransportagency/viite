@@ -75,227 +75,227 @@ return `<div>${selector.render()}</div>`;
 */
 
 export function Selector(props) {
-    const defaults = {
-      id: '',
-      data: {},
-      selectedItem: null,
-      placeholder: 'Valitse...',
-      disabled: false,
-      onSelectionChange: null,
-      className: '',
-      width: null // Optional width for the control. Accepts number (px) or string (any CSS unit)
-    };
+	const defaults = {
+		id: '',
+		data: {},
+		selectedItem: null,
+		placeholder: 'Valitse...',
+		disabled: false,
+		onSelectionChange: null,
+		className: '',
+		width: null // Optional width for the control. Accepts number (px) or string (any CSS unit)
+	};
 
-    const config = Object.assign({}, defaults, props);
+	const config = Object.assign({}, defaults, props);
 
-    // Trigger error if passed data or id are invalid
-    function validateConfig() {
-      if (!config.id) {
-        throw new Error('Selector: id is required');
-      }
-      if (typeof config.data !== 'object') {
-        throw new Error('Selector: data must be an object');
-      }
-    }
+	// Trigger error if passed data or id are invalid
+	function validateConfig() {
+		if (!config.id) {
+			throw new Error('Selector: id is required');
+		}
+		if (typeof config.data !== 'object') {
+			throw new Error('Selector: data must be an object');
+		}
+	}
 
-    function createButton(selectedLabel) {
-      const disabledAttr = config.disabled ? ' disabled' : '';
-      const widthStyle = (config.width !== null && config.width !== undefined)
-        ? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
-        : '';
-      return `
+	function createButton(selectedLabel) {
+		const disabledAttr = config.disabled ? ' disabled' : '';
+		const widthStyle = (config.width !== null && config.width !== undefined)
+			? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
+			: '';
+		return `
         <button id="${config.id}-button" class="modern-button"${widthStyle} ${disabledAttr}>
           <span class="modern-label">${selectedLabel || config.placeholder}</span>
           <span class="modern-arrow" style="font-size: 1.5em;">&#9662;</span>
         </button>
       `;
-    }
+	}
 
-    function createDropdown() {
-      const columns = Object.keys(config.data).map(Number).sort();
-      let html = `<div id="${config.id}-dropdown" class="modern-dropdown hidden"><div class="modern-columns">`;
+	function createDropdown() {
+		const columns = Object.keys(config.data).map(Number).sort();
+		let html = `<div id="${config.id}-dropdown" class="modern-dropdown hidden"><div class="modern-columns">`;
 
-      columns.forEach((colIndex) => {
-        const colData = config.data[colIndex];
-        if (!colData) return;
+		columns.forEach((colIndex) => {
+			const colData = config.data[colIndex];
+			if (!colData) return;
 
-        html += `<div class="modern-column">`;
-        if (colData.columnTitle) {
-          html += `<div class="modern-column-title">${colData.columnTitle}</div>`;
-        }
+			html += `<div class="modern-column">`;
+			if (colData.columnTitle) {
+				html += `<div class="modern-column-title">${colData.columnTitle}</div>`;
+			}
 
-        colData.items.forEach(item => {
-          const itemId = `${item.value}-${item.label}`;
-          const selected = itemId === config.selectedItem ? ' selected' : '';
-          html += `
+			colData.items.forEach(item => {
+				const itemId = `${item.value}-${item.label}`;
+				const selected = itemId === config.selectedItem ? ' selected' : '';
+				html += `
             <div class="modern-item${selected}" data-id="${itemId}">
               <span class="modern-circle${selected ? ' filled' : ''}"></span>
               <span class="modern-item-label">${item.label}</span>
             </div>
           `;
-        });
+			});
 
-        html += `</div>`;
-      });
+			html += `</div>`;
+		});
 
-      html += `</div></div>`;
-      return html;
-    }
+		html += `</div></div>`;
+		return html;
+	}
 
-    function createComponent() {
-      validateConfig();
+	function createComponent() {
+		validateConfig();
 
-      let selectedLabel = null;
-      const allItems = Object.values(config.data).flatMap(c => c.items || []);
+		let selectedLabel = null;
+		const allItems = Object.values(config.data).flatMap(c => c.items || []);
 
-      if (config.value) {
-        const found = allItems.find(it => it.value === config.value);
-        if (found) {
-          selectedLabel = found.label;
-          config.selectedItem = `${found.value}-${found.label}`;
-        }
-      } else if (config.selectedItem) {
-        const found = allItems.find(it => `${it.value}-${it.label}` === config.selectedItem);
-        if (found) {
-          selectedLabel = found.label;
-          config.value = found.value;
-        }
-      }
+		if (config.value) {
+			const found = allItems.find(it => it.value === config.value);
+			if (found) {
+				selectedLabel = found.label;
+				config.selectedItem = `${found.value}-${found.label}`;
+			}
+		} else if (config.selectedItem) {
+			const found = allItems.find(it => `${it.value}-${it.label}` === config.selectedItem);
+			if (found) {
+				selectedLabel = found.label;
+				config.value = found.value;
+			}
+		}
 
-      const containerWidthStyle = (config.width !== null && config.width !== undefined)
-        ? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
-        : '';
+		const containerWidthStyle = (config.width !== null && config.width !== undefined)
+			? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
+			: '';
 
-      return `
+		return `
         <div id="${config.id}" class="modern-container ${config.className}"${containerWidthStyle}>
           ${createButton(selectedLabel)}
           ${createDropdown()}
         </div>
       `;
-    }
+	}
 
-    function bindEvents() {
-      // Use event delegation to handle clicks on the button and menu items
-      setupEventDelegation();
-    }
+	function bindEvents() {
+		// Use event delegation to handle clicks on the button and menu items
+		setupEventDelegation();
+	}
 
-    function setupEventDelegation() {
-      // Remove existing listener if any
-      if (config._globalClickHandler) {
-        document.removeEventListener('click', config._globalClickHandler);
-      }
+	function setupEventDelegation() {
+		// Remove existing listener if any
+		if (config._globalClickHandler) {
+			document.removeEventListener('click', config._globalClickHandler);
+		}
 
-      // Create global click handler
-      config._globalClickHandler = function (e) {
-        const rootEl = document.getElementById(config.id);
-        if (!rootEl) return;
+		// Create global click handler
+		config._globalClickHandler = function (e) {
+			const rootEl = document.getElementById(config.id);
+			if (!rootEl) return;
 
-        const button = rootEl.querySelector('.modern-button');
-        const dropdown = rootEl.querySelector('.modern-dropdown');
-        const label = rootEl.querySelector('.modern-label');
+			const button = rootEl.querySelector('.modern-button');
+			const dropdown = rootEl.querySelector('.modern-dropdown');
+			const label = rootEl.querySelector('.modern-label');
 
-        if (!button || !dropdown || !label) return;
+			if (!button || !dropdown || !label) return;
 
-        // Handle button clicks
-        if (button.contains(e.target)) {
-          e.preventDefault();
-          e.stopPropagation();
-          dropdown.classList.toggle('hidden');
-          button.classList.toggle('open', !dropdown.classList.contains('hidden'));
-          return;
-        }
+			// Handle button clicks
+			if (button.contains(e.target)) {
+				e.preventDefault();
+				e.stopPropagation();
+				dropdown.classList.toggle('hidden');
+				button.classList.toggle('open', !dropdown.classList.contains('hidden'));
+				return;
+			}
 
-        // Handle item clicks
-        const itemEl = e.target.closest('.modern-item');
-        if (itemEl && dropdown.contains(itemEl)) {
-          e.preventDefault();
-          e.stopPropagation();
+			// Handle item clicks
+			const itemEl = e.target.closest('.modern-item');
+			if (itemEl && dropdown.contains(itemEl)) {
+				e.preventDefault();
+				e.stopPropagation();
 
-          const itemId = itemEl.getAttribute('data-id');
-          const itemValue = itemId.split('-')[0];
+				const itemId = itemEl.getAttribute('data-id');
+				const itemValue = itemId.split('-')[0];
 
-          // Update selection state
-          dropdown.querySelectorAll('.modern-item').forEach(item => {
-            item.classList.remove('selected');
-            const circle = item.querySelector('.modern-circle');
-            if (circle) circle.classList.remove('filled');
-          });
+				// Update selection state
+				dropdown.querySelectorAll('.modern-item').forEach(item => {
+					item.classList.remove('selected');
+					const circle = item.querySelector('.modern-circle');
+					if (circle) circle.classList.remove('filled');
+				});
 
-          const isSame = config.selectedItem === itemId;
-          config.selectedItem = isSame ? null : itemId;
-          config.value = isSame ? null : itemValue;
+				const isSame = config.selectedItem === itemId;
+				config.selectedItem = isSame ? null : itemId;
+				config.value = isSame ? null : itemValue;
 
-          if (config.selectedItem) {
-            itemEl.classList.add('selected');
-            const circle = itemEl.querySelector('.modern-circle');
-            if (circle) circle.classList.add('filled');
-            label.textContent = itemEl.querySelector('.modern-item-label').textContent;
-          } else {
-            label.textContent = config.placeholder;
-          }
+				if (config.selectedItem) {
+					itemEl.classList.add('selected');
+					const circle = itemEl.querySelector('.modern-circle');
+					if (circle) circle.classList.add('filled');
+					label.textContent = itemEl.querySelector('.modern-item-label').textContent;
+				} else {
+					label.textContent = config.placeholder;
+				}
 
-          if (config.onSelectionChange) {
-            config.onSelectionChange(config.value, e);
-          }
+				if (config.onSelectionChange) {
+					config.onSelectionChange(config.value, e);
+				}
 
-          dropdown.classList.add('hidden');
-          button.classList.remove('open');
-          return;
-        }
+				dropdown.classList.add('hidden');
+				button.classList.remove('open');
+				return;
+			}
 
-        // Close menu when clicking outside
-        if (!rootEl.contains(e.target)) {
-          dropdown.classList.add('hidden');
-          button.classList.remove('open');
-        }
-      };
+			// Close menu when clicking outside
+			if (!rootEl.contains(e.target)) {
+				dropdown.classList.add('hidden');
+				button.classList.remove('open');
+			}
+		};
 
-      // Add global event listener
-      document.addEventListener('click', config._globalClickHandler);
-    }
+		// Add global event listener
+		document.addEventListener('click', config._globalClickHandler);
+	}
 
-    function setValue(value) {
-      const allItems = Object.values(config.data).flatMap(c => c.items || []);
-      const found = allItems.find(it => it.value === value);
+	function setValue(value) {
+		const allItems = Object.values(config.data).flatMap(c => c.items || []);
+		const found = allItems.find(it => it.value === value);
 
-      if (found) {
-        config.selectedItem = `${found.value}-${found.label}`;
-        config.value = found.value;
-      } else {
-        config.selectedItem = null;
-        config.value = null;
-      }
+		if (found) {
+			config.selectedItem = `${found.value}-${found.label}`;
+			config.value = found.value;
+		} else {
+			config.selectedItem = null;
+			config.value = null;
+		}
 
-      const el = document.getElementById(config.id);
-      if (el) {
-        const label = el.querySelector('.modern-label');
-        label.textContent = found ? found.label : config.placeholder;
+		const el = document.getElementById(config.id);
+		if (el) {
+			const label = el.querySelector('.modern-label');
+			label.textContent = found ? found.label : config.placeholder;
 
-        // Update dropdown items state
-        const dropdown = el.querySelector('.modern-dropdown');
-        dropdown.querySelectorAll('.modern-item').forEach(item => {
-          const isSelected = item.getAttribute('data-id') === config.selectedItem;
-          item.classList.toggle('selected', isSelected);
-          const circle = item.querySelector('.modern-circle');
-          if (circle) circle.classList.toggle('filled', isSelected);
-        });
-      }
-    }
+			// Update dropdown items state
+			const dropdown = el.querySelector('.modern-dropdown');
+			dropdown.querySelectorAll('.modern-item').forEach(item => {
+				const isSelected = item.getAttribute('data-id') === config.selectedItem;
+				item.classList.toggle('selected', isSelected);
+				const circle = item.querySelector('.modern-circle');
+				if (circle) circle.classList.toggle('filled', isSelected);
+			});
+		}
+	}
 
-    function getSelectedValue() {
-      return config.value;
-    }
+	function getSelectedValue() {
+		return config.value;
+	}
 
-    function getElement() {
-      return document.getElementById(config.id);
-    }
+	function getElement() {
+		return document.getElementById(config.id);
+	}
 
-    return {
-      render: createComponent,
-      bindEvents: bindEvents,
-      setValue: setValue,
-      getSelectedValue: getSelectedValue,
-      getElement: getElement,
-      config: config
-    };
+	return {
+		render: createComponent,
+		bindEvents: bindEvents,
+		setValue: setValue,
+		getSelectedValue: getSelectedValue,
+		getElement: getElement,
+		config: config
+	};
 }

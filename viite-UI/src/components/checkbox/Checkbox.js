@@ -12,15 +12,15 @@ import { checkbox } from '@/components/checkbox/Checkbox.js';
 */
 
 export function checkbox({ 
-  id = '', 
-  name = id, 
-  value = '', 
-  label = '', 
-  checked = false
+	id = '', 
+	name = id, 
+	value = '', 
+	label = '', 
+	checked = false
 } = {}) {
-  const checkedAttribute = checked ? 'checked' : '';
+	const checkedAttribute = checked ? 'checked' : '';
 
-  return `
+	return `
     <div class="common-checkbox">
       <label class="common-checkbox-label">
         <input

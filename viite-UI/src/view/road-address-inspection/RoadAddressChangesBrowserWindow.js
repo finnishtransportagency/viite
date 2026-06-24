@@ -15,115 +15,115 @@ import { EnumerationUtils } from '@utils/EnumerationUtils.js';
 import { RoadAddressBrowserForm, createElyEvkSelectorData } from './RoadAddressBrowserForm.js';
 
 export function RoadAddressChangesBrowserWindow(backend) {
-  let searchParams = {};
-  let elyEvkSelector;
-  let modal = null;
+	let searchParams = {};
+	let elyEvkSelector;
+	let modal = null;
 
-  const roadAddressBrowserForm = new RoadAddressBrowserForm();
+	const roadAddressBrowserForm = new RoadAddressBrowserForm();
 
-  const createModal = () => new ModalContainer({
-      helpUrl: 'manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu',
-      helpTitle: 'Avaa käyttöohje',
-      onClose: () => {
-          $(document).off('keydown.roadAddressChangesBrowser');
-          modal = null;
-          elyEvkSelector = null;
-      }
-  });
+	const createModal = () => new ModalContainer({
+		helpUrl: 'manual/index.html#!index.md#11_Tieosoitemuutosten_katselu_-ty%C3%B6kalu',
+		helpTitle: 'Avaa käyttöohje',
+		onClose: () => {
+			$(document).off('keydown.roadAddressChangesBrowser');
+			modal = null;
+			elyEvkSelector = null;
+		}
+	});
 
-  function validateDate(dateString, dateElement) {
-      // Check format ignoring whitespace
-      if (dateutil.isFinnishDateString(dateString.trim())) {
-          const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
-          if (dateutil.isValidDate(dateObject)){
-              if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
-                  dateElement.setCustomValidity("");
-                  return true;
-              } else {
-                  dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
-                  return false;
-              }
-          } else {
-              dateElement.setCustomValidity("Tarkista päivämäärä!");
-              return false;
-          }
-      } else {
-          dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp-kk-vvvv");
-          return false;
-      }
-  }
+	function validateDate(dateString, dateElement) {
+		// Check format ignoring whitespace
+		if (dateutil.isFinnishDateString(dateString.trim())) {
+			const dateObject = moment(dateString, "DD-MM-YYYY").toDate();
+			if (dateutil.isValidDate(dateObject)){
+				if (dateutil.isDateInYearRange(dateObject, ViiteConstants.MIN_YEAR_INPUT, ViiteConstants.MAX_YEAR_INPUT)) {
+					dateElement.setCustomValidity("");
+					return true;
+				} else {
+					dateElement.setCustomValidity("Vuosiluvun tulee olla väliltä " + ViiteConstants.MIN_YEAR_INPUT + " - " + ViiteConstants.MAX_YEAR_INPUT);
+					return false;
+				}
+			} else {
+				dateElement.setCustomValidity("Tarkista päivämäärä!");
+				return false;
+			}
+		} else {
+			dateElement.setCustomValidity("Päivämäärän tulee olla muodossa pp-kk-vvvv");
+			return false;
+		}
+	}
 
-  function validateBeginningAndEndParts () {
-      const aOsa = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
-      const lOsa = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
+	function validateBeginningAndEndParts () {
+		const aOsa = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
+		const lOsa = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
 
-      if (!aOsa || !lOsa) {
-          return false;
-      }
+		if (!aOsa || !lOsa) {
+			return false;
+		}
 
-      const aOsaValue = Number(aOsa.value);
-      const lOsaValue = Number(lOsa.value);
+		const aOsaValue = Number(aOsa.value);
+		const lOsaValue = Number(lOsa.value);
 
-      const aOsaIsNumber = !isNaN(aOsaValue);
-      const lOsaIsNumber = !isNaN(lOsaValue);
+		const aOsaIsNumber = !isNaN(aOsaValue);
+		const lOsaIsNumber = !isNaN(lOsaValue);
 
-      // If both are numbers and A is greater than L, show error
-      if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
-          lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
-          return false;
-      }
+		// If both are numbers and A is greater than L, show error
+		if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
+			lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
+			return false;
+		}
 
-      // Clear error if valid
-      lOsa.setCustomValidity("");
-      return true;
-  }
+		// Clear error if valid
+		lOsa.setCustomValidity("");
+		return true;
+	}
 
-  // Instantiate selector and inject it into the Changes form
-  function insertElyEvkSelector() {
-      // Render selector with id expected by getData()
-      elyEvkSelector = new Selector({
-          id: 'roadAddrChangesInputEly',
-          placeholder: 'Valitse Elinvoimakeskus / ELY',
-          width: 240,
-          data: createElyEvkSelectorData()
-      });
+	// Instantiate selector and inject it into the Changes form
+	function insertElyEvkSelector() {
+		// Render selector with id expected by getData()
+		elyEvkSelector = new Selector({
+			id: 'roadAddrChangesInputEly',
+			placeholder: 'Valitse Elinvoimakeskus / ELY',
+			width: 240,
+			data: createElyEvkSelectorData()
+		});
 
-      // Find the changes form and the end date container to insert after (search within the window container)
-      const $form = modal.getContent().find('#roadAddressChangesBrowser');
-      const $endDateContainer = $form.find('#roadAddrChangesEndDate').closest('.input-container');
+		// Find the changes form and the end date container to insert after (search within the window container)
+		const $form = modal.getContent().find('#roadAddressChangesBrowser');
+		const $endDateContainer = $form.find('#roadAddrChangesEndDate').closest('.input-container');
 
-      const $elyContainer = $(`
+		const $elyContainer = $(`
           <div class="input-container">
               <label>Elinvoimakeskus / ELY</label>
               ${elyEvkSelector.render()}
           </div>`);
 
-      if ($endDateContainer.length > 0) {
-          $endDateContainer.after($elyContainer);
-      } else {
-          // Fallback: append to end of form
-          $form.append($elyContainer);
-      }
+		if ($endDateContainer.length > 0) {
+			$endDateContainer.after($elyContainer);
+		} else {
+			// Fallback: append to end of form
+			$form.append($elyContainer);
+		}
 
-      // Bind selector events (global/default binding)
-      elyEvkSelector.bindEvents();
-  }
+		// Bind selector events (global/default binding)
+		elyEvkSelector.bindEvents();
+	}
 
-    function getChangeTypeDisplayText(changeTypeValue) {
-    const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
-        return obj.value === changeTypeValue;
-    });
-    return changeType.displayText;
-  }
+	function getChangeTypeDisplayText(changeTypeValue) {
+		const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
+			return obj.value === changeTypeValue;
+		});
+		return changeType.displayText;
+	}
 
-  /**
+	/**
     *      Function is performance critical. Pointers in use for reasonable processing time.
    *      If edited be sure to measure table creation time with the largest possible dataset!
    */
-  function createResultTable(results) {
-      const arr = [];
-      let arrPointer = -1;
-      arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table viite-table">
+	function createResultTable(results) {
+		const arr = [];
+		let arrPointer = -1;
+		arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table viite-table">
                               <thead>
                                   <tr>
                                       <th>Voimaantulopvm</th>
@@ -155,8 +155,8 @@ export function RoadAddressChangesBrowserWindow(backend) {
                               </thead>
                               <tbody>`;
 
-      for (let i = 0, len = results.length; i < len; i++) {
-          arr[++arrPointer] = `   <tr>
+		for (let i = 0, len = results.length; i < len; i++) {
+			arr[++arrPointer] = `   <tr>
                                       <td>${results[i].startDate}</td>
                                       <td>${results[i].oldEvk}</td>
                                       <td>${typeof results[i].oldEly === 'undefined' || results[i].oldEly === null ? '-' : results[i].oldEly}</td>
@@ -184,308 +184,308 @@ export function RoadAddressChangesBrowserWindow(backend) {
                                       <td>${results[i].projectName}</td>
                                       <td>${results[i].projectAcceptedDate}</td>
                                   </tr>`;
-      }
-      arr.push(`    </tbody>
+		}
+		arr.push(`    </tbody>
                           </table>`);
-      return $(arr.join('')); // join the array to one large string and create jquery element from said string
-  }
+		return $(arr.join('')); // join the array to one large string and create jquery element from said string
+	}
 
-  function showData(results, table) {
-      if (results.length === 0) {
-          modal.getContent().append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
-          modal.getContent().append(table.hide());
-      }
-      else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
-          modal.getContent().append(table);
-          $('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
-      }
-      else {
-          // hide the results and notify user to download result table as CSV file
-          modal.getContent().append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset CSV -taulukkona</b></p>'));
-          modal.getContent().append(table.hide());
-          $('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
-      }
-  }
+	function showData(results, table) {
+		if (results.length === 0) {
+			modal.getContent().append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
+			modal.getContent().append(table.hide());
+		}
+		else if (results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
+			modal.getContent().append(table);
+			$('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
+		}
+		else {
+			// hide the results and notify user to download result table as CSV file
+			modal.getContent().append($('<p id="tableNotification"><b>Tulostaulu liian suuri, lataa tulokset CSV -taulukkona</b></p>'));
+			modal.getContent().append(table.hide());
+			$('#exportAsCsvFile').prop("disabled", false); // enable CSV download button
+		}
+	}
 
-  function exportDataAsCsvFile() {
-      const params = searchParams;
+	function exportDataAsCsvFile() {
+		const params = searchParams;
 
-      // Create file name
-      const parts = [
-        "Viite",
-        params.dateTarget,
-        params.startDate,
-        params.endDate,
-        params.ely || params.roadMaintainer,
-        params.roadNumber,
-        params.minRoadPartNumber,
-        params.maxRoadPartNumber
-      ];
-      const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
-      const fileName = fileNameString.replaceAll("undefined", "-");
+		// Create file name
+		const parts = [
+			"Viite",
+			params.dateTarget,
+			params.startDate,
+			params.endDate,
+			params.ely || params.roadMaintainer,
+			params.roadNumber,
+			params.minRoadPartNumber,
+			params.maxRoadPartNumber
+		];
+		const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
+		const fileName = fileNameString.replaceAll("undefined", "-");
 
-      const table = modal.getContent().find('#roadAddressChangesBrowserTable')[0];
-      if (!table) {
-          console.error('Table not found for CSV export');
-          return;
-      }
-      let csvContent = "\uFEFF"; // UTF-8 BOM
+		const table = modal.getContent().find('#roadAddressChangesBrowserTable')[0];
+		if (!table) {
+			console.error('Table not found for CSV export');
+			return;
+		}
+		let csvContent = "\uFEFF"; // UTF-8 BOM
 
-      for (const row of table.rows) {
-          const rowData = [];
-          for (const cell of row.cells) {
-              rowData.push(cell.innerText);
-          }
-          csvContent += rowData.join(";") + "\n"; // Join cells with semicolons
-      }
+		for (const row of table.rows) {
+			const rowData = [];
+			for (const cell of row.cells) {
+				rowData.push(cell.innerText);
+			}
+			csvContent += rowData.join(";") + "\n"; // Join cells with semicolons
+		}
 
-      // Create a downloadable CSV file
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
-      const url = URL.createObjectURL(blob); // Create a temporary URL for the file
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", fileName);
+		// Create a downloadable CSV file
+		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
+		const url = URL.createObjectURL(blob); // Create a temporary URL for the file
+		const link = document.createElement("a");
+		link.setAttribute("href", url);
+		link.setAttribute("download", fileName);
 
-      // Append the link and trigger download
-      document.body.appendChild(link);
-      link.click();
+		// Append the link and trigger download
+		document.body.appendChild(link);
+		link.click();
 
-      // Cleanup
-      document.body.removeChild(link);
-  }
+		// Cleanup
+		document.body.removeChild(link);
+	}
 
-  function getData() {
-      const roadAddrChangesStartDate      = modal.getContent().find('#roadAddrChangesStartDate')[0];
-      const roadAddrChangesEndDate        = modal.getContent().find('#roadAddrChangesEndDate')[0];
-      // ELY is a Selector component, not an input element
-      const roadNumber                    = modal.getContent().find('#roadAddrChangesInputRoad')[0];
-      const minRoadPartNumber             = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
-      const maxRoadPartNumber             = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
-      // Get dateTarget from the form's selector component
-      const dateTargetSelector = roadAddressBrowserForm.getSelectorComponents().dateTarget;
+	function getData() {
+		const roadAddrChangesStartDate      = modal.getContent().find('#roadAddrChangesStartDate')[0];
+		const roadAddrChangesEndDate        = modal.getContent().find('#roadAddrChangesEndDate')[0];
+		// ELY is a Selector component, not an input element
+		const roadNumber                    = modal.getContent().find('#roadAddrChangesInputRoad')[0];
+		const minRoadPartNumber             = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
+		const maxRoadPartNumber             = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
+		// Get dateTarget from the form's selector component
+		const dateTargetSelector = roadAddressBrowserForm.getSelectorComponents().dateTarget;
 
-      // Validate elements exist
-      if (!roadAddrChangesStartDate || !roadAddrChangesEndDate || !roadNumber || !minRoadPartNumber || !maxRoadPartNumber) {
-          console.error('Required form elements not found');
-          return;
-      }
+		// Validate elements exist
+		if (!roadAddrChangesStartDate || !roadAddrChangesEndDate || !roadNumber || !minRoadPartNumber || !maxRoadPartNumber) {
+			console.error('Required form elements not found');
+			return;
+		}
 
-      // convert date input text to date object
-      const roadAddrStartDateObject  = moment(roadAddrChangesStartDate.value, "DD-MM-YYYY").toDate();
-      const roadAddrEndDateObject  = moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate();
+		// convert date input text to date object
+		const roadAddrStartDateObject  = moment(roadAddrChangesStartDate.value, "DD-MM-YYYY").toDate();
+		const roadAddrEndDateObject  = moment(roadAddrChangesEndDate.value, "DD-MM-YYYY").toDate();
 
-      function reportValidations() {
-          return roadAddrChangesStartDate.reportValidity() &&
+		function reportValidations() {
+			return roadAddrChangesStartDate.reportValidity() &&
               roadAddrChangesEndDate.reportValidity() &&
               roadNumber.reportValidity() &&
               minRoadPartNumber.reportValidity() &&
               maxRoadPartNumber.reportValidity() &&
               validateBeginningAndEndParts();
-      }
+		}
 
-      // Input listeners moved to bindEvents() to avoid re-attaching on each search
+		// Input listeners moved to bindEvents() to avoid re-attaching on each search
 
-      function willPassValidations() {
-          // If start date is provided, validate it
-          if (roadAddrChangesStartDate.value.trim().length > 0) {
-              validateDate(roadAddrChangesStartDate.value, roadAddrChangesStartDate);
-          } else {
-              // If start date is not provided, set custom validity
-              roadAddrChangesStartDate.setCustomValidity("Alkupäivämäärä on pakollinen tieto");
-          }
-          // Validate end date
-          if (roadAddrChangesEndDate.value && validateDate(roadAddrChangesEndDate.value, roadAddrChangesEndDate)) {
-              if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
-                  roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
-              }
-          }
-          return reportValidations();
-      }
+		function willPassValidations() {
+			// If start date is provided, validate it
+			if (roadAddrChangesStartDate.value.trim().length > 0) {
+				validateDate(roadAddrChangesStartDate.value, roadAddrChangesStartDate);
+			} else {
+				// If start date is not provided, set custom validity
+				roadAddrChangesStartDate.setCustomValidity("Alkupäivämäärä on pakollinen tieto");
+			}
+			// Validate end date
+			if (roadAddrChangesEndDate.value && validateDate(roadAddrChangesEndDate.value, roadAddrChangesEndDate)) {
+				if (roadAddrEndDateObject.getTime() < roadAddrStartDateObject.getTime()) {
+					roadAddrChangesEndDate.setCustomValidity("Loppupäivämäärä ei voi olla ennen alkupäivämäärää");
+				}
+			}
+			return reportValidations();
+		}
 
-      if (!willPassValidations()) {
-          return; // Stop execution if validation fails
-      }
+		if (!willPassValidations()) {
+			return; // Stop execution if validation fails
+		}
 
-      function createParams() {
-          const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
-          const params = {
-              startDate: parsedDateString,
-              dateTarget: dateTargetSelector && dateTargetSelector.getSelectedValue ? dateTargetSelector.getSelectedValue() : 'ProjectAcceptedDate'
-          };
+		function createParams() {
+			const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
+			const params = {
+				startDate: parsedDateString,
+				dateTarget: dateTargetSelector && dateTargetSelector.getSelectedValue ? dateTargetSelector.getSelectedValue() : 'ProjectAcceptedDate'
+			};
 
-          // Add end date to params
-          if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
-          const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
-            ? elyEvkSelector.getSelectedValue()
-            : null;
+			// Add end date to params
+			if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
+			const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
+				? elyEvkSelector.getSelectedValue()
+				: null;
 
-          // Add ELY/EVK to params
-          if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
-              const parts = selected.split('_');
-              if (parts[1]) params.ely = parts[1];
-          } else if (selected && selected.startsWith('EVK_')) {
-              const parts = selected.split('_');
-              if (parts[1]) params.roadMaintainer = parts[1]; // Backend handles evk value as roadMaintainer, so convert evk to that
-          }
+			// Add ELY/EVK to params
+			if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
+				const parts = selected.split('_');
+				if (parts[1]) params.ely = parts[1];
+			} else if (selected && selected.startsWith('EVK_')) {
+				const parts = selected.split('_');
+				if (parts[1]) params.roadMaintainer = parts[1]; // Backend handles evk value as roadMaintainer, so convert evk to that
+			}
           
-          if (roadNumber.value)
-              params.roadNumber = roadNumber.value;
-          if (minRoadPartNumber.value)
-              params.minRoadPartNumber = minRoadPartNumber.value;
-          if (maxRoadPartNumber.value)
-              params.maxRoadPartNumber = maxRoadPartNumber.value;
-          return params;
-      }
+			if (roadNumber.value)
+				params.roadNumber = roadNumber.value;
+			if (minRoadPartNumber.value)
+				params.minRoadPartNumber = minRoadPartNumber.value;
+			if (maxRoadPartNumber.value)
+				params.maxRoadPartNumber = maxRoadPartNumber.value;
+			return params;
+		}
 
-      //reset roadAddrStartDate input fields' custom validity
-      roadAddrChangesStartDate.setCustomValidity("");
-      roadAddrChangesEndDate.setCustomValidity("");
+		//reset roadAddrStartDate input fields' custom validity
+		roadAddrChangesStartDate.setCustomValidity("");
+		roadAddrChangesEndDate.setCustomValidity("");
 
-      if (willPassValidations()) {
-          // Sets the end date 1 day ahead, so that the inputted end date is included in project listing.
-          dateutil.addOneDayToDate(roadAddrEndDateObject);
-          fetchRoadAddressChanges(createParams());
-      }
-  }
+		if (willPassValidations()) {
+			// Sets the end date 1 day ahead, so that the inputted end date is included in project listing.
+			dateutil.addOneDayToDate(roadAddrEndDateObject);
+			fetchRoadAddressChanges(createParams());
+		}
+	}
 
-  function fetchRoadAddressChanges(params) {
-      Spinner.show();
-      backend.getDataForRoadAddressChangesBrowser(params, function(result) {
-          if (result.success) {
-              Spinner.hide();
-              searchParams = params;
-              showData(result.changeInfos, createResultTable(result.changeInfos));
-          } else {
-              Spinner.hide();
-              new ConfirmPopup(result.error, { type: "alert" });
-          }
-      });
-  }
+	function fetchRoadAddressChanges(params) {
+		Spinner.show();
+		backend.getDataForRoadAddressChangesBrowser(params, function(result) {
+			if (result.success) {
+				Spinner.hide();
+				searchParams = params;
+				showData(result.changeInfos, createResultTable(result.changeInfos));
+			} else {
+				Spinner.hide();
+				new ConfirmPopup(result.error, { type: "alert" });
+			}
+		});
+	}
 
-  function clearResultsAndDisableCsvButton() {
-      $('.road-address-browser-window-results-table').remove(); // empty the result table
-      $('#exportAsCsvFile').prop("disabled", true); //disable CSV download button
-      $('#tableNotification').remove(); // remove notification if present
-  }
+	function clearResultsAndDisableCsvButton() {
+		$('.road-address-browser-window-results-table').remove(); // empty the result table
+		$('#exportAsCsvFile').prop("disabled", true); //disable CSV download button
+		$('#tableNotification').remove(); // remove notification if present
+	}
 
-  function bindEvents() {
-    const eventNs = '.roadAddressChangesBrowser';
-    const $content = modal.getContent();
+	function bindEvents() {
+		const eventNs = '.roadAddressChangesBrowser';
+		const $content = modal.getContent();
 
-    // Bind the enter key to the search button
-    $(document).off('keydown' + eventNs).on('keydown' + eventNs, function(e) {
+		// Bind the enter key to the search button
+		$(document).off('keydown' + eventNs).on('keydown' + eventNs, function(e) {
 
-        // ModalContainer does not expose isVisible(); skip when modal is detached from DOM.
-        if (!modal || !modal.getContent().closest('body').length) {
-            return;
-        }
+			// ModalContainer does not expose isVisible(); skip when modal is detached from DOM.
+			if (!modal || !modal.getContent().closest('body').length) {
+				return;
+			}
 
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            clearResultsAndDisableCsvButton();
-            getData();
-        }
-    });
+			if (e.key === 'Enter') {
+				e.preventDefault();
+				clearResultsAndDisableCsvButton();
+				getData();
+			}
+		});
 
-    // if any of the input fields change (the input fields are child elements of the form wrapper)
-      const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];
-      if (formEl) {
-          formEl.onchange = function () {
-              clearResultsAndDisableCsvButton();
-          };
-      }
+		// if any of the input fields change (the input fields are child elements of the form wrapper)
+		const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];
+		if (formEl) {
+			formEl.onchange = function () {
+				clearResultsAndDisableCsvButton();
+			};
+		}
 
-      // Input field validation handlers
-      const roadInput = modal.getContent().find('#roadAddrChangesInputRoad')[0];
-      if (roadInput) {
-          roadInput.oninput = function (event) {
-              const input = event.currentTarget;
-              if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
-                  input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER);
-              }
-          };
-      }
+		// Input field validation handlers
+		const roadInput = modal.getContent().find('#roadAddrChangesInputRoad')[0];
+		if (roadInput) {
+			roadInput.oninput = function (event) {
+				const input = event.currentTarget;
+				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER) {
+					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_NUMBER);
+				}
+			};
+		}
 
-      const startPartInput = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
-      if (startPartInput) {
-          startPartInput.oninput = function (event) {
-              const input = event.currentTarget;
-              if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                  input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
-              }
-          };
-      }
+		const startPartInput = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
+		if (startPartInput) {
+			startPartInput.oninput = function (event) {
+				const input = event.currentTarget;
+				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+				}
+			};
+		}
 
-      const endPartInput = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
-      if (endPartInput) {
-          endPartInput.oninput = function (event) {
-              const input = event.currentTarget;
-              if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-                  input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
-              }
-          };
-      }
+		const endPartInput = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
+		if (endPartInput) {
+			endPartInput.oninput = function (event) {
+				const input = event.currentTarget;
+				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+				}
+			};
+		}
 
-      // Attach validation listeners once
-      const startDateEl = modal.getContent().find('#roadAddrChangesStartDate')[0];
-      const endDateEl = modal.getContent().find('#roadAddrChangesEndDate')[0];
-      if (startDateEl) {
-          startDateEl.oninput = function (event) {
-              const input = event.currentTarget;
-              validateDate(input.value, input);
-              input.setCustomValidity("");
-          };
-      }
-      if (endDateEl) {
-          endDateEl.oninput = function (event) {
-              const input = event.currentTarget;
-              validateDate(input.value, input);
-              input.setCustomValidity("");
-          };
-      }
+		// Attach validation listeners once
+		const startDateEl = modal.getContent().find('#roadAddrChangesStartDate')[0];
+		const endDateEl = modal.getContent().find('#roadAddrChangesEndDate')[0];
+		if (startDateEl) {
+			startDateEl.oninput = function (event) {
+				const input = event.currentTarget;
+				validateDate(input.value, input);
+				input.setCustomValidity("");
+			};
+		}
+		if (endDateEl) {
+			endDateEl.oninput = function (event) {
+				const input = event.currentTarget;
+				validateDate(input.value, input);
+				input.setCustomValidity("");
+			};
+		}
 
-      const startPartEl = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
-      const endPartEl = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
-      if (startPartEl) {
-          startPartEl.oninput = function (event) {
-              const input = event.currentTarget;
-              validateBeginningAndEndParts();
-              input.setCustomValidity("");
-          };
-      }
-      if (endPartEl) {
-          endPartEl.oninput = function (event) {
-              const input = event.currentTarget;
-              validateBeginningAndEndParts();
-              input.setCustomValidity("");
-          };
-      }
+		const startPartEl = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
+		const endPartEl = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
+		if (startPartEl) {
+			startPartEl.oninput = function (event) {
+				const input = event.currentTarget;
+				validateBeginningAndEndParts();
+				input.setCustomValidity("");
+			};
+		}
+		if (endPartEl) {
+			endPartEl.oninput = function (event) {
+				const input = event.currentTarget;
+				validateBeginningAndEndParts();
+				input.setCustomValidity("");
+			};
+		}
       
-      $content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
-          modal.close();
-      });
-  }
+		$content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
+			modal.close();
+		});
+	}
 
-  function show() {
-      modal = createModal();
-      modal.open({
-          title: 'Tieosoitemuutosten katselu',
-          content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm(
-              () => { clearResultsAndDisableCsvButton(); getData(); },
-              exportDataAsCsvFile
-          )
-      });
+	function show() {
+		modal = createModal();
+		modal.open({
+			title: 'Tieosoitemuutosten katselu',
+			content: roadAddressBrowserForm.getRoadAddressChangesBrowserForm(
+				() => { clearResultsAndDisableCsvButton(); getData(); },
+				exportDataAsCsvFile
+			)
+		});
 
-      const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];
-      if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
-          roadAddressBrowserForm.bindSelectorEvents(formEl);
-      }
+		const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];
+		if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
+			roadAddressBrowserForm.bindSelectorEvents(formEl);
+		}
 
-      if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
-          insertElyEvkSelector();
-      }
-      bindEvents();
-  }
+		if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
+			insertElyEvkSelector();
+		}
+		bindEvents();
+	}
 
-  return { show };
+	return { show };
 }

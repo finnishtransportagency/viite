@@ -5,11 +5,11 @@ import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml } from './Dropdowns
 import { button } from '@/components/button/Button.js';
 
 export const View = {
-    getContent: function () {
-        const defaultRoles = ["viite"];
-        const defaultElinvoimakeskus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+	getContent: function () {
+		const defaultRoles = ["viite"];
+		const defaultElinvoimakeskus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-        return `
+		return `
             <div class="user-management-content-wrapper">
               <!-- Existing users-->
               <div class="user-table-section user-management-form">
@@ -55,5 +55,5 @@ export const View = {
               </fieldset>
             </div>
           `;
-    }
+	}
 };

@@ -32,28 +32,28 @@
         
 export function ModalContainer(config) {
 
-        const {
-            helpUrl = null,
-            helpTitle = 'Avaa käyttöohje',
-            onClose = null,
-            onShow = null,
-            className = '',
-            style = ''
-        } = config;
+	const {
+		helpUrl = null,
+		helpTitle = 'Avaa käyttöohje',
+		onClose = null,
+		onShow = null,
+		className = '',
+		style = ''
+	} = config;
 
-        // Internal state variables
-        let modalElement;
-        let overlayElement;
-        let contentContainer;
-        let eventsBound = false;
-        let currentTitle = ''; 
+	// Internal state variables
+	let modalElement;
+	let overlayElement;
+	let contentContainer;
+	let eventsBound = false;
+	let currentTitle = ''; 
 
-        // Initialize modal immediately
-        init();
+	// Initialize modal immediately
+	init();
 
-        // Creates the modal header with title, optional help button, and close button
-        function createHeader() {
-            const headerHtml = `
+	// Creates the modal header with title, optional help button, and close button
+	function createHeader() {
+		const headerHtml = `
                 <div class="modal-header">
                     <p>${currentTitle}</p>
                     ${helpUrl ? `
@@ -66,95 +66,95 @@ export function ModalContainer(config) {
                     <button class="close btn-close-modal">x</button>
                 </div>
             `;
-            return $(headerHtml);
-        }
+		return $(headerHtml);
+	}
 
-        // Creates the main modal container with header and content area
+	// Creates the main modal container with header and content area
 
-        function init() {
-            const styleAttr = style ? ` style="${style}"` : '';
-            modalElement = $(`<div class="modal-container ${className}"${styleAttr}></div>`).hide();
-            const header = createHeader();
-            contentContainer = $(`<div class="modal-content modal-content-scrollable"></div>`);
+	function init() {
+		const styleAttr = style ? ` style="${style}"` : '';
+		modalElement = $(`<div class="modal-container ${className}"${styleAttr}></div>`).hide();
+		const header = createHeader();
+		contentContainer = $(`<div class="modal-content modal-content-scrollable"></div>`);
             
-            modalElement.append(header);
-            modalElement.append(contentContainer);
-        }
+		modalElement.append(header);
+		modalElement.append(contentContainer);
+	}
 
-        // Creates the overlay with dark background and modal window container
-        function createOverlay() {
-            overlayElement = $('<div class="modal-overlay viite-modal-overlay confirm-modal"></div>');
-            const windowContainer = $('<div class="modal-window"></div>');
-            windowContainer.append(modalElement);
-            overlayElement.append(windowContainer);
-            return overlayElement;
-        }
+	// Creates the overlay with dark background and modal window container
+	function createOverlay() {
+		overlayElement = $('<div class="modal-overlay viite-modal-overlay confirm-modal"></div>');
+		const windowContainer = $('<div class="modal-window"></div>');
+		windowContainer.append(modalElement);
+		overlayElement.append(windowContainer);
+		return overlayElement;
+	}
 
-        // Binds event handlers for modal interactions and handles close button clicks, overlay clicks, and ESC key
-        function bindEvents() {
-            if (!modalElement || eventsBound) return;
+	// Binds event handlers for modal interactions and handles close button clicks, overlay clicks, and ESC key
+	function bindEvents() {
+		if (!modalElement || eventsBound) return;
             
-            eventsBound = true;
+		eventsBound = true;
 
-            // Close button click handler
-            modalElement.on('click', 'button.close, button.btn-close-modal', function () {
-                close();
-                if (typeof onClose === 'function') {
-                    onClose();
-                }
-            });
-        }
+		// Close button click handler
+		modalElement.on('click', 'button.close, button.btn-close-modal', function () {
+			close();
+			if (typeof onClose === 'function') {
+				onClose();
+			}
+		});
+	}
 
-        /**
+	/**
          * Shows the modal with dark overlay
          * @param {Object} openConfig - Configuration for opening modal
          * @param {string} [openConfig.title=''] - Modal title
          * @param {string|jQuery} openConfig.content - Modal content
          */
-        function open(openConfig) {
-            const { title = '', content } = openConfig;
+	function open(openConfig) {
+		const { title = '', content } = openConfig;
             
-            // Update title and content
-            currentTitle = title;
-            const titleElement = modalElement.find('.modal-header p');
-            if (titleElement.length) {
-                titleElement.text(title);
-            }
+		// Update title and content
+		currentTitle = title;
+		const titleElement = modalElement.find('.modal-header p');
+		if (titleElement.length) {
+			titleElement.text(title);
+		}
             
-            if (content !== undefined && contentContainer) {
-                contentContainer.empty().append(content);
-            }
+		if (content !== undefined && contentContainer) {
+			contentContainer.empty().append(content);
+		}
             
-            if (!overlayElement) {
-                createOverlay();
-                bindEvents();
-            }
+		if (!overlayElement) {
+			createOverlay();
+			bindEvents();
+		}
             
-            $('.container').append(overlayElement);
-            modalElement.show();
+		$('.container').append(overlayElement);
+		modalElement.show();
             
-            // Call onShow callback if provided
-            if (typeof onShow === 'function') {
-                onShow();
-            }
-        }
+		// Call onShow callback if provided
+		if (typeof onShow === 'function') {
+			onShow();
+		}
+	}
 
-        // Hides the modal and detaches overlay from DOM (overlay is reused on next open)
-        function close() {
+	// Hides the modal and detaches overlay from DOM (overlay is reused on next open)
+	function close() {
             
-            modalElement.hide();
-            if (overlayElement) {
-                overlayElement.detach();
-            }
-        }
+		modalElement.hide();
+		if (overlayElement) {
+			overlayElement.detach();
+		}
+	}
 
-        function getContent() {
-            return contentContainer ? contentContainer : $();
-        }
+	function getContent() {
+		return contentContainer ? contentContainer : $();
+	}
 
-        return {
-            open: open,
-            close: close,
-            getContent: getContent
-        };
+	return {
+		open: open,
+		close: close,
+		getContent: getContent
+	};
 }

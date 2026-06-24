@@ -8,14 +8,14 @@ export function AdminPanel(backend) {
 
 
 
-        const dynamicLinkNetwork = dynamicLinkNetworkContent(backend);
+	const dynamicLinkNetwork = dynamicLinkNetworkContent(backend);
 
-        const showAdminPanelWindow = function () {
-            const modalContainer = new ModalContainer({
-                className: 'admin-panel-modal'
-            });
+	const showAdminPanelWindow = function () {
+		const modalContainer = new ModalContainer({
+			className: 'admin-panel-modal'
+		});
 
-            const navBar = `
+		const navBar = `
                 <nav class="navbar">
                     ${button({ id: 'tab-btn-tab1', label: 'Dynaaminen tielinkkiverkko', className: 'tab-button active', onClick: () => controlTabs($('#tab-btn-tab1'), $('#adminPanelWindowContent'), 'tab1') })}
                     ${button({ id: 'tab-btn-tab2', label: 'Käyttäjien hallinta', className: 'tab-button', onClick: () => controlTabs($('#tab-btn-tab2'), $('#adminPanelWindowContent'), 'tab2') })}
@@ -24,7 +24,7 @@ export function AdminPanel(backend) {
                 </nav>
             `;
 
-            const contentForTabs = `
+		const contentForTabs = `
                 <div class="content-area">
                     <div id="tab1" class="tab-content active">
                         ${dynamicLinkNetwork.getContent()}
@@ -41,38 +41,38 @@ export function AdminPanel(backend) {
                 </div>
             `;
 
-            const contentWrapper = $('<div id="adminPanelWindowContent"></div>');
-            contentWrapper.append(navBar);
-            contentWrapper.append(contentForTabs);
+		const contentWrapper = $('<div id="adminPanelWindowContent"></div>');
+		contentWrapper.append(navBar);
+		contentWrapper.append(contentForTabs);
 
-            modalContainer.open({
-                title: 'Admin Paneeli',
-                content: contentWrapper
-            });
+		modalContainer.open({
+			title: 'Admin Paneeli',
+			content: contentWrapper
+		});
 
-            // Re-bind everything fresh
-            dynamicLinkNetwork.addDatePickersToInputFields();
-            dynamicLinkNetwork.bindEvents('.modal-container');
+		// Re-bind everything fresh
+		dynamicLinkNetwork.addDatePickersToInputFields();
+		dynamicLinkNetwork.bindEvents('.modal-container');
 
-            // Initialize the new user management module
+		// Initialize the new user management module
             
-            UserManagagement.init('#userManagementPanelContainer', {});
-        };
+		UserManagagement.init('#userManagementPanelContainer', {});
+	};
 
-        const controlTabs = function (clickedButton, contentWrapper, targetTabId) {
-            if (clickedButton.hasClass('active')) return;
+	const controlTabs = function (clickedButton, contentWrapper, targetTabId) {
+		if (clickedButton.hasClass('active')) return;
 
-            const tabButtons = contentWrapper.find('.navbar .tab-button');
-            const tabContents = contentWrapper.find('.content-area .tab-content');
+		const tabButtons = contentWrapper.find('.navbar .tab-button');
+		const tabContents = contentWrapper.find('.content-area .tab-content');
 
-            tabButtons.removeClass('active');
-            tabContents.removeClass('active');
+		tabButtons.removeClass('active');
+		tabContents.removeClass('active');
 
-            clickedButton.addClass('active');
-            contentWrapper.find(`#${targetTabId}`).addClass('active');
-        };
+		clickedButton.addClass('active');
+		contentWrapper.find(`#${targetTabId}`).addClass('active');
+	};
 
-        return {
-            show: showAdminPanelWindow
-        };
+	return {
+		show: showAdminPanelWindow
+	};
 }

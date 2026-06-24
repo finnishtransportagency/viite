@@ -16,15 +16,15 @@ import { getStartupParameters } from '@model/ApplicationModel.js';
 import { button } from '@components/button/Button.js';
 
 export const MENU_STATE = {
-  MAIN: 'main',
-  LINK_INFO: 'linkInfo',
-  PROJECT: 'project',
-  NAME_TOOL: 'nameTool',
-  NODE: 'node',
-  ROAD_ADDRESS_BROWSER: 'roadAddressBrowser',
-  ROAD_ADDRESS_CHANGES: 'roadAddressChangesBrowser',
-  ROAD_NETWORK_ERRORS: 'roadNetworkErrors',
-  ADMIN_PANEL: 'adminPanel'
+	MAIN: 'main',
+	LINK_INFO: 'linkInfo',
+	PROJECT: 'project',
+	NAME_TOOL: 'nameTool',
+	NODE: 'node',
+	ROAD_ADDRESS_BROWSER: 'roadAddressBrowser',
+	ROAD_ADDRESS_CHANGES: 'roadAddressChangesBrowser',
+	ROAD_NETWORK_ERRORS: 'roadNetworkErrors',
+	ADMIN_PANEL: 'adminPanel'
 };
 
 let setMainMenuState = () => {};
@@ -32,43 +32,43 @@ let setMainMenuState = () => {};
 export { setMainMenuState };
 
 export function MainMenu(options = {}) {
-  const {
-    eventbus: activeEventbus,
-    selectedLinkProperty,
-    roadNameCollection,
-    backend,
-    map,
-    models = {}
-  } = options;
+	const {
+		eventbus: activeEventbus,
+		selectedLinkProperty,
+		roadNameCollection,
+		backend,
+		map,
+		models = {}
+	} = options;
 
-  const { nodeCollection, selectedNodesAndJunctions, roadCollection } = models;
+	const { nodeCollection, selectedNodesAndJunctions, roadCollection } = models;
 
-  const roles = getStartupParameters().roles || [];
-  const menu = new MenuContainer();
+	const roles = getStartupParameters().roles || [];
+	const menu = new MenuContainer();
 
-  $('#menu-container').append(menu.root);
+	$('#menu-container').append(menu.root);
 
-  const views = {
-    linkInfo: new LinkInfo(selectedLinkProperty),
-    projectList: new ProjectList({ ...options, eventbus: activeEventbus, menu, roadCollection }),
-    roadNamingTool: new RoadNamingToolWindow(roadNameCollection),
-    roadAddressBrowser: new RoadAddressBrowserWindow(backend),
-    roadAddressChangesBrowser: new RoadAddressChangesBrowserWindow(backend),
-    roadNetworkErrorsList: new RoadNetworkErrorsList(backend, {}),
-    adminPanel: new AdminPanel(backend, {}),
-    nodeMenu: new NodeMenu(
-      map,
-      nodeCollection,
-      backend,
-      selectedNodesAndJunctions,
-      roadCollection,
-      menu
-    )
-  };
+	const views = {
+		linkInfo: new LinkInfo(selectedLinkProperty),
+		projectList: new ProjectList({ ...options, eventbus: activeEventbus, menu, roadCollection }),
+		roadNamingTool: new RoadNamingToolWindow(roadNameCollection),
+		roadAddressBrowser: new RoadAddressBrowserWindow(backend),
+		roadAddressChangesBrowser: new RoadAddressChangesBrowserWindow(backend),
+		roadNetworkErrorsList: new RoadNetworkErrorsList(backend, {}),
+		adminPanel: new AdminPanel(backend, {}),
+		nodeMenu: new NodeMenu(
+			map,
+			nodeCollection,
+			backend,
+			selectedNodesAndJunctions,
+			roadCollection,
+			menu
+		)
+	};
 
-  const hasRole = (role) => _.includes(roles, role);
+	const hasRole = (role) => _.includes(roles, role);
 
-  const renderMainMenu = () => `
+	const renderMainMenu = () => `
     <div class="main-menu-container">
       <div class="main-menu-button-wrapper">
         ${hasRole('viite') ? `
@@ -85,35 +85,35 @@ export function MainMenu(options = {}) {
       </div>
     </div>`;
 
-  const showMain = () => {
-    menu.setHeader();
-    menu.setFooter();
-    menu.setBody(renderMainMenu());
-  };
+	const showMain = () => {
+		menu.setHeader();
+		menu.setFooter();
+		menu.setBody(renderMainMenu());
+	};
 
-  const actions = {
-    [MENU_STATE.MAIN]: showMain,
-    [MENU_STATE.LINK_INFO]: (data) => {
-      menu.setHeader('Tieosoitteen ominaisuustiedot', () => selectedLinkProperty.close());
-      menu.setFooter();
-      menu.setBody(views.linkInfo.render(data));
-    },
-    [MENU_STATE.PROJECT]: () => views.projectList.show(),
-    [MENU_STATE.NAME_TOOL]: () => views.roadNamingTool.show(),
-    [MENU_STATE.NODE]: () => views.nodeMenu.setNodeMenuState('search'),
-    [MENU_STATE.ROAD_ADDRESS_BROWSER]: () => views.roadAddressBrowser.show(),
-    [MENU_STATE.ROAD_ADDRESS_CHANGES]: () => views.roadAddressChangesBrowser.show(),
-    [MENU_STATE.ROAD_NETWORK_ERRORS]: () => views.roadNetworkErrorsList.show(),
-    [MENU_STATE.ADMIN_PANEL]: () => views.adminPanel.show()
-  };
+	const actions = {
+		[MENU_STATE.MAIN]: showMain,
+		[MENU_STATE.LINK_INFO]: (data) => {
+			menu.setHeader('Tieosoitteen ominaisuustiedot', () => selectedLinkProperty.close());
+			menu.setFooter();
+			menu.setBody(views.linkInfo.render(data));
+		},
+		[MENU_STATE.PROJECT]: () => views.projectList.show(),
+		[MENU_STATE.NAME_TOOL]: () => views.roadNamingTool.show(),
+		[MENU_STATE.NODE]: () => views.nodeMenu.setNodeMenuState('search'),
+		[MENU_STATE.ROAD_ADDRESS_BROWSER]: () => views.roadAddressBrowser.show(),
+		[MENU_STATE.ROAD_ADDRESS_CHANGES]: () => views.roadAddressChangesBrowser.show(),
+		[MENU_STATE.ROAD_NETWORK_ERRORS]: () => views.roadNetworkErrorsList.show(),
+		[MENU_STATE.ADMIN_PANEL]: () => views.adminPanel.show()
+	};
 
-  function setState(state, data) {
-    (actions[state] || actions[MENU_STATE.MAIN])(data);
-  }
+	function setState(state, data) {
+		(actions[state] || actions[MENU_STATE.MAIN])(data);
+	}
 
-  setMainMenuState = setState;
-  menu.setDefaultClose(() => setState(MENU_STATE.MAIN));
-  setState(MENU_STATE.MAIN);
+	setMainMenuState = setState;
+	menu.setDefaultClose(() => setState(MENU_STATE.MAIN));
+	setState(MENU_STATE.MAIN);
 
-  return { setState };
+	return { setState };
 }

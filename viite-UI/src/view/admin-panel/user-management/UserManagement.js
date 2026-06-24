@@ -7,11 +7,11 @@ import { getRoleDropdownHtml, getElinvoimakeskusDropdownHtml } from './Dropdowns
 import { button } from '@components/button/Button.js';
 
 export const UserManagagement = {
-    getContent: function () {
-        const defaultRoles = ["viite"];
-        const defaultElinvoimakeskus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+	getContent: function () {
+		const defaultRoles = ["viite"];
+		const defaultElinvoimakeskus = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-        return `
+		return `
             <div class="user-management-content-wrapper">
               <!-- Existing users-->
               <div class="user-table-section user-management-form">
@@ -57,22 +57,22 @@ export const UserManagagement = {
               </fieldset>
             </div>
           `;
-    },
+	},
 
-    init: function (containerSelector) {
-        const container = document.querySelector(containerSelector);
+	init: function (containerSelector) {
+		const container = document.querySelector(containerSelector);
 
-        if (!container || !AddUserForm || !UpdateUserForm) {
-            return;
-        }
+		if (!container || !AddUserForm || !UpdateUserForm) {
+			return;
+		}
 
-        container.innerHTML = UserManagagement.getContent();
-        AddUserForm.bindEvents(containerSelector, {
-            onUserAdded: function () {
-                UpdateUserForm.fetchUsers({});
-            }
-        });
-        UpdateUserForm.bindEvents(containerSelector, {});
-        UpdateUserForm.fetchUsers({});
-    }
+		container.innerHTML = UserManagagement.getContent();
+		AddUserForm.bindEvents(containerSelector, {
+			onUserAdded: function () {
+				UpdateUserForm.fetchUsers({});
+			}
+		});
+		UpdateUserForm.bindEvents(containerSelector, {});
+		UpdateUserForm.fetchUsers({});
+	}
 };

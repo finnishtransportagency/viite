@@ -4,69 +4,69 @@ import { eventbus } from "@utils/Eventbus.js";
 // It provides functions to get and set these states, and triggers events on changes for other components to react accordingly.
 
 const state = {
-  selectedLayer: undefined,
-  sessionUsername: "",
-  sessionUserRoles: "",
-  roadsVisibility: true,
+	selectedLayer: undefined,
+	sessionUsername: "",
+	sessionUserRoles: "",
+	roadsVisibility: true,
 
-  appContext: {
-    startupParameters: undefined,
-    selectedProjectLinkProperty: undefined,
-    projectLinkLayer: undefined,
-    mainMenu: undefined
-  }
+	appContext: {
+		startupParameters: undefined,
+		selectedProjectLinkProperty: undefined,
+		projectLinkLayer: undefined,
+		mainMenu: undefined
+	}
 };
 
 function toggleRoadVisibility() {
-  state.roadsVisibility = !state.roadsVisibility;
+	state.roadsVisibility = !state.roadsVisibility;
 }
 
 function getRoadVisibility() {
-  return state.roadsVisibility;
+	return state.roadsVisibility;
 }
 
 function getSelectedLayer() {
-  return state.selectedLayer;
+	return state.selectedLayer;
 }
 
 function getSessionUsername() {
-  return state.sessionUsername;
+	return state.sessionUsername;
 }
 
 function getSessionUserRoles() {
-  return state.sessionUserRoles;
+	return state.sessionUserRoles;
 }
 
 function setUserData(userData) {
-  state.sessionUsername = userData.userName;
-  state.sessionUserRoles = userData.roles;
+	state.sessionUsername = userData.userName;
+	state.sessionUserRoles = userData.roles;
 }
 
 function setStartupParameters(startupParameters) {
-  state.appContext.startupParameters = startupParameters;
+	state.appContext.startupParameters = startupParameters;
 }
 
 function getStartupParameters() {
-  return state.appContext.startupParameters;
+	return state.appContext.startupParameters;
 }
 
 function selectLayer(layer, toggleStart) {
 
-  if (layer !== state.selectedLayer) {
-    const previousLayer = state.selectedLayer;
-    state.selectedLayer = layer;
-    eventbus.trigger("layer:selected", layer, previousLayer, toggleStart);
-  }
+	if (layer !== state.selectedLayer) {
+		const previousLayer = state.selectedLayer;
+		state.selectedLayer = layer;
+		eventbus.trigger("layer:selected", layer, previousLayer, toggleStart);
+	}
 }
 
 export {
-  getRoadVisibility,
-  toggleRoadVisibility,
-  selectLayer,
-  getSelectedLayer,
-  getSessionUsername,
-  getSessionUserRoles,
-  setUserData,
-  setStartupParameters,
-  getStartupParameters
+	getRoadVisibility,
+	toggleRoadVisibility,
+	selectLayer,
+	getSelectedLayer,
+	getSessionUsername,
+	getSessionUserRoles,
+	setUserData,
+	setStartupParameters,
+	getStartupParameters
 };

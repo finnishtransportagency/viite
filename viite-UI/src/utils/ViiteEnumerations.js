@@ -1,182 +1,182 @@
 const ViiteEnumerations = {};
 
 ViiteEnumerations.RoadAddressChangeType = {
-    NotHandled: {value: 0, description: "NotHandled", transitionFrom: [0], displayText: "Käsittelemätön"},
-    Unchanged: {value: 1, description: "Unchanged", transitionFrom: [0, 1, 3, 5], displayText: "Ennallaan"},
-    New: {value: 2, description: "New", transitionFrom: [99, 2], displayText: "Uusi"},
-    Transfer: {value: 3, description: "Transfer", transitionFrom: [0, 1, 3, 5], displayText: "Siirto"},
-    Numbering: {value: 4, description: "Numbering", transitionFrom: [0, 1, 3, 4, 5], displayText: "Numerointi"},
-    Terminated: {value: 5, description: "Terminated", transitionFrom: [0, 1, 3, 5], displayText: "Lakkautus"},
-    Revert: {value: 6, description: "Revert", transitionFrom: [1, 2, 3, 4, 5, 6], displayText: "Palautus aihioksi tai tieosoitteettomaksi"},
-    Undefined: {value: 99, description: "?", transitionFrom: []}
-  };
+	NotHandled: {value: 0, description: "NotHandled", transitionFrom: [0], displayText: "Käsittelemätön"},
+	Unchanged: {value: 1, description: "Unchanged", transitionFrom: [0, 1, 3, 5], displayText: "Ennallaan"},
+	New: {value: 2, description: "New", transitionFrom: [99, 2], displayText: "Uusi"},
+	Transfer: {value: 3, description: "Transfer", transitionFrom: [0, 1, 3, 5], displayText: "Siirto"},
+	Numbering: {value: 4, description: "Numbering", transitionFrom: [0, 1, 3, 4, 5], displayText: "Numerointi"},
+	Terminated: {value: 5, description: "Terminated", transitionFrom: [0, 1, 3, 5], displayText: "Lakkautus"},
+	Revert: {value: 6, description: "Revert", transitionFrom: [1, 2, 3, 4, 5, 6], displayText: "Palautus aihioksi tai tieosoitteettomaksi"},
+	Undefined: {value: 99, description: "?", transitionFrom: []}
+};
 
 ViiteEnumerations.ChangeType = {
-    Unchanged: {value: 1, description: "Unchanged", displayText: "Ennallaan"},
-    New: {value: 2, description: "New", displayText: "Uusi"},
-    Transfer: {value: 3, description: "Transfer", displayText: "Siirto"},
-    Numbering: {value: 4, description: "Numbering", displayText: "Numerointi"},
-    Terminated: {value: 5, description: "Terminated", displayText: "Lakkautus"}
-  };
+	Unchanged: {value: 1, description: "Unchanged", displayText: "Ennallaan"},
+	New: {value: 2, description: "New", displayText: "Uusi"},
+	Transfer: {value: 3, description: "Transfer", displayText: "Siirto"},
+	Numbering: {value: 4, description: "Numbering", displayText: "Numerointi"},
+	Terminated: {value: 5, description: "Terminated", displayText: "Lakkautus"}
+};
 
 ViiteEnumerations.LinkGeomSource = {
-    NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
-    ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
-    SuravageLinkInterface: {value: 3, descriptionFI: "Suravage", description: "SuravageLinkInterface"}, // Not used anymore
-    FrozenLinkInterface: {value: 4, descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
-    HistoryLinkInterface: {value: 5, descriptionFI: "MML historia", description: "HistoryLinkInterface"}, // Not used anymore
-    Unknown: {value: 99, descriptionFI: "Tuntematon", description: "Unknown"}
-  };
+	NormalLinkInterface: {value: 1, descriptionFI: "MML", description: "NormalLinkInterface"},
+	ComplementaryLinkInterface: {value: 2, descriptionFI: "Täydentävä", description: "ComplementaryLinkInterface"},
+	SuravageLinkInterface: {value: 3, descriptionFI: "Suravage", description: "SuravageLinkInterface"}, // Not used anymore
+	FrozenLinkInterface: {value: 4, descriptionFI: "MML jäädytetty", description: "FrozenLinkInterface"},
+	HistoryLinkInterface: {value: 5, descriptionFI: "MML historia", description: "HistoryLinkInterface"}, // Not used anymore
+	Unknown: {value: 99, descriptionFI: "Tuntematon", description: "Unknown"}
+};
 
 ViiteEnumerations.lifecycleStatus = {
-      Planned: {value: 1, description: "Planned"},
-      UnderConstruction: {value: 2, description: "UnderConstruction"},
-      InUse: {value: 3, description: "InUse"},
-      UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
-  };
+	Planned: {value: 1, description: "Planned"},
+	UnderConstruction: {value: 2, description: "UnderConstruction"},
+	InUse: {value: 3, description: "InUse"},
+	UnknownConstructionType: {value: 99, description: "UnknownConstructionType"}
+};
 
 
 ViiteEnumerations.RoadClass = {
-    HighwayClass: {value: 1, description: "HighwayClass"},
-    MainRoadClass: {value: 2, description: "MainRoadClass"},
-    RegionalClass: {value: 3, description: "RegionalClass"},
-    ConnectingClass: {value: 4, description: "ConnectingClass"},
-    MinorConnectingClass: {value: 5, description: "MinorConnectingClass"},
-    StreetClass: {value: 6, description: "StreetClass"},
-    RampsAndRoundAboutsClass: {value: 7, description: "RampsAndRoundAboutsClass"},
-    PedestrianAndBicyclesClass: {value: 8, description: "PedestrianAndBicyclesClass"},
-    WinterRoadsClass: {value: 9, description: "WinterRoadsClass"},
-    PathsClass: {value: 10, description: "PathsClass"},
-    PrivateRoadClass: {value: 12, description: "PrivateRoadClass"},
-    NoClass: {value: 99, description: "NoClass"}
-  };
+	HighwayClass: {value: 1, description: "HighwayClass"},
+	MainRoadClass: {value: 2, description: "MainRoadClass"},
+	RegionalClass: {value: 3, description: "RegionalClass"},
+	ConnectingClass: {value: 4, description: "ConnectingClass"},
+	MinorConnectingClass: {value: 5, description: "MinorConnectingClass"},
+	StreetClass: {value: 6, description: "StreetClass"},
+	RampsAndRoundAboutsClass: {value: 7, description: "RampsAndRoundAboutsClass"},
+	PedestrianAndBicyclesClass: {value: 8, description: "PedestrianAndBicyclesClass"},
+	WinterRoadsClass: {value: 9, description: "WinterRoadsClass"},
+	PathsClass: {value: 10, description: "PathsClass"},
+	PrivateRoadClass: {value: 12, description: "PrivateRoadClass"},
+	NoClass: {value: 99, description: "NoClass"}
+};
 
 ViiteEnumerations.LifeCycleStatus = {
-    UnderConstructionPrivate: {value: 0, description: "Rakenteilla (kunta/yksityinen)"},
-    UnderConstructionState: {value: 1, description: "Rakenteilla (valtio)"}
-  };
+	UnderConstructionPrivate: {value: 0, description: "Rakenteilla (kunta/yksityinen)"},
+	UnderConstructionState: {value: 1, description: "Rakenteilla (valtio)"}
+};
 
 ViiteEnumerations.TrafficDirection = {
-    BothDirections: {value: 2, description: "Molempiin suuntiin"},
-    AgainstDigitizing: {value: 3, description: "Digitointisuuntaa vastaan"},
-    TowardsDigitizing: {value: 4, description: "Digitointisuuntaan"},
-    UnknownDirection: {value: 99, description: "Tuntemattomaan suuntaan"}
-  };
+	BothDirections: {value: 2, description: "Molempiin suuntiin"},
+	AgainstDigitizing: {value: 3, description: "Digitointisuuntaa vastaan"},
+	TowardsDigitizing: {value: 4, description: "Digitointisuuntaan"},
+	UnknownDirection: {value: 99, description: "Tuntemattomaan suuntaan"}
+};
 
 ViiteEnumerations.SideCode = {
-    BothDirections: {value: 1, description: "BothDirections"},
-    TowardsDigitizing: {value: 2, description: "TowardsDigitizing"},
-    AgainstDigitizing: {value: 3, description: "AgainstDigitizing"},
-    Unknown: {value: 99, description: "Unknown"}
-  };
+	BothDirections: {value: 1, description: "BothDirections"},
+	TowardsDigitizing: {value: 2, description: "TowardsDigitizing"},
+	AgainstDigitizing: {value: 3, description: "AgainstDigitizing"},
+	Unknown: {value: 99, description: "Unknown"}
+};
 
 ViiteEnumerations.CalibrationCode = {
-    None: {value: 0, description: "None"},
-    AtEnd: {value: 1, description: "AtEnd"},
-    AtBeginning: {value: 2, description: "AtBeginning"},
-    AtBoth: {value: 3, description: "AtBoth"}
-  };
+	None: {value: 0, description: "None"},
+	AtEnd: {value: 1, description: "AtEnd"},
+	AtBeginning: {value: 2, description: "AtBeginning"},
+	AtBoth: {value: 3, description: "AtBoth"}
+};
 
 ViiteEnumerations.ProjectStatus = {
-    ErrorInViite: {value: 0, description: "Virhe Viite-sovelluksessa"},
-    Incomplete: {value: 1, description: "Keskeneräinen"},
-    Deleted: {value: 7, description: "Poistettu projekti"},
-    InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
-    UpdatingToRoadNetwork: {value: 11, description: "Päivitetään tieverkolle"},
-    Accepted: {value: 12, description: "Hyväksytty"},
-    Unknown: {value: 99, description: "Tuntematon"}
-  };
+	ErrorInViite: {value: 0, description: "Virhe Viite-sovelluksessa"},
+	Incomplete: {value: 1, description: "Keskeneräinen"},
+	Deleted: {value: 7, description: "Poistettu projekti"},
+	InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
+	UpdatingToRoadNetwork: {value: 11, description: "Päivitetään tieverkolle"},
+	Accepted: {value: 12, description: "Hyväksytty"},
+	Unknown: {value: 99, description: "Tuntematon"}
+};
 
 ViiteEnumerations.ProjectStatusToDisplay = [ViiteEnumerations.ProjectStatus.Incomplete.value,
-  ViiteEnumerations.ProjectStatus.InUpdateQueue.value, ViiteEnumerations.ProjectStatus.UpdatingToRoadNetwork.value,
-  ViiteEnumerations.ProjectStatus.ErrorInViite.value];
+	ViiteEnumerations.ProjectStatus.InUpdateQueue.value, ViiteEnumerations.ProjectStatus.UpdatingToRoadNetwork.value,
+	ViiteEnumerations.ProjectStatus.ErrorInViite.value];
 
 ViiteEnumerations.Track = {
-    Combined: {value: 0, description: "Combined"},
-    RightSide: {value: 1, description: "RightSide"},
-    LeftSide: {value: 2, description: "LeftSide"},
-    Unknown: {value: 99, description: "Unknown"}
-  };
+	Combined: {value: 0, description: "Combined"},
+	RightSide: {value: 1, description: "RightSide"},
+	LeftSide: {value: 2, description: "LeftSide"},
+	Unknown: {value: 99, description: "Unknown"}
+};
 
 ViiteEnumerations.NodesAndJunctionsZIndex = {
-    DirectionMarker: {value: 140},
-    NodePointTemplate: {value: 160, selected: 165},
-    NodeMarker: {value: 200, selected: 205},
-    JunctionTemplate: {value: 180, selected: 185},
-    JunctionMarker: {value: 190, selected: 195}
-  };
+	DirectionMarker: {value: 140},
+	NodePointTemplate: {value: 160, selected: 165},
+	NodeMarker: {value: 200, selected: 205},
+	JunctionTemplate: {value: 180, selected: 185},
+	JunctionMarker: {value: 190, selected: 195}
+};
 
 ViiteEnumerations.ViewModeZIndex = {
-    BorderStyle: {value: 1},
-    UnAddressedOther: {border: 10, stroke: 11, fill: 12},
-    UnAddressedState: {border: 20, stroke: 20, fill: 20},
-    UnAddressedOtherUnderConstruction: {border: 30, stroke: 31, fill: 32},
-    UnAddressedStateUnderConstruction: {border: 40, stroke: 41, fill: 42},
-    PedestrianAndBicycleRoad: {border: 50, stroke: 51, fill: 52},
-    PrivateRoad: {border: 60, stroke: 61, fill: 62},
-    Street: {border: 70, stroke: 71, fill: 72},
-    Ramp: {border: 80, stroke: 81, fill: 82},
-    ConnectingRoad: {border: 90, stroke: 91, fill: 92},
-    RegionalRoad: {border: 100, stroke: 101, fill: 102},
-    MainRoad: {border: 110, stroke: 111, fill: 112},
-    Highway: {border: 120, stroke: 121, fill: 122},
-    ReservedRoad: {value: 130},
-    DirectionMarker: {value: 140},
-    CalibrationPoint: {value: 150}
-  };
+	BorderStyle: {value: 1},
+	UnAddressedOther: {border: 10, stroke: 11, fill: 12},
+	UnAddressedState: {border: 20, stroke: 20, fill: 20},
+	UnAddressedOtherUnderConstruction: {border: 30, stroke: 31, fill: 32},
+	UnAddressedStateUnderConstruction: {border: 40, stroke: 41, fill: 42},
+	PedestrianAndBicycleRoad: {border: 50, stroke: 51, fill: 52},
+	PrivateRoad: {border: 60, stroke: 61, fill: 62},
+	Street: {border: 70, stroke: 71, fill: 72},
+	Ramp: {border: 80, stroke: 81, fill: 82},
+	ConnectingRoad: {border: 90, stroke: 91, fill: 92},
+	RegionalRoad: {border: 100, stroke: 101, fill: 102},
+	MainRoad: {border: 110, stroke: 111, fill: 112},
+	Highway: {border: 120, stroke: 121, fill: 122},
+	ReservedRoad: {value: 130},
+	DirectionMarker: {value: 140},
+	CalibrationPoint: {value: 150}
+};
 
 ViiteEnumerations.ProjectModeZIndex = {
-    BorderStyle: {value: 1},
-    NotInProjectRoadLinks: {border: 10, stroke: 11, fill: 12},
-    TerminatedProjectLinks: {border: 20, stroke: 21, fill: 22},
-    UnAddressedOther: {border: 30, stroke: 31, fill: 32},
-    UnAddressedState: {border: 40, stroke: 41, fill: 42},
-    UnAddressedUnderConstructionOther: {border: 50, stroke: 51, fill: 52},
-    UnAddressedUnderConstructionState: {border: 60, stroke: 61, fill: 62},
-    TransferredProjectLinks: {border: 70, stroke: 71, fill: 72},
-    UnchangedProjectLinks: {border: 70, stroke: 71, fill: 72},
-    NumberingProjectLinks: {border: 70, stroke: 71, fill: 72},
-    NewProjectLinks: {border: 70, stroke: 71, fill: 72},
-    NotHandledProjectLinks: {border: 80, stroke: 81, fill: 82},
-    CalibrationPoint: {value: 90},
-    SelectedProjectLink: {value: 100},
-    DirectionMarker: {value: 110}
-  };
+	BorderStyle: {value: 1},
+	NotInProjectRoadLinks: {border: 10, stroke: 11, fill: 12},
+	TerminatedProjectLinks: {border: 20, stroke: 21, fill: 22},
+	UnAddressedOther: {border: 30, stroke: 31, fill: 32},
+	UnAddressedState: {border: 40, stroke: 41, fill: 42},
+	UnAddressedUnderConstructionOther: {border: 50, stroke: 51, fill: 52},
+	UnAddressedUnderConstructionState: {border: 60, stroke: 61, fill: 62},
+	TransferredProjectLinks: {border: 70, stroke: 71, fill: 72},
+	UnchangedProjectLinks: {border: 70, stroke: 71, fill: 72},
+	NumberingProjectLinks: {border: 70, stroke: 71, fill: 72},
+	NewProjectLinks: {border: 70, stroke: 71, fill: 72},
+	NotHandledProjectLinks: {border: 80, stroke: 81, fill: 82},
+	CalibrationPoint: {value: 90},
+	SelectedProjectLink: {value: 100},
+	DirectionMarker: {value: 110}
+};
 
 ViiteEnumerations.AdministrativeClass = {
-    Empty: {value: 0, description: "", displayText: "--", textValue: ""},
-    PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio", textValue: "Valtio"},
-    MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta", textValue: "Kunta"},
-    PrivateRoad: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen", textValue: "Yksityinen"},
-    Unknown: {value: 99, description: "Ei määritelty", displayText: "--", textValue: ""}
-  };
+	Empty: {value: 0, description: "", displayText: "--", textValue: ""},
+	PublicRoad: {value: 1, description: "Yleinen tie", displayText: "1 Valtio", textValue: "Valtio"},
+	MunicipalityStreetRoad: {value: 2, description: "Kunnan katuosuus", displayText: "2 Kunta", textValue: "Kunta"},
+	PrivateRoad: {value: 3, description: "Yksityistie", displayText: "3 Yksityinen", textValue: "Yksityinen"},
+	Unknown: {value: 99, description: "Ei määritelty", displayText: "--", textValue: ""}
+};
 
 ViiteEnumerations.AdministrativeClassShort = {
-    PublicRoad: {value: 1, description: "valtio"},
-    MunicipalityStreetRoad: {value: 2, description: "kunta"},
-    PrivateRoad: {value: 3, description: "yksit."}
-  };
+	PublicRoad: {value: 1, description: "valtio"},
+	MunicipalityStreetRoad: {value: 2, description: "kunta"},
+	PrivateRoad: {value: 3, description: "yksit."}
+};
 
 ViiteEnumerations.RoadLinkType = {
-    UnknownRoadLinkType: {value: 0, description: "UnknownRoadLinkType"},
-    NormalRoadLinkType: {value: 1, description: "NormalRoadLinkType"},
-    ComplementaryRoadLinkType: {value: 3, description: "ComplementaryRoadLinkType"},
-    SuravageRoadLink: {value: 4, description: "SuravageRoadLink"}
-  };
+	UnknownRoadLinkType: {value: 0, description: "UnknownRoadLinkType"},
+	NormalRoadLinkType: {value: 1, description: "NormalRoadLinkType"},
+	ComplementaryRoadLinkType: {value: 3, description: "ComplementaryRoadLinkType"},
+	SuravageRoadLink: {value: 4, description: "SuravageRoadLink"}
+};
 
 ViiteEnumerations.RoadNameSource = {
-    UnknownSource: {value: 99, description: "Unknown Source"},
-    ProjectLinkSource: {value: 0, description: "Project Link Source"},
-    RoadAddressSource: {value: 1, description: "Road Name Source"}
-  };
+	UnknownSource: {value: 99, description: "Unknown Source"},
+	ProjectLinkSource: {value: 0, description: "Project Link Source"},
+	RoadAddressSource: {value: 1, description: "Road Name Source"}
+};
 
 ViiteEnumerations.ProjectError = {
-    TerminationContinuity: {value: 18},
-    DoubleEndOfRoad: {value: 19},
-    RoadNotReserved: {value: 27}
-  };
+	TerminationContinuity: {value: 18},
+	DoubleEndOfRoad: {value: 19},
+	RoadNotReserved: {value: 27}
+};
 
-  /*
+/*
   The meta key codes are browser dependant, in proper:
       Firefox: 224
       Opera: 17
@@ -195,73 +195,73 @@ ViiteEnumerations.NewRoadId = -1000;
 ViiteEnumerations.BlackUnderlineAdministrativeClasses = [ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.value, ViiteEnumerations.AdministrativeClass.PrivateRoad.value];
 
 ViiteEnumerations.ElyCodes = {
-    ELY_U: {value: 1, name: "Uusimaa", shortName: "UUD"},
-    ELY_T: {value: 2, name: "Varsinais-Suomi", shortName: "VAR"},
-    ELY_KAS: {value: 3, name: "Kaakkois-Suomi", shortName: "KAS"},
-    ELY_H: {value: 4, name: "Pirkanmaa", shortName: "PIR"},
-    ELY_SK: {value: 8, name: "Pohjois-Savo", shortName: "POS"},
-    ELY_KES: {value: 9, name: "Keski-Suomi", shortName: "KES"},
-    ELY_V: {value: 10, name: "Etelä-Pohjanmaa", shortName: "EPO"},
-    ELY_O: {value: 12, name: "Pohjois-Pohjanmaa", shortName: "POP"},
-    ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
-  };
+	ELY_U: {value: 1, name: "Uusimaa", shortName: "UUD"},
+	ELY_T: {value: 2, name: "Varsinais-Suomi", shortName: "VAR"},
+	ELY_KAS: {value: 3, name: "Kaakkois-Suomi", shortName: "KAS"},
+	ELY_H: {value: 4, name: "Pirkanmaa", shortName: "PIR"},
+	ELY_SK: {value: 8, name: "Pohjois-Savo", shortName: "POS"},
+	ELY_KES: {value: 9, name: "Keski-Suomi", shortName: "KES"},
+	ELY_V: {value: 10, name: "Etelä-Pohjanmaa", shortName: "EPO"},
+	ELY_O: {value: 12, name: "Pohjois-Pohjanmaa", shortName: "POP"},
+	ELY_L: {value: 14, name: "Lappi", shortName: "LAP"}
+};
 
 ViiteEnumerations.EVKCodes = { // Elinvoimakeskus codes
-    EVK_UUD: {value: 1, name: "Uudenmaan elinvoimakeskus", shortName: "UUD"},
-    EVK_LOU: {value: 2, name: "Lounais-Suomen elinvoimakeskus", shortName: "LOU"},
-    EVK_KAS: {value: 3, name: "Kaakkois-Suomen elinvoimakeskus", shortName: "KAS"},
-    EVK_SIS: {value: 4, name: "Sisä-Suomen elinvoimakeskus", shortName: "SIS"},
-    EVK_KES: {value: 5, name: "Keski-Suomen elinvoimakeskus", shortName: "KES"},
-    EVK_ITA: {value: 6, name: "Itä-Suomen elinvoimakeskus", shortName: "ITA"},
-    EVK_EPO: {value: 7, name: "Etelä-Pohjanmaan elinvoimakeskus", shortName: "EPO"},
-    EVK_POH: {value: 8, name: "Pohjanmaan elinvoimakeskus", shortName: "POH"},
-    EVK_PSU: {value: 9, name: "Pohjois-Suomen elinvoimakeskus", shortName: "PSU"},
-    EVK_LAP: {value: 10, name: "Lapin elinvoimakeskus", shortName: "LAP"}
-  };
+	EVK_UUD: {value: 1, name: "Uudenmaan elinvoimakeskus", shortName: "UUD"},
+	EVK_LOU: {value: 2, name: "Lounais-Suomen elinvoimakeskus", shortName: "LOU"},
+	EVK_KAS: {value: 3, name: "Kaakkois-Suomen elinvoimakeskus", shortName: "KAS"},
+	EVK_SIS: {value: 4, name: "Sisä-Suomen elinvoimakeskus", shortName: "SIS"},
+	EVK_KES: {value: 5, name: "Keski-Suomen elinvoimakeskus", shortName: "KES"},
+	EVK_ITA: {value: 6, name: "Itä-Suomen elinvoimakeskus", shortName: "ITA"},
+	EVK_EPO: {value: 7, name: "Etelä-Pohjanmaan elinvoimakeskus", shortName: "EPO"},
+	EVK_POH: {value: 8, name: "Pohjanmaan elinvoimakeskus", shortName: "POH"},
+	EVK_PSU: {value: 9, name: "Pohjois-Suomen elinvoimakeskus", shortName: "PSU"},
+	EVK_LAP: {value: 10, name: "Lapin elinvoimakeskus", shortName: "LAP"}
+};
 
 ViiteEnumerations.NodeType = {
-    NormalIntersection: {value: 1, description: "Normaali tasoliittymä"},
-    Roundabout: {value: 3, description: "Kiertoliittymä"},
-    YIntersection: {value: 4, description: "Y-liittymä"},
-    Interchange: {value: 5, description: "Eritasoliittymä"},
-    RoadBoundary: {value: 7, description: "Hallinnollinen raja"},
-    ELYBorder: {value: 8, description: "Elinvoimakeskus raja"},
-    MultiTrackIntersection: {value: 10, description: "Moniajoratainen liittymä"},
-    AccessRoad: {value: 12, description: "Liityntätie"},
-    EndOfRoad: {value: 13, description: "Tien alku/loppu"},
-    Bridge: {value: 14, description: "Silta"},
-    MaintenanceOpening: {value: 15, description: "Huoltoaukko"},
-    PrivateRoad: {value: 16, description: "Yksityistie- tai katuliittymä"},
-    StaggeredIntersection: {value: 17, description: "Porrastettu liittymä"},
-    Ferry: {value: 18, description: "Lautta"},
-    UnknownNodeType: {value: 99, description: "Ei määritelty"}
-  };
+	NormalIntersection: {value: 1, description: "Normaali tasoliittymä"},
+	Roundabout: {value: 3, description: "Kiertoliittymä"},
+	YIntersection: {value: 4, description: "Y-liittymä"},
+	Interchange: {value: 5, description: "Eritasoliittymä"},
+	RoadBoundary: {value: 7, description: "Hallinnollinen raja"},
+	ELYBorder: {value: 8, description: "Elinvoimakeskus raja"},
+	MultiTrackIntersection: {value: 10, description: "Moniajoratainen liittymä"},
+	AccessRoad: {value: 12, description: "Liityntätie"},
+	EndOfRoad: {value: 13, description: "Tien alku/loppu"},
+	Bridge: {value: 14, description: "Silta"},
+	MaintenanceOpening: {value: 15, description: "Huoltoaukko"},
+	PrivateRoad: {value: 16, description: "Yksityistie- tai katuliittymä"},
+	StaggeredIntersection: {value: 17, description: "Porrastettu liittymä"},
+	Ferry: {value: 18, description: "Lautta"},
+	UnknownNodeType: {value: 99, description: "Ei määritelty"}
+};
 
 ViiteEnumerations.NodePointType = {
-    RoadNodePoint: {value: 1, description: "Tien solmukohta"},
-    CalculatedNodePoint: {value: 2, description: "Laskettu solmukohta"},
-    UnknownNodePointType: {value: 99, description: "Ei määritelty"}
-  };
+	RoadNodePoint: {value: 1, description: "Tien solmukohta"},
+	CalculatedNodePoint: {value: 2, description: "Laskettu solmukohta"},
+	UnknownNodePointType: {value: 99, description: "Ei määritelty"}
+};
 
 ViiteEnumerations.BeforeAfter = {
-    Before: {value: 1, description: "Ennen", displayLetter: "E"},
-    After: {value: 2, description: "Jälkeen", displayLetter: "J"}
-  };
+	Before: {value: 1, description: "Ennen", displayLetter: "E"},
+	After: {value: 2, description: "Jälkeen", displayLetter: "J"}
+};
 
 ViiteEnumerations.Tool = {
-    Attach: {value: "Attach"},
-    Add: {value: "Add"},
-    Default: {value: "Default"},
-    Unknown: {value: ""}
-  };
+	Attach: {value: "Attach"},
+	Add: {value: "Add"},
+	Default: {value: "Default"},
+	Unknown: {value: ""}
+};
 
 ViiteEnumerations.Discontinuity = {
-    EndOfRoad: {value: 1, description: "Tien loppu"},
-    Discontinuous: {value: 2, description: "Epäjatkuva"},
-    ChangingELYCode: {value: 3, description: "Elinvoimakeskuksen raja"},
-    MinorDiscontinuity: {value: 4, description: "Lievä epäjatkuvuus"},
-    Continuous: {value: 5, description: "Jatkuva"}
+	EndOfRoad: {value: 1, description: "Tien loppu"},
+	Discontinuous: {value: 2, description: "Epäjatkuva"},
+	ChangingELYCode: {value: 3, description: "Elinvoimakeskuksen raja"},
+	MinorDiscontinuity: {value: 4, description: "Lievä epäjatkuvuus"},
+	Continuous: {value: 5, description: "Jatkuva"}
 
-  };
+};
 
 export { ViiteEnumerations };
