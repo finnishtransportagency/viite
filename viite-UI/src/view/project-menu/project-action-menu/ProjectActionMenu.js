@@ -11,7 +11,6 @@ import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { button } from '@components/button/Button.js';
 
@@ -34,7 +33,6 @@ export function ProjectActionMenu(options) {
 	const {
 		projectCollection,
 		map,
-		eventbus: injectedEventbus,
 		backend,
 		projectChangeInfoModel,
 		container = '#menu-container',
@@ -43,7 +41,6 @@ export function ProjectActionMenu(options) {
 		onStateChange
 	} = options;
 	const mainMenu = options.mainMenu;
-	const activeEventbus = injectedEventbus || eventbus;
 	const projectChangeTable = getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection);
 
 	const state = Object.assign({
@@ -95,7 +92,7 @@ export function ProjectActionMenu(options) {
 		// Short-circuit: a save is in-flight — keep all action buttons disabled until the
 		// background map fetch completes and ProjectMenu clears isSaveInFlight.
 		if (state.isSaveInFlight) {
-			const waitTitle = 'Odota tallennuksen valmistumista';
+			const waitTitle = 'Projektilinkkien käsittely kesken, odota hetki';
 			config.buttonStates.recalculate = { disabled: true, title: waitTitle };
 			config.buttonStates.changes    = { disabled: true, title: waitTitle };
 			config.buttonStates.send       = { disabled: true, title: waitTitle };
@@ -300,7 +297,7 @@ export function ProjectActionMenu(options) {
 	// ==========================================
 
 	const closeProjectMode = (_changeLayerMode, noSave) => {
-		activeEventbus.trigger('projectChangeTable:hide');
+		if (projectChangeTable) { projectChangeTable.hide(); }
 		projectCollection.clearRoadAddressProjects();
 
 		if (typeof closeProjectMenu === 'function') {

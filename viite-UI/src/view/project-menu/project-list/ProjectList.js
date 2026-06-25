@@ -26,14 +26,13 @@ export function ProjectList(options = {}) {
 		const actionMenu = new ProjectActionMenu({
 			projectCollection: options.projectCollection,
 			map: options.map,
-			eventbus: options.eventbus || eventbus,
 			canValidateProject: canUseDevTools,
 			backend: options.backend,
 			projectChangeInfoModel: options.projectChangeInfoModel,
 			mainMenu: options.mainMenu
 		});
 
-		projectMenuInstance = new ProjectMenu('#menu-container', options.eventbus || eventbus, {
+		projectMenuInstance = new ProjectMenu('#menu-container', {
 			projectMenu: actionMenu,
 			projectCollection: options.projectCollection,
 			projectLinkLayer: options.projectLinkLayer,

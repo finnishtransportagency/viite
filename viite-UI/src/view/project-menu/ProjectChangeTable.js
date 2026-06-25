@@ -1,6 +1,5 @@
 // Displays changes made to the project once "avaa projektin yhteenvetotaulukko" button is clicked. It supports sorting and is used for entering project edit/creation menu
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
 export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
@@ -137,7 +136,6 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 	}
 
 	function hide() {
-		eventbus.trigger('projectChangeTable:closed');
 		changeTableOpen = false;
 		if (typeof callbacks.onClosed === 'function') {
 			callbacks.onClosed();
@@ -541,18 +539,15 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 		});
 	}
 
-	eventbus.on('projectChangeTable:refresh', function () {
+	function refresh() {
 		getChanges();
 		enableTableInteractions();
-	});
-
-	eventbus.on('projectChangeTable:hide', function () {
-		hide();
-	});
+	}
 
 	return {
 		show: show,
 		hide: hide,
+		refresh: refresh,
 		bindEvents: bindEvents,
 		isChangeTableOpen: isChangeTableOpen,
 		setCallbacks: setCallbacks

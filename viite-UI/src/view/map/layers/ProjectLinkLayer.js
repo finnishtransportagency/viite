@@ -363,10 +363,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		});
 	}
 
-	me.eventListener.listenTo(eventbus, 'projectLink:errorClicked', function () {
-		highlightProjectLinkLayerFeaturesInternal();
-	});
-
 	const zoomDoubleClickListener = function (event) {
 		if (isActiveLayer) {
 			_.defer(function () {

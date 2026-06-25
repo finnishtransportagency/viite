@@ -33,7 +33,6 @@ export { setMainMenuState };
 
 export function MainMenu(options = {}) {
 	const {
-		eventbus: activeEventbus,
 		selectedLinkProperty,
 		roadNameCollection,
 		backend,
@@ -50,7 +49,7 @@ export function MainMenu(options = {}) {
 
 	const views = {
 		linkInfo: new LinkInfo(selectedLinkProperty),
-		projectList: new ProjectList({ ...options, eventbus: activeEventbus, menu, roadCollection }),
+		projectList: new ProjectList({ ...options, menu, roadCollection }),
 		roadNamingTool: new RoadNamingToolWindow(roadNameCollection),
 		roadAddressBrowser: new RoadAddressBrowserWindow(backend),
 		roadAddressChangesBrowser: new RoadAddressChangesBrowserWindow(backend),

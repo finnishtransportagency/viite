@@ -14,6 +14,7 @@ import { setMainMenuState } from '@view/MainMenu.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
+import { eventbus } from '@utils/eventbus.js';
 
 const States = {
 	CONFIGURATION:   'CONFIGURATION',
@@ -24,9 +25,8 @@ const States = {
 let updateProjectMenuBridge = function () {};
 export function updateProjectMenu(selected) { return updateProjectMenuBridge(selected); }
 
-export function ProjectMenu(containerSelector, eventBus, options = {}) {
+export function ProjectMenu(containerSelector, options = {}) {
 	const rootElement = $(containerSelector || '#menu-container');
-	const eventbus = eventBus;
 	const selectedProjectLinkProperty = options.selectedProjectLinkProperty;
 	const menu = options.menu || null;
 
@@ -140,7 +140,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
 			const actionMenu = new ProjectActionMenu({
 				...options,
-				eventbus: eventbus,
 				project: project.data,
 				mainMenu: options.mainMenu,
 				closeProjectMenu: closeProjectMenu,
@@ -280,7 +279,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 		// Unbind any previous listeners before binding new ones
 		const editSpan = rootElement.find('#editProjectSpan');
 		editSpan.off('click').on('click', () => {
-			eventbus.trigger('projectChangeTable:hide');
+			if (options.projectChangeTable) { options.projectChangeTable.hide(); }
 			syncRoadAddressingState({ changeTableOpen: false });
 			selectLayer('linkProperty', true, false);
 
@@ -352,17 +351,6 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 
 	updateProjectMenuBridge = updateProjectMenuInternal;
 
-	const onProjectLinkErrorClicked = function (selected, errorMessage) {
-		const currentProject = options.projectCollection ? options.projectCollection.getCurrentProject() : null;
-		if (currentProject) {
-			const errorSelectedLinks = Array.isArray(selected) ? selected : [selected];
-			updateUI(States.LINK_EDIT, currentProject.project, false, { 
-				selectedLinks: errorSelectedLinks, 
-				errorMessage: errorMessage 
-			});
-		}
-	};
-
 	const onProjectLinksUpdated = function () {
 		if (options.projectCollection) {
 			options.projectCollection.setTmpDirty([]);
@@ -416,7 +404,7 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 			options.projectCollection.setTmpDirty([]);
 		}
 		syncRoadAddressingState({ hasFormedLinks: true });
-		eventbus.trigger('projectChangeTable:refresh');
+		if (options.projectChangeTable) { options.projectChangeTable.refresh(); }
 		updateUI(States.ROAD_ADDRESSING, project.data, false);
 	};
 
@@ -473,13 +461,11 @@ export function ProjectMenu(containerSelector, eventBus, options = {}) {
 		}
 	};
 
-	eventbus.on('projectLink:errorClicked',                onProjectLinkErrorClicked);
 	eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
 	eventbus.on('roadAddress:openProject',                 onOpenProject);
 	eventbus.on('roadAddressProject:fetched',              onFetched);
 
 	const destroy = function () {
-		eventbus.off('projectLink:errorClicked',                onProjectLinkErrorClicked);
 		eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
 		eventbus.off('roadAddress:openProject',                 onOpenProject);
 		eventbus.off('roadAddressProject:fetched',              onFetched);

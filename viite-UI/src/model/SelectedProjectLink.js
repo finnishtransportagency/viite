@@ -1,4 +1,3 @@
-import { eventbus } from '@utils/eventbus.js';
 import { updateProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { highlightProjectLinkLayerFeatures } from '@view/map/layers/ProjectLinkLayer.js';
 /**
@@ -29,12 +28,6 @@ export function SelectedProjectLink(projectLinkCollection) {
 		const linkData = get(id);
 		updateProjectMenu(linkData);
 		highlightProjectLinkLayerFeatures();
-	};
-
-	const openWithErrorMessage = function (ids, errorMessage) {
-		current = projectLinkCollection.getProjectLink(ids);
-		me.ids = ids;
-		eventbus.trigger('projectLink:errorClicked', get(ids[0]), errorMessage);
 	};
 
 	const isDirty = function () { return dirty; };
@@ -130,7 +123,6 @@ export function SelectedProjectLink(projectLinkCollection) {
 
 	return {
 		open: open,
-		openWithErrorMessage: openWithErrorMessage,
 		openCtrl: openCtrl,
 		get: get,
 		clean: clean,

@@ -27,7 +27,6 @@ import { SelectedProjectLink } from '@model/SelectedProjectLink.js';
 import { TileMapCollection } from '@model/TileMapCollection.js';
 import { URLRouter } from './router.js';
 import { ZoomBox } from '@view/map/markers/ZoomBox.js';
-import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -154,7 +153,6 @@ const initializeUI = function (map, backend, startupParameters, layers, tileMaps
 
 	new MainMenu({
 		selectedLinkProperty: models.selectedLinkProperty,
-		eventbus: eventbus,
 		projectCollection: models.projectCollection,
 		map: map,
 		backend: backend,

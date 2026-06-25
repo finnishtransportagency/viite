@@ -533,7 +533,7 @@ export function NodeEditor(
 		$container.find('#nodeStartDate').on('input.nodeEditor', function () { $(this).change(); });
 
 		// Disable autocomplete
-		$container.find('#nodeName, #nodeStartDate').attr('autocomplete', 'false');
+		$container.find('#nodeName, #nodeStartDate').attr('autocomplete', 'off');
 
 		if (permissionToEditNodes) {
 			$container.find('.junction-address-header').append('<i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i>');
