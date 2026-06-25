@@ -1013,7 +1013,7 @@ class ProjectValidator {
      * @return A tuple of the largest previous road part number and the smallest next road part number.
      */
     def getPreviousAndNextRoadParts(roadPart: RoadPart): (Option[Long], Option[Long]) = {
-      val validRoadPartsAtProjectStartDate = roadAddressService.getValidRoadAddressParts(roadPart.roadNumber, project.startDate)
+      val validRoadPartsAtProjectStartDate = roadAddressService.getValidRoadAddressParts(roadPart.roadNumber)
       //Value is None, if no such road part numbers exist
       val previousRoadPart = validRoadPartsAtProjectStartDate.filter(rp => rp < roadPart.partNumber && !project.isReserved(RoadPart(roadPart.roadNumber, rp))).reduceOption(Ordering.Long.max)
       val nextRoadPart     = validRoadPartsAtProjectStartDate.filter(rp => rp > roadPart.partNumber && !project.isReserved(RoadPart(roadPart.roadNumber, rp))).reduceOption(Ordering.Long.min)
@@ -1480,7 +1480,7 @@ class ProjectValidator {
       val afterCheckErrors = roadProjectLinks.groupBy(_.roadPart.roadNumber).flatMap { g =>
         val roadNumber = g._1
         val trackIntervals = Seq(g._2.filter(_.track != Track.RightSide), g._2.filter(_.track != Track.LeftSide))
-        val validRoadParts = roadAddressService.getValidRoadAddressParts(roadNumber, project.startDate)
+        val validRoadParts = roadAddressService.getValidRoadAddressParts(roadNumber)
         trackIntervals.flatMap {
           interval =>
             val nonTerminated = interval.filter(r => r.status != RoadAddressChangeType.Termination)
@@ -1529,7 +1529,7 @@ class ProjectValidator {
       */
     def checkDiscontinuityOnLastLinkPart: Seq[ValidationErrorDetails] = {
       val discontinuityErrors = roadProjectLinks.groupBy(_.roadPart.roadNumber).flatMap { g =>
-        val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt, project.startDate)
+        val validRoadParts = roadAddressService.getValidRoadAddressParts(g._1.toInt)
         val trackIntervals = Seq(g._2.filter(_.track != Track.RightSide), g._2.filter(_.track != Track.LeftSide))
         trackIntervals.flatMap {
           interval =>

@@ -1062,14 +1062,13 @@ class RoadwayDAO extends BaseDAO {
    * Said delay is no longer present in AWS.
    * TODO: Refactor this function as it's no longer needed.
    * @param roadNumber
-   * @param projectStartDate
    * @return
    */
-  def getValidRoadParts(roadNumber: Long, projectStartDate: DateTime): List[Long] = {
+  def getValidRoadParts(roadNumber: Long): List[Long] = {
     val query = sql"""
       SELECT DISTINCT ra.road_part_number
       FROM roadway ra
-      WHERE road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $projectStartDate
+      WHERE road_number = $roadNumber AND valid_to IS NULL
           AND end_date IS NULL
           AND ra.road_part_number NOT IN (
               SELECT DISTINCT pl.road_part_number
