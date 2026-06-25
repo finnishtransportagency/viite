@@ -315,16 +315,16 @@ export function NodeEditor(
 	};
 
 	const formIsInvalid = () => {
-		const $c = getContainer();
-		const hasEmptyEnabledJunctionNumbers = $c
+		const nodeEditorContainer = getContainer();
+		const hasEmptyEnabledJunctionNumbers = nodeEditorContainer
 			.find('[id^=junction-number-textbox-]:enabled')
 			.toArray()
 			.some(input => _.trim($(input).val() || '') === '');
 
 		const checks = {
-			isNodeNameEmpty: $c.find('#nodeName').val() === '',
-			isUnknownNodeType: $c.find('#nodeTypeDropdown').val() === String(ViiteEnumerations.NodeType.UnknownNodeType.value),
-			isStartDateEmpty: $c.find('#nodeStartDate').val() === '',
+			isNodeNameEmpty: nodeEditorContainer.find('#nodeName').val() === '',
+			isUnknownNodeType: nodeEditorContainer.find('#nodeTypeDropdown').val() === String(ViiteEnumerations.NodeType.UnknownNodeType.value),
+			isStartDateEmpty: nodeEditorContainer.find('#nodeStartDate').val() === '',
 			hasEmptyEnabledJunctionNumbers: hasEmptyEnabledJunctionNumbers,
 			areJunctionNumbersValid: selectedNodesAndJunctions.validateJunctionNumbers(applyJunctionValidity)
 		};
@@ -338,12 +338,12 @@ export function NodeEditor(
 		return invalid;
 	};
 
-	const setSaveButtonDisabled = (disabled) => { $('#node-editor-save').prop('disabled', disabled); };
-	const setCancelButtonDisabled = (disabled) => { $('#node-editor-cancel').prop('disabled', disabled); };
+	const setSaveButtonState = (disabled) => { $('#node-editor-save').prop('disabled', disabled); };
+	const setCancelButtonState = (disabled) => { $('#node-editor-cancel').prop('disabled', disabled); };
 
 	const syncActionButtons = () => {
-		setSaveButtonDisabled(saveInProgress || formIsInvalid());
-		setCancelButtonDisabled(saveInProgress);
+		setSaveButtonState(saveInProgress || formIsInvalid());
+		setCancelButtonState(saveInProgress);
 	};
 
 	// ─── Eventbus ───────────────────────────────────────────────────────────────

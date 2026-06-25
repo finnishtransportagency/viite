@@ -330,7 +330,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 
 	const closeNode = function (cancel) {
 		const currentNode = current && current.node ? current.node : undefined;
-		const savedTemplates = current.templates;
+		const savedTemplates = cancel ? current.templates : undefined;
 		onNodeLayerUnselected(currentNode, cancel);
 		current = {};
 		current.templates = savedTemplates;

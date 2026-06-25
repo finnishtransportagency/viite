@@ -204,13 +204,19 @@ export function NodeCollection(backend) {
 			onFail(message.errorMessage || 'Solmun tallennus epäonnistui.', saving);
 		};
 
+		const handleSuccess = function () {
+			fetchAndApplyNodesAndJunctions().finally(function () {
+				Spinner.hide(saving);
+				onSuccess();
+			});
+		};
+
 		if (!_.isUndefined(node)) {
 			Spinner.show(saving);
 			if (node.id) {
 				backend.updateNodeInfo(node, function (result) {
 					if (result.success) {
-						Spinner.hide(saving);
-						onSuccess();
+						handleSuccess();
 					} else {
 						fail(result);
 					}
@@ -218,8 +224,7 @@ export function NodeCollection(backend) {
 			} else {
 				backend.createNodeInfo(node, function (result) {
 					if (result.success) {
-						Spinner.hide(saving);
-						onSuccess();
+						handleSuccess();
 					} else {
 						fail(result);
 					}
