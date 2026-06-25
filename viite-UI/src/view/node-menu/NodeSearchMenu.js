@@ -145,7 +145,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		const id = $(event.currentTarget).attr('id');
 		const node = nodeCollection.getNodesWithAttributes()[id];
 		if (node) {
-			moveMapToCoordinates(map, {
+			moveMapToCoordinates({
 				lon: node.coordinates.x,
 				lat: node.coordinates.y,
 				zoom: 12

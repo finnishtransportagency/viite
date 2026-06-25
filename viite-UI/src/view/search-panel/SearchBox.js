@@ -57,7 +57,7 @@ export function SearchBox(map) {
 
 	function selectResult(result) {
 		if (map) {
-			moveMapToCoordinates(map, {
+			moveMapToCoordinates({
 				lon: result.lon,
 				lat: result.lat
 			});

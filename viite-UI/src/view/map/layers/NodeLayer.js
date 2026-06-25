@@ -608,12 +608,11 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 
 	const fetchNodesAndJunctions = function (zoom) {
 		map.getView().setZoom(Math.round(zoomlevels.getViewZoom(map)));
-		const targetZoom = _.isNumber(zoom) ? zoom : zoomlevels.getViewZoom(map) + 1;
 
 		return new Promise((resolve) => {
 			roadCollection.fetchWithNodes(
 				map.getView().calculateExtent(map.getSize()).join(','),
-				targetZoom,
+				zoom,
 				function (fetchedNodesAndJunctions) { resolve(fetchedNodesAndJunctions); }
 			);
 		});

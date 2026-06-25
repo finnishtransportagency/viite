@@ -10,6 +10,7 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
 const mapState = {
+	map: undefined,
 	zoomLevel: undefined,
 	centerLonLat: undefined
 };
@@ -48,15 +49,16 @@ export function refreshMap(zoomLevel, bbox, center) {
 	});
 }
 
-export function moveMapToCoordinates(map, position) {
-	let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(map));
+export function moveMapToCoordinates(position) {
+	let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(mapState.map));
 	if (!_.isUndefined(position.zoom))
 		zoomLevel = position.zoom;
-	map.getView().setCenter([position.lon, position.lat]);
-	map.getView().setZoom(zoomLevel);
+	mapState.map.getView().setCenter([position.lon, position.lat]);
+	mapState.map.getView().setZoom(zoomLevel);
 }
 
 export function MapView(map, layers) {
+	mapState.map = map;
 	const centerMarkerLayer = new ol.source.Vector({});
 	let enableCtrlModifier = false;
 	const metaKeyCodes = ViiteEnumerations.MetaKeyCodes;

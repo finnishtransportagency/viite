@@ -70,7 +70,6 @@ module.exports = {
         "id-length": "off",
         "id-match": "error",
         "implicit-arrow-linebreak": "off",
-        "indent": ["error", "tab"],
         "indent-legacy": "off",
         "init-declarations": "off",
         "jsx-quotes": "error",

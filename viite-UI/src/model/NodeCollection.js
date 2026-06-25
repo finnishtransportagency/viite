@@ -72,12 +72,9 @@ export function NodeCollection(backend) {
 	}
 
 	async function fetchAndApplyNodesAndJunctions(zoom) {
-		const targetZoom = _.isNumber(zoom)
-			? zoom
-			: zoomlevels.getViewZoom(map) + 1;
 
-		const fetchResult = await fetchNodesAndJunctionsFromCurrentMap(targetZoom);
-		applyFetchedNodesAndJunctions(fetchResult, targetZoom);
+		const fetchResult = await fetchNodesAndJunctionsFromCurrentMap(zoom);
+		applyFetchedNodesAndJunctions(fetchResult, zoom);
 		return fetchResult;
 	}
 
@@ -148,7 +145,7 @@ export function NodeCollection(backend) {
 
 			// Move map to found location with appropriate zoom level
 
-			moveMapToCoordinates(map, {
+			moveMapToCoordinates({
 				lon: result.lon,
 				lat: result.lat,
 				zoom: zoomlevels.minZoomForJunctions
