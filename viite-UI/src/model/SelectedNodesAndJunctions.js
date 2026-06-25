@@ -3,12 +3,6 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { clearNodeLayerHighlights, onNodeLayerUnselected, onNodeChanged, onTemplatesSelected, onJunctionDetach, onJunctionAttach, onNodePointDetach, onNodePointAttach } from '@view/map/layers/NodeLayer.js';
 
-let openTemplatesBridge = function () {};
-
-export function openSelectedNodesAndJunctionTemplates(templatesToOpen) {
-	openTemplatesBridge(templatesToOpen);
-}
-
 /**
  * SelectedNodesAndJunctions - Manages selected nodes and junctions state
  * 
@@ -68,8 +62,6 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		setNodeMenuState('display-templates');
 	}
 
-	openTemplatesBridge = openTemplates; // Allow opening templates from outside this module
-
 	const getCurrentTemplates = function () {
 		return current.templates;
 	};
@@ -93,15 +85,12 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		_.each(nodePoints, function (nodePoint) {
 			current.node.nodePoints.push(nodePoint);
 		});
-		eventbus.trigger('nodePointTemplates:selected', {nodePoints: nodePoints});
 	};
 
 	const addJunctionTemplates = function (junctions) {
 		_.each(junctions, function (junction) {
 			current.node.junctions.push(junction);
 		});
-		eventbus.trigger('junction:validate');
-		eventbus.trigger('junctionTemplates:selected', {junctions: junctions});
 	};
 
 	const getStartingCoordinates = function () {
@@ -114,7 +103,6 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 
 	const setCoordinates = function (coordinates) {
 		current.node.coordinates = coordinates;
-		eventbus.trigger('change:node-coordinates');
 	};
 
 	const setNodeName = function (name) {
@@ -169,7 +157,6 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 
 		if (!_.isUndefined(junction)) {
 			junction.junctionNumber = normalizedJunctionNumber;
-			eventbus.trigger('junction:validate');
 			updateNodesAndJunctionsMarker();
 		}
 	};
@@ -192,14 +179,13 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 			_.each(ids, function (id) {
 				const jp = getJunctionPoint(parseInt(id, 10));
 				if (_.isUndefined(jp)) {
-					console.log("Failed to find junction point " + id + " and set it's address to " + addr + ".");
+					console.error("Failed to find junction point " + id + " and set it's address to " + addr + ".");
 				} else {
 					jp.addrM = addr;
 				}
 			});
-			eventbus.trigger('junctionPoint:validate', idString, addr);
 		} else {
-			console.log("Failed to update junction point address. (ids: " + idString + ", address: " + addr + ")");
+			console.error("Failed to update junction point address. (ids: " + idString + ", address: " + addr + ")");
 		}
 	};
 
@@ -243,7 +229,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		});
 	};
 
-	const validateJunctionNumbers = function () {
+	const validateJunctionNumbers = function (onGroup) {
 		if (!current.node || !current.node.junctions) {
 			return true;
 		}
@@ -266,7 +252,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		let verified = true;
 
 		_.each(_.groupBy(current.node.junctions, 'junctionNumber'), function (junctions) {
-			eventbus.trigger('junction:setCustomValidity', junctions, errorMessage(junctions));
+			if (onGroup) onGroup(junctions, errorMessage(junctions));
 		});
 
 		return verified;

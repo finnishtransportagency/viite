@@ -276,7 +276,7 @@ export function NodeEditor(
 			junction.junctionNumber = checked ? '' : junction.junctionNumber;
 			el.prop('disabled', checked).val(junction.junctionNumber);
 			updateJunctionNumberEmptyState(el);
-			selectedNodesAndJunctions.validateJunctionNumbers();
+			selectedNodesAndJunctions.validateJunctionNumbers(applyJunctionValidity);
 			selectedNodesAndJunctions.updateNodesAndJunctionsMarker([junction]);
 		}
 		_.each(nodePoints, np => $(`[id^="detach-node-point-${np.id}"]`).prop('checked', checked));
@@ -306,6 +306,9 @@ export function NodeEditor(
 
 	// ─── Validation ─────────────────────────────────────────────────────────────
 
+	const applyJunctionValidity = (junctions, message) =>
+		_.each(junctions, j => getContainer().find(`#junction-number-textbox-${j.id}`)[0].setCustomValidity(message));
+
 	const updateJunctionNumberEmptyState = (inputEl) => {
 		const $el = $(inputEl);
 		$el.toggleClass('junction-number-input-empty', !$el.prop('disabled') && _.trim($el.val() || '') === '');
@@ -323,7 +326,7 @@ export function NodeEditor(
 			isUnknownNodeType: $c.find('#nodeTypeDropdown').val() === String(ViiteEnumerations.NodeType.UnknownNodeType.value),
 			isStartDateEmpty: $c.find('#nodeStartDate').val() === '',
 			hasEmptyEnabledJunctionNumbers: hasEmptyEnabledJunctionNumbers,
-			areJunctionNumbersValid: selectedNodesAndJunctions.validateJunctionNumbers()
+			areJunctionNumbersValid: selectedNodesAndJunctions.validateJunctionNumbers(applyJunctionValidity)
 		};
 
 		const invalid = checks.isNodeNameEmpty
@@ -446,14 +449,10 @@ export function NodeEditor(
 			$container.find('#edit-junction-point-addresses').toggleClass('active', addressEditMode);
 		});
 
-		subscribeEventbus('nodeStartDate:setCustomValidity', (_date, errorMessage) => {
-			$container.find('#nodeStartDate')[0].setCustomValidity(errorMessage);
-			$container.find('#nodeStartDate-validation-notification').html(errorMessage);
-		});
-
-		subscribeEventbus('junction:setCustomValidity', (junctions, errorMessage) => {
-			_.each(junctions, j => $container.find(`#junction-number-textbox-${j.id}`)[0].setCustomValidity(errorMessage));
-		});
+		// subscribeEventbus('nodeStartDate:setCustomValidity', (_date, errorMessage) => {
+		// 	$container.find('#nodeStartDate')[0].setCustomValidity(errorMessage);
+		// 	$container.find('#nodeStartDate-validation-notification').html(errorMessage);
+		// });
 
 		subscribeEventbus('junctionPoint:setCustomValidity', (idString, errorMessage) => {
 			const input = $container.find(`#junction-point-address-input-${idString}`)[0];

@@ -48,6 +48,7 @@ export function startApplication() {
 		const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 		const nodeCollection = new NodeCollection(backend);
 		const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
+		nodeCollection.setSelectedNodesAndJunctions(selectedNodesAndJunctions);
 
 		const models = {
 			roadCollection: roadCollection,

@@ -4,7 +4,6 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
 import { addNodesToMap, fetchNodesAndJunctionsFromCurrentMap } from '@view/map/layers/NodeLayer.js';
-import { openSelectedNodesAndJunctionTemplates } from './SelectedNodesAndJunctions.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -19,6 +18,7 @@ import { openSelectedNodesAndJunctionTemplates } from './SelectedNodesAndJunctio
 export function NodeCollection(backend) {
 	let nodes = [];
 	let nodesWithAttributes = [];
+	let selectedNodesAndJunctions;
 	let mapTemplates = [];
 	let userNodePointTemplates = [];
 	let userJunctionTemplates = [];
@@ -27,6 +27,10 @@ export function NodeCollection(backend) {
 
 	function setMap(m) {
 		map = m;
+	}
+
+	function setSelectedNodesAndJunctions(s) {
+		selectedNodesAndJunctions = s;
 	}
 
 	function setMapTemplates(templates) {
@@ -176,7 +180,7 @@ export function NodeCollection(backend) {
                     Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
 				};
 
-				openSelectedNodesAndJunctionTemplates({
+				selectedNodesAndJunctions.openTemplates({
 					nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
 						return isSameLocation(nodePoint.coordinates, referencePoint);
 					}),
@@ -299,6 +303,7 @@ export function NodeCollection(backend) {
 		getNodePointTemplatesByCoordinates: getNodePointTemplatesByCoordinates,
 		getJunctionTemplateByCoordinates: getJunctionTemplateByCoordinates,
 		setMap: setMap,
+		setSelectedNodesAndJunctions: setSelectedNodesAndJunctions,
 		saveNodeToBackend: saveNodeToBackend,
 		moveToLocation: moveToLocation,
 		openNodePointTemplate: openNodePointTemplate,
