@@ -1,4 +1,3 @@
-import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { clearNodeLayerHighlights, onNodeLayerUnselected, onNodeChanged, onTemplatesSelected, onJunctionDetach, onJunctionAttach, onNodePointDetach, onNodePointAttach } from '@view/map/layers/NodeLayer.js';
@@ -258,19 +257,6 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		return verified;
 	};
 
-	const validateJunctionPointAddress = function (idString, addr) {
-		let message = '';
-
-		if (addr < 1) {
-			message = 'Tieosan keskellä olevan liittymäkohdan osoitteen on oltava vähintään yksi'; // User is not allowed to set the address smaller than one
-		} else if (_.isNaN(addr)) {
-			message = 'Liittymäkohdan osoite on pakollinen tieto'; // junction point address is a compulsory information
-		}
-
-		eventbus.trigger('junctionPoint:setCustomValidity', idString, message);
-		return _.isEmpty(message);
-	};
-
 	const isDirty = function () {
 		if (!current.node) {
 			return false;
@@ -377,7 +363,6 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		detachJunctionAndNodePoints: detachJunctionAndNodePoints,
 		attachJunctionAndNodePoints: attachJunctionAndNodePoints,
 		validateJunctionNumbers: validateJunctionNumbers,
-		validateJunctionPointAddress: validateJunctionPointAddress,
 		isDirty: isDirty,
 		isObsoleteNode: isObsoleteNode,
 		closeNode: closeNode,

@@ -712,7 +712,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 						$('#generalNext').prop('disabled', false);
 						$('#saveProject:disabled').prop('disabled', false);
 						markAsChanged();
-						eventbus.trigger('projectCollection:partsChanged');
 					});
 				};
 

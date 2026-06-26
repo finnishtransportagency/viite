@@ -452,11 +452,6 @@ export function NodeEditor(
 			$container.find('#edit-junction-point-addresses').toggleClass('active', addressEditMode);
 		});
 
-		subscribeEventbus('junctionPoint:setCustomValidity', (idString, errorMessage) => {
-			const input = $container.find(`#junction-point-address-input-${idString}`)[0];
-			if (input) { input.setCustomValidity(errorMessage); input.reportValidity(); }
-			revalidate();
-		});
 	};
 
 	// ─── Detach confirm message ─────────────────────────────────────────────────
