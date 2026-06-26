@@ -637,6 +637,12 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		const currentNode = selectedNodesAndJunctions.getCurrentNode();
 		const currentTemplates = selectedNodesAndJunctions.getCurrentTemplates();
 
+		// Remove expired nodes from the map before adding new ones, to avoid duplicates and stale data
+		nodeMarkerLayer.getSource().clear();
+		nodePointTemplateLayer.getSource().clear();
+		junctionMarkerLayer.getSource().clear();
+		junctionTemplateLayer.getSource().clear();
+    
 		if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
 			let filteredNodePointTemplates = templates.nodePoints;
 

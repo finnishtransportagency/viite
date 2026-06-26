@@ -475,10 +475,11 @@ export function NodeEditor(
 		addressEditMode    = false;
 		saveInProgress     = false;
 
+		const isExistingNode = !_.isNil(currentNode?.nodeNumber);
 		const noTemplates  = _.isUndefined(templates);
 		const npTemplates  = !noTemplates && _.has(templates, 'nodePoints') && templates.nodePoints;
 		const jTemplates   = !noTemplates && _.has(templates, 'junctions')  && templates.junctions;
-		const tableOpts    = { checkbox: noTemplates, junctionInputNumber: true, disabledAttribute: dis };
+		const tableOpts    = { checkbox: isExistingNode, junctionInputNumber: true, disabledAttribute: dis };
 
 		const junctionsHtml   = dataTable.setProps(buildJunctionsTable({
 			title: 'Liittymät', junctionTemplates: jTemplates,
