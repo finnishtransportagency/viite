@@ -5,6 +5,7 @@ import { moveMapToCoordinates } from '@view/map/MapView.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { button } from '@components/button/Button.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
+import { navigateToNodePointTemplate, navigateToJunctionTemplate } from '@src/router.js';
 
 export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions) {
 	const dataTable = new DataTable();
@@ -156,6 +157,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 
 	$(document).on('click', `${ROOT} .node-point-template-link`, function (event) {
 		const templateId = Number(event.currentTarget.id);
+		navigateToNodePointTemplate(templateId);
 		nodeCollection.openNodePointTemplate({ id: templateId });
 	});
 
@@ -170,6 +172,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		};
 
 		const coordinates = resolveJunctionPointCoordinatesByRow(templateId, rowData);
+		navigateToJunctionTemplate(templateId);
 		nodeCollection.openJunctionTemplate({
 			id: templateId,
 			coordinates: coordinates,

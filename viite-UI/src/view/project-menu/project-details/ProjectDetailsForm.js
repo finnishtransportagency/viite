@@ -14,7 +14,8 @@ import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { eventbus } from '@utils/eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
-import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
+import { navigateToSelectedProject } from '@src/router.js';
+import { fetchProjectLinksForCurrentMap, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';
 
 export function enableCloseBtn() {
 	$('#saveAndCancelDialogue, #cancelEdit, .menu-close-btn')
@@ -444,7 +445,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 					projectData.additionalInfo = savedProject.additionalInfo || projectData.additionalInfo;
 
 					if (savedProject) {
-						eventbus.trigger('roadAddressProject:openProject', savedProject);
+						openRoadAddressProject(savedProject);
 
 						// This updates the map after saving the project
 						projectCollection.getProjectsWithLinksById(savedProject.id, function () {
@@ -453,7 +454,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 					}
 
 					if (result.projectAddresses && savedProject) {
-						eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, savedProject);
+						navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
 					}
             
 					selectLayer('roadAddressProject', true, false);
@@ -522,11 +523,11 @@ export function ProjectDetailsForm(callbacks = {}) {
 								const latestProject = result.project || (projectCollection.getCurrentProject() && projectCollection.getCurrentProject().project) || projectData;
 
 								if (latestProject) {
-									eventbus.trigger('roadAddressProject:openProject', latestProject);
+									openRoadAddressProject(latestProject);
 								}
 
 								if (result.projectAddresses && latestProject) {
-									eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, latestProject);
+									navigateToSelectedProject(result.projectAddresses.linkId, latestProject);
 								}
                   
 								// Set the selected layer to roadAddressProject when project is saved

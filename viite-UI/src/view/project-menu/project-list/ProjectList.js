@@ -9,7 +9,6 @@ import { ProjectActionMenu } from '@view/project-menu/project-action-menu/Projec
 import { ProjectMenu } from '@view/project-menu/ProjectMenu.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { eventbus } from '@utils/eventbus.js';
 
 import { getStartupParameters, getSessionUsername } from '@model/ApplicationModel.js';
 
@@ -178,9 +177,7 @@ export function ProjectList(options = {}) {
 		options.projectCollection.clearRoadAddressProjects();
 		const newProj = { id: 0, name: '', startDate: '', additionalInfo: '', createdBy: '' };
 		const projectMenu = ensureProjectMenu();
-		if (projectMenu && _.isFunction(projectMenu.showProjectDetails)) {
-			projectMenu.showProjectDetails(newProj, true, options.projectCollection, newProj);
-		}
+		projectMenu.showProjectDetails(newProj, true, options.projectCollection, newProj);
 		$('.edit-mode-btn:visible').click();
 	};
 
@@ -195,7 +192,8 @@ export function ProjectList(options = {}) {
 		Spinner.show();
 		options.projectCollection.getProjectsWithLinksById(projectId).then(result => {
 			hide();
-			eventbus.trigger('roadAddress:openProject', result);
+			const projectMenu = ensureProjectMenu();
+			projectMenu.openProject(result);
 			$('.edit-mode-btn:visible').click();
 		});
 	};

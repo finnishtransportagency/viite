@@ -34,9 +34,6 @@ export function ProjectLinkEditor(canUseDevTools) {
 
 		setUnsavedChanges: function(status) {
 			this.hasUnsavedChanges = status;
-			if (typeof eventbus !== 'undefined') {
-				eventbus.trigger('roadAddressProject:toggleEditingRoad', !status);
-			}
 		},
 
 		setChangeType: function(type) {
@@ -393,8 +390,6 @@ export function ProjectLinkEditor(canUseDevTools) {
 			selectedProjectLinkPropertyRef.cleanIds();
 			selectedProjectLinkPropertyRef.clean();
 		}
-
-		eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
 
 		if (typeof callbacks.onCancel === 'function') {
 			callbacks.onCancel();

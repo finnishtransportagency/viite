@@ -30,6 +30,7 @@ let _instance = null;
 export function addNodesToMap(nodes, templates, zoom) { _instance.addNodesToMap(nodes, templates, zoom); }
 export function fetchNodesAndJunctionsFromCurrentMap(zoom) { return _instance.fetchNodesAndJunctions(zoom); }
 export function fetchAndApplyNodesAndJunctionsForCurrentMap(zoom) { return _instance.fetchAndApplyNodesAndJunctions(zoom); }
+export function clearNodeLayer() { return _instance.clearNodeLayer(); }
 export function clearNodeLayerHighlights() { _instance.clearHighlights(); }
 export function onNodeLayerUnselected(currentNode, cancel) { _instance.handleNodeUnselected(currentNode, cancel); }
 export function onNodeChanged(node) { _instance.updateCurrentNodeMarker(node); }
@@ -714,10 +715,11 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	});
 
 
+	const clearLayersHandler = function () {
+		clearLayers(layers);
+	};
+
 	const layerStarted = function (listener) {
-		listener.listenTo(eventbus, 'map:clearLayers', function () {
-			clearLayers(layers);
-		});
 		listener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
 			if (isNodeDragged()) {
 				clearOverlay();
@@ -751,6 +753,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		fetchNodesAndJunctions,
 		fetchAndApplyNodesAndJunctions,
 		addNodesToMap: renderNodesToMap,
+		clearNodeLayer: clearLayersHandler,
 		clearHighlights,
 		handleNodeUnselected,
 		updateCurrentNodeMarker,

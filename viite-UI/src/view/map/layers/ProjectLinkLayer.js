@@ -12,6 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { ProjectLinkStyler } from '@view/map/ProjectLinkStyler.js';
+import { navigateToRoadAddressProject } from '@src/router.js';
 import { addLayers, clearLayers, drawProjectCalibrationMarkers, toggleLayersVisibility } from './LayerUtils.js';
 import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
@@ -20,6 +21,7 @@ import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/Applica
 let _instance = null;
 
 export function fetchProjectLinksForCurrentMap() { return _instance.fetchProjectLinks(); }
+export function openRoadAddressProject(projectSelected) { return _instance.openRoadAddressProject(projectSelected); }
 export function clearOnProjectClose() { return _instance.clearOnProjectClose(); }
 export function discardProjectLinkChanges() { return _instance.discardChanges(); }
 export function highlightProjectLinkLayerFeatures() { return _instance.highlightProjectLinkLayerFeatures(); }
@@ -33,7 +35,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
 	const RoadClass = ViiteEnumerations.RoadClass;
 	const lifecycleStatus = ViiteEnumerations.lifecycleStatus;
-	let isNotEditingData = true;
 	let isActiveLayer = false;
 	let discardChangesHandler = function () {};
 
@@ -153,9 +154,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 					else
 						showDoubleClickChanges(ctrlPressed, selection);
 				}
-			},
-			closeCallback: function () {
-				isNotEditingData = false;
 			}
 		});
 	};
@@ -285,7 +283,8 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			selectDoubleClick.getFeatures().remove(selection);
 			return;
 		}
-		if (isNotEditingData) {
+    console.log('selectDoubleClick.on select', { ctrlPressed, selection, isDirty: projectCollection.isDirty() });
+		if (!projectCollection.isDirty()) {
 			showDoubleClickChanges(ctrlPressed, selection);
 		} else {
 			const selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
@@ -540,13 +539,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		}
 	};
 
-	eventListener.listenTo(eventbus, 'roadAddressProject:openProject', function (projectSelected) {
-		this.project = projectSelected;
-		eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, getSelectedLayer());
-		selectLayer(layerName);
-	});
-
-	eventListener.listenTo(eventbus, 'roadAddressProject:selected', function (projId) {
+	const onRoadAddressProjectSelected = function (projId) {
 		projectCollection.getProjectsWithLinksById(projId, function (projectInfo) {
 			fetchProjectLinksWith({
 				boundingBox: map.getView().calculateExtent(map.getSize()),
@@ -555,7 +548,14 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 				isPublishable: projectInfo.publishable
 			});
 		});
-	});
+	};
+
+	const openRoadAddressProjectInternal = function (projectSelected) {
+		this.project = projectSelected;
+		navigateToRoadAddressProject(projectSelected.id);
+		onRoadAddressProjectSelected(projectSelected.id);
+		selectLayer(layerName);
+	};
 
 	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
 		isActiveLayer = layer === 'roadAddressProject';
@@ -579,21 +579,9 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		removeSelectInteractions();
 	});
 
-	eventListener.listenTo(eventbus, 'roadAddressProject:enableInteractions', function () {
-		addSelectInteractions();
-	});
-
-	eventListener.listenTo(eventbus, 'map:clearLayers', function () {
-		clearLayers(layers);
-	});
-
 	function updateRoadVisibility() {
 		toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer], getRoadVisibility());
 	}
-
-	eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
-		isNotEditingData = notEditingData;
-	});
 
 	toggleLayersVisibility(layers, true);
 
@@ -612,6 +600,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 
 	_instance = {
 		fetchProjectLinks: fetchProjectLinksWith,
+		openRoadAddressProject: openRoadAddressProjectInternal,
 		clearOnProjectClose: function () {
 			clearHighlights();
 			clearLayers(layers);

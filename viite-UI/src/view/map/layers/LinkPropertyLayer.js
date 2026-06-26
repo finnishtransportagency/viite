@@ -487,9 +487,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 
 	const showLayer = function () {
 		if (!layerStarted) {
-			eventListener.listenTo(eventbus, 'map:clearLayers', function () {
-				clearLayers(layers);
-			});
+      clearLayers(layers);
 			layerStarted = true;
 		}
 	};

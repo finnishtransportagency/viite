@@ -8,9 +8,9 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
-import { fetchLinkPropertiesForCurrentMap } from './LinkPropertyLayer.js';
-import { fetchAndApplyNodesAndJunctionsForCurrentMap } from './NodeLayer.js';
-import { fetchProjectLinksForCurrentMap } from './ProjectLinkLayer.js';
+import { fetchLinkPropertiesForCurrentMap, clearLinkPropertyLayer } from './LinkPropertyLayer.js';
+import { fetchAndApplyNodesAndJunctionsForCurrentMap, clearNodeLayer } from './NodeLayer.js';
+import { fetchProjectLinksForCurrentMap, clearOnProjectClose } from './ProjectLinkLayer.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
 export function initRoadLayer(map) {
@@ -121,7 +121,9 @@ export function initRoadLayer(map) {
 	const refreshMap = function (mapState) {
 		if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
 			roadLayer.getSource().clear();
-			eventbus.trigger('map:clearLayers');
+			clearLinkPropertyLayer();
+			clearNodeLayer();
+			clearOnProjectClose();
 			Spinner.hide();
 		} else {
 			switch (getSelectedLayer()) {

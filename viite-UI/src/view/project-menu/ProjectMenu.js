@@ -14,6 +14,7 @@ import { setMainMenuState } from '@view/MainMenu.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
+import { navigateToSelectedProject } from '@src/router.js';
 import { eventbus } from '@utils/eventbus.js';
 
 const States = {
@@ -288,7 +289,7 @@ export function ProjectMenu(containerSelector, options = {}) {
 				Spinner.show();
 				options.projectCollection.getProjectsWithLinksById(projectId)
 					.then((result) => {
-						eventbus.trigger('roadAddress:openProject', result);
+						onOpenProject(result);
 						editFlag = true;
 					})
 					.catch(() => {
@@ -445,8 +446,7 @@ export function ProjectMenu(containerSelector, options = {}) {
 		options.roadCollection.setPendingHighlight(project.data.id);
 
 		if (!_.isUndefined(project.data)) {
-			eventbus.trigger('linkProperties:selectedProject', result.linkId, project.data);
-
+			navigateToSelectedProject(result.linkId, project.data);
 		}
 		Spinner.hide();
 	};
@@ -462,16 +462,15 @@ export function ProjectMenu(containerSelector, options = {}) {
 	};
 
 	eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
-	eventbus.on('roadAddress:openProject',                 onOpenProject);
 	eventbus.on('roadAddressProject:fetched',              onFetched);
 
 	const destroy = function () {
 		eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
-		eventbus.off('roadAddress:openProject',                 onOpenProject);
 		eventbus.off('roadAddressProject:fetched',              onFetched);
 	};
 
 	return {
+		openProject: onOpenProject,
 		updateProjectMenu: updateProjectMenuInternal,
 		showProjectDetails: (proj, isNew) => updateUI(States.CONFIGURATION, proj, isNew),
 		showRoadAddressing: (proj) => updateUI(States.ROAD_ADDRESSING, proj, false),

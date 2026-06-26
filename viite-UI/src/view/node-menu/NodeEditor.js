@@ -6,6 +6,7 @@ import { DataTable, NodeTableUtils } from '@node-menu/DataTable.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
+import { getZoomLevel } from '@view/map/MapView.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 
 /**
@@ -132,6 +133,8 @@ export function NodeEditor(
 	};
 
 	const onSaveSuccess = () => {
+		eventbus.trigger('map:refresh', { zoom: getZoomLevel() });
+
 		cleanup();
 		selectedNodesAndJunctions.closeNode(false);
 		exitEditor('search');
@@ -449,21 +452,11 @@ export function NodeEditor(
 			$container.find('#edit-junction-point-addresses').toggleClass('active', addressEditMode);
 		});
 
-		// subscribeEventbus('nodeStartDate:setCustomValidity', (_date, errorMessage) => {
-		// 	$container.find('#nodeStartDate')[0].setCustomValidity(errorMessage);
-		// 	$container.find('#nodeStartDate-validation-notification').html(errorMessage);
-		// });
-
 		subscribeEventbus('junctionPoint:setCustomValidity', (idString, errorMessage) => {
 			const input = $container.find(`#junction-point-address-input-${idString}`)[0];
 			if (input) { input.setCustomValidity(errorMessage); input.reportValidity(); }
 			revalidate();
 		});
-
-		subscribeEventbus('reset:startDate', (originalStartDate) => {
-			if (picker) { picker.setDate(originalStartDate); picker.gotoToday(); }
-		});
-
 	};
 
 	// ─── Detach confirm message ─────────────────────────────────────────────────
