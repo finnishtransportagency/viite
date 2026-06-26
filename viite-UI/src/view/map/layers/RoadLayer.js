@@ -8,15 +8,13 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
-import { Layer } from './Layer.js';
 import { fetchLinkPropertiesForCurrentMap } from './LinkPropertyLayer.js';
 import { fetchAndApplyNodesAndJunctionsForCurrentMap } from './NodeLayer.js';
 import { fetchProjectLinksForCurrentMap } from './ProjectLinkLayer.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
 export function initRoadLayer(map) {
-	const me = {};
-	Layer.call(me, map);
+	const eventListener = _.extend({}, Backbone.Events);
 
 	const roadLinkStyler = new RoadLinkStyler();
 
@@ -112,7 +110,7 @@ export function initRoadLayer(map) {
 	}
 
 	// Open info container when mouse is hovered over a road link
-	me.eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
+	eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
 		displayRoadAddressInfo(event, pixel);
 	});
 
@@ -143,7 +141,7 @@ export function initRoadLayer(map) {
 		}
 	};
 
-	me.eventListener.listenTo(eventbus, 'map:refresh', refreshMap);
+	eventListener.listenTo(eventbus, 'map:refresh', refreshMap);
 
 	const clear = function () {
 		roadLayer.getSource().clear();

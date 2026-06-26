@@ -12,7 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { ProjectLinkStyler } from '@view/map/ProjectLinkStyler.js';
-import { Layer } from './Layer.js';
+import { addLayers, clearLayers, drawProjectCalibrationMarkers, toggleLayersVisibility } from './LayerUtils.js';
 import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/ApplicationModel.js';
@@ -27,8 +27,7 @@ export function setProjectLinkDiscardChanges(handler) { return _instance.setDisc
 
 export function initProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
 	const layerName = 'roadAddressProject';
-	const me = {};
-	Layer.call(me, map);
+	const eventListener = _.extend({}, Backbone.Events);
 
 	const SideCode = ViiteEnumerations.SideCode;
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
@@ -54,7 +53,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 	const unlockProjectLinks = function () {
 		lockedLinkIds = [];
 		map.getViewport().style.cursor = '';
-		me.redraw();
+		redraw();
 	};
 
 	projectCollection.setProjectLinkLockHandlers({
@@ -393,7 +392,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		map.removeInteraction(selectSingleClick);
 	}
 
-	me.eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
+	eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
 		if (event.dragging) {
 			return;
 		}
@@ -409,11 +408,10 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 	});
 
 	const showLayer = function () {
-		me.start();
 	};
 
 	const hideLayer = function () {
-		me.clearLayers(layers);
+		clearLayers(layers);
 	};
 
 	function clearHighlights() {
@@ -436,7 +434,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 	}
 
 	const onProjectLinksFetched = function () {
-		me.redraw();
+    redraw();
 		_.defer(function () {
 			highlightProjectLinkLayerFeaturesInternal();
 			lockedLinkIds = [];
@@ -462,7 +460,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 	/**
      * This function is responsible for adding features to the correct layers that they belong to.
      * */
-	me.redraw = function () {
+	const redraw = function () {
 		const addLinkFeaturesToLayer = function (links, destinationLayer) {
 			_.map(links, function (link) {
 				const points = _.map(link.points, function (point) {
@@ -476,7 +474,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			});
 		};
 
-		me.clearLayers(layers);
+		clearLayers(layers);
 		removeSelectInteractions();
 		const cachedMarker = new ProjectLinkMarker(selectedProjectLinkProperty);
 
@@ -524,7 +522,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			}
 
 			if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints) {
-				const actualCalibrationPoints = me.drawProjectCalibrationMarkers(calibrationPointLayer.source, linksWithRoadNumber.concat(underConstruction));
+				const actualCalibrationPoints = drawProjectCalibrationMarkers(linksWithRoadNumber.concat(underConstruction));
 				_.each(actualCalibrationPoints, function (actualPoint) {
 					const calMarker = new CalibrationPoint(actualPoint);
 					calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
@@ -542,13 +540,13 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		}
 	};
 
-	me.eventListener.listenTo(eventbus, 'roadAddressProject:openProject', function (projectSelected) {
+	eventListener.listenTo(eventbus, 'roadAddressProject:openProject', function (projectSelected) {
 		this.project = projectSelected;
 		eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, getSelectedLayer());
 		selectLayer(layerName);
 	});
 
-	me.eventListener.listenTo(eventbus, 'roadAddressProject:selected', function (projId) {
+	eventListener.listenTo(eventbus, 'roadAddressProject:selected', function (projId) {
 		projectCollection.getProjectsWithLinksById(projId, function (projectInfo) {
 			fetchProjectLinksWith({
 				boundingBox: map.getView().calculateExtent(map.getSize()),
@@ -559,7 +557,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		});
 	});
 
-	me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
+	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
 		isActiveLayer = layer === 'roadAddressProject';
 		toggleSelectInteractions(isActiveLayer, true);
 		if (isActiveLayer) {
@@ -576,26 +574,28 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		calibrationPointLayer.setVisible(isActiveLayer && getRoadVisibility());
 	});
 
-	me.eventListener.listenTo(eventbus, 'roadAddressProject:clearAndDisableInteractions', function () {
+	eventListener.listenTo(eventbus, 'roadAddressProject:clearAndDisableInteractions', function () {
 		clearHighlights();
 		removeSelectInteractions();
 	});
 
-	me.eventListener.listenTo(eventbus, 'roadAddressProject:enableInteractions', function () {
+	eventListener.listenTo(eventbus, 'roadAddressProject:enableInteractions', function () {
 		addSelectInteractions();
 	});
 
-	me.eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers(layers));
+	eventListener.listenTo(eventbus, 'map:clearLayers', function () {
+		clearLayers(layers);
+	});
 
 	function updateRoadVisibility() {
-		me.toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer], getRoadVisibility());
+		toggleLayersVisibility([projectLinkLayer, calibrationPointLayer, directionMarkerLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer, notReservedInProjectLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer], getRoadVisibility());
 	}
 
-	me.eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
+	eventListener.listenTo(eventbus, 'roadAddressProject:toggleEditingRoad', function (notEditingData) {
 		isNotEditingData = notEditingData;
 	});
 
-	me.toggleLayersVisibility(true);
+	toggleLayersVisibility(layers, true);
 
 	function setVisible(name, visible) {
 		const layersByName = {
@@ -608,13 +608,13 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		}
 	}
 
-	me.addLayers(layers);
+	addLayers(map, layers);
 
 	_instance = {
 		fetchProjectLinks: fetchProjectLinksWith,
 		clearOnProjectClose: function () {
 			clearHighlights();
-			me.clearLayers(layers);
+			clearLayers(layers);
 		},
 		discardChanges: function () { discardChangesHandler(); },
 		setDiscardChanges: function (handler) {

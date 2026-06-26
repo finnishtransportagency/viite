@@ -13,7 +13,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { Layer } from './Layer.js';
+import { addLayers, clearLayers, toggleLayersVisibility } from './LayerUtils.js';
 import { JunctionMarker } from '../markers/JunctionMarker.js';
 import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
 import { NodeMarker } from '../markers/NodeMarker.js';
@@ -40,8 +40,8 @@ export function onNodePointDetach(nodePoint) { if (!_.isUndefined(nodePoint)) _i
 export function onNodePointAttach(nodePoint) { if (!_.isUndefined(nodePoint)) _instance.toggleNodePointToTemplate(nodePoint); }
 
 export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection) {
-	const me = {};
-	Layer.call(me, map);
+
+	const eventListener = _.extend({}, Backbone.Events);
 	let isDraggingNode = false;
 	let userHasPermissionToEdit = _.includes(getSessionUserRoles(), 'viite');
 
@@ -701,7 +701,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		}
 	}
 
-	me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
+	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
 		toggleSelectInteractions(layer === 'node');
 		if (previouslySelectedLayer === 'node') {
 			hideLayer();
@@ -713,16 +713,12 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		}
 	});
 
-	me.refreshView = function () {
-		roadCollection.reset();
-		fetchAndApplyNodesAndJunctions(zoomlevels.getViewZoom(map)).then(function () {
-			roadLayer.layer.changed();
-		});
-	};
 
-	me.layerStarted = function (eventListener) {
-		eventListener.listenTo(eventbus, 'map:clearLayers', me.clearLayers);
-		eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
+	const layerStarted = function (listener) {
+		listener.listenTo(eventbus, 'map:clearLayers', function () {
+			clearLayers(layers);
+		});
+		listener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
 			if (isNodeDragged()) {
 				clearOverlay();
 				return;
@@ -733,20 +729,21 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	};
 
 	const showLayer = function () {
-		me.start();
-		me.layerStarted(me.eventListener);
-		me.toggleLayersVisibility(layers, true);
+		if (!layerStarted) {
+			layerStarted(eventListener);
+		}
+		toggleLayersVisibility(layers, true);
 	};
 
 	function hideLayer() {
-		me.clearLayers(layers);
-		me.toggleLayersVisibility(layers, false);
+		clearLayers(layers);
+		toggleLayersVisibility(layers, false);
 	}
 
 	applyNodeCreateMode(isNodeCreateModeEnabled());
 	registerLayerHandler(applyNodeCreateMode);
 
-	me.addLayers(layers);
+	addLayers(map, layers);
 
 	_instance = {
 		show: showLayer,
@@ -759,8 +756,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		updateCurrentNodeMarker,
 		highlightTemplates,
 		toggleJunctionToTemplate,
-		toggleNodePointToTemplate,
-		minZoomForContent: me.minZoomForContent
+		toggleNodePointToTemplate
 	};
 
 	return _instance;

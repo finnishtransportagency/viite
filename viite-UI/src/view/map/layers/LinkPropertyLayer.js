@@ -12,7 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
-import { Layer } from './Layer.js';
+import { addLayers, clearLayers, drawCalibrationMarkers, toggleLayersVisibility } from './LayerUtils.js';
 import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { getSelectedLayer, getRoadVisibility } from '@model/ApplicationModel.js';
@@ -26,8 +26,9 @@ export function highlightReservedRoads(reservedOLFeatures) { return _instance.hi
 export function clearLinkPropertyLayer() { return _instance.clearOnProjectClose(); }
 
 export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
-	const me = {};
-	Layer.call(me, map);
+
+	const eventListener = _.extend({}, Backbone.Events);
+	let layerStarted = false;
 
 	const directionMarkerVector = new ol.source.Vector({});
 	const selectedDirectionMarkerVector = new ol.source.Vector({});
@@ -340,7 +341,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 
 		cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
 		removeSelectInteractions();
-		me.clearLayers([roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, selectedDirectionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
+		clearLayers([roadLayer.layer, underConstructionRoadLayer, unAddressedRoadLayer, directionMarkerLayer, selectedDirectionMarkerLayer, calibrationPointLayer, selectedRoadLayer]);
 
 		const allRoadLinks = roadCollection.getAll();
 		const [roadLinksWithoutRoadNumber, roadLinksWithRoadNumber] = _.partition(allRoadLinks, function (roadLink) {
@@ -380,7 +381,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
             
 			// Draw calibration points in view mode only
 			if (zoomlevels.getViewZoom(map) >= zoomlevels.minZoomLevelForCalibrationPoints && getSelectedLayer() === 'linkProperty') {
-				const actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
+				const actualPoints = drawCalibrationMarkers(roadLinks);
 				_.each(actualPoints, function (actualPoint) {
 					const calMarker = new CalibrationPoint(actualPoint);
 					calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
@@ -485,19 +486,23 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 	}
 
 	const showLayer = function () {
-		me.start();
-		me.eventListener.listenTo(me.eventListener, 'map:clearLayers', me.clearLayers);
+		if (!layerStarted) {
+			eventListener.listenTo(eventbus, 'map:clearLayers', function () {
+				clearLayers(layers);
+			});
+			layerStarted = true;
+		}
 	};
 
 	const hideLayer = function () {
-		me.clearLayers(layers);
+		clearLayers(layers);
 	};
 
 	const updateRoadVisibility = function () {
-		me.toggleLayersVisibility(roadVisibilityLayers, getRoadVisibility());
+		toggleLayersVisibility(roadVisibilityLayers, getRoadVisibility());
 	};
 
-	me.eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
+	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
 		isActiveLayer = layer === 'linkProperty';
 		toggleSelectInteractions(isActiveLayer, true);
 		if (isActiveLayer) {
@@ -505,7 +510,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 		} else {
 			removeSelectInteractions();
 		}
-		me.clearLayers(layers);
+		clearLayers(layers);
 		clearHighlights();
 		if (previouslySelectedLayer === 'linkProperty') {
 			hideLayer();
@@ -518,11 +523,11 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 		const nonAddressedOrConstructionLayers = layers.filter(function (layerItem) {
 			return layerItem !== unAddressedRoadLayer && layerItem !== underConstructionRoadLayer;
 		});
-		me.toggleLayersVisibility(nonAddressedOrConstructionLayers, getRoadVisibility());
+		toggleLayersVisibility(nonAddressedOrConstructionLayers, getRoadVisibility());
 	});
 
-	me.toggleLayersVisibility(layers, true);
-	me.addLayers(layers);
+	toggleLayersVisibility(layers, true);
+	addLayers(map, layers);
 	showLayer();
 
 	_instance = {
