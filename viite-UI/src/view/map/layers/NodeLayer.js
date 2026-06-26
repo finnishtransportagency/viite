@@ -642,7 +642,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		nodePointTemplateLayer.getSource().clear();
 		junctionMarkerLayer.getSource().clear();
 		junctionTemplateLayer.getSource().clear();
-    
+
 		if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
 			let filteredNodePointTemplates = templates.nodePoints;
 
@@ -726,7 +726,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	};
 
 	const layerStarted = function (listener) {
-		listener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
+    listener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
 			if (isNodeDragged()) {
 				clearOverlay();
 				return;
@@ -734,13 +734,6 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 			displayNodeInfo(event, pixel);
 			displayJunctionInfo(event, pixel);
 		});
-	};
-
-	const showLayer = function () {
-		if (!layerStarted) {
-			layerStarted(eventListener);
-		}
-		toggleLayersVisibility(layers, true);
 	};
 
 	function hideLayer() {
@@ -754,7 +747,6 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	addLayers(map, layers);
 
 	_instance = {
-		show: showLayer,
 		hide: hideLayer,
 		fetchNodesAndJunctions,
 		fetchAndApplyNodesAndJunctions,

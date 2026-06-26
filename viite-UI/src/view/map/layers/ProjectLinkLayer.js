@@ -391,11 +391,10 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		map.removeInteraction(selectSingleClick);
 	}
 
+  // Change cursor to 'wait' when hovering over locked links
 	eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
-		if (event.dragging) {
-			return;
-		}
-		eventbus.trigger('overlay:update', event, pixel);
+		if (event.dragging) { return; }
+
 		if (lockedLinkIds.length > 0) {
 			const hasLockedFeature = map.forEachFeatureAtPixel(pixel, function (feature) {
 				return feature.linkData && isLocked(feature.linkData);
@@ -405,9 +404,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			map.getViewport().style.cursor = '';
 		}
 	});
-
-	const showLayer = function () {
-	};
 
 	const hideLayer = function () {
 		clearLayers(layers);
@@ -610,7 +606,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			discardChangesHandler = typeof handler === 'function' ? handler : function () {};
 		},
 		highlightProjectLinkLayerFeatures: highlightProjectLinkLayerFeaturesInternal,
-		show: showLayer,
 		hide: hideLayer,
 		clearHighlights: clearHighlights,
 		setVisible: setVisible,

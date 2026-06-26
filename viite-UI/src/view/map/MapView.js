@@ -57,10 +57,9 @@ export function moveMapToCoordinates(position) {
 	mapState.map.getView().setZoom(zoomLevel);
 }
 
-export function MapView(map, layers) {
+export function MapView(map) {
 	mapState.map = map;
 	const centerMarkerLayer = new ol.source.Vector({});
-	let enableCtrlModifier = false;
 	const metaKeyCodes = ViiteEnumerations.MetaKeyCodes;
 
 
@@ -104,16 +103,7 @@ export function MapView(map, layers) {
 		}
 	});
 
-	eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-		const layerToBeHidden = layers[previouslySelectedLayer];
-		const layerToBeShown = layers[layer];
 
-		if (layerToBeHidden) {
-			layerToBeHidden.hide(map);
-		}
-		if (getRoadVisibility()) layerToBeShown.show(map);
-		enableCtrlModifier = (layer === 'roadAddressProject' || layer === 'linkProperty');
-	}, this);
 
 	map.on('moveend', function () {
 		refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
@@ -149,7 +139,7 @@ export function MapView(map, layers) {
 	});
 
 	$('body').on('keydown', function (evt) {
-		if ((evt.ctrlKey || evt.metaKey) && enableCtrlModifier)
+		if ((evt.ctrlKey || evt.metaKey))
 			map.getViewport().style.cursor = "copy";
 	});
 

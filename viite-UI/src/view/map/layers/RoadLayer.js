@@ -110,7 +110,8 @@ export function initRoadLayer(map) {
 	}
 
 	// Open info container when mouse is hovered over a road link
-	eventListener.listenTo(eventbus, 'overlay:update', function (event, pixel) {
+	eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
+    if (event.dragging) { return; }
 		displayRoadAddressInfo(event, pixel);
 	});
 
