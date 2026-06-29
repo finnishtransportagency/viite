@@ -348,6 +348,10 @@ export function ProjectMenu(containerSelector, options = {}) {
 	const updateProjectMenuInternal = function (selected) {
 		const currentProject = options.projectCollection ? options.projectCollection.getCurrentProject() : null;
 		if (currentProject) {
+			if (options.projectChangeTable && typeof options.projectChangeTable.hide === 'function') {
+				options.projectChangeTable.hide();
+			}
+			syncRoadAddressingState({ changeTableOpen: false });
 			updateUI(States.LINK_EDIT, currentProject.project, false, { selectedLinks: selected });
 		}
 	};
@@ -403,7 +407,13 @@ export function ProjectMenu(containerSelector, options = {}) {
 			options.projectCollection.setTmpDirty([]);
 		}
 		syncRoadAddressingState({ hasFormedLinks: true });
-		if (options.projectChangeTable) { options.projectChangeTable.refresh(); }
+		if (
+			options.projectChangeTable &&
+			typeof options.projectChangeTable.isChangeTableOpen === 'function' &&
+			options.projectChangeTable.isChangeTableOpen()
+		) {
+			options.projectChangeTable.refresh();
+		}
 		updateUI(States.ROAD_ADDRESSING, project.data, false);
 	};
 

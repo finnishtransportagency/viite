@@ -32,7 +32,8 @@ export function createProjectLinkEditorLogic(dependencies) {
 
 		const selectedChangeType = $('#dropDown_0').val();
 		if (selectedChangeType === RoadAddressChangeType.Revert.description) {
-			saveButton.prop('disabled', projectChangeTable.isChangeTableOpen());
+			const isChangeTableOpen = projectChangeTable.isChangeTableOpen();
+			saveButton.prop('disabled', isChangeTableOpen);
 			return;
 		}
 
@@ -40,9 +41,11 @@ export function createProjectLinkEditorLogic(dependencies) {
 		const osaValue = _.trim($('#osa').val() || '');
 		const trackValue = _.trim($('#trackCodeDropdown').val() || '');
 		const roadNameValue = _.trim($('#roadName').val() || '');
+		const isChangeTableOpen = projectChangeTable.isChangeTableOpen();
 		const filled = tieValue !== '' && osaValue !== '' && trackValue !== '' && trackValue !== '99' && roadNameValue !== '';
+		const disabled = !(filled && !isChangeTableOpen);
 
-		saveButton.prop('disabled', !(filled && !projectChangeTable.isChangeTableOpen()));
+		saveButton.prop('disabled', disabled);
 	};
 
 	const changeDropDownValue = (statusCode, selectedLinks) => {

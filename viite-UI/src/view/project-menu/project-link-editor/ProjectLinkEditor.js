@@ -128,6 +128,32 @@ export function ProjectLinkEditor(canUseDevTools) {
 
 	const { render, renderFooter } = renderer;
 
+	const getLatestLinkForSelection = (selectedLink, projectCollection) => {
+		if (!selectedLink || !projectCollection || typeof projectCollection.getAll !== 'function') {
+			return selectedLink;
+		}
+
+		const allLinks = projectCollection.getAll() || [];
+		const latestById = _.find(allLinks, (link) => selectedLink.id && link.id === selectedLink.id);
+		if (latestById) {
+			return latestById;
+		}
+
+		const latestByLinkId = _.find(allLinks, (link) => selectedLink.linkId && link.linkId === selectedLink.linkId);
+		return latestByLinkId || selectedLink;
+	};
+
+	const shouldAttemptPrefill = (selectedLink, projectCollection) => {
+		const latestLink = getLatestLinkForSelection(selectedLink, projectCollection);
+
+		const isUnaddressed = latestLink &&
+			Number(latestLink.roadNumber) === 0 &&
+			Number(latestLink.roadPartNumber) === 0 &&
+			Number(latestLink.trackCode) === 99;
+
+		return isUnaddressed;
+	};
+
 	// ==========================================
 	// EVENT LISTENERS
 	// ==========================================
@@ -275,8 +301,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 			document.getElementById("origAddrLength").textContent = res.toString();
 		});
 
-		if (backend && selected && selected[0] && 
-          selected[0].roadNumber === 0 && selected[0].roadPartNumber === 0 && selected[0].trackCode === 99) {
+		if (backend && selected && selected[0] && shouldAttemptPrefill(selected[0], projectCollection)) {
 			const currentProject = projectCollection ? projectCollection.getCurrentProject() : null;
 			if (currentProject) {
 				backend.getPrefillValuesForLink(selected[0].linkId, currentProject.project.id, function (response) {
@@ -294,6 +319,10 @@ export function ProjectLinkEditor(canUseDevTools) {
 						if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20000 && response.roadNumber <= 39999) {
 							$('#trackCodeDropdown').val("0");
 						}
+					}
+
+					if (projectChangeTable) {
+						checkInputs(projectChangeTable, project ? project.statusCode : null);
 					}
 				});
 			}
