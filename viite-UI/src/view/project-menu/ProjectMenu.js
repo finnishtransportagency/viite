@@ -135,7 +135,11 @@ export function ProjectMenu(containerSelector, options = {}) {
 		case States.ROAD_ADDRESSING: {
 			if (roadAddressingState.hasFormedLinks === undefined) {
 				const links = options.projectCollection ? options.projectCollection.getAll() : [];
-				syncRoadAddressingState({ hasFormedLinks: links.some(l => l.status !== 0) });
+
+        if (links.length > 0) {
+					// Recalculate is allowed only when every project link has been processed.
+					syncRoadAddressingState({ hasFormedLinks: links.every(l => l.status !== 0) });
+				}
 			}
 
 			const actionMenu = new ProjectActionMenu({

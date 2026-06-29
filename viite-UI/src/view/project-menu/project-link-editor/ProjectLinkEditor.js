@@ -460,9 +460,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 		return true;
 	};
 
-	// ==========================================
-	// PUBLIC API
-	// ==========================================
+  // Public api
 	return {
 		render,
 		bindEvents,

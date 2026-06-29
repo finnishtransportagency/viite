@@ -1,0 +1,63 @@
+#header {
+	width: 100%;
+	height: 40px;
+	padding: 10px 20px 5px 10px;
+	border-bottom: 1px solid @gray-darkest;
+	text-align: center;
+	background-color: @gray-darker-2;
+	.box-sizing(border-box);
+	.user-select(none);
+
+	.logo {
+		.text-hide();
+		display: block;
+		float: left;
+		width: 75px;
+		height: 15px;
+		margin: 3px 0;
+		color: #fff;
+		.img-retina('../images/logo.png', '../images/logo@2x.png', 75px, 15px);
+	}
+
+	.notification {
+		padding: 0 6px;
+		font-size: @font-size-small;
+		color: #fff;
+		float: left;
+	}
+
+	.headerTooltip {
+		position: relative;
+		padding: 4px 0 0 20px;
+		font-size: @font-size-small;
+		color: #fff;
+		float: left;
+	}
+
+	.action-state {
+		display: inline-block;
+		padding: 0 10px;
+		border-radius: @border-radius-base;
+		font-size: @font-size-small;
+		line-height: @line-height-modifier * 6;
+		color: #fff;
+		background-color: @blue;
+	}
+}
+
+.header-link {
+	float: right;
+	padding: 0 8px;
+	border-radius: @border-radius-base;
+	text-decoration: none;
+	color: #fff;
+	background-color: @gray-darker;
+	.transition(all 0.2s @easing-swift-out);
+
+	&:hover,
+	&:focus {
+		background-color: @gray-dark-2;
+		color: #fff;
+		text-decoration: none;
+	}
+}

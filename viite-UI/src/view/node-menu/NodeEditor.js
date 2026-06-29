@@ -24,7 +24,6 @@ export function NodeEditor(
 	const dataTable = new DataTable();
 
 	let picker;
-	let activeEventbusHandlers = [];
 	let addressEditMode = false;
 	let saveInProgress = false;
 	let sourceTemplates;
@@ -135,7 +134,7 @@ export function NodeEditor(
 	const onSaveSuccess = () => {
 		eventbus.trigger('map:refresh', { zoom: getZoomLevel() });
 
-		cleanup();
+		getContainer().off('.nodeEditor');
 		selectedNodesAndJunctions.closeNode(false);
 		exitEditor('search');
 	};
@@ -150,7 +149,7 @@ export function NodeEditor(
 	const triggerNodeSave = () => selectedNodesAndJunctions.saveNode(onSaveSuccess, onSaveFail);
 
 	const onCancel = () => {
-		cleanup();
+		getContainer().off('.nodeEditor');
 		selectedNodesAndJunctions.closeNode(true);
 		exitEditor(cancelExitTarget);
 	};
@@ -349,23 +348,6 @@ export function NodeEditor(
 		setCancelButtonState(saveInProgress);
 	};
 
-	// ─── Eventbus ───────────────────────────────────────────────────────────────
-
-	const subscribeEventbus = (eventName, callback) => {
-		eventbus.on(eventName, callback);
-		activeEventbusHandlers.push({ eventName, callback });
-	};
-
-	const clearEventbusHandlers = () => {
-		_.each(activeEventbusHandlers, h => eventbus.off(h.eventName, h.callback));
-		activeEventbusHandlers = [];
-	};
-
-	const cleanup = () => {
-		getContainer().off('.nodeEditor');
-		clearEventbusHandlers();
-	};
-
 	// ─── Event binding ──────────────────────────────────────────────────────────
 
 	const bindEvents = ($container) => {
@@ -469,7 +451,7 @@ export function NodeEditor(
 	// ─── Public API ─────────────────────────────────────────────────────────────
 
 	const showNode = (currentNode, templates, options = {}) => {
-		cleanup();
+		getContainer().off('.nodeEditor');
 		sourceTemplates    = templates;
 		cancelExitTarget   = options.cancelTarget || 'templates';
 		addressEditMode    = false;
@@ -543,7 +525,6 @@ export function NodeEditor(
 
 	return {
 		showNode,
-		cleanup,
 		getHeader: () => 'Solmun tiedot:',
 		renderFooter
 	};

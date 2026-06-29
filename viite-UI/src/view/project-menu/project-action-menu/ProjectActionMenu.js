@@ -368,12 +368,18 @@ export function ProjectActionMenu(options) {
 			Spinner.hide();
         
 			if (response.success) {
-				const hasErrors = response.validationErrors && Object.keys(response.validationErrors).length > 0;
+				const validationErrors = response.validationErrors || [];
+				const hasErrors = _.isArray(validationErrors)
+					? validationErrors.length > 0
+					: Object.keys(validationErrors).length > 0;
+
+				// Keep project error state in sync also for empty successful validations.
+				projectCollection.setAndWriteProjectErrorsToUser(validationErrors);
           
 				if (!hasErrors) {
-					updateState({ hasErrors: false });
+					// Validation passed: allow opening the change table directly.
+					updateState({ hasErrors: false, recalculated: true });
 				} else {
-					projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
 					updateState({ hasErrors: true });
 					new ConfirmPopup('Projektissa on virheitä. Korjaa virheet ennen yhteenvetotaulukon avaamista.', {
 						type: 'alert',

@@ -9,10 +9,7 @@ import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 */
 
 export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {
-	const element = '<div class="map-footer"></div>';
-	container.append(element);
-
-	const footerContainer = container.find('.map-footer');
+  const footerContainer = $('<div class="map-footer"></div>').appendTo(container);
 	renderTileMapSelector(footerContainer, linkPropertyLayer, projectLinkLayer, tileMapCollection);
 	renderCoordinatesDisplay(footerContainer, map);
 	createCrosshairToggle(footerContainer.find('.mapplugin.coordinates'), map);
@@ -71,10 +68,10 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 	const renderLayerOptionCheckbox = (option) => `
     <div class="layer-option-visible-wrapper">
       ${checkbox({
-		id: `${option.id}Checkbox`,
-		label: option.label,
-		checked: option.checked
-	})}
+        id: `${option.id}Checkbox`,
+        label: option.label,
+        checked: option.checked
+      })}
     </div>
   `;
 
@@ -349,10 +346,10 @@ function createCrosshairToggle(parentElement, map, onFeatureClick = null) {
 		const $element = $(`
       <div class="crosshair-wrapper">
         ${checkbox({
-		name: 'crosshair',
-		label: 'Kohdistin',
-		checked: true
-	})}
+          name: 'crosshair',
+          label: 'Kohdistin',
+          checked: true
+        })}
       </div>
     `);
 		$element.find('input').on('change', (e) => $(crosshairSelector).toggle(e.target.checked));

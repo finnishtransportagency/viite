@@ -13,8 +13,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	let pendingSearchNodeNumber = null;
 	let storedTemplates = { nodePoints: [], junctions: [] };
 
-	// --- PRIVATE: DATA & LIFECYCLE ---
-
 	function hasCompleteNodeData(node) {
 		return Boolean(node) && _.isArray(node.nodePoints) && _.isArray(node.junctions);
 	}
@@ -50,8 +48,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		});
 	}
 
-	// --- PRIVATE: DOM HELPERS ---
-
 	function root() {
 		return $(ROOT);
 	}
@@ -73,11 +69,10 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	}
 
 	function getSearchData() {
-		const r = root();
 		return _.pickBy({
-			roadNumber: r.find('#tie').val(),
-			minRoadPartNumber: r.find('#aosa').val() || undefined,
-			maxRoadPartNumber: r.find('#losa').val() || undefined
+			roadNumber: root().find('#tie').val(),
+			minRoadPartNumber: root().find('#aosa').val() || undefined,
+			maxRoadPartNumber: root().find('#losa').val() || undefined
 		}, _.identity);
 	}
 
@@ -86,9 +81,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 			return junction.id === templateId;
 		});
 
-		if (!clickedTemplate) {
-			return null;
-		}
+		if (!clickedTemplate) { return null; }
 
 		const matchingPoint = _.find(clickedTemplate.junctionPoints || [], function (jp) {
 			return Number(jp.roadNumber) === Number(rowData.roadNumber) &&
@@ -133,14 +126,13 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	}
 
 	function getIsSearchDisabled() {
-		const r = root();
-		const aosa = Number(r.find('#aosa').val()) || 0;
-		const losa = Number(r.find('#losa').val()) || 999;
-		return r.find('#tie').val() && aosa > losa;
+		const aosa = Number(root().find('#aosa').val()) || 0;
+		const losa = Number(root().find('#losa').val()) || 999;
+		return root().find('#tie').val() && aosa > losa;
 	}
 
 	// EVENT BINDING
-
+  
 	$(document).on('click', `${ROOT} [data-action="result-click"]`, function (event) {
 		event.preventDefault();
 		const id = $(event.currentTarget).attr('id');
@@ -161,14 +153,15 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		nodeCollection.openNodePointTemplate({ id: templateId });
 	});
 
+  // Open junction template when clicking on a row in the junction template table
 	$(document).on('click', `${ROOT} .junction-template-link`, function (event) {
 		const templateId = Number(event.currentTarget.id);
 		const $cells = $(event.currentTarget).find('td');
 		const rowData = {
-			roadNumber: $cells.eq(0).text(),
-			track: $cells.eq(1).text(),
-			roadPartNumber: $cells.eq(2).text(),
-			addrM: $cells.eq(3).text()
+			roadNumber: $cells.filter('.junction-road-number').text(),
+			track: $cells.filter('.junction-track').text(),
+			roadPartNumber: $cells.filter('.junction-road-part-number').text(),
+			addrM: $cells.filter('.junction-addr-m').text()
 		};
 
 		const coordinates = resolveJunctionPointCoordinatesByRow(templateId, rowData);
@@ -179,9 +172,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 			rowData: rowData
 		});
 	});
-
-
-	// --- PRIVATE: RENDERING ---
 
 	function renderControls() {
 		return `
@@ -240,7 +230,12 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 			(item) => ({
 				id: item.id,
 				className: 'junction-template-link node-template-clickable-row',
-				cells: [item.roadNumber, item.track, item.roadPartNumber, item.addrM]
+				cells: [
+					{ content: item.roadNumber, className: 'junction-road-number' },
+					{ content: item.track, className: 'junction-track' },
+					{ content: item.roadPartNumber, className: 'junction-road-part-number' },
+					{ content: item.addrM, className: 'junction-addr-m' }
+				]
 			})
 		);
 		if (hasRowsInGroups(junctionGroups)) {
@@ -289,8 +284,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		return _.some(groups, (group) => (group.rows || []).length > 0);
 	}
 
-	// --- PUBLIC API ---
-
+	// Public API
 	function render() {
 		selectLayer('node');
 		fetchAndRenderTemplates();

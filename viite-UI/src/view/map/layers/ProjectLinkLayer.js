@@ -371,6 +371,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			});
 		}
 	};
+  
 	//This will control the double click zoom when there is no selection that activates
 	map.on('dblclick', zoomDoubleClickListener);
 
@@ -446,7 +447,14 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			projectId = _.isUndefined(currentProject) ? undefined : currentProject.project.id;
 		}
 		const isPublishable = _.isUndefined(options.isPublishable) ? projectCollection.getPublishableStatus() : options.isPublishable;
-		const onFetched = _.isUndefined(options.onFetched) ? onProjectLinksFetched : options.onFetched;
+		const externalOnFetched = _.isFunction(options.onFetched) ? options.onFetched : null;
+		const onFetched = function () {
+			// Always refresh layer data/highlights and clear lock visuals after fetch.
+			onProjectLinksFetched();
+			if (externalOnFetched) {
+				externalOnFetched();
+			}
+		};
 
 		projectCollection.fetch(boundingBox, zoom, projectId, isPublishable, onFetched);
 	};
