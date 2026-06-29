@@ -21,8 +21,7 @@ import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
 import { getSessionUserRoles } from '@model/ApplicationModel.js';
 import {
 	isNodeCreateModeEnabled,
-	setNodeCreateModeEnabled,
-	registerLayerHandler
+	setNodeCreateModeEnabled
 } from '@node-menu/NodeDataMenu.js';
 
 let _instance = null;
@@ -39,6 +38,7 @@ export function onJunctionDetach(junction) { if (!_.isUndefined(junction)) _inst
 export function onJunctionAttach(junction) { if (!_.isUndefined(junction)) _instance.toggleJunctionToTemplate(junction); }
 export function onNodePointDetach(nodePoint) { if (!_.isUndefined(nodePoint)) _instance.toggleNodePointToTemplate(nodePoint, true); }
 export function onNodePointAttach(nodePoint) { if (!_.isUndefined(nodePoint)) _instance.toggleNodePointToTemplate(nodePoint); }
+export function setNodeLayerCreateMode(enabled) { if (_instance) _instance.setNodeCreateModeEnabled(enabled); }
 
 export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection) {
 
@@ -720,7 +720,6 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		}
 	});
 
-
 	const clearLayersHandler = function () {
 		clearLayers(layers);
 	};
@@ -740,12 +739,12 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	}
 
 	applyNodeCreateMode(isNodeCreateModeEnabled());
-	registerLayerHandler(applyNodeCreateMode);
 
 	addLayers(map, layers);
 
 	_instance = {
 		hide: hideLayer,
+		setNodeCreateModeEnabled: applyNodeCreateMode,
 		fetchNodesAndJunctions,
 		fetchAndApplyNodesAndJunctions,
 		addNodesToMap: renderNodesToMap,

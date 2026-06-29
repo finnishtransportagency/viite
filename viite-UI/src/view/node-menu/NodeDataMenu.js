@@ -1,32 +1,28 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { button } from '@components/button/Button.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
+import { setNodeLayerCreateMode } from '@view/map/layers/NodeLayer.js';
 
 let nodeCreateMode = false;
-let _layerHandler = null;
-
-export function registerLayerHandler(fn) {
-	_layerHandler = fn;
-}
 
 export function isNodeCreateModeEnabled() {
 	return nodeCreateMode;
 }
 
+// Allows user to create a new node when clicking on map
 export function setNodeCreateModeEnabled(enabled) {
 	const nextValue = Boolean(enabled);
 	if (nodeCreateMode === nextValue) return nodeCreateMode;
 
 	nodeCreateMode = nextValue;
 	$('#attachToNewNode').toggleClass('active', nodeCreateMode);
-	if (_layerHandler) _layerHandler(nodeCreateMode);
+	setNodeLayerCreateMode(nextValue);
 	return nodeCreateMode;
 }
 
 export function toggleNodeCreateMode() {
 	return setNodeCreateModeEnabled(!nodeCreateMode);
 }
-
 
 /**
  * NodeDataMenu - Read-only detail panel for searched node and template data.
@@ -152,11 +148,11 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 		return `
         <div class="form form-controls node-template-actions">
           ${button({ 
-		id: 'attachToNewNode',
-		label: 'Luo uusi solmu, johon haluat liittää aihiot',
-		className: 'btn-primary btn-block' + attachToNewNodeClass,
-		onClick: () => { toggleNodeCreateMode(); } 
-	})}
+            id: 'attachToNewNode',
+            label: 'Luo uusi solmu, johon haluat liittää aihiot',
+            className: 'btn-primary btn-block' + attachToNewNodeClass,
+            onClick: () => { toggleNodeCreateMode(); } 
+          })}
           <div class="node-template-actions-split-row">
             ${button({ id: 'btn-edit-node-save', label: 'Tallenna', className: 'btn-primary btn-edit-node-save btn-block', disabled: true, onClick: onSaveTemplates })}
             ${button({ id: 'btn-edit-templates-cancel', label: 'Peruuta', className: 'cancel btn-secondary btn-edit-templates-cancel btn-block', onClick: onBackToSearch })}
