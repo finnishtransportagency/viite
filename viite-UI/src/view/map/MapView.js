@@ -103,8 +103,6 @@ export function MapView(map) {
 		}
 	});
 
-
-
 	map.on('moveend', function () {
 		refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
 		setDefaultCursor();

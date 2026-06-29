@@ -17,7 +17,6 @@ export function initRoadLayer(map) {
 	const eventListener = _.extend({}, Backbone.Events);
 
 	const roadLinkStyler = new RoadLinkStyler();
-
 	const roadVector = new ol.source.Vector({});
 
 	const roadLayer = new ol.layer.Vector({
@@ -26,97 +25,125 @@ export function initRoadLayer(map) {
 			return roadLinkStyler.getRoadLinkStyles(feature.linkData, map);
 		}
 	});
+
 	roadLayer.setVisible(true);
 	roadLayer.set('name', 'roadLayer');
 
 	const infoContainer = document.getElementById('popup');
 	const infoContent = document.getElementById('popup-content');
 
-	const overlay = new ol.Overlay(({
+	const overlay = new ol.Overlay({
 		element: infoContainer
-	}));
+	});
 
 	map.addOverlay(overlay);
 
+
+	const buildBaseHtml = (roadData) => `
+		<div class="popup-line-div"><div>Tienumero:&nbsp;</div><div class="selectable">${roadData.roadNumber}</div></div>
+		<div class="popup-line-div"><div>Tieosanumero:&nbsp;</div><div class="selectable">${roadData.roadPartNumber}</div></div>
+		<div class="popup-line-div"><div>Ajorata:&nbsp;</div><div class="selectable">${roadData.trackCode}</div></div>
+		<div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">${roadData.addrMRange.start}</div></div>
+		<div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">${roadData.addrMRange.end}</div></div>
+		<div class="popup-line-div">
+			<div>Hall. luokka:&nbsp;</div>
+			<div class="selectable">${displayAdministrativeClass(roadData.administrativeClassId)}</div>
+		</div>
+	`;
+
+	const buildExtraHtml = (roadData) => `
+		<hr>
+		${roadData.municipalityCode
+			? `<div class="popup-line-div"><div>MunicipalityCode:&nbsp;</div><div class="selectable">${roadData.municipalityCode}</div></div>`
+			: ''
+		}
+		<div class="popup-line-div"><div>Elinvoimakeskus:&nbsp;</div><div class="selectable">${roadData.evkCode}</div></div>
+		<div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linkId}</div></div>
+		<div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linearLocationId}</div></div>
+		<div class="popup-line-div"><div>Roadway&nbsp;id:&nbsp;</div><div class="selectable">${roadData.roadwayId}</div></div>
+		<div class="popup-line-div"><div>RoadwayNumber:&nbsp;</div><div class="selectable">${roadData.roadwayNumber}</div></div>
+	`;
+
+	const updatePopup = (roadData, showExtra) => {
+		infoContent.innerHTML =
+			buildBaseHtml(roadData) +
+			(showExtra ? buildExtraHtml(roadData) : '');
+	};
+
+	const clearPopup = () => {
+		infoContent.innerHTML = '';
+	};
+
 	const displayRoadAddressInfo = (event, pixel) => {
-		const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature);
-		let coordinate;
-		const popupBox = document.getElementById('popup-content').getBoundingClientRect();
+		const { originalEvent } = event;
 
-		if (!(event.originalEvent.clientX < popupBox.right &&
-            event.originalEvent.clientX > popupBox.left &&
-            event.originalEvent.clientY > popupBox.top &&
-            event.originalEvent.clientY < popupBox.bottom)) {
+		const popupBox = document
+			.getElementById('popup-content')
+			.getBoundingClientRect();
 
-			if (!_.isNil(featureAtPixel) && featureAtPixel.linkData) {
-				const roadData = featureAtPixel.linkData;
+		const insidePopup =
+			originalEvent.clientX > popupBox.left &&
+			originalEvent.clientX < popupBox.right &&
+			originalEvent.clientY > popupBox.top &&
+			originalEvent.clientY < popupBox.bottom;
 
-				if (infoContent !== null) {
-					if (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0) {
-						coordinate = map.getEventCoordinate(event.originalEvent);
+		const feature = map.forEachFeatureAtPixel(pixel, f => f);
+		const roadData = feature?.linkData;
 
-						infoContent.innerHTML = `
-                            <div class="popup-line-div"><div>Tienumero:&nbsp;</div><div class="selectable">${roadData.roadNumber}</div></div>
-                            <div class="popup-line-div"><div>Tieosanumero:&nbsp;</div><div class="selectable">${roadData.roadPartNumber}</div></div>
-                            <div class="popup-line-div"><div>Ajorata:&nbsp;</div><div class="selectable">${roadData.trackCode}</div></div>
-                            <div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">${roadData.addrMRange.start}</div></div>
-                            <div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">${roadData.addrMRange.end}</div></div>
-                            <div class="popup-line-div"><div>Hall. luokka:&nbsp;</div><div class="selectable">${displayAdministrativeClass(roadData.administrativeClassId)}</div></div>
-                        `;
+		const validRoad =
+			roadData &&
+			roadData.roadNumber !== 0 &&
+			roadData.roadPartNumber !== 0;
 
-						const altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;
-						if (altShiftPressed) {
-							infoContent.innerHTML += `<hr>`;
+		const shouldRender = !insidePopup && infoContent && validRoad;
 
-							if (!_.isUndefined(roadData.municipalityCode)) {
-								infoContent.innerHTML += `
-                                    <div class="popup-line-div"><div>MunicipalityCode:&nbsp;</div><div class="selectable">${roadData.municipalityCode}</div></div>
-                                `;
-							}
-							infoContent.innerHTML += `
-                                <div class="popup-line-div"><div>Elinvoimakeskus:&nbsp;</div><div class="selectable">${roadData.evkCode}</div></div>
-                                <div class="popup-line-div"><div>Link&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linkId}</div></div>
-                                <div class="popup-line-div"><div>LinearLocation&nbsp;id:&nbsp;</div><div class="selectable">${roadData.linearLocationId}</div></div>
-                                <div class="popup-line-div"><div>Roadway&nbsp;id:&nbsp;</div><div class="selectable">${roadData.roadwayId}</div></div>
-                                <div class="popup-line-div"><div>RoadwayNumber:&nbsp;</div><div class="selectable">${roadData.roadwayNumber}</div></div>
-                            `;
-						}
-					}
-				}
-			}
+		const coordinate = shouldRender
+			? map.getEventCoordinate(originalEvent)
+			: undefined;
+
+		if (!shouldRender) {
+			clearPopup();
+			overlay.setPosition(undefined);
+			return;
 		}
 
-		if (!event.originalEvent.altKey) {
-			overlay.setPosition(coordinate);
-		}
+		const showExtra = originalEvent.shiftKey && originalEvent.altKey;
+
+		updatePopup(roadData, showExtra);
+		overlay.setPosition(coordinate);
 	};
 
 	function displayAdministrativeClass(administrativeClassCode) {
 		let administrativeClass;
+
 		switch (administrativeClassCode) {
-		case ViiteEnumerations.AdministrativeClassShort.PublicRoad.value:
-			administrativeClass = ViiteEnumerations.AdministrativeClassShort.PublicRoad.description;
-			break;
-		case ViiteEnumerations.AdministrativeClassShort.MunicipalityStreetRoad.value:
-			administrativeClass = ViiteEnumerations.AdministrativeClassShort.MunicipalityStreetRoad.description;
-			break;
-		case ViiteEnumerations.AdministrativeClassShort.PrivateRoad.value:
-			administrativeClass = ViiteEnumerations.AdministrativeClassShort.PrivateRoad.description;
-			break;
-		default:
-			break;
+			case ViiteEnumerations.AdministrativeClassShort.PublicRoad.value:
+				administrativeClass = ViiteEnumerations.AdministrativeClassShort.PublicRoad.description;
+				break;
+			case ViiteEnumerations.AdministrativeClassShort.MunicipalityStreetRoad.value:
+				administrativeClass = ViiteEnumerations.AdministrativeClassShort.MunicipalityStreetRoad.description;
+				break;
+			case ViiteEnumerations.AdministrativeClassShort.PrivateRoad.value:
+				administrativeClass = ViiteEnumerations.AdministrativeClassShort.PrivateRoad.description;
+				break;
+			default:
+				break;
 		}
+
 		return administrativeClass;
 	}
 
 	// Open info container when mouse is hovered over a road link
 	eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
-    if (event.dragging) { return; }
+		if (event.dragging) return;
 		displayRoadAddressInfo(event, pixel);
 	});
 
 	const handleRoadsVisibility = function () {
-		roadLayer.setVisible(getRoadVisibility() && zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadLinks);
+		roadLayer.setVisible(
+			getRoadVisibility() &&
+			zoomlevels.getViewZoom(map) >= zoomlevels.minZoomForRoadLinks
+		);
 	};
 
 	const refreshMap = function (mapState) {
@@ -128,17 +155,17 @@ export function initRoadLayer(map) {
 			Spinner.hide();
 		} else {
 			switch (getSelectedLayer()) {
-			case 'linkProperty':
-				fetchLinkPropertiesForCurrentMap();
-				break;
-			case 'roadAddressProject':
-				fetchProjectLinksForCurrentMap();
-				break;
-			case 'node':
-				fetchAndApplyNodesAndJunctionsForCurrentMap();
-				break;
-			default:
-				break;
+				case 'linkProperty':
+					fetchLinkPropertiesForCurrentMap();
+					break;
+				case 'roadAddressProject':
+					fetchProjectLinksForCurrentMap();
+					break;
+				case 'node':
+					fetchAndApplyNodesAndJunctionsForCurrentMap();
+					break;
+				default:
+					break;
 			}
 			handleRoadsVisibility();
 		}
