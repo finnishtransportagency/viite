@@ -725,17 +725,15 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		clearLayers(layers);
 	};
 
-	const layerStarted = function (listener) {
-    listener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
-			if (isNodeDragged()) {
-				clearOverlay();
-				return;
-			}
-			displayNodeInfo(event, pixel);
-			displayJunctionInfo(event, pixel);
-		});
-	};
-
+  eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
+    if (isNodeDragged()) {
+      clearOverlay();
+      return;
+    }
+    displayNodeInfo(event, pixel);
+    displayJunctionInfo(event, pixel);
+  });
+	
 	function hideLayer() {
 		clearLayers(layers);
 		toggleLayersVisibility(layers, false);

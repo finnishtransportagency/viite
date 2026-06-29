@@ -12,7 +12,6 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { showToast } from '@components/toast/Toast.js';
 import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { navigateToSelectedProject } from '@src/router.js';
 import { fetchProjectLinksForCurrentMap, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';

@@ -15,7 +15,6 @@ import { selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { navigateToSelectedProject } from '@src/router.js';
-import { eventbus } from '@utils/eventbus.js';
 
 const States = {
 	CONFIGURATION:   'CONFIGURATION',
@@ -211,7 +210,6 @@ export function ProjectMenu(containerSelector, options = {}) {
 						hasFormedLinks: true,
 						isSaveInFlight: true
 					});
-					eventbus.trigger('roadAddressProject:linksSaving');
 					updateUI(States.ROAD_ADDRESSING, project.data, false);
 
 					// Fire the async save — onProjectLinksUpdated handles the HTTP response.
@@ -371,8 +369,8 @@ export function ProjectMenu(containerSelector, options = {}) {
 			currentActionMenu.updateState({});
 		}
 
-		// Fetch updated project links; fires roadAddressProject:fetched when done.
-		fetchProjectLinksForCurrentMap();
+		// Fetch updated project links and re-enable action buttons when the refresh completes.
+		fetchProjectLinksForCurrentMap({ onFetched });
 	};
 
 	const onProjectLinksUpdateFailed = function (errorCode) {
@@ -394,10 +392,6 @@ export function ProjectMenu(containerSelector, options = {}) {
 			type: 'alert',
 			okButtonLbl: 'OK'
 		});
-	};
-
-	const onReOpenCurrent = function () {
-		updateUI(States.ROAD_ADDRESSING, project.data, false);
 	};
 
 	const onProjectLinksCreateSuccess = function () {
@@ -461,12 +455,8 @@ export function ProjectMenu(containerSelector, options = {}) {
 		}
 	};
 
-	eventbus.on('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
-	eventbus.on('roadAddressProject:fetched',              onFetched);
-
 	const destroy = function () {
-		eventbus.off('roadAddressProject:reOpenCurrent',        onReOpenCurrent);
-		eventbus.off('roadAddressProject:fetched',              onFetched);
+		setProjectLinkDiscardChanges();
 	};
 
 	return {

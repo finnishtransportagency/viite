@@ -7,7 +7,6 @@
  */
 
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { eventbus } from '@utils/eventbus.js';
 import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
@@ -393,8 +392,6 @@ export function ProjectLinkEditor(canUseDevTools) {
 
 		if (typeof callbacks.onCancel === 'function') {
 			callbacks.onCancel();
-		} else {
-			eventbus.trigger('roadAddressProject:reOpenCurrent');
 		}
 	};
 

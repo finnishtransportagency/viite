@@ -20,7 +20,7 @@ import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/Applica
 
 let _instance = null;
 
-export function fetchProjectLinksForCurrentMap() { return _instance.fetchProjectLinks(); }
+export function fetchProjectLinksForCurrentMap(options = {}) { return _instance.fetchProjectLinks(options); }
 export function openRoadAddressProject(projectSelected) { return _instance.openRoadAddressProject(projectSelected); }
 export function clearOnProjectClose() { return _instance.clearOnProjectClose(); }
 export function discardProjectLinkChanges() { return _instance.discardChanges(); }
@@ -434,7 +434,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			highlightProjectLinkLayerFeaturesInternal();
 			lockedLinkIds = [];
 			map.getViewport().style.cursor = '';
-			eventbus.trigger('roadAddressProject:fetched');
 		});
 	};
 
