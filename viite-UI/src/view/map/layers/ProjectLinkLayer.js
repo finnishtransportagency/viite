@@ -26,6 +26,8 @@ export function clearOnProjectClose() { return _instance.clearOnProjectClose(); 
 export function discardProjectLinkChanges() { return _instance.discardChanges(); }
 export function highlightProjectLinkLayerFeatures() { return _instance.highlightProjectLinkLayerFeatures(); }
 export function setProjectLinkDiscardChanges(handler) { return _instance.setDiscardChanges(handler); }
+export function lockProjectLinks(ids, linkIds) { return _instance.lockProjectLinks(ids, linkIds); }
+export function unlockProjectLinks() { return _instance.unlockProjectLinks(); }
 
 export function initProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
 	const layerName = 'roadAddressProject';
@@ -56,11 +58,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		map.getViewport().style.cursor = '';
 		redraw();
 	};
-
-	projectCollection.setProjectLinkLockHandlers({
-		lockProjectLinks: lockProjectLinks,
-		unlockProjectLinks: unlockProjectLinks
-	});
 
 	const projectLinkStyler = new ProjectLinkStyler();
 
@@ -371,7 +368,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			});
 		}
 	};
-  
+
 	//This will control the double click zoom when there is no selection that activates
 	map.on('dblclick', zoomDoubleClickListener);
 
@@ -608,6 +605,8 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			discardChangesHandler = typeof handler === 'function' ? handler : function () {};
 		},
 		highlightProjectLinkLayerFeatures: highlightProjectLinkLayerFeaturesInternal,
+		lockProjectLinks: lockProjectLinks,
+		unlockProjectLinks: unlockProjectLinks,
 		hide: hideLayer,
 		clearHighlights: clearHighlights,
 		setVisible: setVisible,
