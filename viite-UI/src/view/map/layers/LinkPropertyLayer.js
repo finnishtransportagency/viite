@@ -24,6 +24,7 @@ export function redrawLinkPropertyLayer() { return _instance.redraw(); }
 export function highlightProject(featureLinkId) { return _instance.highlightProject(featureLinkId); }
 export function highlightReservedRoads(reservedOLFeatures) { return _instance.highlightReservedRoads(reservedOLFeatures); }
 export function clearLinkPropertyLayer() { return _instance.clearOnProjectClose(); }
+export function setLinkPropertyInteractionsActive(active) { return _instance && _instance.setInteractionsActive(active); }
 
 export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
 
@@ -534,6 +535,9 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 			if (getSelectedLayer() === 'linkProperty' || getSelectedLayer() === 'node') {
 				redraw();
 			}
+		},
+		setInteractionsActive: function (active) {
+			toggleSelectInteractions(active, true);
 		},
 		highlightProject: highlightProjectInternal,
 		highlightReservedRoads: highlightReservedRoadsInternal,

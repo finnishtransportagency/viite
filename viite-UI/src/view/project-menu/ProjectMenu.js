@@ -342,6 +342,12 @@ export function ProjectMenu(containerSelector, options = {}) {
 		additionalData = data;
       
 		render();
+
+    // Automatically update map when entering road addressing state
+		if (newState === States.ROAD_ADDRESSING) {
+			selectLayer('roadAddressProject', true, false);
+			fetchProjectLinksForCurrentMap({ projectId: project.data && project.data.id });
+		}
 	};
 
 	// --- Listeners ---

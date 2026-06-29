@@ -30,7 +30,6 @@ export function lockProjectLinks(ids, linkIds) { return _instance.lockProjectLin
 export function unlockProjectLinks() { return _instance.unlockProjectLinks(); }
 
 export function initProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
-	const layerName = 'roadAddressProject';
 	const eventListener = _.extend({}, Backbone.Events);
 
 	const SideCode = ViiteEnumerations.SideCode;
@@ -49,11 +48,11 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		return lockedLinkIds.length > 0 && _.includes(lockedLinkIds, id);
 	};
 
-	const lockProjectLinks = function (ids, linkIds) {
+	const lockProjectLinksInternal = function (ids, linkIds) {
 		lockedLinkIds = (ids || []).concat(linkIds || []);
 	};
 
-	const unlockProjectLinks = function () {
+	const unlockProjectLinksInternal = function () {
 		lockedLinkIds = [];
 		map.getViewport().style.cursor = '';
 		redraw();
@@ -119,7 +118,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 
 	const projectLinkLayer = new ol.layer.Vector({
 		source: projectLinkVector,
-		name: layerName,
+		name: "roadAddressProject",
 		style: function (feature) {
 			return projectLinkStyler.getProjectLinkStyles(feature.linkData, map);
 		}
@@ -554,7 +553,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		this.project = projectSelected;
 		getNavigation().navigateToRoadAddressProject(projectSelected.id);
 		onRoadAddressProjectSelected(projectSelected.id);
-		selectLayer(layerName);
+		selectLayer("roadAddressProject");
 	};
 
 	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
@@ -605,8 +604,8 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			discardChangesHandler = typeof handler === 'function' ? handler : function () {};
 		},
 		highlightProjectLinkLayerFeatures: highlightProjectLinkLayerFeaturesInternal,
-		lockProjectLinks: lockProjectLinks,
-		unlockProjectLinks: unlockProjectLinks,
+		lockProjectLinks: lockProjectLinksInternal,
+		unlockProjectLinks: unlockProjectLinksInternal,
 		hide: hideLayer,
 		clearHighlights: clearHighlights,
 		setVisible: setVisible,
