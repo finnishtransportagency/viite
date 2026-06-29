@@ -3,6 +3,7 @@
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
+      "@router.js": ["src/router.js"],
       "@src/*": ["src/*"],
       "@components/*": ["src/components/*"],
       "@model/*": ["src/model/*"],

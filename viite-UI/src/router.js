@@ -1,56 +1,36 @@
 /**
  * Synchronizes URL routes with the selected map layer, link selection, and project navigation state.
- * Keeps Backbone history aligned with map-driven UI actions.
  */
-/* eslint-disable prefer-named-capture-group */
-import { eventbus } from '@utils/eventbus.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { refreshMap } from '@view/map/MapView.js';
+import { eventbus } from '@utils/eventbus.js';
 
 const LAYER_LINK_PROPERTY = 'linkProperty';
 const LAYER_ROAD_ADDRESS_PROJECT = 'roadAddressProject';
 
-let navigateToRoadAddressProjectBridge = function () {};
-export function navigateToRoadAddressProject(projectId) {
-	return navigateToRoadAddressProjectBridge(projectId);
-}
+// Singleton navigation API instance.
+let api = null;
 
-let navigateToSelectedProjectBridge = function () {};
-export function navigateToSelectedProject(linkId, project) {
-	return navigateToSelectedProjectBridge(linkId, project);
-}
+export function initNavigation({ map, backend, models }) {
+	if (api) return api; // prevent double init
 
-let navigateToNodePointTemplateBridge = function () {};
-export function navigateToNodePointTemplate(templateId) {
-	return navigateToNodePointTemplateBridge(templateId);
-}
-
-let navigateToJunctionTemplateBridge = function () {};
-export function navigateToJunctionTemplate(templateId) {
-	return navigateToJunctionTemplateBridge(templateId);
-}
-
-export function URLRouter(map, backend, models) {
 	const openNodePointTemplate = models.nodeCollection.openNodePointTemplate;
 	const openJunctionTemplate = models.nodeCollection.openJunctionTemplate;
 
 	const Router = Backbone.Router.extend({
-		initialize: function () {
+		initialize() {
+			// Numeric hash route -> select layer by id.
+			this.route(/^(?<layer>\d+)$/, layer => selectLayer(layer));
 
-			this.route(/^(\d+)$/, function (layer) {
-				selectLayer(layer);
-			});
+			// Single-word hash route (with optional slash) -> select layer.
+			this.route(/^(?<layer>[A-Za-z]+)\/?$/, layer => selectLayer(layer));
 
-			this.route(/^([A-Za-z]+)\/?$/, function (layer) {
-				selectLayer(layer);
-			});
-
-			this.route(/^$/, function () {
-				selectLayer(LAYER_LINK_PROPERTY);
-			});
+			// Empty hash route -> default layer.
+			this.route(/^$/, () => selectLayer(LAYER_LINK_PROPERTY));
 		},
 
+		// Explicit routes with parameters.
 		routes: {
 			'linkProperty/:linkId': 'linkProperty',
 			'linkProperty/mml/:mmlId': 'linkPropertyByMml',
@@ -60,108 +40,150 @@ export function URLRouter(map, backend, models) {
 			'node/junctionTemplate/:id': 'junctionTemplate'
 		},
 
-		linkProperty: function (linkId) {
+		linkProperty(linkId) {
 			selectLayer(LAYER_LINK_PROPERTY);
-			backend.getRoadAddressByLinkId(linkId, function (response) {
-				if (response.success) {
-					map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-					map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
-				} else {
-					console.error(response.reason);
-				}
-			});
-		},
 
-		linkPropertyByMml: function (mmlId) {
-			selectLayer(LAYER_LINK_PROPERTY);
-			backend.getRoadLinkByMmlId(mmlId, function (response) {
-				if (!response || !response.middlePoint) {
-					console.error('Failed to load road link by MML id:', mmlId);
+			backend.getRoadAddressByLinkId(linkId, response => {
+				if (!response?.success) {
+					console.error(response?.reason);
 					return;
 				}
-				map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+
+				map.getView().setCenter([
+					response.middlePoint.x,
+					response.middlePoint.y
+				]);
+
 				map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
 			});
 		},
 
-		linkPropertyByMtk: function (mtkid) {
+		linkPropertyByMml(mmlId) {
 			selectLayer(LAYER_LINK_PROPERTY);
-			backend.getRoadLinkByMtkId(mtkid, function (response) {
-				if (!response || response.x === undefined) {
-					console.error('Failed to load road link by MTK id:', mtkid);
+
+			backend.getRoadLinkByMmlId(mmlId, response => {
+				if (!response?.middlePoint) {
+					console.error('Failed to load MML link:', mmlId);
 					return;
 				}
+
+				map.getView().setCenter([
+					response.middlePoint.x,
+					response.middlePoint.y
+				]);
+
+				map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
+			});
+		},
+
+		linkPropertyByMtk(mtkid) {
+			selectLayer(LAYER_LINK_PROPERTY);
+
+			backend.getRoadLinkByMtkId(mtkid, response => {
+				if (!response || response.x === undefined) {
+					console.error('Failed to load MTK link:', mtkid);
+					return;
+				}
+
 				map.getView().setCenter([response.x, response.y]);
 				map.getView().setZoom(zoomlevels.minZoomForLinkSearch);
 			});
 		},
-		roadAddressProject: function (projectId) {
+
+		roadAddressProject(projectId) {
 			selectLayer(LAYER_ROAD_ADDRESS_PROJECT);
-			const parsedProjectId = parseInt(projectId, 10);
-			models.projectCollection.startProject(parsedProjectId);
+			models.projectCollection.startProject(Number(projectId));
 		},
 
-		nodePointTemplate: function (nodePointTemplateId) {
-			openNodePointTemplate(nodePointTemplateId);
+		nodePointTemplate(id) {
+			openNodePointTemplate(id);
 		},
 
-		junctionTemplate: function (junctionTemplateId) {
-			openJunctionTemplate(junctionTemplateId);
+		junctionTemplate(id) {
+			openJunctionTemplate(id);
 		}
 	});
-
 
 	const router = new Router();
 
-	// We need to restart the router history so that tests can reset
+	// Restart history so tests can reset app state between runs.
 	// the application before each test.
-	Backbone.history.stop();
+  Backbone.history.stop();
 	Backbone.history.start();
 
-	const navigateToRoadAddressProjectInternal = function (projectId) {
-		router.navigate(`${LAYER_ROAD_ADDRESS_PROJECT}/${projectId}`);
-	};
+	// Public navigation helpers used by UI modules.
+	const navigation = {
+		navigateToRoadAddressProject(projectId) {
+			router.navigate(`${LAYER_ROAD_ADDRESS_PROJECT}/${projectId}`);
+		},
 
-	const navigateToSelectedProjectInternal = function (linkId, project) {
-		const baseUrl = `${LAYER_ROAD_ADDRESS_PROJECT}/${project.id}`;
-		const linkIdUrl = linkId ? `/${linkId}` : '';
-		router.navigate(`${baseUrl}${linkIdUrl}`);
-		const initialCenter = map.getView().getCenter();
-		const hasProjectCoords = !_.isUndefined(project.coordX) && project.coordX !== 0 &&
-        !_.isUndefined(project.coordY) && project.coordY !== 0 &&
-        !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0;
-		if (hasProjectCoords) {
-			selectLayer(LAYER_LINK_PROPERTY, false);
-			map.getView().setCenter([project.coordX, project.coordY]);
-			map.getView().setZoom(project.zoomLevel);
-		} else if (typeof linkId !== 'undefined') {
-			selectLayer(LAYER_LINK_PROPERTY, false);
-			backend.getProjectLinkByLinkId(linkId, function (response) {
-				map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-			});
+		navigateToSelectedProject(linkId, project) {
+			const baseUrl = `${LAYER_ROAD_ADDRESS_PROJECT}/${project.id}`;
+			const linkUrl = linkId ? `/${linkId}` : '';
+
+			router.navigate(`${baseUrl}${linkUrl}`);
+
+			// If center stays unchanged, trigger a manual refresh.
+			const initialCenter = map.getView().getCenter();
+
+			const hasCoords =
+				project.coordX &&
+				project.coordY &&
+				project.zoomLevel;
+
+			if (hasCoords) {
+				selectLayer(LAYER_LINK_PROPERTY, false);
+
+				map.getView().setCenter([
+					project.coordX,
+					project.coordY
+				]);
+
+				map.getView().setZoom(project.zoomLevel);
+			} else if (linkId !== undefined) {
+				selectLayer(LAYER_LINK_PROPERTY, false);
+
+				backend.getProjectLinkByLinkId(linkId, response => {
+					map.getView().setCenter([
+						response.middlePoint.x,
+						response.middlePoint.y
+					]);
+				});
+			}
+
+			const newCenter = map.getView().getCenter();
+
+			if (
+				initialCenter[0] === newCenter[0] &&
+				initialCenter[1] === newCenter[1]
+			) {
+				refreshMap(
+					zoomlevels.getViewZoom(map),
+					map.getLayers().getArray()[0].getExtent(),
+					newCenter
+				);
+			}
+		},
+
+		navigateToNodePointTemplate(templateId) {
+			router.navigate(`node/nodePointTemplate/${templateId}`);
+		},
+
+		navigateToJunctionTemplate(templateId) {
+			router.navigate(`node/junctionTemplate/${templateId}`);
 		}
-		const newCenter = map.getView().getCenter();
-		if (initialCenter[0] === newCenter[0] && initialCenter[1] === newCenter[1]) {
-			refreshMap(zoomlevels.getViewZoom(map), map.getLayers().getArray()[0].getExtent(), newCenter);
-		}
 	};
 
-	navigateToSelectedProjectBridge = navigateToSelectedProjectInternal;
-	navigateToRoadAddressProjectBridge = navigateToRoadAddressProjectInternal;
+	// Keep URL in sync when layer changes from UI events.
+  eventbus.on('layer:selected', layer => {
+    const route = layer.includes('/') ? layer : `${layer}/`;
+    router.navigate(route);
+  });
 
-	const navigateToNodePointTemplateInternal = function (templateId) {
-		router.navigate(`node/nodePointTemplate/${templateId}`);
-	};
+	api = navigation;
+	return api;
+}
 
-	const navigateToJunctionTemplateInternal = function (templateId) {
-		router.navigate(`node/junctionTemplate/${templateId}`);
-	};
-
-	navigateToNodePointTemplateBridge = navigateToNodePointTemplateInternal;
-	navigateToJunctionTemplateBridge = navigateToJunctionTemplateInternal;
-
-	eventbus.on('layer:selected', function (layer) {
-		const layerAdjusted = layer.includes('/') ? layer : layer.concat('/');
-		router.navigate(layerAdjusted);
-	});
+export function getNavigation() {
+	return api;
 }

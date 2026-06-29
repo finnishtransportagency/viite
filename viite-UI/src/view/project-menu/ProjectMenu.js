@@ -14,7 +14,7 @@ import { setMainMenuState } from '@view/MainMenu.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
-import { navigateToSelectedProject } from '@src/router.js';
+import { getNavigation } from '@router.js';
 
 const States = {
 	CONFIGURATION:   'CONFIGURATION',
@@ -440,7 +440,7 @@ export function ProjectMenu(containerSelector, options = {}) {
 		options.roadCollection.setPendingHighlight(project.data.id);
 
 		if (!_.isUndefined(project.data)) {
-			navigateToSelectedProject(result.linkId, project.data);
+			getNavigation().navigateToSelectedProject(result.linkId, project.data);
 		}
 		Spinner.hide();
 	};

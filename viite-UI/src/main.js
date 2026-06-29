@@ -25,11 +25,11 @@ import { SelectedLinkProperty } from '@model/SelectedLinkProperty.js';
 import { SelectedNodesAndJunctions } from '@model/SelectedNodesAndJunctions.js';
 import { SelectedProjectLink } from '@model/SelectedProjectLink.js';
 import { TileMapCollection } from '@model/TileMapCollection.js';
-import { URLRouter } from './router.js';
 import { ZoomBox } from '@view/map/markers/ZoomBox.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { initNavigation } from '@router.js';
 
 // Starts application
 export function startApplication() {
@@ -184,7 +184,7 @@ const initializeApplication = function (backend, models, startupParameters, road
 		});
 	}
 
-	new URLRouter(mapContext.map, backend, models);
+  initNavigation({ map: mapContext.map, backend, models, eventbus: startupParameters.eventbus });
 };
 
 const setupProjections = function () {

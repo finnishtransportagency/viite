@@ -12,7 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { ProjectLinkStyler } from '@view/map/ProjectLinkStyler.js';
-import { navigateToRoadAddressProject } from '@src/router.js';
+import { getNavigation } from '@router.js';
 import { addLayers, clearLayers, drawProjectCalibrationMarkers, toggleLayersVisibility } from './LayerUtils.js';
 import { ProjectLinkMarker } from '../markers/ProjectLinkMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
@@ -547,7 +547,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 
 	const openRoadAddressProjectInternal = function (projectSelected) {
 		this.project = projectSelected;
-		navigateToRoadAddressProject(projectSelected.id);
+		getNavigation().navigateToRoadAddressProject(projectSelected.id);
 		onRoadAddressProjectSelected(projectSelected.id);
 		selectLayer(layerName);
 	};
@@ -567,11 +567,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		}
 		projectLinkLayer.setVisible(isActiveLayer && getRoadVisibility());
 		calibrationPointLayer.setVisible(isActiveLayer && getRoadVisibility());
-	});
-
-	eventListener.listenTo(eventbus, 'roadAddressProject:clearAndDisableInteractions', function () {
-		clearHighlights();
-		removeSelectInteractions();
 	});
 
 	function updateRoadVisibility() {

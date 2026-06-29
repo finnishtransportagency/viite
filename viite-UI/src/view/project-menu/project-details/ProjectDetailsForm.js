@@ -13,7 +13,7 @@ import { showToast } from '@components/toast/Toast.js';
 import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer } from '@model/ApplicationModel.js';
-import { navigateToSelectedProject } from '@src/router.js';
+import { getNavigation } from '@router.js';
 import { fetchProjectLinksForCurrentMap, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';
 
 export function enableCloseBtn() {
@@ -380,6 +380,9 @@ export function ProjectDetailsForm(callbacks = {}) {
 		}
       
 		$('#generalNext, #saveProject').off('click').on('click', function() {
+      
+			enableCloseBtn();
+
 			const ProjectStatus = ViiteEnumerations.ProjectStatus;
 			const isProjectPublished = Boolean(
 				projectData &&
@@ -453,7 +456,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 					}
 
 					if (result.projectAddresses && savedProject) {
-						navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
+						getNavigation().navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
 					}
             
 					selectLayer('roadAddressProject', true, false);
@@ -526,7 +529,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 								}
 
 								if (result.projectAddresses && latestProject) {
-									navigateToSelectedProject(result.projectAddresses.linkId, latestProject);
+									getNavigation().navigateToSelectedProject(result.projectAddresses.linkId, latestProject);
 								}
                   
 								// Set the selected layer to roadAddressProject when project is saved

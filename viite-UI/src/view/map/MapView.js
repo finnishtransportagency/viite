@@ -7,7 +7,7 @@
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
+import { getSelectedLayer } from '@model/ApplicationModel.js';
 
 const mapState = {
 	map: undefined,
@@ -114,13 +114,6 @@ export function MapView(map) {
 		const pixel = map.getEventPixel(event.originalEvent);
 		eventbus.trigger('map:mouseMoved', event, pixel);
 	}, true);
-
-	map.on('singleclick', function (event) {
-		eventbus.trigger('map:clicked', {x: event.coordinate[0], y: event.coordinate[1]});
-	});
-	map.on('dblclick', function (event) {
-		eventbus.trigger('map:dblclicked', {x: event.coordinate[0], y: event.coordinate[1]});
-	});
 
 	addCenterMarkerLayerToMap(map);
 
