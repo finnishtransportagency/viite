@@ -6,7 +6,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.vaylavirasto.viite.dao.UnaddressedRoadLink
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AdministrativeClass, RoadLinkLike}
+import fi.vaylavirasto.viite.model.{AdministrativeClass, ArealRoadMaintainer, RoadLinkLike}
 import org.slf4j.{Logger, LoggerFactory}
 
 
@@ -125,27 +125,31 @@ object RoadAddressFiller {
     * ATTENTION: We can in the future also crete here unaddressed parts if needed.
     * @param roadLink
     * @param roadAddresses
+    * @param municipalityMapping
     * @return
     */
-  private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+  private def generateUnaddressedSegments(roadLink: RoadLinkLike, roadAddresses: Seq[RoadAddress], municipalityMapping: Map[Long, String], municipalityNameMapping: Map[Long, String]): Seq[RoadAddressLink] = {
     //TODO check if its needed to create unaddressed road link for part after VIITE-1536
     if (roadAddresses.isEmpty) {
       val unaddressedRoadLink =
         UnaddressedRoadLink(roadLink.linkId, None, AdministrativeClass.Unknown, None, None, Some(0.0), Some(roadLink.length),
           GeometryUtils.truncateGeometry3D(roadLink.geometry, 0.0, roadLink.length))
 
-      Seq(roadAddressLinkBuilder.build(roadLink, unaddressedRoadLink))
+      val roadMaintainer = ArealRoadMaintainer.apply(municipalityMapping.getOrElse(roadLink.municipalityCode, "EVK0"))
+      val municipalityName = municipalityNameMapping.getOrElse(roadLink.municipalityCode, "")
+
+      Seq(roadAddressLinkBuilder.buildRoadLinksAndUnAddressedLinks(roadLink, unaddressedRoadLink, roadMaintainer, municipalityName))
     } else {
       Seq()
     }
   }
 
-  private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink]  = {
-    roadAddresses.map(ra => roadAddressLinkBuilder.build(topology, ra))
+  private def generateSegments(topology: RoadLinkLike, roadAddresses: Seq[RoadAddress], municipalityMapping: Map[Long, String], municipalityNameMapping: Map[Long, String]): Seq[RoadAddressLink]  = {
+    roadAddresses.map(ra => roadAddressLinkBuilder.buildWithRoadLinkAndRoadAddress(topology, ra, municipalityNameMapping.getOrElse(topology.municipalityCode, "")))
   }
 
-  def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress]): Seq[RoadAddressLink] = {
-    val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddress]) => Seq[RoadAddressLink]] = Seq(
+  def fillTopology(topology: Seq[RoadLinkLike], roadAddresses: Seq[RoadAddress], municipalityMapping: Map[Long, String], municipalityNameMapping: Map[Long, String]): Seq[RoadAddressLink] = {
+    val fillOperations: Seq[(RoadLinkLike, Seq[RoadAddress], Map[Long, String], Map[Long, String]) => Seq[RoadAddressLink]] = Seq(
       generateUnaddressedSegments,
       generateSegments
     )
@@ -154,7 +158,7 @@ object RoadAddressFiller {
     topology.flatMap {
       roadLink =>
         val segments = roadAddressesMap.getOrElse(roadLink.linkId, Seq())
-        fillOperations.flatMap(operation => operation(roadLink, segments))
+        fillOperations.flatMap(operation => operation(roadLink, segments, municipalityMapping, municipalityNameMapping))
     }
   }
 }

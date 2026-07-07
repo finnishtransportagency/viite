@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.client.vkm.VKMClient
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
+import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityNamesMapping
 import fi.liikennevirasto.viite.dao.{RoadwayPointDAO, _}
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process._
@@ -128,6 +129,8 @@ class RoadAddressService(
       }
 
     val allRoadLinks = roadLinks ++ complementaryRoadLinks
+    val municipalityRoadMaintainerMapping = ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
+    val municipalityNamesMapping = ProjectAddressLinkBuilder.municipalityNamesMapping
 
     //removed apply changes before adjusting topology since in future NLS will give perfect geometry and supposedly, we will not need any changes
     val (adjustedLinearLocations, changeSet) = if (frozenKGV) (linearLocations, Seq()) else RoadAddressFiller.adjustToTopology(allRoadLinks, linearLocations)
@@ -137,7 +140,7 @@ class RoadAddressService(
     val roadAddresses = runWithReadOnlySession {
       roadwayAddressMapper.getRoadAddressesByLinearLocation(adjustedLinearLocations)
     }
-    RoadAddressFiller.fillTopology(allRoadLinks, roadAddresses)
+    RoadAddressFiller.fillTopology(allRoadLinks, roadAddresses, municipalityRoadMaintainerMapping, municipalityNamesMapping)
   }
 
   def getRoadAddressWithRoadNumberAddress(road: Long): Seq[RoadAddress] = {
@@ -228,7 +231,7 @@ class RoadAddressService(
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
     }
 
-    roadAddresses.map(roadAddressLinkBuilder.build)
+    roadAddresses.map(roadAddressLinkBuilder.buildWithRoadAddress)
   }
 
   // maximum allowed length difference for VIITE-3083 rounding inconsistency
@@ -242,6 +245,9 @@ class RoadAddressService(
     */
   def getAllByMunicipality(municipality: Int, searchDate: Option[DateTime] = None): Seq[RoadAddressLink] = {
     val (roadLinks, _) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+
+    val municipalityNames = municipalityNamesMapping
+    val municipalityName = municipalityNames.getOrElse(municipality, "")
 
     val linearLocations = runWithTransaction {
       time(logger, "Fetch addresses") {
@@ -262,7 +268,7 @@ class RoadAddressService(
     roadAddresses.flatMap { ra =>
       val roadLink = roadLinks.find(rl => rl.linkId == ra.linkId)
       roadLink.map(rl => {
-        val ral: RoadAddressLink = roadAddressLinkBuilder.build(rl, ra)
+        val ral: RoadAddressLink = roadAddressLinkBuilder.buildWithRoadLinkAndRoadAddress(rl, ra, municipalityName)
 
         // ---- Start of VIITE-3083 hack ---
         // Instead of returning just the RoadAddressLink returned by the roadAddressLinkBuilder.build function retain the linear location with "correct" 3 decimals in the last geometry point
@@ -419,10 +425,13 @@ class RoadAddressService(
         linearLocationDAO.fetchByRoadAddress(roadPart, addressM, track)
       }
     }
+    val municipalityRoadMaintainerMapping = ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
+    val municipalityNamesMapping = ProjectAddressLinkBuilder.municipalityNamesMapping
+
     val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
     val roadAddresses = getRoadAddressForSearch(roadPart, addressM, track)
     val roadLinks = roadLinkService.getRoadLinksByLinkIds(linearLocationsLinkIds)
-    val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses)
+    val rals = RoadAddressFiller.fillTopology(roadLinks, roadAddresses, municipalityRoadMaintainerMapping, municipalityNamesMapping)
     val filteredRals = rals.filter(al => al.addrMRange.start <= addressM && al.addrMRange.end >= addressM && (al.addrMRange.start != 0 || al.addrMRange.end != 0))
     val ral = filteredRals.filter(al => (track.nonEmpty && track.contains(al.trackCode)) || al.trackCode != Track.LeftSide.value)
     ral.headOption
@@ -650,12 +659,6 @@ class RoadAddressService(
       case _ => None
     }
 
-    println(s"MAPPING THE OPTIONAL ELY AND EVK PARAMETERS TO A SINGLE FILTER ::getTracksForRoadAddressBrowser:: ")
-    println(s"ELY :: $ely")
-    println(s"EVK :: $roadMaintainer")
-
-    println(s"MATCHED INTO ::: $roadMaintainerOpt")
-
     runWithReadOnlySession {
       roadwayDAO.fetchTracksForRoadAddressBrowser(situationDate, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
     }
@@ -668,13 +671,6 @@ class RoadAddressService(
       case (None, roadMaintainer) => roadMaintainer
       case _ => None
     }
-
-    println(s"MAPPING THE OPTIONAL ELY AND EVK PARAMETERS TO A SINGLE FILTER :: getRoadPartsForRoadAddressBrowser :: ")
-    println(s"ELY :: $ely")
-    println(s"EVK :: $roadMaintainer")
-
-    println(s"MATCHED INTO ::: $roadMaintainerOpt")
-
 
     runWithReadOnlySession {
       roadwayDAO.fetchRoadPartsForRoadAddressBrowser(situationDate, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber)
@@ -691,14 +687,6 @@ class RoadAddressService(
       case (None, roadMaintainer) => roadMaintainer
       case _ => None
     }
-
-    println(s"MAPPING THE OPTIONAL ELY AND EVK PARAMETERS TO A SINGLE FILTER :: getChangeInfosForRoadAddressChangesBrowser :: ")
-    println(s"ELY :: $ely")
-    println(s"EVK :: $roadMaintainer")
-
-    println(s"MATCHED INTO ::: $roadMaintainerOpt")
-
-
 
     runWithReadOnlySession {
       roadwayChangesDAO.fetchChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, roadMaintainerOpt, roadNumber, minRoadPartNumber, maxRoadPartNumber) //TODO: Add evk to the called function
@@ -762,13 +750,16 @@ class RoadAddressService(
 
     val roadlinks = roadLinkService.getAllVisibleRoadLinks(Set(linkId))
 
+    val municipalityRoadMaintainerMapping = ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
+    val municipalityNamesMapping = ProjectAddressLinkBuilder.municipalityNamesMapping
+
     val roadAddresses = runWithReadOnlySession {
       val linearLocations = linearLocationDAO.fetchRoadwayByLinkId(Set(linkId))
 
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
     }
 
-    RoadAddressFiller.fillTopology(roadlinks, roadAddresses).filter(_.linkId == linkId)
+    RoadAddressFiller.fillTopology(roadlinks, roadAddresses, municipalityRoadMaintainerMapping, municipalityNamesMapping).filter(_.linkId == linkId)
 
   }
 

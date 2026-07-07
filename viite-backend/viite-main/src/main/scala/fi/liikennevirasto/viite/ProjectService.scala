@@ -4,13 +4,13 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.{municipalityToViiteELYMapping, municipalityToViiteEVKMapping}
+import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
 import fi.liikennevirasto.viite.dao._
 import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.process.strategy.TwoTrackAverager.{averageTwoTrackBoundaries}
+import fi.liikennevirasto.viite.process.strategy.TwoTrackAverager.averageTwoTrackBoundaries
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -22,8 +22,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.sql.SQLException
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
@@ -301,7 +300,7 @@ class ProjectService(
     * If it does not then we check if this project is able to reserve the combination.
     * If the combination is already reserved in this project we simply return their parts, if not we validate the project date with the dates of the road parts.
     * If the validation of the date passes then we return these road parts.
-    * IN ANY OTHER INSTANCE we return a error message detailing what the problem was
+    * IN ANY OTHER INSTANCE we return an error message detailing what the problem was
     *
     * @param roadNumber  : Long
     * @param startPart   : Long - road part number of the start of the reservation
@@ -686,7 +685,7 @@ class ProjectService(
     * @param linkIds   the linkIds to process
     * @param roadPart  the roadPart to apply/was applied to said linkIds
     * @param newLinks  new project links for this ramp
-    * @return the projectLinks with a assigned SideCode
+    * @return the projectLinks with an assigned SideCode
     */
   private def fillRampGrowthDirection(linkIds: Set[String], roadPart: RoadPart, newLinks: Seq[ProjectLink], firstLinkId: String, existingLinks: Seq[ProjectLink]) = {
     if (newLinks.exists(nl => existingLinks.exists(pl => pl.status != RoadAddressChangeType.Termination &&
@@ -716,7 +715,7 @@ class ProjectService(
   }
 
   /**
-    * Main method of reversing the direction of a already created project link.
+    * Main method of reversing the direction of an already created project link.
     * 1st check if the project is writable in the current session, if it is then we check if there still are project links that are unchanged of unhandled, if there are none then the process continues by getting all the discontinuities of all project links.
     * After that we run the query to reverse the directions, after it's execution we re-fetch the project links (minus the terminated ones) and the original information of the roads.
     * Using said information we run an all project links of that project to update the "reversed" tag when relative to the side codes of the original roadways.
@@ -730,7 +729,8 @@ class ProjectService(
     * @return
     */
   def changeDirection(projectId: Long, roadPart: RoadPart, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
-    roadAddressLinkBuilder.municipalityToViiteELYMapping // make sure it is populated outside of this TX
+   // roadAddressLinkBuilder.municipalityToViiteELYMapping // make sure it is populated outside of this TX
+    roadAddressLinkBuilder.municipalityToViiteEVKMapping
     try {
       runWithTransaction {
         projectWritableCheckInSession(projectId) match {
@@ -790,7 +790,7 @@ class ProjectService(
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
-    * project links that are no longer reserved for the project. Reservability is check before this.
+    * project links that are no longer reserved for the project. Reservability is checked before this.
     * for each reserved part get all roadways
     * validate if the road exists on the roadway table and if there isn't different ely codes reserved
     * in case there is, throw roadPartReserved exception
@@ -1124,7 +1124,11 @@ class ProjectService(
     }
     val nonProjectRoadLinks = (normalLinks ++ complementaryLinks).filterNot(rl => projectRoadLinks.exists(_.linkId == rl.linkId)) //    val buildEndTime = System.currentTimeMillis()
 
-    val filledTopology = RoadAddressFiller.fillTopology(nonProjectRoadLinks, addresses.values.flatten.toSeq)
+    val municipalityMapping = ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
+
+    val municipalityNameMapping = ProjectAddressLinkBuilder.municipalityNamesMapping
+
+    val filledTopology = RoadAddressFiller.fillTopology(nonProjectRoadLinks, addresses.values.flatten.toSeq, municipalityMapping, municipalityNameMapping)
 
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
@@ -1186,7 +1190,7 @@ class ProjectService(
     val nonProjectAddresses = addresses.filterNot(a => projectLinks.contains(a._1))
 
     val nonProjectLinks = nonProjectAddresses.values.flatten.toSeq.map { address =>
-      address.linkId -> roadAddressLinkBuilder.build(address)
+      address.linkId -> roadAddressLinkBuilder.buildWithRoadAddress(address)
     }.toMap
 
     logger.info("Build road addresses completed in %d ms".format(System.currentTimeMillis() - buildStartTime))
