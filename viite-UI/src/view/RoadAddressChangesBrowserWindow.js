@@ -377,12 +377,12 @@
             roadAddrChangesStartDate.setCustomValidity("");
             roadAddrChangesEndDate.setCustomValidity("");
 
-            if (willPassValidations())
-
-                //Sets the end date 1 day ahead, so that the inputted end date will be included in the projectlisting.
+            if (roadAddrChangesEndDate.value && roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
+                // Include the whole selected day when start and end date are the same.
                 dateutil.addOneDayToDate(roadAddrEndDateObject);
+            }
 
-                fetchRoadAddressChanges(createParams());
+            fetchRoadAddressChanges(createParams());
         }
 
         function fetchRoadAddressChanges(params) {
