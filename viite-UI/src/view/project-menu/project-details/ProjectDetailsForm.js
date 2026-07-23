@@ -104,7 +104,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 		if (startDatePicker) startDatePicker.destroy();
 		startDatePicker = new DatePicker({
 			id: 'projectStartDate',
-			className: 'form-control',
+			className: 'form-control required',
 			containerClass: '', 
 			value: project.startDate || '',
 			required: true
@@ -142,7 +142,7 @@ export function ProjectDetailsForm(callbacks = {}) {
             <div class="form-row">
               <div class="form-group field-name">
                 <label>*Nimi</label>
-                <input autocomplete="off" type="text" class="form-control" id="nimi" maxlength="32" value="${projectData.name || ''}"/>
+                <input autocomplete="off" type="text" class="form-control required" id="nimi" maxlength="32" value="${projectData.name || ''}"/>
               </div>
               <div class="form-group field-date">
                 <label>*Alkupvm</label>
