@@ -15,13 +15,6 @@ input[type="search"] {
   .box-sizing(border-box);
 }
 
-// Position checkboxes better
-input[type="checkbox"] {
-  margin: 4px 0 0;
-  margin-top: 1px \9; // IE8-9
-  line-height: normal;
-}
-
 // Set the height of file controls to match text inputs
 input[type="file"] {
   display: block;
@@ -39,9 +32,7 @@ select[size] {
   height: auto;
 }
 
-// Focus for file and checkbox
-input[type="file"]:focus,
-input[type="checkbox"]:focus {
+input[type="file"]:focus {
   .tab-focus();
 }
 
@@ -123,10 +114,6 @@ input[type="checkbox"]:focus {
   margin-bottom: @input-margin;
 }
 
-// Checkboxes
-//
-// Indent the labels to position checkboxes as hanging controls.
-
 .no-copy {
   -webkit-user-select: none;
   /* Chrome all / Safari all */
@@ -136,106 +123,6 @@ input[type="checkbox"]:focus {
   /* IE 10+ */
   user-select: none;
   /* Likely future */
-}
-
-.checkbox {
-  display: block;
-  min-height: @line-height-modifier * 3; // clear the floating input if there is no label text
-  margin-bottom: @input-margin;
-  margin-top: -1px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-
-  label {
-    margin-bottom: 0;
-    padding-left: 20px;
-    margin-top: 5px;
-    font-size: @font-size-base;
-    font-weight: normal;
-    color: @text-color;
-    text-transform: none;
-    cursor: pointer;
-    .user-select(none);
-  }
-}
-
-.checkbox input[type="checkbox"],
-.checkbox-inline input[type="checkbox"] {
-  float: left;
-  margin-left: -20px;
-  .user-select(none);
-}
-
-.checkbox input[type="checkbox"] {
-  position: relative;
-  width: 12px;
-  height: 12px;
-  border: 1px solid @gray-darker;
-  border-radius: @border-radius-small;
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-  .scale(0.9999);
-  .transition(transform 0.05s ease-in-out);
-  .transition(-webkit-transform 0.05s ease-in-out);
-  .transition(-moz-transform 0.05s ease-in-out);
-  .transition(-o-transform 0.05s ease-in-out);
-  .transition(-ms-transform 0.05s ease-in-out);
-
-  &:active {
-    .scale(0.85);
-  }
-
-  &:checked {
-    .icon-font;
-
-    &:before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 12px;
-      height: 12px;
-      margin-left: -5px;
-      margin-top: -5px;
-      font-size: 18px;
-      content: '\e804';
-    }
-  }
-}
-
-// Apply same disabled cursor tweak as for inputs
-// Some special care is needed because <label>s don't inherit their parent's `cursor`.
-//
-// Note: Neither checkboxes can be readonly.
-input[type="checkbox"] {
-
-  &[disabled],
-  &.disabled,
-  fieldset[disabled] & {
-    cursor: not-allowed;
-  }
-}
-
-// These classes are used directly on <label>s
-.checkbox-inline {
-
-  &.disabled,
-  fieldset[disabled] & {
-    cursor: not-allowed;
-  }
-}
-
-// These classes are used on elements with <label> descendants
-.checkbox {
-
-  &.disabled,
-  fieldset[disabled] & {
-    label {
-      cursor: not-allowed;
-    }
-  }
 }
 
 // Horizontal forms
@@ -260,9 +147,7 @@ input[type="checkbox"] {
     .hyphens();
   }
 
-  .checkbox,
   .select,
-
   .choice-group,
   .project-choice-group {
     float: left;
@@ -272,7 +157,6 @@ input[type="checkbox"] {
   .project-choice-group {
 
     .form-control,
-    .checkbox,
     .select {
       float: none;
     }
@@ -335,17 +219,6 @@ input[type="checkbox"] {
       color: @input-color-placeholder-dark;
       background-color: @input-bg-disabled-dark;
     }
-  }
-
-  .checkbox {
-    label {
-      color: #fff;
-    }
-  }
-
-  .checkbox input[type="checkbox"] {
-    border-color: @input-border-dark;
-    color: @input-border-dark;
   }
 
   .unit-of-measure {

@@ -1,25 +1,25 @@
-.common-checkbox {
+.checkbox {
   display: block;
   margin: 0;
   box-sizing: border-box;
 }
 
-label.common-checkbox-label {
+label.checkbox-label {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   margin: 0;
   padding: 0;
   font-size: inherit;
   font-weight: normal;
   color: @text-color;
-  line-height: 1.2;
   text-transform: none;
   cursor: pointer;
   .user-select(none);
 }
 
-input.common-checkbox-input {
+input.checkbox-input {
   appearance: none;
   -webkit-appearance: none;
   position: relative;
@@ -57,8 +57,8 @@ input.common-checkbox-input {
   }
 }
 
-.common-checkbox-text {
-  display: inline-block;
+.checkbox-text {
+  display: flex;
+  align-items: center;
   font-size: 12px;
-  line-height: 1.3;
 }
