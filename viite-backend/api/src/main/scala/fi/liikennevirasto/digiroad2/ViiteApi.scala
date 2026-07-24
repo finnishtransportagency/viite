@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
 import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.ArealRoadMaintainer.{getELYNumber, getEVKNumber, isEVK}
+import fi.vaylavirasto.viite.model.ArealRoadMaintainer.{getELYNumber, getEVKNumber}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import fi.vaylavirasto.viite.util.DateTimeFormatters.{ISOdateFormatter, dateSlashFormatter, finnishDateCommaTimeFormatter, finnishDateFormatter}
@@ -970,13 +970,13 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       val projectId = params("projectId").toLong
       time(logger, s"GET request for /roadlinks/roadaddress/project/validatereservedlink/", params=Some(params.toMap)) {
         projectService.checkRoadPartExistsAndReservable(roadNumber, startPart, endPart, projDate, projectId) match {
-          case Left(err) => Map("success" -> false, "error" -> err)
-          case Right((reservedparts, formedparts)) => Map("success" -> true, "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
+          case Left(err) => Map("success" -> err)
+          case Right((reservedparts, formedparts)) => Map("success" -> "ok", "reservedInfo" -> reservedparts.map(projectReservedPartToApi),
             "formedInfo" -> formedparts.map(projectFormedPartToApi()))
         }
       }
     } catch {
-      case e: IllegalArgumentException => Map("success" -> false, "error" -> e.getMessage)
+      case e: IllegalArgumentException => Map("success" -> e.getMessage)
     }
   }
 
@@ -1053,10 +1053,12 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         response.get("success") match {
           case Some(true) =>
             val projectErrors = response.getOrElse("projectErrors", Seq).asInstanceOf[Seq[projectService.projectValidator.ValidationErrorDetails]].map(projectService.projectValidator.errorPartsToApi)
+            val project = projectService.getSingleProjectById(links.projectId).get
             Map("success" -> true,
               "publishable" -> !response.contains("projectErrors"),
               "projectErrors" -> projectErrors,
-              "errorMessage" -> response.get("errorMessage"))
+              "errorMessage" -> response.get("errorMessage"),
+              "formedInfo" -> project.formedParts.map(projectFormedPartToApi(Some(project.id)))) // Convert formed parts to API format
           case _ => response
         }
       } catch {

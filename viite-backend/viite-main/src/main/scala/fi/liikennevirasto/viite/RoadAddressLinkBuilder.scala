@@ -27,12 +27,11 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
 
   private val modifiedBy = "kgvModified"
 
-  def build(roadLink: RoadLinkLike, roadAddress: RoadAddress): RoadAddressLink = {
+  def buildWithRoadLinkAndRoadAddress(roadLink: RoadLinkLike, roadAddress: RoadAddress, municipalityName: String): RoadAddressLink = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue)
     val length = GeometryUtils.geometryLength(geom)
     val roadName = roadAddress.roadName
     val municipalityCode = roadLink.municipalityCode
-    val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     val administrativeClass = roadAddress.administrativeClass match {
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => roadAddress.administrativeClass
@@ -67,7 +66,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       sourceId = roadLink.sourceId)
   }
 
-  def build(roadAddress: RoadAddress): RoadAddressLink = {
+  def buildWithRoadAddress(roadAddress: RoadAddress): RoadAddressLink = {
     val geom = roadAddress.geometry
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = 0
@@ -102,21 +101,24 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       sourceId = "")
   }
 
-  def build(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
+  def buildRoadLinksAndUnAddressedLinks(roadLink: RoadLinkLike, unaddressedRoadLink: UnaddressedRoadLink, roadMaintainer: ArealRoadMaintainer, municipalityName: String): RoadAddressLink = {
     roadLink match {
-      case rl: RoadLink => buildRoadLink(rl, unaddressedRoadLink)
+      case rl: RoadLink => buildRoadLink(rl, unaddressedRoadLink, roadMaintainer, municipalityName)
     }
   }
 
-  private def buildRoadLink(roadLink: RoadLink, unaddressedRoadLink: UnaddressedRoadLink): RoadAddressLink = {
+  private def buildRoadLink(roadLink: RoadLink, unaddressedRoadLink: UnaddressedRoadLink, roadMaintainer: ArealRoadMaintainer, municipalityName: String): RoadAddressLink = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, unaddressedRoadLink.startMValue.getOrElse(0.0), unaddressedRoadLink.endMValue.getOrElse(roadLink.length))
     val length = GeometryUtils.geometryLength(geom)
     val municipalityCode = roadLink.municipalityCode
-    val municipalityName = municipalityNamesMapping.getOrElse(municipalityCode, "")
     val administrativeClass = unaddressedRoadLink.administrativeClass match {
       case AdministrativeClass.Unknown => roadLink.administrativeClass
       case _ => unaddressedRoadLink.administrativeClass
     }
+    if (municipalityCode <= 0) {
+      println(s"Invalid municipality code (${municipalityCode}) for road link with ID ${roadLink.linkId} and unaddressed road link with ID ${unaddressedRoadLink.linkId}, using elinvoimakeskus 0 instead") //TODO: Make sure these hard coded municipality codes are actually what we want.
+    }
+
     RoadAddressLink(
       0,
       0,
@@ -134,7 +136,7 @@ class RoadAddressLinkBuilder(roadwayDAO: RoadwayDAO, linearLocationDAO: LinearLo
       Some("kgv_modified"),
       RoadPart(0, 0),
       Track.Unknown.value,
-      ArealRoadMaintainer.apply(municipalityToViiteEVKMapping.getOrElse(roadLink.municipalityCode, "EVK11")), // TODO: THIS IS ONE POSSIBLE WHERE THE EVK0 BUG MIGHT ORIGINATE FROM
+      roadMaintainer, // TODO: THIS IS ONE POSSIBLE WHERE THE EVK0 BUG MIGHT ORIGINATE FROM
       Discontinuity.Continuous.value,
       AddrMRange(0, 0),
       "",

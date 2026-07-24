@@ -23,49 +23,10 @@ object ProjectSectionMValueCalculator {
       thisPL.originalAddrMRange.continuesTo(ext.originalAddrMRange) &&
         (thisPL.track == ext.track || Set(thisPL.track, ext.track).contains(Track.Combined))
     }
-/*  id: Long,
-                        roadPart: RoadPart,
-                        track: Track,
-                        discontinuity: Discontinuity,
-                        addrMRange: AddrMRange,
-                        originalAddrMRange: AddrMRange,
-                        startDate: Option[DateTime] = None,
-                        endDate: Option[DateTime] = None,
-                        createdBy: Option[String] = None,
-                        linkId: String,
-                        startMValue: Double,
-                        endMValue: Double,
-                        sideCode: SideCode,
-                        calibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
-                        originalCalibrationPointTypes: (CalibrationPointType, CalibrationPointType) = (CalibrationPointType.NoCP, CalibrationPointType.NoCP),
-                        geometry: Seq[Point],
-                        projectId: Long,
-                        status: RoadAddressChangeType,
-                        administrativeClass: AdministrativeClass,
-                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface,
-                        geometryLength: Double,
-                        roadwayId: Long,
-                        linearLocationId: Long,
-                        roadMaintainer: ArealRoadMaintainer,
-                        reversed: Boolean,
-                        connectedLinkId: Option[String] = None,
-                        linkGeometryTimeStamp: Long,
-                        roadwayNumber: Long = NewIdValue,
-                        roadName: Option[String] = None,
-                        roadAddressLength: Option[Long] = None, roadAddressStartAddrM: Option[Long] = None, roadAddressEndAddrM: Option[Long] = None, roadAddressTrack: Option[Track] = None, roadAddressRoadPart: Option[RoadPart] = None)*/
     // Reset the end address measure if have changed
     def resetEndAddrMValue(pl: ProjectLink): ProjectLink = {
-      println(s"RESETTING PROJECT LINK END ADDRESS BECAUSE PERCEIVED AS CHANGED")
-      println(s"PL ID :: ${pl.id}")
-      println(s"PL track :: ${pl.track}")
-      println(s"PL addrMRange :: ${pl.addrMRange}")
-      println(s"PL startMValue :: ${pl.startMValue}")
-      println(s"PL endMValue :: ${pl.endMValue}")
       val endAddrMValue = pl.addrMRange.start + pl.addrMRange.length
-      println(s"endAddrMValue ::: $endAddrMValue")
       if (endAddrMValue != pl.addrMRange.end) {
-        println(s"!!!!!!!!! if (endAddrMValue != pl.addrMRange.end) !!!!!!!!!!")
-        println(s"NYT VISSIIN SIJOITELLAAN KORVAAVAA ARVOA ::: $endAddrMValue")
         pl.copy(addrMRange = AddrMRange(pl.addrMRange.start, endAddrMValue))
       } else
         pl

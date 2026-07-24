@@ -1062,26 +1062,26 @@ class RoadwayDAO extends BaseDAO {
    * Said delay is no longer present in AWS.
    * TODO: Refactor this function as it's no longer needed.
    * @param roadNumber
-   * @param startDate
    * @return
    */
-  def getValidRoadParts(roadNumber: Long, startDate: DateTime): List[Long] = {
+  def getValidRoadParts(roadNumber: Long): List[Long] = {
     val query = sql"""
-        SELECT DISTINCT ra.road_part_number
-        FROM roadway ra
-        WHERE road_number = $roadNumber AND valid_to IS NULL AND START_DATE <= $startDate
-            AND end_date IS NULL
-            AND ra.road_part_number NOT IN (
-        SELECT DISTINCT pl.road_part_number
-        FROM project_link pl
-            WHERE (
-            SELECT count(DISTINCT pl2.status)
-            FROM project_link pl2
-            WHERE pl2.road_part_number = ra.road_part_number
-            AND pl2.road_number = ra.road_number
-            AND pl.road_number = pl2.road_number)
-         = 1
-         AND pl.status = 5)
+      SELECT DISTINCT ra.road_part_number
+      FROM roadway ra
+      WHERE road_number = $roadNumber AND valid_to IS NULL
+          AND end_date IS NULL
+          AND ra.road_part_number NOT IN (
+              SELECT DISTINCT pl.road_part_number
+              FROM project_link pl
+              WHERE (
+                  SELECT count(DISTINCT pl2.status)
+                  FROM project_link pl2
+                  WHERE pl2.road_part_number = ra.road_part_number
+                    AND pl2.road_number = ra.road_number
+                    AND pl.road_number = pl2.road_number
+              ) = 1
+              AND pl.status = 5
+          )
       """
     runSelectQuery(query.map(_.long(1)))
   }
@@ -1209,12 +1209,17 @@ class RoadwayDAO extends BaseDAO {
   def fetchTracksForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long],
                                        minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
 
+    val parsedSituationDate = situationDate.map(DateTime.parse)
+
     val dateCondition = situationDate.map(date =>
       sqls"AND start_date <= $date::date AND (end_date >= $date::date OR end_date IS NULL)"
     ).getOrElse(sqls"")
 
     val roadMaintainerCondition = roadMaintainer.map(roadMaintainer => sqls" AND road_maintainer = $roadMaintainer").getOrElse(sqls"")
     val roadNumberCondition = roadNumber.map(roadNumber => sqls" AND road_number = $roadNumber").getOrElse(sqls"")
+
+    val isRoadMaintainerEvk = roadMaintainer.exists(rm => rm.contains("EVK"))
+
 
     val roadPartCondition = {
       val parts = (minRoadPartNumber, maxRoadPartNumber)
@@ -1226,10 +1231,77 @@ class RoadwayDAO extends BaseDAO {
       }
     }
 
+
+    val transitionDateStart = DateTime.parse("2026-01-01")
+    val transitionDateEnd = DateTime.parse("2025-12-31")
+
+    val case1 = parsedSituationDate.exists(_.isBefore(transitionDateStart)) && isRoadMaintainerEvk
+    val case2 = parsedSituationDate.exists(_.isAfter(transitionDateEnd)) && !isRoadMaintainerEvk
+    val case3 = !case1 && !case2
+
+
+    val roadwaysCtePrefix: SQLSyntax =
+      if (case1) {  // Case 1: Elinvoimakeskus road_maintainer and before 2026-01-01
+        sqls"""
+      WITH roadway_numbers AS (
+        SELECT DISTINCT r0.roadway_number
+        FROM roadway r0
+        WHERE r0.valid_to IS NULL
+          $roadNumberCondition
+          $roadMaintainerCondition
+          $roadPartCondition
+          AND r0.start_date = DATE '2026-01-01'
+      ),
+      roadways AS (
+        SELECT r.*
+        FROM roadway r
+        JOIN roadway_numbers rn ON rn.roadway_number = r.roadway_number
+        WHERE r.valid_to IS NULL
+          $dateCondition
+          $roadNumberCondition
+          $roadPartCondition
+      )
+    """
+      } else if (case2) { // Case 2: ELY road_maintainer and after 2025-12-31
+        sqls"""
+      WITH roadway_numbers AS (
+        SELECT DISTINCT r0.roadway_number
+        FROM roadway r0
+        WHERE r0.valid_to IS NULL
+          $roadNumberCondition
+          $roadMaintainerCondition
+          $roadPartCondition
+          AND r0.end_date = DATE '2025-12-31'
+      ),
+      roadways AS (
+        SELECT r.*
+        FROM roadway r
+        JOIN roadway_numbers rn ON rn.roadway_number = r.roadway_number
+        WHERE r.valid_to IS NULL
+          $dateCondition
+          $roadNumberCondition
+          $roadPartCondition
+      )
+    """
+      } else { // Case 3: All other cases, no special filtering
+        sqls"""
+      WITH roadways AS (
+        SELECT *
+        FROM roadway r
+        WHERE r.valid_to IS NULL
+          $dateCondition
+          $roadNumberCondition
+          $roadMaintainerCondition
+          $roadPartCondition
+      )
+    """
+      }
+
     /** Form homogenous sections by road number, road part number, track, start date and road maintainer
      *
      * Use three CTE's (Common Table Expression)
      * 1. roadways: SELECT roadways FROM roadway table with the optional parameters
+     *    - split into three separate handlings ($roadwaysCtePrefix) to accomodate the transition date of 2026-01-01 and the road maintainer types of ELY and Elinvoimakeskus (EVK)
      * 2. roadwayswithstartaddr: SELECT roadways FROM the roadways CTE that don't have another roadway BEFORE it (r2.end_addr_m = r.start_addr_m...). Then set row numbers for these roadways.
      * 3. roadwayswithendaddr: SELECT roadways FROM the roadways CTE that don't have another roadway AFTER it (r2.start_addr_m = r.end_addr_m...). Then set row numbers for these roadways as well
      * Now we have two ROW NUMBERED CTE's: roadwayswithstartaddr and roadwayswithendaddr.
@@ -1237,15 +1309,8 @@ class RoadwayDAO extends BaseDAO {
      * Joining these CTE's by the row numbers will give us one list that tells us the startAddrM and endAddrM of the homogenous section.
      * */
     val query =
-      sql"""WITH roadways
-                AS (SELECT *
-                    FROM   roadway r
-                    WHERE  r.valid_to IS NULL
-                    $dateCondition
-                    $roadMaintainerCondition
-                    $roadNumberCondition
-                    $roadPartCondition
-                    ),
+      sql"""
+          $roadwaysCtePrefix,
            roadwayswithstartaddr AS (SELECT
                            road_maintainer,
                            road_number,

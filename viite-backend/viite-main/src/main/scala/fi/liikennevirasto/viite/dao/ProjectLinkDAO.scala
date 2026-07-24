@@ -807,6 +807,23 @@ class ProjectLinkDAO extends BaseDAO {
     }
   }
 
+  /** Fetches all project links in the given project whose ORIGINAL road part (from the roadway table)
+    * matches the given roadPart. This finds links regardless of whether they have been moved to a
+    * different current road part via Transfer or Renumeration. */
+  def fetchProjectLinksByOriginalRoadPart(roadPart: RoadPart, projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Get project links by original road part") {
+      val query =
+        sql"""
+              $projectLinkQueryBase
+              WHERE roadway.road_number = ${roadPart.roadNumber}
+              AND roadway.road_part_number = ${roadPart.partNumber}
+              AND project_link.project_id = $projectId
+              ORDER BY project_link.road_number, project_link.road_part_number, project_link.end_addr_m
+              """
+      listQuery(query)
+    }
+  }
+
   def fetchByProjectRoadPart(roadPart: RoadPart, projectId: Long): Seq[ProjectLink] = {
     time(logger, "Fetch project links by project road part") {
       val filter = sqls"project_link.road_number = ${roadPart.roadNumber} AND project_link.road_part_number = ${roadPart.partNumber} AND"

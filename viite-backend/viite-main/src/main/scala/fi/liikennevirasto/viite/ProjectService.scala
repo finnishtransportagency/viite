@@ -4,14 +4,13 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
-import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.{municipalityToViiteELYMapping, municipalityToViiteEVKMapping}
+import fi.liikennevirasto.viite.ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
 import fi.liikennevirasto.viite.dao._
 import ProjectCalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.process.strategy.AdministrativeClassTwoTrackSynchronizer.{adjustAdministrativeClassChanges}
-import fi.liikennevirasto.viite.process.strategy.TerminatedTwoTrackSectionSynchronizer.{adjustTerminations}
+import fi.liikennevirasto.viite.process.strategy.TwoTrackAverager.averageTwoTrackBoundaries
 import fi.vaylavirasto.viite.dao.{LinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, UserDefinedCP}
@@ -23,8 +22,7 @@ import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import java.sql.SQLException
-import scala.collection.mutable.ListBuffer
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.util.control.NonFatal
@@ -302,7 +300,7 @@ class ProjectService(
     * If it does not then we check if this project is able to reserve the combination.
     * If the combination is already reserved in this project we simply return their parts, if not we validate the project date with the dates of the road parts.
     * If the validation of the date passes then we return these road parts.
-    * IN ANY OTHER INSTANCE we return a error message detailing what the problem was
+    * IN ANY OTHER INSTANCE we return an error message detailing what the problem was
     *
     * @param roadNumber  : Long
     * @param startPart   : Long - road part number of the start of the reservation
@@ -687,7 +685,7 @@ class ProjectService(
     * @param linkIds   the linkIds to process
     * @param roadPart  the roadPart to apply/was applied to said linkIds
     * @param newLinks  new project links for this ramp
-    * @return the projectLinks with a assigned SideCode
+    * @return the projectLinks with an assigned SideCode
     */
   private def fillRampGrowthDirection(linkIds: Set[String], roadPart: RoadPart, newLinks: Seq[ProjectLink], firstLinkId: String, existingLinks: Seq[ProjectLink]) = {
     if (newLinks.exists(nl => existingLinks.exists(pl => pl.status != RoadAddressChangeType.Termination &&
@@ -717,7 +715,7 @@ class ProjectService(
   }
 
   /**
-    * Main method of reversing the direction of a already created project link.
+    * Main method of reversing the direction of an already created project link.
     * 1st check if the project is writable in the current session, if it is then we check if there still are project links that are unchanged of unhandled, if there are none then the process continues by getting all the discontinuities of all project links.
     * After that we run the query to reverse the directions, after it's execution we re-fetch the project links (minus the terminated ones) and the original information of the roads.
     * Using said information we run an all project links of that project to update the "reversed" tag when relative to the side codes of the original roadways.
@@ -731,7 +729,8 @@ class ProjectService(
     * @return
     */
   def changeDirection(projectId: Long, roadPart: RoadPart, links: Seq[LinkToRevert], coordinates: ProjectCoordinates, username: String): Option[String] = {
-    roadAddressLinkBuilder.municipalityToViiteELYMapping // make sure it is populated outside of this TX
+   // roadAddressLinkBuilder.municipalityToViiteELYMapping // make sure it is populated outside of this TX
+    roadAddressLinkBuilder.municipalityToViiteEVKMapping
     try {
       runWithTransaction {
         projectWritableCheckInSession(projectId) match {
@@ -791,7 +790,7 @@ class ProjectService(
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
-    * project links that are no longer reserved for the project. Reservability is check before this.
+    * project links that are no longer reserved for the project. Reservability is checked before this.
     * for each reserved part get all roadways
     * validate if the road exists on the roadway table and if there isn't different ely codes reserved
     * in case there is, throw roadPartReserved exception
@@ -1125,7 +1124,11 @@ class ProjectService(
     }
     val nonProjectRoadLinks = (normalLinks ++ complementaryLinks).filterNot(rl => projectRoadLinks.exists(_.linkId == rl.linkId)) //    val buildEndTime = System.currentTimeMillis()
 
-    val filledTopology = RoadAddressFiller.fillTopology(nonProjectRoadLinks, addresses.values.flatten.toSeq)
+    val municipalityMapping = ProjectAddressLinkBuilder.municipalityToViiteEVKMapping
+
+    val municipalityNameMapping = ProjectAddressLinkBuilder.municipalityNamesMapping
+
+    val filledTopology = RoadAddressFiller.fillTopology(nonProjectRoadLinks, addresses.values.flatten.toSeq, municipalityMapping, municipalityNameMapping)
 
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
@@ -1187,7 +1190,7 @@ class ProjectService(
     val nonProjectAddresses = addresses.filterNot(a => projectLinks.contains(a._1))
 
     val nonProjectLinks = nonProjectAddresses.values.flatten.toSeq.map { address =>
-      address.linkId -> roadAddressLinkBuilder.build(address)
+      address.linkId -> roadAddressLinkBuilder.buildWithRoadAddress(address)
     }.toMap
 
     logger.info("Build road addresses completed in %d ms".format(System.currentTimeMillis() - buildStartTime))
@@ -1781,7 +1784,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             } else
               Seq.empty[ProjectCalibrationPoint]
           })
-        println(s"${roadAddressChangeType}")
           roadAddressChangeType match {
             case RoadAddressChangeType.Termination =>
               if (devToolData.isDefined) {
@@ -1807,8 +1809,10 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
                     roadAddresses.map(ra => (ra.roadPart)).distinct.lengthCompare(1) != 0) {
                   throw new ProjectValidationException(ErrorMultipleRoadNumbersOrParts)
                 }
-                val roadPartLinks = projectLinkDAO.fetchProjectLinksByProjectRoadPart(toUpdateLinks.head.roadPart, projectId)
-                if (roadPartLinks.exists(rpl => rpl.status == RoadAddressChangeType.Unchanged || rpl.status == RoadAddressChangeType.Transfer || rpl.status == RoadAddressChangeType.New || rpl.status == RoadAddressChangeType.Termination)) {
+                // Check for conflicting actions on the same original road part.
+                val originalRoadPart = toUpdateLinks.head.roadAddressRoadPart.getOrElse(toUpdateLinks.head.roadPart)
+                val roadPartLinks = projectLinkDAO.fetchProjectLinksByOriginalRoadPart(originalRoadPart, projectId)
+                if (roadPartLinks.exists(rpl => rpl.status != RoadAddressChangeType.Renumeration && rpl.status != RoadAddressChangeType.NotHandled)) {
                   throw new ProjectValidationException(ErrorOtherActionWithNumbering)
                 }
                 val (reservationNotNeeded, oldRoadPart) = checkAndMakeReservation(projectId, newRoadPart, RoadAddressChangeType.Renumeration, toUpdateLinks)
@@ -2105,60 +2109,43 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     })
   }
 
-  private val maxDiffForOriginalAddrMAlignment = 1L
-
-  /**
-   * Workaround for occasional 1m drift between calculated addrMRange and originalAddrMRange.
-   *
-   * If either start or end differs by at most maxDiff, originalAddrMRange is aligned to addrMRange
-   * for that boundary.
-   */
-  private def alignOriginalAddrMToCalculatedAddrMWhenClose(projectLinks: Seq[ProjectLink], maxDiff: Long = maxDiffForOriginalAddrMAlignment): Seq[ProjectLink] = {
-    projectLinks.map { link =>
-      val alignedStart = if (Math.abs(link.originalAddrMRange.start - link.addrMRange.start) <= maxDiff) link.addrMRange.start else link.originalAddrMRange.start
-      val alignedEnd = if (Math.abs(link.originalAddrMRange.end - link.addrMRange.end) <= maxDiff) link.addrMRange.end else link.originalAddrMRange.end
-
-      if (alignedStart != link.originalAddrMRange.start || alignedEnd != link.originalAddrMRange.end) {
-        link.copy(originalAddrMRange = AddrMRange(alignedStart, alignedEnd))
-      } else {
-        link
-      }
-    }
-  }
-
   def recalculateProjectLinks(projectId: Long, userName: String, roadParts: Set[RoadPart] = Set()): Unit = {
 
     logger.info(s"Recalculating project $projectId, parts ${roadParts.mkString(", ")}")
     time(logger, "Recalculate links") {
       val projectLinks = projectLinkDAO.fetchProjectLinks(projectId)
-      val recalculated = projectLinks.groupBy(pl => {
-        (pl.roadPart)
-      }).flatMap {
-        grp =>
-          val fusedLinks = getFusedProjectLinks(grp._2)
-          val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, grp._1)
-          val projectLinksWithAdjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
-          val (newLinks, notNewLinks) = projectLinksWithAdjustedCalibrationPoints.partition(_.status == RoadAddressChangeType.New)
-          val (adjustedTerminated, adjustedNonTerminated) = adjustTerminations(notNewLinks).partition(_.status == RoadAddressChangeType.Termination)
-          
-          // Administrative class synchronization needs full non-terminated road-part context
-          // so the neighboring unchanged links can be slid with changed boundaries.
-          val adjustedAdminClassNonTerminated = adjustAdministrativeClassChanges(adjustedNonTerminated)
+      val preparedByRoadPart = projectLinks.groupBy(_.roadPart).map { case (roadPart, linksOnRoadPart) =>
+        val fusedLinks = getFusedProjectLinks(linksOnRoadPart)
+        val adjustedCalibrationPoints = adjustCalibrationPointsOnProjectLinks(fusedLinks)
+        roadPart -> adjustedCalibrationPoints
+      }
 
-          val withoutTerminated = (adjustedAdminClassNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
-          val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
+      val allPreparedLinks = preparedByRoadPart.values.flatten.toSeq
+      val averagedById = averageTwoTrackBoundaries(allPreparedLinks).map(pl => pl.id -> pl).toMap
 
-          // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end
-          val recalculatedWithTerminated = (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+      val recalculated = preparedByRoadPart.flatMap { case (roadPart, linksOnRoadPart) =>
+        val calibrationPoints = ProjectCalibrationPointDAO.fetchByRoadPart(projectId, roadPart)
 
-          // Apply rounding correction to originalAddrMRange for links where the difference between original and calculated addrM values is within the defined threshold
-          alignOriginalAddrMToCalculatedAddrMWhenClose(recalculatedWithTerminated)
+        val averagedOnRoadPart = linksOnRoadPart.map(link => averagedById.getOrElse(link.id, link))
+
+        val (newLinks, notNewLinks) = averagedOnRoadPart.partition(_.status == RoadAddressChangeType.New)
+        val (adjustedTerminated, adjustedNonTerminated) = notNewLinks.partition(_.status == RoadAddressChangeType.Termination)
+
+        val withoutTerminated = (adjustedNonTerminated ++ newLinks).sortBy(_.addrMRange.start)
+        val recalculatedNonTerminated = ProjectSectionCalculator.assignAddrMValues(withoutTerminated, calibrationPoints)
+
+        // Add the adjusted terminated links to the recalculated links and sort them by addrMRange.end.
+        val recalculatedWithTerminated = (recalculatedNonTerminated ++ adjustedTerminated).sortBy(_.addrMRange.end)
+
+        recalculatedWithTerminated
       }.toSeq
 
 
       val terminatedProjectLinksWithAssignedRoadwayNumbers = assignRoadwayNumbersToTerminatedProjectLinks(recalculated)
+      val updatedProjectLinks = recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers
+
       val originalAddresses = roadAddressService.getRoadAddressesByRoadwayIds((recalculated).map(_.roadwayId))
-      projectLinkDAO.updateProjectLinks(recalculated ++ terminatedProjectLinksWithAssignedRoadwayNumbers, userName, originalAddresses)
+      projectLinkDAO.updateProjectLinks(updatedProjectLinks, userName, originalAddresses)
       val projectLinkIdsToDB = recalculated.map(_.id).diff(projectLinks.map(_.id))
 
       val persistable = recalculated.filter(pl => projectLinkIdsToDB.contains(pl.id))
@@ -2324,17 +2311,11 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   private def newProjectTemplate(rl: RoadLinkLike, ra: RoadAddress, project: Project): ProjectLink = {
     val geometry = GeometryUtils.truncateGeometry3D(rl.geometry, ra.startMValue, ra.endMValue)
 
-    println(s"HUNTING THE EVK0 ISSUE in ProjectService.newProjectTemplate: Matching to see if reserved part roadPart matches the road address roadPart")
-
-
     val newRoadMaintainer = project.reservedParts.find(rp => rp.roadPart == ra.roadPart) match {
       case Some(rp) => {
-        val previousImpl = rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
-        println(s"Previous impl: ${previousImpl.id}")
         val currentImpl = rp.roadMaintainer.getOrElse(ra.roadMaintainer)
-        println(s"Current impl: ${currentImpl.id}")
         currentImpl
-      }// rp.roadMaintainer.getOrElse(ArealRoadMaintainer.apply("EVK0"))
+      }
       case _ => ra.roadMaintainer
     }
     ProjectLink(NewIdValue, ra.roadPart, ra.track, ra.discontinuity, ra.addrMRange, ra.addrMRange, ra.startDate, ra.endDate, Some(project.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, ra.sideCode, ra.calibrationPointTypes, (ra.startCalibrationPointType, ra.endCalibrationPointType), geometry, project.id, RoadAddressChangeType.NotHandled, ra.administrativeClass, ra.linkGeomSource, GeometryUtils.geometryLength(geometry), ra.id, ra.linearLocationId, newRoadMaintainer, ra.reversed, None, ra.adjustedTimestamp, roadAddressLength = ra.addrMRange.lengthOption)
@@ -2667,10 +2648,9 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       })
 
       // Exclude linear locations that are terminated from insertion
-      val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
-
+      val (terminatingLinearLocationsToInsert, nonTerminatingLinearLocationsToInsert) = linearLocationsToInsert.partition(ll => terminatedLinkIDs.contains(ll.linkId)) // linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep,
-        nonTerminatingLinearLocationsToInsert, project)
+        linearLocationsToInsert, project)
       handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
         Some(project.startDate.minusDays(1)), nodeIds, project.createdBy)
@@ -2678,6 +2658,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       val oldRoadParts = projectLinks.map(pl => pl.originalRoadPart)
       val newRoadParts = projectLinks.map(pl => pl.roadPart)
+
       (oldRoadParts ++ newRoadParts).distinct
     } catch {
       case e: ProjectValidationException =>
@@ -2904,31 +2885,18 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     * @return A sequence of validation errors, can be empty.
     */
   def validateProjectById(projectId: Long, newSession: Boolean = true): Seq[projectValidator.ValidationErrorDetails] = {
-    def validateWithCalculatedLinks(): Seq[projectValidator.ValidationErrorDetails] = {
+    def validateLinks(): Seq[projectValidator.ValidationErrorDetails] = {
       val project = fetchProjectById(projectId).get
-      val linksBeforeValidation = projectLinkDAO.fetchProjectLinks(projectId)
-
-      // Address-dependent validations require calculated M-values. Recalculate first if needed.
-      // If recalculation fails, log a warning and continue validation with the existing links.
-      if (linksBeforeValidation.exists(_.isNotCalculated)) {
-        try {
-          recalculateProjectLinks(projectId, project.modifiedBy)
-        } catch {
-          case e: Exception =>
-            logger.warn(s"Recalculation failed for project $projectId during validation, continuing with existing link values. ${e.getMessage}", e)
-        }
-      }
-
-      val linksForValidation = projectLinkDAO.fetchProjectLinks(projectId)
-      projectValidator.validateProject(project, linksForValidation)
+      val links   = projectLinkDAO.fetchProjectLinks(projectId)
+      projectValidator.validateProject(project, links)
     }
 
     if (newSession) {
       runWithTransaction {
-        validateWithCalculatedLinks()
+        validateLinks()
       }
     } else {
-      validateWithCalculatedLinks()
+      validateLinks()
     }
   }
 
