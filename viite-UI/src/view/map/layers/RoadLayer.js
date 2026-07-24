@@ -13,6 +13,13 @@ import { fetchAndApplyNodesAndJunctionsForCurrentMap, clearNodeLayer } from './N
 import { fetchProjectLinksForCurrentMap, clearOnProjectClose } from './ProjectLinkLayer.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
+let refresh;
+
+export function refreshRoadLayer(mapState) {
+	if (refresh) {
+		refresh(mapState);
+	}
+}
 export function initRoadLayer(map) {
 	const eventListener = _.extend({}, Backbone.Events);
 
@@ -146,7 +153,7 @@ export function initRoadLayer(map) {
 		);
 	};
 
-	const refreshMap = function (mapState) {
+	refresh = function (mapState) {
 		if (mapState.zoom < zoomlevels.minZoomForRoadLinks) {
 			roadLayer.getSource().clear();
 			clearLinkPropertyLayer();
@@ -171,14 +178,13 @@ export function initRoadLayer(map) {
 		}
 	};
 
-	eventListener.listenTo(eventbus, 'map:refresh', refreshMap);
-
 	const clear = function () {
 		roadLayer.getSource().clear();
 	};
 
 	return {
 		layer: roadLayer,
-		clear: clear
+		clear: clear,
+		refreshRoadLayer
 	};
 }

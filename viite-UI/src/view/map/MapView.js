@@ -4,10 +4,12 @@
  * @param {Object} map - OpenLayers map instance
  * @param {Object} layers - Active map layers keyed by layer name
  */
+
 import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { getSelectedLayer } from '@model/ApplicationModel.js';
+import { refreshRoadLayer } from '@view/map/layers/RoadLayer.js';
 
 const mapState = {
 	map: undefined,
@@ -41,7 +43,7 @@ export function refreshMap(zoomLevel, bbox, center) {
 	setZoomLevel(zoomLevel);
 	mapState.centerLonLat = center;
 
-	eventbus.trigger('map:refresh', {
+	refreshRoadLayer({
 		selectedLayer: getSelectedLayer(),
 		zoom: mapState.zoomLevel,
 		bbox,

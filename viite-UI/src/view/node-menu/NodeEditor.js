@@ -4,9 +4,9 @@ import { DatePicker } from '@components/date-picker/DatePicker.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { DataTable, NodeTableUtils } from '@node-menu/DataTable.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { getZoomLevel } from '@view/map/MapView.js';
+import { refreshRoadLayer } from '@view/map/layers/RoadLayer.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 
 /**
@@ -132,8 +132,7 @@ export function NodeEditor(
 	};
 
 	const onSaveSuccess = () => {
-		eventbus.trigger('map:refresh', { zoom: getZoomLevel() });
-
+		refreshRoadLayer({ zoom: getZoomLevel() });
 		getContainer().off('.nodeEditor');
 		selectedNodesAndJunctions.closeNode(false);
 		exitEditor('search');
