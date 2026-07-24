@@ -75,15 +75,33 @@
 
 			li {
 				.btn;
-				.btn-sm;
-				.btn-tertiary;
-				display: inline-flex;
-				align-items: center;
+				display: inline-block;
+				border: 1px solid transparent;
+				vertical-align: middle;
+				text-align: center;
+				background-image: none;
+				cursor: pointer;
+				white-space: nowrap;
+				user-select: none;
+				transition: all 0.2s cubic-bezier(0.55, 0, 0.1, 1);
+				padding: 5px 7.5px;
+				font-size: 10px;
+				line-height: 10px;
 				box-sizing: border-box;
 				height: 22px;
 				position: relative;
+				width: auto;
 				margin: 0 0 0 -1px;
 				border-radius: 0;
+
+				&:not(.selected) {
+					border-color: #7f7f7c;
+					color: #383836;
+					background-color: #cbcbc9;
+					box-shadow: inset 0 1px 0 rgba(247, 247, 246, 0.325), 0px 1px 1px 0px rgba(23, 23, 23, 0.25);
+					border-top-right-radius: 3px;
+					border-bottom-right-radius: 3px;
+				}
 
 				&.selected {
 					.btn-secondary;
