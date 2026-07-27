@@ -7,7 +7,7 @@
  */
 
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
-import { fetchProjectLinksForCurrentMap } from '@view/map/layers/ProjectLinkLayer.js';
+import { fetchProjectLinks } from '@view/map/layers/ProjectLinkLayer.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
 import { createProjectLinkEditorHTML } from './ProjectLinkEditorHTML.js';
@@ -276,7 +276,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 				const projectId = projectCollection.getCurrentProject().project.id;
 				projectCollection.changeNewProjectLinkDirection(projectId, selected, {
 					onChangeProjectDirectionClicked: function () {
-						fetchProjectLinksForCurrentMap();
+						fetchProjectLinks();
 					},
 					onChangeDirectionFailed: function (error) {
 						if (typeof bindingContext.onChangeDirectionFailed === 'function') {

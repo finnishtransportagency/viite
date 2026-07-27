@@ -119,7 +119,7 @@ export function ProjectCollection(backend, startupParameters) {
 		});
 	}
 
-	function fetch(boundingBox, zoom, projectId, isPublishable, onFetched = function () {}) {
+	function fetch(boundingBox, zoom, projectId, isPublishable) {
 		let id = projectId;
 		if (typeof id === 'undefined' && typeof projectInfo !== 'undefined') {
 			id = projectInfo.id;
@@ -128,16 +128,17 @@ export function ProjectCollection(backend, startupParameters) {
 			backend.abortGettingRoadLinks();
 		}
 
-		backend.getProjectLinks({ boundingBox: boundingBox, zoom: zoom, projectId: id }, function (fetchedLinks) {
-			fetchedProjectLinks = _.map(fetchedLinks, function (projectLinkGroup) {
-				return _.map(projectLinkGroup, function (projectLink) {
-					return new ProjectLinkModel(projectLink);
+		return new Promise(function (resolve) {
+			backend.getProjectLinks({ boundingBox: boundingBox, zoom: zoom, projectId: id }, function (fetchedLinks) {
+				fetchedProjectLinks = _.map(fetchedLinks, function (projectLinkGroup) {
+					return _.map(projectLinkGroup, function (projectLink) {
+						return new ProjectLinkModel(projectLink);
+					});
 				});
+				publishableProject = isPublishable;
+				Spinner.hide();
+				resolve();
 			});
-			publishableProject = isPublishable;
-
-			onFetched();
-			Spinner.hide();
 		});
 	}
 
@@ -326,11 +327,8 @@ export function ProjectCollection(backend, startupParameters) {
 
 		return new Promise(function (resolve) {
 			backendOperation(dataJson, function (successObject) {
-
-        unlockProjectLinks();
-        refreshRoadLayer({ zoom: getZoomLevel() });
-        
 				if (!successObject.success) {
+					unlockProjectLinks();
 					resolve(projectLinkOperationFailure(successObject.errorMessage, successObject));
 					return;
 				}

@@ -12,7 +12,7 @@ import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
 import { selectLayer } from '@model/ApplicationModel.js';
-import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
+import { fetchProjectLinks, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { getNavigation } from '@router.js';
 
@@ -397,27 +397,21 @@ export function ProjectMenu(containerSelector, options = {}) {
 
 	updateProjectMenuBridge = updateProjectMenuInternal;
 
-	const onProjectLinksUpdated = function () {
+	const onProjectLinksUpdated = async function () {
 		if (options.projectCollection) {
 			options.projectCollection.setTmpDirty([]);
 			options.projectCollection.setDirty([]);
 		}
 
-		syncRoadAddressingState({
-			recalculated: false,
-			changeTableOpen: false,
-			hasFormedLinks: true
-			// isSaveInFlight stays true — cleared only when the background fetch completes (onFetched)
-		});
-
-		// Refresh the project error list in the already-visible ActionMenu without a full re-render.
-		// Button states remain disabled (isSaveInFlight) until the map fetch finishes.
-		if (currentActionMenu) {
-			currentActionMenu.updateState({});
-		}
+		syncRoadAddressingState({recalculated: false, changeTableOpen: false, hasFormedLinks: true });
 
 		// Fetch updated project links and re-enable action buttons when the refresh completes.
-		fetchProjectLinksForCurrentMap({ onFetched });
+		await fetchProjectLinks();
+		if (!roadAddressingState.isSaveInFlight) return;
+		syncRoadAddressingState({ isSaveInFlight: false });
+		if (currentActionMenu && currentState === States.ROAD_ADDRESSING) {
+			currentActionMenu.updateState({ isSaveInFlight: false });
+		}
 	};
 
 	const onProjectLinksCreateSuccess = function () {
@@ -475,16 +469,6 @@ export function ProjectMenu(containerSelector, options = {}) {
 			getNavigation().navigateToSelectedProject(result.linkId, project.data);
 		}
 		Spinner.hide();
-	};
-
-	// When the background fetch triggered by a link save finishes, re-enable action buttons.
-	// Guarded by isSaveInFlight so regular project-open fetches don't override button state.
-	const onFetched = function () {
-		if (!roadAddressingState.isSaveInFlight) return;
-		syncRoadAddressingState({ isSaveInFlight: false });
-		if (currentActionMenu && currentState === States.ROAD_ADDRESSING) {
-			currentActionMenu.updateState({ isSaveInFlight: false });
-		}
 	};
 
 	const destroy = function () {

@@ -10,7 +10,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
 import { fetchLinkPropertiesForCurrentMap, clearLinkPropertyLayer } from './LinkPropertyLayer.js';
 import { fetchAndApplyNodesAndJunctionsForCurrentMap, clearNodeLayer } from './NodeLayer.js';
-import { fetchProjectLinksForCurrentMap, clearOnProjectClose } from './ProjectLinkLayer.js';
+import { fetchProjectLinks, clearOnProjectClose } from './ProjectLinkLayer.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
 
 let refresh;
@@ -166,7 +166,7 @@ export function initRoadLayer(map) {
 					fetchLinkPropertiesForCurrentMap();
 					break;
 				case 'roadAddressProject':
-					fetchProjectLinksForCurrentMap();
+					fetchProjectLinks();
 					break;
 				case 'node':
 					fetchAndApplyNodesAndJunctionsForCurrentMap();

@@ -14,7 +14,7 @@ import { ValidationUtils } from './ValidationUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { getNavigation } from '@router.js';
-import { fetchProjectLinksForCurrentMap, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';
+import { fetchProjectLinks, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';
 import { setLinkPropertyInteractionsActive } from '@view/map/layers/LinkPropertyLayer.js';
 
 export function enableCloseBtn() {
@@ -454,7 +454,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 
 						// This updates the map after saving the project
 						projectCollection.getProjectsWithLinksById(savedProject.id, function () {
-							fetchProjectLinksForCurrentMap();
+							fetchProjectLinks();
 						});
 					}
 

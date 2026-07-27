@@ -8,7 +8,7 @@
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
-import { fetchProjectLinksForCurrentMap, clearOnProjectClose as clearProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
+import { fetchProjectLinks, clearOnProjectClose as clearProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer } from '@model/ApplicationModel.js';
@@ -328,7 +328,7 @@ export function ProjectActionMenu(options) {
 					recalculated: !hasErrors
 				});
 
-				fetchProjectLinksForCurrentMap();
+				fetchProjectLinks();
 			} else {
 				new ConfirmPopup(response.errorMessage, {
 					type: 'alert',

@@ -20,7 +20,7 @@ import { getSelectedLayer, selectLayer, getRoadVisibility } from '@model/Applica
 
 let _instance = null;
 
-export function fetchProjectLinksForCurrentMap(options = {}) { return _instance.fetchProjectLinks(options); }
+export function fetchProjectLinks(options = {}) { return _instance.fetchProjectLinks(options); }
 export function openRoadAddressProject(projectSelected) { return _instance.openRoadAddressProject(projectSelected); }
 export function clearOnProjectClose() { return _instance.clearOnProjectClose(); }
 export function discardProjectLinkChanges() { return _instance.discardChanges(); }
@@ -425,16 +425,8 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		else return false;
 	}
 
-	const onProjectLinksFetched = function () {
-    redraw();
-		_.defer(function () {
-			highlightProjectLinkLayerFeaturesInternal();
-			lockedLinkIds = [];
-			map.getViewport().style.cursor = '';
-		});
-	};
 
-	const fetchProjectLinksWith = function (options = {}) {
+	const fetchProjectLinksInternal = async function (options = {}) {
 		const boundingBox = _.isUndefined(options.boundingBox) ? map.getView().calculateExtent(map.getSize()).join(',') : options.boundingBox;
 		const zoom = _.isUndefined(options.zoom) ? zoomlevels.getViewZoom(map) + 1 : options.zoom;
 		let projectId = options.projectId;
@@ -443,16 +435,10 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			projectId = _.isUndefined(currentProject) ? undefined : currentProject.project.id;
 		}
 		const isPublishable = _.isUndefined(options.isPublishable) ? projectCollection.getPublishableStatus() : options.isPublishable;
-		const externalOnFetched = _.isFunction(options.onFetched) ? options.onFetched : null;
-		const onFetched = function () {
-			// Always refresh layer data/highlights and clear lock visuals after fetch.
-			onProjectLinksFetched();
-			if (externalOnFetched) {
-				externalOnFetched();
-			}
-		};
 
-		projectCollection.fetch(boundingBox, zoom, projectId, isPublishable, onFetched);
+		await projectCollection.fetch(boundingBox, zoom, projectId, isPublishable);
+		// Always refresh layer data/highlights and clear lock visuals after fetch.
+		unlockProjectLinks();
 	};
 
 	/**
@@ -538,21 +524,10 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		}
 	};
 
-	const onRoadAddressProjectSelected = function (projId) {
-		projectCollection.getProjectsWithLinksById(projId, function (projectInfo) {
-			fetchProjectLinksWith({
-				boundingBox: map.getView().calculateExtent(map.getSize()),
-				zoom: zoomlevels.getViewZoom(map),
-				projectId: projectInfo.id,
-				isPublishable: projectInfo.publishable
-			});
-		});
-	};
 
 	const openRoadAddressProjectInternal = function (projectSelected) {
 		this.project = projectSelected;
 		getNavigation().navigateToRoadAddressProject(projectSelected.id);
-		onRoadAddressProjectSelected(projectSelected.id);
 		selectLayer("roadAddressProject");
 	};
 
@@ -593,7 +568,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 	addLayers(map, layers);
 
 	_instance = {
-		fetchProjectLinks: fetchProjectLinksWith,
+		fetchProjectLinks: fetchProjectLinksInternal,
 		openRoadAddressProject: openRoadAddressProjectInternal,
 		clearOnProjectClose: function () {
 			clearHighlights();
