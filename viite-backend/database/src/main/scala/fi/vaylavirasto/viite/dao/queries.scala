@@ -20,7 +20,7 @@ object Queries {
 
   def nextRoadNetworkErrorId = sql"SELECT nextval('road_network_error_seq')"
 
-  def nextRoadwayChangeLink = sql"SELECT nextval('roadway_change_link')"
+  def nextRoadwayChangeLink = sql"SELECT nextval('roadway_changes_link_seq')"
 
   @deprecated ("Table published_road_network is no longer in use, and is empty.")
   def nextPublishedRoadNetworkId = sql"SELECT nextval('published_road_network_seq')"

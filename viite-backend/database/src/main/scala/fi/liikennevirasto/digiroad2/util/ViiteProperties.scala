@@ -34,6 +34,8 @@ trait ViiteProperties {
   val dynamicLinkNetworkS3BucketName: String
   val awsConnectionEnabled: Boolean
   val apiS3ObjectTTLSeconds: String
+  // LOCAL DEBUG: when set, dynamic-network "S3" files are written to this local directory instead of the real S3 bucket.
+  val localS3DebugDir: String
 
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String
@@ -79,6 +81,7 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", null)
   val awsConnectionEnabled: Boolean = scala.util.Properties.envOrElse("awsConnectionEnabled", "true").toBoolean
   val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", null)
+  val localS3DebugDir: String = scala.util.Properties.envOrElse("localS3DebugDir", null)
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     scala.util.Properties.envOrElse("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username", null)
@@ -135,6 +138,7 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val dynamicLinkNetworkS3BucketName: String = scala.util.Properties.envOrElse("dynamicLinkNetworkS3BucketName", envProps.getProperty("dynamicLinkNetworkS3BucketName"))
   override val awsConnectionEnabled: Boolean = envProps.getProperty("awsConnectionEnabled", "true").toBoolean
   override val apiS3ObjectTTLSeconds: String = scala.util.Properties.envOrElse("apiS3ObjectTTLSeconds", envProps.getProperty("apiS3ObjectTTLSeconds"))
+  override val localS3DebugDir: String = scala.util.Properties.envOrElse("localS3DebugDir", envProps.getProperty("localS3DebugDir"))
 
   override def getAuthenticationBasicUsername(baseAuth: String = ""): String = {
     envProps.getProperty("authentication." + baseAuth + (if (baseAuth.isEmpty) "" else ".") + "basic.username")
@@ -189,6 +193,7 @@ object ViiteProperties {
   lazy val dynamicLinkNetworkS3BucketName: String = properties.dynamicLinkNetworkS3BucketName
   lazy val awsConnectionEnabled: Boolean = properties.awsConnectionEnabled
   lazy val apiS3ObjectTTLSeconds: String = properties.apiS3ObjectTTLSeconds
+  lazy val localS3DebugDir: String = properties.localS3DebugDir
 
   def getAuthenticationBasicUsername(baseAuth: String = ""): String = properties.getAuthenticationBasicUsername(baseAuth)
   def getAuthenticationBasicPassword(baseAuth: String = ""): String = properties.getAuthenticationBasicPassword(baseAuth)

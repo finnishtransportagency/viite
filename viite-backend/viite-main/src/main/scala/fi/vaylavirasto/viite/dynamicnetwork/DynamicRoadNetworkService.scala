@@ -32,6 +32,21 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
   val complementaryLinkDAO: ComplementaryLinkDAO = new ComplementaryLinkDAO
 
+  // LOCAL DEBUG: set the `localS3DebugDir` property (env var or env.properties) to write all dynamic-network
+  // S3 files to that local directory instead of the real S3 bucket. Leave unset for normal S3 behaviour.
+  private val localS3DebugDir: String = ViiteProperties.localS3DebugDir
+
+  private def saveToS3(bucket: String, id: String, body: String, responseType: String): Unit = {
+    if (localS3DebugDir == null || localS3DebugDir.isEmpty) {
+      awsService.S3.saveFileToS3(bucket, id, body, responseType)
+    } else {
+      val dir = java.nio.file.Paths.get(s"$localS3DebugDir/$bucket")
+      java.nio.file.Files.createDirectories(dir)
+      java.nio.file.Files.write(dir.resolve(id.replace('/', '_')), body.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+      logger.info(s"[LOCAL DEBUG] S3 write → $dir/${id.replace('/', '_')}")
+    }
+  }
+
   def tiekamuRoadLinkChangeErrorToMap(tiekamuRoadLinkChangeError: TiekamuRoadLinkChangeError): Map[String, Any] = {
     Map(
       "errorMessage" -> tiekamuRoadLinkChangeError.errorMessage,
@@ -251,13 +266,77 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       filteredActiveChangeInfos
     }
 
+    /**
+     * Tiekamu can describe a single old→new link mapping with several OVERLAPPING M-range rows
+     * (e.g. a version bump "X:1 → X:2" arriving as 0..49, 0..16, 16..49, 16..38). These overlaps are
+     * not a real merge or a partial change — they redundantly re-cover the same span. Left untouched
+     * they (1) inflate the summed length in validateTiekamuRoadLinkChanges, yielding a false
+     * "No partial changes allowed" error, (2) look like several changes into one new link and so
+     * trigger a false combination / "not continuous" error, and (3) would create overlapping
+     * ReplaceInfos downstream.
+     *
+     * For each (oldLinkId, newLinkId, digitizationChange) group we cluster rows whose old-link M-ranges
+     * overlap or touch, and replace each cluster with a single change spanning the union on both the
+     * old and the new side. Genuinely disjoint ranges (a real partial change with a gap) remain
+     * separate clusters, so genuine partial-coverage cases still fail validation exactly as before.
+     */
+    def collapseOverlappingChanges(changes: Seq[TiekamuRoadLinkChange]): Seq[TiekamuRoadLinkChange] = {
+      // The old-link M-range may be stored descending (oldStartM > oldEndM), so normalise to [lo, hi]
+      // for overlap detection and restore the group's orientation on output.
+      def oldLo(ch: TiekamuRoadLinkChange): Double = math.min(ch.oldStartM, ch.oldEndM)
+      def oldHi(ch: TiekamuRoadLinkChange): Double = math.max(ch.oldStartM, ch.oldEndM)
+
+      changes.groupBy(ch => (ch.oldLinkId, ch.newLinkId, ch.digitizationChange)).values.flatMap { group =>
+        val ascending = group.head.oldEndM >= group.head.oldStartM
+        // Cluster rows whose normalised old-M ranges overlap or touch (within DefaultEpsilon).
+        val clusters = group.sortBy(oldLo).foldLeft(List.empty[List[TiekamuRoadLinkChange]]) {
+          case (head :: tail, ch) if oldLo(ch) <= head.map(oldHi).max + GeometryUtils.DefaultEpsilon =>
+            (ch :: head) :: tail
+          case (acc, ch) =>
+            List(ch) :: acc
+        }
+        clusters.map { cluster =>
+          val first = cluster.head
+          val lo = cluster.map(oldLo).min
+          val hi = cluster.map(oldHi).max
+          val (oldStart, oldEnd) = if (ascending) (lo, hi) else (hi, lo)
+          TiekamuRoadLinkChange(
+            first.oldLinkId, oldStart, oldEnd,
+            first.newLinkId, cluster.map(_.newStartM).min, cluster.map(_.newEndM).max,
+            first.digitizationChange
+          )
+        }
+      }.toSeq
+    }
+
     time(logger, "Creating Viite road link change info sets") {
       val tiekamuRoadLinkChanges = vkmClient.getTiekamuRoadlinkChanges(previousDate, newDate)
       logger.info(s"${tiekamuRoadLinkChanges.length} TiekamuRoadLinkChanges fetched.")
       // filter change infos so that only the ones that target links with road addresses are left
       val roadAddressedRoadLinkChanges = getChangeInfosWithRoadAddress(tiekamuRoadLinkChanges, activeLinearLocations)
 
-      roadAddressedRoadLinkChanges
+      // Drop "no-op" changes: a row where the link maps onto itself with identical M-values and no
+      // digitization change describes a link that did not change at all. Such a row is not an error,
+      // so it must not reach validateTiekamuRoadLinkChanges (where it would be flagged as
+      // "No changes found in the changeset" and drop the entire road part), nor produce a redundant
+      // self-replace in the change set.
+      val (noOpChanges, effectiveChanges) = roadAddressedRoadLinkChanges.partition(ch =>
+        ch.oldLinkId == ch.newLinkId &&
+          ch.oldStartM == ch.newStartM &&
+          ch.oldEndM == ch.newEndM &&
+          !ch.digitizationChange
+      )
+      if (noOpChanges.nonEmpty)
+        logger.info(s"Filtered out ${noOpChanges.length} no-op TiekamuRoadLinkChange(s) (link unchanged); ${effectiveChanges.length} remain.")
+
+      // Reconcile overlapping/fragmented rows that describe the same old→new mapping (see
+      // collapseOverlappingChanges) so they no longer cause false partial-change / combination errors.
+      val collapsedChanges = collapseOverlappingChanges(effectiveChanges)
+      val collapsedAway = effectiveChanges.length - collapsedChanges.length
+      if (collapsedAway > 0)
+        logger.info(s"Collapsed $collapsedAway overlapping TiekamuRoadLinkChange row(s) into spanning changes; ${collapsedChanges.length} remain.")
+
+      collapsedChanges
     }
   }
 
@@ -468,7 +547,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
       var tiekamuRoadLinkChangeErrors = new ListBuffer[TiekamuRoadLinkChangeError]()
       tiekamuRoadLinkChanges.foreach(change => {
-        val lengthOfChange = GeometryUtils.scaleToThreeDigits(change.oldEndM - change.oldStartM)
+        val lengthOfChange = GeometryUtils.scaleToThreeDigits(math.abs(change.oldEndM - change.oldStartM))
         val oldLinkId = change.oldLinkId
         val newLinkId = change.newLinkId
         val newStartM = change.newStartM
@@ -507,7 +586,9 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         // check that there are no "partial" changes to road addressed links, i.e. only part of the link changes and the other part has no changes applied to it.
         if (lengthOfChange != roadAddressedLinkLength) {
           val allChangesWithOldLinkId = tiekamuRoadLinkChanges.filter(_.oldLinkId == oldLinkId)
-          val combinedLengthOfChanges = GeometryUtils.scaleToThreeDigits(allChangesWithOldLinkId.map(och => och.oldEndM - och.oldStartM).sum)
+          // Use abs: a change may run against the old link's digitization direction (oldStartM > oldEndM),
+          // in which case oldEndM - oldStartM is negative. The length covered on the old link is |oldEndM - oldStartM|.
+          val combinedLengthOfChanges = GeometryUtils.scaleToThreeDigits(allChangesWithOldLinkId.map(och => math.abs(och.oldEndM - och.oldStartM)).sum)
           if (combinedLengthOfChanges != roadAddressedLinkLength)
             tiekamuRoadLinkChangeErrors += TiekamuRoadLinkChangeError("No partial changes allowed. The old link needs to have changes applied to the whole length of the old link", change, getMetaData(change, linearLocations, roadwaysForLinearLocations))
         }
@@ -632,7 +713,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
           val s3SkippedChangeSetsName = s"SkippedTiekamuRoadLinkChanges-${previousDate.getYear}-${previousDate.getMonthOfYear}-${previousDate.getDayOfMonth}-" +
                                         s"${newDate.getYear}-${newDate.getMonthOfYear}-${newDate.getDayOfMonth}-${DateTime.now()}"
           val jsonSkippedChanges = Json(DefaultFormats).write(skippedTiekamuRoadLinkChanges.map(skippedChange => skippedTiekamuRoadLinkChangeToMap(skippedChange)))
-          awsService.S3.saveFileToS3(bucketName, s3SkippedChangeSetsName, jsonSkippedChanges, "json") // save the error details to S3
+          saveToS3(bucketName, s3SkippedChangeSetsName, jsonSkippedChanges, "json") // save the error details to S3
         }
       } catch {
         case ex: ViiteException =>
@@ -655,7 +736,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
         val jsonErrorParts = Json(DefaultFormats).write(tiekamuRoadLinkChangeErrors.map(error => tiekamuRoadLinkChangeErrorToMap(error)))
         val s3ChangeSetErrorsName = s"${previousDate.getDayOfMonth}-${previousDate.getMonthOfYear}-${previousDate.getYear}-" +
                                     s"${newDate.getDayOfMonth}-${newDate.getMonthOfYear}-${newDate.getYear}-${DateTime.now()}-Errors"
-        awsService.S3.saveFileToS3(bucketName, s3ChangeSetErrorsName, jsonErrorParts, "json") // save the error details to S3
+        saveToS3(bucketName, s3ChangeSetErrorsName, jsonErrorParts, "json") // save the error details to S3
       }
 
       if (viiteChangeSets.nonEmpty) {
@@ -667,7 +748,7 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
 
         // ViiteChangeSets-yyyy-MM-dd-yyyy-MM-dd-yyyy-MM-dd:hh:mm:ss (ViiteChangeSets-previousDate-newDate-currentTimeStamp)
         val changeSetNameForS3Bucket = "ViiteChangeSets" + "-" + changeDateString + "-" + DateTime.now()
-        awsService.S3.saveFileToS3(bucketName, changeSetNameForS3Bucket, jsonChangeSets, "json")
+        saveToS3(bucketName, changeSetNameForS3Bucket, jsonChangeSets, "json")
 
         linkNetworkUpdater.persistLinkNetworkChanges(viiteChangeSets, changeSetNameForViiteDB, newDate, LinkGeomSource.NormalLinkInterface)
         logger.info(s"${viiteChangeSets.size} links updated successfully!")

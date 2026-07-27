@@ -273,7 +273,7 @@ class VKMClient(endPoint: String, apiKey: String) {
       val previousDateStr = finnishDateFormatter.print(previousDate)
       val newDateStr = finnishDateFormatter.print(newDate)
 
-      Stream
+      val allChanges = Stream
         .from(1)
         .map { page =>
           val params =
@@ -306,6 +306,16 @@ class VKMClient(endPoint: String, apiKey: String) {
         }
         .flatMap(_.toSeq.flatten)
         .toSeq
+
+      // Tiekamu can return the exact same change row more than once (e.g. the same row repeated across
+      // paginated responses). Identical duplicates inflate the per-old-link length sum in Viite's change
+      // validation, producing false "No partial changes allowed" errors that drop the whole road part,
+      // and would create duplicate ReplaceInfos downstream. Drop exact duplicates at the source.
+      val distinctChanges = allChanges.distinct
+      val duplicateCount = allChanges.length - distinctChanges.length
+      if (duplicateCount > 0)
+        logger.info(s"Removed $duplicateCount duplicate TiekamuRoadLinkChange row(s); ${distinctChanges.length} remain.")
+      distinctChanges
     }
   }
 }
