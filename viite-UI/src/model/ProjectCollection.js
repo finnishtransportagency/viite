@@ -6,7 +6,7 @@
  * - Road part reservation and formation
  * - Project validation and publishing
  * - Backend integration for project operations
- * - Dirty state tracking and change management
+ * - Dirty state (unsaved) tracking and change management
  */
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -14,11 +14,11 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { getUserGeoLocation } from '@view/map/MapView.js';
 import { lockProjectLinks, unlockProjectLinks } from '@view/map/layers/ProjectLinkLayer.js';
+import { refreshRoadLayer } from '@view/map/layers/RoadLayer.js';
 
 export function ProjectCollection(backend, startupParameters) {
 	const noop = function () {};
-	// eslint-disable-next-line no-unused-vars
-	let roadAddressProjects = [];
+
 	let projectErrors = [];
 	let reservedParts = [];
 	let formedParts = [];
@@ -32,9 +32,6 @@ export function ProjectCollection(backend, startupParameters) {
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
 	const ProjectStatus = ViiteEnumerations.ProjectStatus;
 	const Track = ViiteEnumerations.Track;
-	const BAD_REQUEST_400 = 400;
-	const PRECONDITION_FAILED_412 = 412;
-	const INTERNAL_SERVER_ERROR_500 = 500;
 	const ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
 	let editedEndDistance = false;
 	let editedBeginDistance = false;
@@ -42,6 +39,22 @@ export function ProjectCollection(backend, startupParameters) {
 	const resetEditedDistance = function () {
 		editedEndDistance = false;
 		editedBeginDistance = false;
+	};
+
+	const projectLinkOperationSuccess = function (operation, response) {
+		return {
+			ok: true,
+			operation: operation,
+			response: response
+		};
+	};
+
+	const projectLinkOperationFailure = function (message, details = null) {
+		return {
+			ok: false,
+			message: message,
+			details: details
+		};
 	};
 
 	const normalizeProjectErrors = function (payload) {
@@ -130,7 +143,6 @@ export function ProjectCollection(backend, startupParameters) {
 
 	function getProjects(onlyActive, onProjectsFetched = noop) {
 		return backend.getRoadAddressProjects(onlyActive, function (projects) {
-			roadAddressProjects = projects;
 			onProjectsFetched(projects);
 		});
 	}
@@ -146,7 +158,6 @@ export function ProjectCollection(backend, startupParameters) {
 
 	function getProjectsWithLinksById(projectId, onProjectFetched = noop, onSetRecalculatedAfterChangesFlag = noop) {
 		return backend.getProjectsWithLinksById(projectId, function (result) {
-			roadAddressProjects = result.project;
 			currentProject = result;
 			projectInfo = {
 				id: result.project.id,
@@ -172,7 +183,6 @@ export function ProjectCollection(backend, startupParameters) {
 	}
 
 	function clearRoadAddressProjects() {
-		roadAddressProjects = [];
 		fetchedProjectLinks = [];
 		reservedParts = [];
 		formedParts = [];
@@ -252,10 +262,7 @@ export function ProjectCollection(backend, startupParameters) {
 		});
 	}
 
-	function revertChangesRoadlink(links, callbacks = {}) {
-		const onProjectLinksRevertedChanges = callbacks.onProjectLinksRevertedChanges || noop;
-		const onProjectLinksUpdated = callbacks.onProjectLinksUpdated || noop;
-		const onProjectLinksUpdateFailed = callbacks.onProjectLinksUpdateFailed || noop;
+	function revertChangesRoadlink(links) {
 		if (!_.isEmpty(links)) {
 			const coordinates = getUserGeoLocation();
 			const revertIds = _.uniq(links.filter(l => l.id > 0).map(l => l.id));
@@ -270,76 +277,73 @@ export function ProjectCollection(backend, startupParameters) {
 				coordinates: coordinates
 			};
 			lockProjectLinks(revertIds, revertLinkIds);
-			backend.revertChangesRoadlink(data, function (response) {
-				if (response.success) {
-					dirtyProjectLinkIds = [];
-					publishableProject = response.publishable;
-					setAndWriteProjectErrorsToUser(response);
-					setFormedParts(response.formedInfo);
-					onProjectLinksRevertedChanges(response);
-					onProjectLinksUpdated(response);
-				} else {
-					unlockProjectLinks();
-					if (response.status === INTERNAL_SERVER_ERROR_500 || response.status === BAD_REQUEST_400) {
-						onProjectLinksUpdateFailed(response.status);
+			return new Promise(function (resolve) {
+				backend.revertChangesRoadlink(data, function (response) {
+					if (response.success) {
+						dirtyProjectLinkIds = [];
+						publishableProject = response.publishable;
+						setAndWriteProjectErrorsToUser(response);
+						setFormedParts(response.formedInfo);
+						resolve(projectLinkOperationSuccess('reverted', response));
+					} else {
+						unlockProjectLinks();
+						resolve(projectLinkOperationFailure(response.errorMessage, response));
 					}
-					new ConfirmPopup(response.errorMessage, { type: 'alert' });
-				}
+				});
 			});
 		}
+
+		return null;
 	}
 
-	const createOrUpdate = function (dataJson, callbacks = {}) {
-		const onProjectLinksCreateSuccess = callbacks.onProjectLinksCreateSuccess || noop;
-		const onProjectLinksUpdated = callbacks.onProjectLinksUpdated || noop;
-		const onProjectLinkSaved = callbacks.onProjectLinkSaved || noop;
-		const onProjectValidationFailed = callbacks.onProjectValidationFailed || noop;
-		const onProjectLinksUpdateFailed = callbacks.onProjectLinksUpdateFailed || noop;
+	const createOrUpdate = function (dataJson) {
+		const hasLinks = !_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids);
+		const hasProject = typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0;
+		const hasValidRoadPart = dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0;
 
-		if ((!_.isEmpty(dataJson.linkIds) || !_.isEmpty(dataJson.ids)) && typeof dataJson.projectId !== 'undefined' && dataJson.projectId !== 0) {
-			if (dataJson.roadNumber !== 0 && dataJson.roadPartNumber !== 0) {
-				resetEditedDistance();
-				const ids = dataJson.ids;
-				lockProjectLinks(dataJson.ids, dataJson.linkIds);
-				if (dataJson.roadAddressChangeType === RoadAddressChangeType.New.value && ids.length === 0) {
-					backend.createProjectLinks(dataJson, function (successObject) {
-						if (successObject.success) {
-							publishableProject = successObject.publishable;
-							setAndWriteProjectErrorsToUser(successObject);
-							setFormedParts(successObject.formedInfo);
-							onProjectLinksCreateSuccess(successObject);
-							onProjectLinksUpdated(successObject);
-							if (successObject.errorMessage) {
-								new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
-							}
-						} else {
-							unlockProjectLinks();
-							new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
-						}
-					});
-				} else {
-					backend.updateProjectLinks(dataJson, function (successObject) {
-						if (successObject.success) {
-							publishableProject = successObject.publishable;
-							setAndWriteProjectErrorsToUser(successObject);
-							setFormedParts(successObject.formedInfo);
-							onProjectLinkSaved(dataJson.projectId, successObject.publishable);
-							onProjectLinksUpdated(successObject);
-						} else {
-							unlockProjectLinks();
-							new ConfirmPopup(successObject.errorMessage, { type: 'alert' });
-						}
-					});
-				}
-			} else {
-				onProjectValidationFailed('Virheellinen tieosanumero');
-			}
-		} else {
-			onProjectLinksUpdateFailed(PRECONDITION_FAILED_412);
+		if (!hasLinks || !hasProject) {
+			return Promise.resolve(
+				projectLinkOperationFailure('Virhe linkin tallentamisessa')
+			);
 		}
+
+		if (!hasValidRoadPart) {
+			return Promise.resolve(projectLinkOperationFailure('Virheellinen tieosanumero'));
+		}
+
+		resetEditedDistance();
+
+		const ids = dataJson.ids;
+		const isCreate =
+			dataJson.roadAddressChangeType === RoadAddressChangeType.New.value &&
+			ids.length === 0;
+		const operation = isCreate ? 'created' : 'updated';
+		const backendOperation = isCreate
+			? backend.createProjectLinks
+			: backend.updateProjectLinks;
+
+		lockProjectLinks(ids, dataJson.linkIds);
+
+		return new Promise(function (resolve) {
+			backendOperation(dataJson, function (successObject) {
+
+        unlockProjectLinks();
+        refreshRoadLayer({ zoom: getZoomLevel() });
+        
+				if (!successObject.success) {
+					resolve(projectLinkOperationFailure(successObject.errorMessage, successObject));
+					return;
+				}
+
+				publishableProject = successObject.publishable;
+				setAndWriteProjectErrorsToUser(successObject);
+				setFormedParts(successObject.formedInfo);
+				resolve(projectLinkOperationSuccess(operation, successObject));
+			});
+		});
 	};
 
-	function saveProjectLinks(changedLinks, statusCode, touchedEndDistance, callbacks = {}, formData = null) {
+	function saveProjectLinks(changedLinks, statusCode, touchedEndDistance, formData = null) {
 		const validUserGivenAddrMValues = function (linkId, userEndAddr) {
 			if (!_.isUndefined(userEndAddr) && userEndAddr !== null) {
 				const roadPartIds = getMultiProjectLinks(linkId);
@@ -458,7 +462,7 @@ export function ProjectCollection(backend, startupParameters) {
 		};
 		if (dataJson.trackCode === Track.Unknown.value) {
 			new ConfirmPopup('Tarkista ajoratakoodi', { type: 'alert' });
-			return;
+			return null;
 		}
 
 		const changedLink = _.chain(changedLinks).uniq().sortBy(function (cl) {
@@ -468,16 +472,19 @@ export function ProjectCollection(backend, startupParameters) {
 
 		const validUserEndAddress = !validUserGivenAddrMValues(_.head(dataJson.ids || dataJson.linkIds), dataJson.userDefinedEndAddressM);
 		if (isNewRoad && (editedEndDistance || editedBeginDistance) && validUserEndAddress) {
-			new ConfirmPopup('Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?', {
-				successCallback: function () {
-					createOrUpdate(dataJson, callbacks);
-				},
-				closeCallback: function () {
-					Spinner.hide();
-				}
+			return new Promise(function (resolve) {
+				new ConfirmPopup('Antamasi pituus eroaa yli 20% prosenttia geometrian pituudesta, haluatko varmasti tallentaa tämän pituuden?', {
+					successCallback: function () {
+						createOrUpdate(dataJson).then(resolve);
+					},
+					closeCallback: function () {
+						Spinner.hide();
+						resolve(null);
+					}
+				});
 			});
 		} else {
-			createOrUpdate(dataJson, callbacks);
+			return createOrUpdate(dataJson);
 		}
 	}
 

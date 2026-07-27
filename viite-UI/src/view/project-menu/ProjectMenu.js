@@ -206,6 +206,15 @@ export function ProjectMenu(containerSelector, options = {}) {
 						if (!isValid) return;
 					}
 
+					const pendingSave = projectLinkEditor.validateAndSave(options.projectCollection, additionalData.selectedLinks, {
+						projectLinkLayer: options.projectLinkLayer,
+						selectedProjectLinkProperty: options.selectedProjectLinkProperty
+					}, statusDropdownValue, capturedFormData);
+
+					if (!pendingSave) {
+						return;
+					}
+
 					// Immediately switch to ROAD_ADDRESSING with all buttons disabled so the user
 					// sees the action menu before the HTTP response and map fetch complete.
 					syncRoadAddressingState({
@@ -216,16 +225,7 @@ export function ProjectMenu(containerSelector, options = {}) {
 					});
 					updateUI(States.ROAD_ADDRESSING, project.data, false);
 
-					// Fire the async save — onProjectLinksUpdated handles the HTTP response.
-					projectLinkEditor.validateAndSave(options.projectCollection, additionalData.selectedLinks, {
-						onProjectLinksUpdated,
-						onProjectLinksUpdateFailed,
-						onProjectLinksCreateSuccess,
-						onChangeDirectionFailed
-					}, {
-						projectLinkLayer: options.projectLinkLayer,
-						selectedProjectLinkProperty: options.selectedProjectLinkProperty
-					}, statusDropdownValue, capturedFormData);
+					pendingSave.then(handleProjectLinkSaveResult).catch(handleProjectLinkSaveError);
 				}
 			};
 
@@ -277,6 +277,44 @@ export function ProjectMenu(containerSelector, options = {}) {
 		return `${project.data.name} <i id="editProjectSpan" class="btn-pencil-edit fas fa-pencil-alt"></i>`;
 	};
 
+	const clearSaveInFlight = function () {
+		syncRoadAddressingState({ isSaveInFlight: false });
+		if (currentActionMenu) {
+			currentActionMenu.updateState({ isSaveInFlight: false });
+		}
+	};
+
+	const showProjectLinkSaveError = function (message, details = null) {
+		clearSaveInFlight();
+		console.error('Project link save failed', details || message);
+		new ConfirmPopup(message, {
+			type: 'alert',
+			okButtonLbl: 'OK'
+		});
+	};
+
+	const handleProjectLinkSaveResult = function (result) {
+		if (!result) {
+			clearSaveInFlight();
+			return;
+		}
+
+		if (!result.ok) {
+			showProjectLinkSaveError(result.message, result.details);
+			return;
+		}
+
+		if (result.operation === 'created') {
+			onProjectLinksCreateSuccess(result.response);
+		}
+
+		onProjectLinksUpdated(result.response);
+	};
+
+	const handleProjectLinkSaveError = function (error) {
+		showProjectLinkSaveError((error && error.message), error);
+	};
+
 	const bindInternalEvents = function (activeChild) {
 		// Always work with fresh DOM references (disposable pattern)
 		// Unbind any previous listeners before binding new ones
@@ -320,7 +358,8 @@ export function ProjectMenu(containerSelector, options = {}) {
 					{
 						projectCollection: options.projectCollection,
 						projectLinkLayer: options.projectLinkLayer,
-						selectedProjectLinkProperty: options.selectedProjectLinkProperty
+						selectedProjectLinkProperty: options.selectedProjectLinkProperty,
+						onChangeDirectionFailed: onChangeDirectionFailed
 					}
 				);
 			} else {
@@ -385,27 +424,6 @@ export function ProjectMenu(containerSelector, options = {}) {
 
 		// Fetch updated project links and re-enable action buttons when the refresh completes.
 		fetchProjectLinksForCurrentMap({ onFetched });
-	};
-
-	const onProjectLinksUpdateFailed = function (errorCode) {
-		const errorMessages = {
-			400: 'Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.',
-			401: 'Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.',
-			412: 'Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.',
-			500: 'Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.'
-		};
-
-		// Clear isSaveInFlight so buttons are re-evaluated
-		syncRoadAddressingState({ isSaveInFlight: false });
-		if (currentActionMenu) {
-			currentActionMenu.updateState({ isSaveInFlight: false });
-		}
-
-		new ConfirmPopup(errorMessages[errorCode] ||
-        'Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.', {
-			type: 'alert',
-			okButtonLbl: 'OK'
-		});
 	};
 
 	const onProjectLinksCreateSuccess = function () {

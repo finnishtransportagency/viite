@@ -424,12 +424,12 @@ export function ProjectLinkEditor(canUseDevTools) {
 		}
 	};
 
-	const validateAndSave = (projectCollection, selectedLinks, callbacks = {}, context = {}, capturedStatusValue = null, preBuiltFormData = null) => {
+	const validateAndSave = (projectCollection, selectedLinks, context = {}, capturedStatusValue = null, preBuiltFormData = null) => {
 		const statusDropdownValue = capturedStatusValue !== null ? capturedStatusValue : $('#dropDown_0').val();
 		const changeType = _.find(RoadAddressChangeType, obj => obj.description === statusDropdownValue);
 		if (!changeType) {
 			console.error('validateAndSave: unknown changeType for dropdown value', statusDropdownValue);
-			return;
+			return null;
 		}
 		// Use pre-captured form data when provided (caller already destroyed the DOM),
 		// otherwise capture from live DOM now.
@@ -464,29 +464,24 @@ export function ProjectLinkEditor(canUseDevTools) {
 			context.selectedProjectLinkProperty.clean();
 		}
 
-		if (!validate(selectedLinks, statusDropdownValue, capturedFormData, projectCollection)) return;
+		if (!validate(selectedLinks, statusDropdownValue, capturedFormData, projectCollection)) return null;
 
 		if (changeType.value === RoadAddressChangeType.Revert.value) {
 			if (projectCollection) {
-				projectCollection.revertChangesRoadlink(selectedLinks, {
-					onProjectLinksUpdated: callbacks.onProjectLinksUpdated,
-					onProjectLinksUpdateFailed: callbacks.onProjectLinksUpdateFailed
-				});
+				return projectCollection.revertChangesRoadlink(selectedLinks);
 			}
 		} else {
 			const linksToSave = tmpDirty.length > 0 ? tmpDirty : selectedLinks;
           
 			if (projectCollection) {
-				const isEndDistanceModified = FormState.isEndDistanceModified($('#endDistance').val());
+				const endDistanceValue = capturedFormData.endDistance !== undefined ? capturedFormData.endDistance : $('#endDistance').val();
+				const isEndDistanceModified = FormState.isEndDistanceModified(endDistanceValue);
               
-				projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified, {
-					onProjectLinksCreateSuccess: callbacks.onProjectLinksCreateSuccess,
-					onProjectLinksUpdated: callbacks.onProjectLinksUpdated,
-					onProjectLinksUpdateFailed: callbacks.onProjectLinksUpdateFailed
-				}, capturedFormData);
+				return projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified, capturedFormData);
 			}
 		}
-		return true;
+
+		return null;
 	};
 
   // Public api
