@@ -50,13 +50,14 @@ export function ProjectMenu(containerSelector, options = {}) {
 		editFlag = false;
 		additionalData = { selectedLinks: [] };
 		roadAddressingState = { hasErrors: false, changeTableOpen: false, recalculated: false, publishable: false };
-      
-		// Clean up MenuContainer and release DOM references
+  
+    
 
 		// Restore main UI state
 		setMainMenuState('main');
-
-
+		if (options.projectChangeTable) {
+			options.projectChangeTable.hide();
+		}
 		clearLinkPropertyLayer();
 		clearProjectLinkLayer();
 		setProjectLinkDiscardChanges();
@@ -64,15 +65,11 @@ export function ProjectMenu(containerSelector, options = {}) {
 		selectLayer('linkProperty', true, noSave);
 	};
 
-
 	// --- State & Project Management ---
 	let currentState = States.CONFIGURATION;
     
 	let editFlag = false;
-	const project = {
-		data: null,
-		isNew: true
-	};
+	const project = { data: null, isNew: true };
 
 	let additionalData = {
 		selectedLinks: []
