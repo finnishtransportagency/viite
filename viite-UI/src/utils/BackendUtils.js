@@ -409,6 +409,10 @@ export function Backend() {
 			$.getJSON(url, callback);
 		},
 
+		getNotificationBanner: function (callback) {
+			$.get('api/viite/notificationbanner', callback);
+		},
+
 		getSearchResults: function (searchString) {
 			return $.get("api/viite/roadlinks/search", { search: searchString }).then(function (x) {
 				return x;

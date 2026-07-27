@@ -14,7 +14,6 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { getUserGeoLocation } from '@view/map/MapView.js';
 import { lockProjectLinks, unlockProjectLinks } from '@view/map/layers/ProjectLinkLayer.js';
-import { refreshRoadLayer } from '@view/map/layers/RoadLayer.js';
 
 export function ProjectCollection(backend, startupParameters) {
 	const noop = function () {};

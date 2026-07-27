@@ -30,6 +30,7 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { Environment } from '@utils/EnvironmentUtils.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { initNavigation } from '@router.js';
+import { initNotificationBanner } from '@components/notification-banner/NotificationBanner.js';
 
 // Starts application
 export function startApplication() {
@@ -144,6 +145,7 @@ const initializeMap = function (models, startupParameters) {
 
 const initializeUI = function (map, backend, startupParameters, layers, tileMaps, models, roadNameCollection) {
 	const mapPluginsContainer = jQuery('#map-plugins');
+  initNotificationBanner(backend);
 
 	new ScaleBar(map, mapPluginsContainer);
 	new ZoomBox(map, mapPluginsContainer);

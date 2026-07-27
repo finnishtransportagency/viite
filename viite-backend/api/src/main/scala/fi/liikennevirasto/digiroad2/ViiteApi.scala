@@ -11,7 +11,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.DigiroadSerializers
-import fi.vaylavirasto.viite.dao.{RoadName, RoadNameForRoadAddressBrowser}
+import fi.vaylavirasto.viite.dao.{NotificationBannerDAO, RoadName, RoadNameForRoadAddressBrowser}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.ArealRoadMaintainer.{getELYNumber, getEVKNumber}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, BeforeAfter, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, Track}
@@ -1422,6 +1422,20 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
   get("/roadlinks/search", operation(getCoordinatesForSearch)) {
     val searchString = params.get("search")
     roadAddressService.getSearchResults(searchString)
+  }
+
+  private val getNotificationBanner: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("getNotificationBanner")
+      tags "ViiteAPI - General"
+      summary "Returns the notification banner message, or an empty string when no banner is active."
+    )
+  get("/notificationbanner", operation(getNotificationBanner)) {
+    time(logger, s"GET request for /notificationbanner") {
+      val message = PostGISDatabaseScalikeJDBC.runWithReadOnlySession {
+        NotificationBannerDAO.getMessage.getOrElse("")
+      }
+      Map("message" -> message)
+    }
   }
 
   private val getRoadLinkDate: SwaggerSupportSyntax.OperationBuilder = (
