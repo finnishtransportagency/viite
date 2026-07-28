@@ -1,6 +1,8 @@
-var assert = require('assert');
-global._ = require('lodash');
-var GeometryUtils = require('../../src/utils/GeometryUtils.js').GeometryUtils;
+import assert from 'node:assert';
+import lodash from 'lodash';
+import { GeometryUtils } from '../../src/utils/GeometryUtils.js';
+
+globalThis._ = lodash;
 
 describe('Geometry utils', function () {
 

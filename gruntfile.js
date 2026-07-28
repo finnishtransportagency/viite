@@ -2,7 +2,7 @@ module.exports = function (grunt) {
 	const serveStatic = require('serve-static');
 	const serveIndex = require('serve-index');
 	const path = require('path');
-	const { execSync } = require('child_process');
+	const { execSync, execFileSync } = require('child_process');
 	const { createProxyMiddleware } = require('http-proxy-middleware');
 
 	const apiProxy = createProxyMiddleware({
@@ -266,17 +266,31 @@ module.exports = function (grunt) {
 		}
 	});
 
+	grunt.registerTask('mochaEsm', 'Run unit tests with ESM imports', function () {
+		const mochaBin = path.resolve('node_modules/mocha/bin/mocha.js');
+		const testFiles = grunt.file.expand('viite-UI/test/unit-tests/*.js');
+		const nodeOptions = [process.env.NODE_OPTIONS, '--experimental-default-type=module'].filter(Boolean).join(' ');
+
+		execFileSync(process.execPath, [mochaBin, ...testFiles], {
+			stdio: 'inherit',
+			env: {
+				...process.env,
+				NODE_OPTIONS: nodeOptions
+			}
+		});
+	});
+
 	var target = grunt.option('target') || 'production';
 
 	grunt.registerTask('server', ['env:development', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-	grunt.registerTask('test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
+	grunt.registerTask('test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaEsm']);
 
-	grunt.registerTask('default', ['eslint', 'env:production', 'preprocess:production', 'connect:viite', 'mochaTest:test', 'clean', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster']);
+	grunt.registerTask('default', ['eslint', 'env:production', 'preprocess:production', 'connect:viite', 'mochaEsm', 'clean', 'less:viiteprod', 'concat', 'terser', 'cacheBust:viiteCacheBuster']);
 
 	grunt.registerTask('deploy', ['clean', 'env:' + target, 'preprocess:production', 'less:viiteprod', 'concat', 'terser', 'copy', 'cacheBust:viiteCacheBuster', 'save_deploy_info']);
 
-	grunt.registerTask('unit-test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaTest:test']);
+	grunt.registerTask('unit-test', ['eslint', 'env:development', 'preprocess:development', 'connect:viite', 'mochaEsm']);
 
 	grunt.registerTask('save_deploy_info',
 		function () {
