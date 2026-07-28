@@ -24,3 +24,8 @@ const parseCoordinates = function (coordinates) {
 export const LocationInputParser = {
 	parse: parse
 };
+
+// This is needed for Mocha tests to work
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = { LocationInputParser };
+}

@@ -78,3 +78,8 @@ export const GeometryUtils = {
 	calculateMidpointOfLineString,
 	geometryLength
 };
+
+// This is needed for Mocha tests to work
+if (typeof module !== 'undefined' && module.exports) {
+	module.exports = { GeometryUtils };
+}
