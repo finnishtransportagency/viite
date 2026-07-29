@@ -199,13 +199,17 @@ module.exports = function (grunt) {
 		},
 		less: {
 			viitedev: {
+				options: {
+					paths: ['viite-UI/src']
+				},
 				files: {
 					"dist/css/viite.css": "viite-UI/src/less/main.less"
 				}
 			},
 			viiteprod: {
 				options: {
-					cleancss: true
+					cleancss: true,
+					paths: ['viite-UI/src']
 				},
 				files: {
 					"dist/css/viite.css": "viite-UI/src/less/main.less"
