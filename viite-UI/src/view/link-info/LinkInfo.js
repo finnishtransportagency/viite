@@ -178,7 +178,7 @@ export function LinkInfo(selectedLinkProperty) {
                 ${isSamePart ? staticField('LOPPUETÄISYYS', _.get(props, 'addrMRange.end')) : constructField('LOPPUETÄISYYS', '')}
                 
                 ${lengthDynamicField()}
-                ${isSingle ? staticField('Elinvoimakeskus', firstLink.evkCode) : constructField('Elinvoimakeskus', formatRowsNoWrap(evkCodes.map(v => `${withFallback(v)} ${decodeAttributes('Elinvoimakeskus', v)}`.trim())))}
+                ${isSingle ? staticField('ELINVOIMAKESKUS', firstLink.evkCode) : constructField('ELINVOIMAKESKUS', formatRowsNoWrap(evkCodes.map(v => `${withFallback(v)} ${decodeAttributes('ELINVOIMAKESKUS', v)}`.trim())))}
                 ${isSingle ? staticField('HALLINNOLLINEN LUOKKA', firstLink.administrativeClassId) : constructField('HALLINNOLLINEN LUOKKA', formatRowsNoWrap(administrativeClasses.map(v => `${withFallback(v)} ${decodeAttributes('HALLINNOLLINEN LUOKKA', v)}`.trim())))}
                 ${isSamePart ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '')}
                 ${isSamePart ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '')}

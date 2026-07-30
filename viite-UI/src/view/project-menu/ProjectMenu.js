@@ -11,7 +11,7 @@ import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
-import { selectLayer } from '@model/ApplicationModel.js';
+import { getSelectedLayer, selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinks, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { getNavigation } from '@router.js';
@@ -41,7 +41,10 @@ export function ProjectMenu(containerSelector, options = {}) {
 		selectedProjectLinkProperty.clearFeaturesToKeep();
 	};
 
-	const closeProjectMenu = ({ noSave = false } = {}) => {
+	const closeProjectMenu = (closeOptions = {}) => {
+		const noSave = typeof closeOptions === 'boolean'
+			? closeOptions
+			: Boolean(closeOptions && closeOptions.noSave);
 
 		// Reset component state
 		currentState = States.CONFIGURATION;
@@ -50,18 +53,24 @@ export function ProjectMenu(containerSelector, options = {}) {
 		editFlag = false;
 		additionalData = { selectedLinks: [] };
 		roadAddressingState = { hasErrors: false, changeTableOpen: false, recalculated: false, publishable: false };
-  
-    
 
 		// Restore main UI state
 		setMainMenuState('main');
 		if (options.projectChangeTable) {
 			options.projectChangeTable.hide();
 		}
+		if (options.projectCollection && typeof options.projectCollection.clearRoadAddressProjects === 'function') {
+			options.projectCollection.clearRoadAddressProjects();
+		}
 		clearLinkPropertyLayer();
 		clearProjectLinkLayer();
 		setProjectLinkDiscardChanges();
 		clearSelectedProjectLinks();
+
+		// If selected layer already says linkProperty, force a transition cycle
+		// so layer listeners run and project-mode visuals/interactions are cleared.
+
+		selectLayer('roadAddressProject', false, noSave);
 		selectLayer('linkProperty', true, noSave);
 	};
 
