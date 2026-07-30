@@ -161,8 +161,10 @@ export function ProjectDetailsForm(callbacks = {}) {
 		return `
         <div class="form-dark">
 
-          <div>Lisätty järjestelmään : ${createdString}</div>
-          <div>Muokattu viimeksi : ${modifiedString}</div>
+          <div class="metadata-container">
+            <p>Lisätty järjestelmään : ${createdString}</p>
+            <p>Muokattu viimeksi : ${modifiedString}</p>
+          </div>
 
           ${metadataForm(project)}
           ${reservationControls()}
