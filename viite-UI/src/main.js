@@ -61,8 +61,6 @@ export function startApplication() {
 		};
 
 		backend.getUserRoles(function (userData) {
-			console.log('[getUserRoles] userData received:', userData);
-			console.log('[getUserRoles] userName:', userData && userData.userName, '| roles:', userData && userData.roles);
 			setUserData(userData);
 			setupProjections();
 			initializeApplication(backend, models, startupParameters, roadNameCollection);

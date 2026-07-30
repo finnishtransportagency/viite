@@ -391,7 +391,6 @@ export function Backend() {
 
 		getUserRoles: function (callback) {
 			return $.get('api/viite/user', function (response) {
-				console.log('[getUserRoles] Raw response:', response);
 				return _.isFunction(callback) && callback(response);
 			}).fail(function (jqxhr, textStatus, error) {
 				console.error('[getUserRoles] Request failed:', textStatus, error, 'status:', jqxhr.status);

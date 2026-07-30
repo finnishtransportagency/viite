@@ -12,6 +12,7 @@ import { fetchLinkPropertiesForCurrentMap, clearLinkPropertyLayer } from './Link
 import { fetchAndApplyNodesAndJunctionsForCurrentMap, clearNodeLayer } from './NodeLayer.js';
 import { fetchProjectLinks, clearOnProjectClose } from './ProjectLinkLayer.js';
 import { getRoadVisibility, getSelectedLayer } from '@model/ApplicationModel.js';
+import { dateutil } from '@utils/DateUtils.js';
 
 let refresh;
 
@@ -45,6 +46,50 @@ export function initRoadLayer(map) {
 
 	map.addOverlay(overlay);
 
+	const withFallback = (value, fallback = '-') => {
+		return _.isNil(value) || value === '' ? fallback : value;
+	};
+
+	const formatLastModified = (roadData) => {
+		const toHumanReadableTimestamp = (date) => {
+			const day = date.getDate();
+			const month = date.getMonth() + 1;
+			const year = date.getFullYear();
+
+			return `${day}.${month}.${year}`;
+		};
+
+		const formatModifiedDate = (value) => {
+			if (_.isNil(value) || value === '') {
+				return value;
+			}
+
+			const dateString = String(value).trim();
+			const parseAttempts = [
+				() => dateutil.parseCustomDateString(dateString),
+				() => dateutil.parseDate(dateString),
+				() => new Date(dateString)
+			];
+
+			for (const attempt of parseAttempts) {
+				try {
+					const parsedDate = attempt();
+					if (dateutil.isValidDate(parsedDate)) {
+						return toHumanReadableTimestamp(parsedDate);
+					}
+				} catch {
+					// Continue to the next parser.
+				}
+			}
+
+			return value;
+		};
+
+		let modifiedAt = roadData.modifiedAt;
+		modifiedAt = formatModifiedDate(modifiedAt);
+		return withFallback(modifiedAt);
+	};
+
 
 	const buildBaseHtml = (roadData) => `
 		<div class="popup-line-div"><div>Tienumero:&nbsp;</div><div class="selectable">${roadData.roadNumber}</div></div>
@@ -56,6 +101,7 @@ export function initRoadLayer(map) {
 			<div>Hall. luokka:&nbsp;</div>
 			<div class="selectable">${displayAdministrativeClass(roadData.administrativeClassId)}</div>
 		</div>
+		<div class="popup-line-div"><div>Muokattu viimeksi:&nbsp;</div><div class="selectable">${formatLastModified(roadData)}</div></div>
 	`;
 
 	const buildExtraHtml = (roadData) => `
