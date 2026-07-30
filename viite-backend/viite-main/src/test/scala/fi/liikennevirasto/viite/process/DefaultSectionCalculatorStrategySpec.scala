@@ -2937,4 +2937,45 @@ Left     ^  ^   Right
 
    }
  }
+
+ test("EXPERIMENT two new parallel tracks growth direction from ajorata number") {
+   runWithRollback {
+     // Two parallel vertical roads: west at x=0, east at x=5, both spanning y=0..10.
+     // Try both ajorata labelings, both digitization orders per link and several sidecodes.
+     // Domain invariant: the RightSide (ajorata 1) track must lie on the RIGHT of the growth direction,
+     // i.e. the vector from the right track start toward the left track start points to the LEFT of growth
+     // (2D cross product of growth x lateral > 0).
+     def mkLink(x: Double, snOrder: Boolean, track: Track, sc: SideCode): ProjectLink = {
+       val geom = if (snOrder) Seq(Point(x, 0.0), Point(x, 10.0)) else Seq(Point(x, 10.0), Point(x, 0.0))
+       val id = Sequences.nextProjectLinkId
+       ProjectLink(id, RoadPart(9999, 1), track, Discontinuity.Continuous, AddrMRange(0L, 0L), AddrMRange(0L, 0L), None, None, None, id.toString, 0.0, 10.0, sc, (NoCP, NoCP), (NoCP, NoCP), geom, 0L, RoadAddressChangeType.New, AdministrativeClass.State, NormalLinkInterface, GeometryUtils.geometryLength(geom), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+     }
+     val sides  = Seq(SideCode.Unknown, SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+     val orders = Seq(true, false)
+     val combos = for { rightIsWest <- Seq(true, false); sc <- sides; w <- orders; e <- orders } yield (rightIsWest, sc, w, e)
+     val results = combos.map { case (rightIsWest, sc, westSN, eastSN) =>
+       val west = mkLink(0.0, westSN, if (rightIsWest) Track.RightSide else Track.LeftSide, sc)
+       val east = mkLink(5.0, eastSN, if (rightIsWest) Track.LeftSide else Track.RightSide, sc)
+       val rightLink = if (rightIsWest) west else east
+       val res = try {
+         val (rightStart, leftStart) = defaultSectionCalculatorStrategy.findStartingPoints(Seq(west, east), Seq(), Seq(), Seq.empty[UserDefinedCalibrationPoint])
+         val rightFar = Seq(rightLink.geometry.head, rightLink.geometry.last).maxBy(_.distance2DTo(rightStart))
+         val d = fi.vaylavirasto.viite.geometry.Vector3d(rightFar.x - rightStart.x, rightFar.y - rightStart.y, 0.0).normalize2D()
+         val s = fi.vaylavirasto.viite.geometry.Vector3d(leftStart.x - rightStart.x, leftStart.y - rightStart.y, 0.0)
+         val crossZ = d.x * s.y - d.y * s.x
+         (crossZ > 0, f"rStart=$rightStart lStart=$leftStart growth=(${d.x}%.0f,${d.y}%.0f) crossZ=$crossZ%.1f")
+       } catch {
+         case ex: Throwable => (false, s"EXC ${ex.getClass.getSimpleName}: ${ex.getMessage}")
+       }
+       (rightIsWest, sc, westSN, eastSN, res._1, res._2)
+     }
+     val bad = results.filterNot(_._5)
+     val report = results.map { case (rightIsWest, sc, westSN, eastSN, ok, msg) =>
+       f"${if (ok) "OK  " else "FAIL"} rightIsWest=$rightIsWest%-5s sc=$sc%-16s westSN=$westSN%-5s eastSN=$eastSN%-5s | $msg"
+     }.mkString("\n")
+     withClue(s"\n${bad.size}/${results.size} combos violate 'RightSide track on the right of growth':\n$report\n") {
+       bad shouldBe empty
+     }
+   }
+ }
 }
