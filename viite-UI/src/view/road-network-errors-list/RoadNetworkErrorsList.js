@@ -11,6 +11,27 @@ export function RoadNetworkErrorsList(backend) {
 	let modalContainer;
 	let isModalActive = false;
 
+	const formatDate = function(dateObj) {
+		// Handle empty objects from JSON serialization
+		if (!dateObj || (typeof dateObj === 'object' && Object.keys(dateObj).length === 0)) {
+			return '-';
+		}
+		// Handle string dates
+		if (typeof dateObj === 'string') {
+			try {
+				const date = new Date(dateObj);
+				if (isNaN(date.getTime())) return '-';
+				const day = String(date.getUTCDate()).padStart(2, '0');
+				const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+				const year = date.getUTCFullYear();
+				return `${day}.${month}.${year}`;
+			} catch (e) {
+				return '-';
+			}
+		}
+		return '-';
+	};
+
 	const showRoadNetworkErrorsListWindow = function () {
 
 		modalContainer = new ModalContainer({
@@ -247,6 +268,8 @@ export function RoadNetworkErrorsList(backend) {
               <th>Let</th>
               <th>Pituus</th>
               <th>Roadway numero</th>
+              <th>Alkupäivä</th>
+              <th>Loppupäivä</th>
             </thead>
             <tbody></tbody>
           </table>`
@@ -261,6 +284,8 @@ export function RoadNetworkErrorsList(backend) {
                   <td>${rw.addrMRange.end}</td>
                   <td>${rw.length}</td>
                   <td>${rw.roadwayNumber}</td>
+                  <td>${formatDate(rw.startDate)}</td>
+                  <td>${formatDate(rw.endDate)}</td>
               </tr>`
 			);
 			table.append(tableRow);
@@ -279,6 +304,8 @@ export function RoadNetworkErrorsList(backend) {
               <th>Aet</th>
               <th>Let</th>
               <th>Roadway numero</th>
+              <th>Alkupäivä</th>
+              <th>Loppupäivä</th>
             </thead>
             <tbody></tbody>
           </table>`
@@ -292,6 +319,8 @@ export function RoadNetworkErrorsList(backend) {
                   <td>${rw.addrMRange.start}</td>
                   <td>${rw.addrMRange.end}</td>
                   <td>${rw.roadwayNumber}</td>
+                  <td>${formatDate(rw.startDate)}</td>
+                  <td>${formatDate(rw.endDate)}</td>
               </tr>`
 			);
 			table.append(tableRow);
