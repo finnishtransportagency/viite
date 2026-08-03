@@ -4,8 +4,8 @@
   "version": "0.0.1",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
-    "@eslint/js": "^10.0.1",
-    "eslint": "^10.2.0",
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
     "grunt": "1.6.1",
     "grunt-cache-bust": "^1.7.0",
     "grunt-contrib-clean": "~2.0.1",
