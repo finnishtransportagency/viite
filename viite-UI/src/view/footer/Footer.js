@@ -322,11 +322,9 @@ function createCrosshairToggle(parentElement, map, onFeatureClick = null) {
 		if (isDoubleClick) {
 			target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
 			target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
-			setTimeout(() => {
-				target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
-				target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
-				target.dispatchEvent(new PointerEvent('dblclick', { ...eventInit, detail: 2 }));
-			}, 50);
+			target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
+			target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
+			target.dispatchEvent(new PointerEvent('dblclick', { ...eventInit, detail: 2 }));
 		} else {
 			target.dispatchEvent(new PointerEvent('pointerdown', { ...eventInit, buttons: 1 }));
 			target.dispatchEvent(new PointerEvent('pointerup', { ...eventInit, buttons: 0 }));
