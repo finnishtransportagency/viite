@@ -101,6 +101,7 @@ export function initRoadLayer(map) {
 			<div>Hall. luokka:&nbsp;</div>
 			<div class="selectable">${displayAdministrativeClass(roadData.administrativeClassId)}</div>
 		</div>
+		<div class="popup-line-div"><div>Alkupäivämäärä:&nbsp;</div><div class="selectable">${withFallback(roadData.startDate)}</div></div>
 		<div class="popup-line-div"><div>Muokattu viimeksi:&nbsp;</div><div class="selectable">${formatLastModified(roadData)}</div></div>
 	`;
 

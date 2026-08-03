@@ -223,7 +223,8 @@ const NodeTableUtils = {
 					track:          junction.track,
 					roadPartNumber: junction.roadPartNumber,
 					addrM:          junction.addrM,
-					ej:             junction.ej
+					ej:             junction.ej,
+					startDate:      junction.startDate
 				}];
 			}
 
@@ -237,7 +238,8 @@ const NodeTableUtils = {
 					track:          jp.track,
 					roadPartNumber: jp.roadPartNumber,
 					addrM:          jp.addrM,
-					ej:             junction.ej
+					ej:             junction.ej,
+					startDate:      junction.startDate
 				};
 			});
 		}));
