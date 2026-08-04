@@ -22,6 +22,11 @@ export function NodeMenu(
 	menu
 ) {
 	const closeNodeMenu = () => {
+		if (selectedNodesAndJunctions.getCurrentNode()) {
+			selectedNodesAndJunctions.closeNode(true);
+		} else {
+			selectedNodesAndJunctions.closeTemplates();
+		}
 		selectLayer('linkProperty', true);
 		setMainMenuState('main');
 	};

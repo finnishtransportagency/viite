@@ -534,6 +534,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		});
 	}
 
+	// Syncs the selected node marker and its selected junction/template markers to match the current editor state.
 	function updateCurrentNodeMarker(node) {
 		_.each(nodeMarkerSelectedLayer.getSource().getFeatures(), function (nodeFeature) {
 			if (nodeFeature.node.id === node.id) {
@@ -544,7 +545,6 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		});
 
 		_.each(node.nodePoints, function (nodePoint) { toggleNodePointToTemplate(nodePoint); });
-		_.each(node.junctions, function (junction) { toggleJunctionToTemplate(junction); });
 
 		_.each(junctionMarkerSelectedLayer.getSource().getFeatures(), function (junctionFeature) {
 			const junction = _.find(node.junctions, function (junctionFound) {
@@ -643,7 +643,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		junctionMarkerLayer.getSource().clear();
 		junctionTemplateLayer.getSource().clear();
 
-		if (parseInt(zoom, 10) >= zoomlevels.minZoomForNodes) {
+		if (zoom >= zoomlevels.minZoomForNodes) {
 			let filteredNodePointTemplates = templates.nodePoints;
 
 			if (currentNode) {
@@ -682,7 +682,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 			});
 		}
 
-		if (parseInt(zoom, 10) >= zoomlevels.minZoomForJunctions) {
+		if (zoom >= zoomlevels.minZoomForJunctions) {
 			const filteredJunctions = _.flatten(_.map(filteredNodes, 'junctions'));
 			let filteredJunctionTemplates = templates.junctions;
 
@@ -714,6 +714,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 			hideLayer();
 			removeInteractions();
 		} else if (layer === 'node') {
+			toggleLayersVisibility(layers, true);
 			setGeneralOpacity(1);
 			addInteractions();
 			fetchAndApplyNodesAndJunctions();
