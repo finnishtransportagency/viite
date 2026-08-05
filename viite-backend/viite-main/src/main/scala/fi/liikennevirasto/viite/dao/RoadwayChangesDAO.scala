@@ -576,7 +576,8 @@ class RoadwayChangesDAO extends BaseDAO {
 
     val dateConditions = Seq.empty[SQLSyntax] ++
       startDate.map(sd => sqls"$dateField >= TO_TIMESTAMP($sd, 'YYYY-MM-DD')") ++
-      endDate.map(ed => sqls"$dateField <= TO_TIMESTAMP($ed, 'YYYY-MM-DD')")
+      // endDate is a day-only value, so include the whole day instead of cutting off at its midnight
+      endDate.map(ed => sqls"$dateField < TO_TIMESTAMP($ed, 'YYYY-MM-DD') + INTERVAL '1 day'")
 
 
    // val elyCondition = ely.map(e => sqls"(rc.new_ely = $e OR rc.old_ely = $e)").toSeq
