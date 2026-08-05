@@ -53,6 +53,7 @@
                 <div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">${roadData.addrMRange.start}</div></div>
                 <div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">${roadData.addrMRange.end}</div></div>
                 <div class="popup-line-div"><div>Hall. luokka:&nbsp;</div><div class="selectable">${displayAdministrativeClass(roadData.administrativeClassId)}</div></div>
+                <div class="popup-line-div"><div>Alkupäivämäärä:&nbsp;</div><div class="selectable">${roadData.startDate || '-'}</div></div>
               `;
 
               const altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;
