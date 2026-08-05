@@ -208,10 +208,8 @@ export function createProjectLinkEditorLogic(dependencies) {
 			uiElements.devTool.prop('hidden', false);
 			new ConfirmPopup('Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosale.', { type: 'alert' });
 
-			const isHandled = selectedLinks[0] && selectedLinks[0].status !== RoadAddressChangeType.NotHandled.value;
-
-			formControls.tie.prop('disabled', isHandled);
-			formControls.osa.prop('disabled', isHandled);
+			formControls.tie.prop('disabled', false);
+			formControls.osa.prop('disabled', false);
 			formControls.trackCode.prop('disabled', true);
 			formControls.discontinuity.prop('disabled', false);
 			formControls.adminClass.prop('disabled', true);
