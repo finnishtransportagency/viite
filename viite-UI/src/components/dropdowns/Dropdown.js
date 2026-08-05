@@ -20,7 +20,8 @@ export function dropdown(config) {
 			const isSelected = option === defaultValue ? 'selected' : '';
 			return `<option value="${option}" ${isSelected}>${option}</option>`;
 		} else if (typeof option === 'object' && option.value !== undefined) {
-			const isSelected = option.selected || option.value === defaultValue || option.text === defaultValue ? 'selected' : '';
+			// Coerce to string: defaultValue may be numeric (e.g. trackCode) while option.value is always a string.
+			const isSelected = option.selected || String(option.value) === String(defaultValue) || option.text === defaultValue ? 'selected' : '';
 			const isDisabled = option.disabled ? 'disabled hidden' : '';
 			const idAttr = option.id ? `id="${option.id}"` : '';
 			return `<option value="${option.value}" ${isSelected} ${isDisabled} ${idAttr}>${option.text || option.value}</option>`;
