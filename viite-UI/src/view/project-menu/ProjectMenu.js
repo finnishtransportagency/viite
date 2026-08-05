@@ -381,11 +381,17 @@ export function ProjectMenu(containerSelector, options = {}) {
 			return;
 		}
 
+		const previousState = currentState;
 		currentState = newState;
 		project.data = newData;
 		project.isNew = newIsNew;
 		additionalData = data;
-      
+
+		// Trigger map refresh when entering ROAD_ADDRESSING state, but only if we weren't already in that state.
+		if (newState === States.ROAD_ADDRESSING && previousState !== States.ROAD_ADDRESSING) {
+			fetchProjectLinks();
+		}
+
 		render();
 	};
 

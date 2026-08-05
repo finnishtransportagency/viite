@@ -279,7 +279,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			selectDoubleClick.getFeatures().remove(selection);
 			return;
 		}
-    console.log('selectDoubleClick.on select', { ctrlPressed, selection, isDirty: projectCollection.isDirty() });
 		if (!projectCollection.isDirty()) {
 			showDoubleClickChanges(ctrlPressed, selection);
 		} else {
@@ -429,7 +428,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		const isPublishable = _.isUndefined(options.isPublishable) ? projectCollection.getPublishableStatus() : options.isPublishable;
 
 		await projectCollection.fetch(boundingBox, zoom, projectId, isPublishable);
-		// Always refresh layer data/highlights and clear lock visuals after fetch.
 		unlockProjectLinks();
 	};
 
