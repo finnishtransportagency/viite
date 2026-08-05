@@ -15,6 +15,8 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { getNavigation } from '@router.js';
 import { fetchProjectLinks, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';
+import { refreshMap } from '@view/map/MapView.js';
+import { zoomlevels } from '@utils/ZoomLevels.js';
 
 export function enableCloseBtn() {
 	$('#saveAndCancelDialogue, #cancelEdit, .menu-close-btn')
@@ -383,18 +385,12 @@ export function ProjectDetailsForm(callbacks = {}) {
 
 				if (savedProject) {
 					openRoadAddressProject(savedProject);
-
-					// This updates the map after saving the project
-					projectCollection.getProjectsWithLinksById(savedProject.id, function () {
-						fetchProjectLinks();
-					});
 				}
 
-				if (result.projectAddresses && savedProject) {
-					getNavigation().navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
-				}
-
-				selectLayer('roadAddressProject', true, false);
+        // TODO: Find better way to refresh map after project save. Using timeout as workaround
+        window.setTimeout(function () {
+          refreshMap(zoomlevels.getViewZoom(map));
+        }, 1000);
 
 				// For 'Jatka toimenpiteisiin' button, always continue to action menu
 				if (callbacks.continueToActions) {
