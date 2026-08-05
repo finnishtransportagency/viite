@@ -521,6 +521,8 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 			projectLinkLayer.changed();
 
 			addSelectInteractions();
+			// Rreapply highlight so an existing selection stays visible after redraw caused by zoom or pan
+			highlightProjectLinkLayerFeaturesInternal();
 		}
 	};
 
