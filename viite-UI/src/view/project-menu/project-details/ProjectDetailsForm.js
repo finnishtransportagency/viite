@@ -186,8 +186,8 @@ export function ProjectDetailsForm(callbacks = {}) {
 		const isSaveDisabled = isProjectPublished || isFormIncomplete || !hasUnsavedChanges || isProjectNotEditable;
 		const showDelete = !isNewProject && ![ProjectStatus.Accepted.value, ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode);
 		const actionButton = (isNewProject || !isEditMode)
-			? button({ id: 'generalNext', label: 'Jatka toimenpiteisiin', className: 'save btn-primary btn-save action-button', disabled: isFormIncomplete, onClick: () => {} })
-			: button({ id: 'saveProject', label: 'Tallenna', className: 'save btn-primary btn-save action-button', disabled: isSaveDisabled, onClick: () => {} });
+			? button({ id: 'generalNext', label: 'Jatka toimenpiteisiin', className: 'save btn-primary btn-save action-button', disabled: isFormIncomplete, onClick: () => handleActionButtonClick(project) })
+			: button({ id: 'saveProject', label: 'Tallenna', className: 'save btn-primary btn-save action-button', disabled: isSaveDisabled, onClick: () => handleActionButtonClick(project) });
       
 		const cancelButton = (isNewProject || !isEditMode)
 			? button({ id: 'saveAndCancelDialogue', label: 'Poistu', className: 'cancel btn-cancel', disabled: true, onClick: () => {} })
@@ -313,6 +313,118 @@ export function ProjectDetailsForm(callbacks = {}) {
 			.attr('title', tooltipText);
 	};
 
+	// Handles clicks on the 'generalNext'/'saveProject' action button (bound via button()'s onClick).
+	const handleActionButtonClick = function (projectData) {
+		enableCloseBtn();
+
+		const ProjectStatus = ViiteEnumerations.ProjectStatus;
+		const isProjectPublished = Boolean(
+			projectData &&
+        !_.isUndefined(projectData.statusCode) &&
+        ![
+        	ProjectStatus.Incomplete.value,
+        	ProjectStatus.ErrorInViite.value,
+        	ProjectStatus.Unknown.value
+        ].includes(projectData.statusCode)
+		);
+
+    fetchProjectLinks();
+
+		// Prevent saving if project is published, but let them continue to action menu so they can inspect change table
+		if (isProjectPublished) {
+			selectLayer('roadAddressProject', true, false);
+			if (callbacks.continueToActions) {
+				callbacks.continueToActions({ project: projectData });
+			}
+
+			return;
+		}
+
+		projectData.name = $('#nimi').val();
+		projectData.startDate = $('#projectStartDate').val();
+		projectData.additionalInfo = $('#lisatiedot').val();
+
+		// Validate required fields
+		if (!projectData.name || !projectData.startDate) {
+			new ConfirmPopup('Nimi ja alkupäivämäärä ovat pakollisia tietoja.', {
+				type: 'alert',
+				okButtonLbl: 'OK'
+			});
+			return;
+		}
+
+		const dateValidationMessage = getDateValidationMessage(projectData.startDate);
+		if (dateValidationMessage) {
+			showToast(dateValidationMessage, { type: 'warning' });
+			return;
+		}
+
+		Spinner.show();
+
+		const formData = [
+			{ value: projectData.name },
+			{ value: projectData.startDate },
+			{ value: projectData.additionalInfo }
+		];
+
+		const onProjectSaved = function(result) {
+			Spinner.hide();
+
+			if (result && result.success) {
+				markAsSaved();
+
+				const currentProjectState = projectCollection.getCurrentProject ? projectCollection.getCurrentProject() : null;
+				const savedProject = result.project || (currentProjectState && currentProjectState.project) || projectData;
+
+				projectData.id = savedProject.id || projectData.id;
+				projectData.name = savedProject.name || projectData.name;
+				projectData.startDate = savedProject.startDate || projectData.startDate;
+				projectData.additionalInfo = savedProject.additionalInfo || projectData.additionalInfo;
+
+				if (savedProject) {
+					openRoadAddressProject(savedProject);
+
+					// This updates the map after saving the project
+					projectCollection.getProjectsWithLinksById(savedProject.id, function () {
+						fetchProjectLinks();
+					});
+				}
+
+				if (result.projectAddresses && savedProject) {
+					getNavigation().navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
+				}
+
+				selectLayer('roadAddressProject', true, false);
+
+				// For 'Jatka toimenpiteisiin' button, always continue to action menu
+				if (callbacks.continueToActions) {
+					callbacks.continueToActions({ project: savedProject });
+				}
+			} else {
+				new ConfirmPopup(getBackendErrorMessage(result, 'Projektin tallennus epäonnistui.'), {
+					type: 'alert',
+					okButtonLbl: 'OK'
+				});
+			}
+		};
+
+		if (!projectData.id || projectData.id === 0) {
+			// Create new project
+			projectCollection.createProject(formData, map ? map.getView().getResolution() : null, {
+				onProjectSaved,
+				onProjectValidationFailed: projectValidationFailedHandler,
+				onProjectFailed: projectFailedHandler
+			});
+		} else {
+			// Save existing project
+			projectCollection.saveProject(formData, map ? map.getView().getResolution() : null, {
+				onProjectSaved,
+				onProjectValidationFailed: projectValidationFailedHandler,
+				onProjectFailed: projectFailedHandler
+			});
+		}
+	};
+
 	const bindEvents = function (project, projCollection, currentProject) {
 		const projectData = project || { name: '', startDate: '', additionalInfo: '', id: null };
 		markAsSaved();
@@ -379,117 +491,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 			bindReservationHandler(projCollection, currentProject);
 			bindDeleteRoadPartHandlers(projCollection, currentProject);
 		}
-      
-		$('#generalNext, #saveProject').off('click').on('click', function() {
-      
-			enableCloseBtn();
-
-			const ProjectStatus = ViiteEnumerations.ProjectStatus;
-			const isProjectPublished = Boolean(
-				projectData &&
-          !_.isUndefined(projectData.statusCode) &&
-          ![
-          	ProjectStatus.Incomplete.value,
-          	ProjectStatus.ErrorInViite.value,
-          	ProjectStatus.Unknown.value
-          ].includes(projectData.statusCode)
-			);
-
-			// Prevent saving if project is published, but let them continue to action menu so they can inspect change table
-			if (isProjectPublished) {
-				selectLayer('roadAddressProject', true, false);
-
-				if (callbacks.continueToActions) {
-					callbacks.continueToActions({ project: projectData });
-				}
-          
-				return;
-			}
-
-			projectData.name = $('#nimi').val();
-			projectData.startDate = $('#projectStartDate').val();
-			projectData.additionalInfo = $('#lisatiedot').val();
-
-			// Validate required fields
-			if (!projectData.name || !projectData.startDate) {
-				new ConfirmPopup('Nimi ja alkupäivämäärä ovat pakollisia tietoja.', {
-					type: 'alert',
-					okButtonLbl: 'OK'
-				});
-				return;
-			}
-
-			const dateValidationMessage = getDateValidationMessage(projectData.startDate);
-			if (dateValidationMessage) {
-				showToast(dateValidationMessage, { type: 'warning' });
-				return;
-			}
-
-			Spinner.show();
-
-			const formData = [
-				{ value: projectData.name }, 
-				{ value: projectData.startDate }, 
-				{ value: projectData.additionalInfo }
-			];
-
-			const onProjectSaved = function(result) {
-				Spinner.hide();
-
-				if (result && result.success) {
-					markAsSaved();
-
-					const currentProjectState = projectCollection.getCurrentProject ? projectCollection.getCurrentProject() : null;
-					const savedProject = result.project || (currentProjectState && currentProjectState.project) || projectData;
-
-					projectData.id = savedProject.id || projectData.id;
-					projectData.name = savedProject.name || projectData.name;
-					projectData.startDate = savedProject.startDate || projectData.startDate;
-					projectData.additionalInfo = savedProject.additionalInfo || projectData.additionalInfo;
-
-					if (savedProject) {
-						openRoadAddressProject(savedProject);
-
-						// This updates the map after saving the project
-						projectCollection.getProjectsWithLinksById(savedProject.id, function () {
-							fetchProjectLinks();
-						});
-					}
-
-					if (result.projectAddresses && savedProject) {
-						getNavigation().navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
-					}
-            
-					selectLayer('roadAddressProject', true, false);
-            
-					// For 'Jatka toimenpiteisiin' button, always continue to action menu
-					if (callbacks.continueToActions) {
-						callbacks.continueToActions({ project: savedProject });
-					}
-				} else {
-					new ConfirmPopup(getBackendErrorMessage(result, 'Projektin tallennus epäonnistui.'), {
-						type: 'alert',
-						okButtonLbl: 'OK'
-					});
-				}
-			};
-
-			if (!projectData.id || projectData.id === 0) {
-				// Create new project
-				projectCollection.createProject(formData, map ? map.getView().getResolution() : null, {
-					onProjectSaved,
-					onProjectValidationFailed: projectValidationFailedHandler,
-					onProjectFailed: projectFailedHandler
-				});
-			} else {
-				// Save existing project
-				projectCollection.saveProject(formData, map ? map.getView().getResolution() : null, {
-					onProjectSaved,
-					onProjectValidationFailed: projectValidationFailedHandler,
-					onProjectFailed: projectFailedHandler
-				});
-			}
-		});
 
 		$('#saveAndCancelDialogue, #cancelEdit').off('click').on('click', function() {
 			const isEditCancel = $(this).attr('id') === 'cancelEdit';
