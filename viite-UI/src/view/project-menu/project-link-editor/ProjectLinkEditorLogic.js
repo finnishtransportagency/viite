@@ -42,7 +42,9 @@ export function createProjectLinkEditorLogic(dependencies) {
 		const trackValue = _.trim($('#trackCodeDropdown').val() || '');
 		const roadNameValue = _.trim($('#roadName').val() || '');
 		const isChangeTableOpen = projectChangeTable.isChangeTableOpen();
-		const filled = tieValue !== '' && osaValue !== '' && trackValue !== '' && trackValue !== '99' && roadNameValue !== '';
+		// Road names above 69999 (käpyväylä) don't require a road name.
+		const roadNameRequired = Number(tieValue) <= 69999;
+		const filled = tieValue !== '' && osaValue !== '' && trackValue !== '' && trackValue !== '99' && (!roadNameRequired || roadNameValue !== '');
 		const disabled = !(filled && !isChangeTableOpen);
 
 		saveButton.prop('disabled', disabled);

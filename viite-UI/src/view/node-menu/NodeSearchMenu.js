@@ -242,7 +242,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		if (hasRowsInGroups(junctionGroups)) {
 			tables.push(renderDataTable({
 				title: 'Käsittelemättömät liittymäaihiot',
-				headers: ['TIE', 'AJR', 'OSA', 'AET', 'Alkupäivä'],
+				headers: ['TIE', 'AJR', 'OSA', 'AET', 'Alkupäivämäärä'],
 				evkGroups: junctionGroups
 			}));
 		}
@@ -258,7 +258,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		if (hasRowsInGroups(nodePointGroups)) {
 			tables.push(renderDataTable({
 				title: 'Käsittelemättömät solmukohta-aihiot',
-				headers: ['TIE', 'OSA', 'AET', 'Alkupäivä'],
+				headers: ['TIE', 'OSA', 'AET', 'Alkupäivämäärä'],
 				evkGroups: nodePointGroups
 			}));
 		}
