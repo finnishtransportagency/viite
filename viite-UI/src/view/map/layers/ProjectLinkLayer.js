@@ -412,19 +412,11 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		map.updateSize();
 	}
 
-	const toggleSelectInteractions = function (activate, both) {
-		selectDoubleClick.setActive(activate);
-		if (both) {
-			selectSingleClick.setActive(activate);
-		}
-	};
-
 	function projectRoadAddressChangeTypeIn(projectLink, possibleStatus) {
 		if (!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink))
 			return _.includes(possibleStatus, projectLink.status);
 		else return false;
 	}
-
 
 	const fetchProjectLinksInternal = async function (options = {}) {
 		const boundingBox = _.isUndefined(options.boundingBox) ? map.getView().calculateExtent(map.getSize()).join(',') : options.boundingBox;
@@ -535,7 +527,6 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 
 	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
 		isActiveLayer = layer === 'roadAddressProject';
-		toggleSelectInteractions(isActiveLayer, true);
 		if (isActiveLayer) {
 			addSelectInteractions();
 		} else {

@@ -11,7 +11,7 @@ import { ProjectActionMenu } from './project-action-menu/ProjectActionMenu.js';
 import { ProjectDetailsForm } from './project-details/ProjectDetailsForm.js';
 import { showToast } from '@components/toast/Toast.js';
 import { setMainMenuState } from '@view/MainMenu.js';
-import { getSelectedLayer, selectLayer } from '@model/ApplicationModel.js';
+import { selectLayer } from '@model/ApplicationModel.js';
 import { fetchProjectLinks, clearOnProjectClose as clearProjectLinkLayer, setProjectLinkDiscardChanges } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { getNavigation } from '@router.js';

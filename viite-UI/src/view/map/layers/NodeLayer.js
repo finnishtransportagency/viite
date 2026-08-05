@@ -13,7 +13,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
-import { addLayers, clearLayers, toggleLayersVisibility } from './LayerUtils.js';
+import { addLayers, clearLayers, toggleInteractionsActive, toggleLayersVisibility } from './LayerUtils.js';
 import { JunctionMarker } from '../markers/JunctionMarker.js';
 import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
 import { NodeMarker } from '../markers/NodeMarker.js';
@@ -257,7 +257,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	}
 
 	const applyNodeCreateMode = function (enabled) {
-		toggleSelectInteractions(!enabled);
+		toggleInteractionsActive([nodeLayerSelectInteraction], !enabled);
 
 		if (enabled) {
 			pendingMapClickHandler = function (event) {
@@ -372,10 +372,6 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	const removeInteractions = function () {
 		removeSelectInteractions();
 		removeTranslateInteractions();
-	};
-
-	const toggleSelectInteractions = function (activate) {
-		nodeLayerSelectInteraction.setActive(activate);
 	};
 
 	function addSelectInteractions() { map.addInteraction(nodeLayerSelectInteraction); }
@@ -709,7 +705,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	}
 
 	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
-		toggleSelectInteractions(layer === 'node');
+		toggleInteractionsActive([nodeLayerSelectInteraction], layer === 'node');
 		if (previouslySelectedLayer === 'node') {
 			hideLayer();
 			removeInteractions();

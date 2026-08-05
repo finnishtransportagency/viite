@@ -14,6 +14,12 @@ export function toggleLayersVisibility(layers, visibleToggle) {
 	});
 }
 
+export function toggleInteractionsActive(interactions, activate) {
+	_.each(interactions, function (interaction) {
+		interaction.setActive(activate);
+	});
+}
+
 export function clearLayers(layers) {
 	_.each(layers, function (layer) {
 		layer.getSource().clear();

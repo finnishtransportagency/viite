@@ -12,7 +12,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
-import { addLayers, clearLayers, drawCalibrationMarkers, toggleLayersVisibility } from './LayerUtils.js';
+import { addLayers, clearLayers, drawCalibrationMarkers, toggleInteractionsActive, toggleLayersVisibility } from './LayerUtils.js';
 import { LinkPropertyMarker } from '../markers/LinkPropertyMarker.js';
 import { CalibrationPoint } from '../markers/CalibrationPointMarker.js';
 import { getSelectedLayer, getRoadVisibility } from '@model/ApplicationModel.js';
@@ -24,7 +24,6 @@ export function redrawLinkPropertyLayer() { return _instance.redraw(); }
 export function highlightProject(featureLinkId) { return _instance.highlightProject(featureLinkId); }
 export function highlightReservedRoads(reservedOLFeatures) { return _instance.highlightReservedRoads(reservedOLFeatures); }
 export function clearLinkPropertyLayer() { return _instance.clearOnProjectClose(); }
-export function setLinkPropertyInteractionsActive(active) { return _instance && _instance.setInteractionsActive(active); }
 
 export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
 
@@ -479,13 +478,6 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 		map.updateSize();
 	}
 
-	function toggleSelectInteractions(activate, both) {
-		selectDoubleClick.setActive(activate);
-		if (both) {
-			selectSingleClick.setActive(activate);
-		}
-	}
-
 	const showLayer = function () {
 		if (!layerStarted) {
       clearLayers(layers);
@@ -503,7 +495,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 
 	eventListener.listenTo(eventbus, 'layer:selected', function (layer, previouslySelectedLayer) {
 		isActiveLayer = layer === 'linkProperty';
-		toggleSelectInteractions(isActiveLayer, true);
+		toggleInteractionsActive([selectDoubleClick, selectSingleClick], isActiveLayer);
 		if (isActiveLayer) {
 			addSelectInteractions();
 		} else {
@@ -536,10 +528,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 				redraw();
 			}
 		},
-		setInteractionsActive: function (active) {
-			toggleSelectInteractions(active, true);
-		},
-		highlightProject: highlightProjectInternal,
+    highlightProject: highlightProjectInternal,
 		highlightReservedRoads: highlightReservedRoadsInternal,
 		clearOnProjectClose,
 		show: showLayer,

@@ -15,7 +15,6 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { getNavigation } from '@router.js';
 import { fetchProjectLinks, openRoadAddressProject } from '@view/map/layers/ProjectLinkLayer.js';
-import { setLinkPropertyInteractionsActive } from '@view/map/layers/LinkPropertyLayer.js';
 
 export function enableCloseBtn() {
 	$('#saveAndCancelDialogue, #cancelEdit, .menu-close-btn')
@@ -318,8 +317,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 		const projectData = project || { name: '', startDate: '', additionalInfo: '', id: null };
 		markAsSaved();
 		updateCancelButtonState();
-		setLinkPropertyInteractionsActive(false);
-      
 		// Disable form inputs if project is not editable (status codes other than 0 or 1)
 		const isNewProject = projectData.name === '';
 		if (!isNewProject && !isProjectEditable(projectData)) {
@@ -400,7 +397,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 
 			// Prevent saving if project is published, but let them continue to action menu so they can inspect change table
 			if (isProjectPublished) {
-				setLinkPropertyInteractionsActive(true);
 				selectLayer('roadAddressProject', true, false);
 
 				if (callbacks.continueToActions) {
@@ -464,7 +460,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 						getNavigation().navigateToSelectedProject(result.projectAddresses.linkId, savedProject);
 					}
             
-					setLinkPropertyInteractionsActive(true);
 					selectLayer('roadAddressProject', true, false);
             
 					// For 'Jatka toimenpiteisiin' button, always continue to action menu
@@ -540,7 +535,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 							const latestProject = result.project || (currentProjectState && currentProjectState.project) || projectData;
 
 							if (!isEditCancel) {
-								setLinkPropertyInteractionsActive(true);
 								selectLayer('linkProperty', true, false);
 								callbacks.closeProjectMenu();
 								navigateToRootUrl();
@@ -574,29 +568,25 @@ export function ProjectDetailsForm(callbacks = {}) {
 
 					},
 					closeCallback: function () {
+            
 						if (isEditCancel) {
-							setLinkPropertyInteractionsActive(true);
 							selectLayer('roadAddressProject', true, false);
 							returnToActions();
 							return;
 						}
 
-						// Close without saving - reset layer to default
-						setLinkPropertyInteractionsActive(true);
 						callbacks.closeProjectMenu();
 						navigateToRootUrl();
 					}
 				});
 			} else {
 				if (isEditCancel) {
-					setLinkPropertyInteractionsActive(true);
 					selectLayer('roadAddressProject', true, false);
 					returnToActions();
 					return;
 				}
 
 				// No unsaved changes, close directly - reset layer to default
-				setLinkPropertyInteractionsActive(true);
 				callbacks.closeProjectMenu();
 				navigateToRootUrl();
 			}
@@ -607,7 +597,6 @@ export function ProjectDetailsForm(callbacks = {}) {
 				successCallback: function () {
 					projectCollection.deleteProject(projectData.id);
 					// Reset layer to default after project deletion
-					setLinkPropertyInteractionsActive(true);
 					selectLayer('linkProperty', true, false);
 					callbacks.closeProjectMenu();
 				}
