@@ -377,11 +377,6 @@
             roadAddrChangesStartDate.setCustomValidity("");
             roadAddrChangesEndDate.setCustomValidity("");
 
-            if (roadAddrChangesEndDate.value && roadAddrEndDateObject.getTime() === roadAddrStartDateObject.getTime()) {
-                // Include the whole selected day when start and end date are the same.
-                dateutil.addOneDayToDate(roadAddrEndDateObject);
-            }
-
             fetchRoadAddressChanges(createParams());
         }
 
