@@ -237,7 +237,7 @@ export function NodeCollection(backend) {
 	function openNodePointTemplate(payload) {
 		const id = _.isObject(payload) ? payload.id : payload;
 		const nodePointTemplate = _.find(userNodePointTemplates, function (template) {
-			return template.id === parseInt(id, 10);
+			return template.id === parseInt(id);
 		});
 		if (_.isUndefined(nodePointTemplate)) {
 			backend.getNodePointTemplateById(id, function (nodePointTemplateFetched) {
@@ -255,7 +255,7 @@ export function NodeCollection(backend) {
 		const rowData = _.isObject(payload) ? payload.rowData : null;
 
 		const junctionTemplate = _.find(userJunctionTemplates, function (template) {
-			if (template.id !== parseInt(id, 10)) {
+			if (template.id !== parseInt(id)) {
 				return false;
 			}
 
@@ -269,7 +269,7 @@ export function NodeCollection(backend) {
 		});
 
 		const fallbackJunctionTemplate = junctionTemplate || _.find(userJunctionTemplates, function (template) {
-			return template.id === parseInt(id, 10);
+			return template.id === parseInt(id);
 		});
 
 		const templateForLocation = function (template) {

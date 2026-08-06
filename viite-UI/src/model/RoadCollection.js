@@ -111,7 +111,7 @@ export function RoadCollection(backend) {
 			});
 		});
 
-		if (parseInt(zoom, 10) <= zoomlevels.minZoomForEditMode) {
+		if (parseInt(zoom) <= zoomlevels.minZoomForEditMode) {
 			// only the fetched road links that have an address
 			setRoadLinkGroups(fetchedWithAddresses);
 		} else {

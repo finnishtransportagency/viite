@@ -712,7 +712,7 @@ export function ProjectCollection(backend, startupParameters) {
 		const currentCoordinates = map.getView().getCenter();
 		const errorIndex = event.currentTarget.id;
 		const errorCoordinates = _.find(coordinateButtons, function (b) {
-			return b.index === parseInt(errorIndex, 10);
+			return b.index === parseInt(errorIndex);
 		}).coordinates;
 		const index = _.findIndex(errorCoordinates, function (coordinates) {
 			return coordinates.x === currentCoordinates[0] && coordinates.y === currentCoordinates[1];
@@ -750,9 +750,9 @@ export function ProjectCollection(backend, startupParameters) {
 		const onProjectValidationSucceed = callbacks.onProjectValidationSucceed || noop;
 		const onProjectValidationFailed = callbacks.onProjectValidationFailed || noop;
 		return backend.checkIfRoadpartReserved(
-			data.roadNumber === '' ? 0 : parseInt(data.roadNumber, 10),
-			data.startPart === '' ? 0 : parseInt(data.startPart, 10),
-			data.endPart === '' ? 0 : parseInt(data.endPart, 10),
+			data.roadNumber === '' ? 0 : parseInt(data.roadNumber),
+			data.startPart === '' ? 0 : parseInt(data.startPart),
+			data.endPart === '' ? 0 : parseInt(data.endPart),
 			data.projectDate,
 			data.projectId,
 			function (validationResult) {

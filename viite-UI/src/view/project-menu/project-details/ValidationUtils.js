@@ -18,9 +18,9 @@ export function ValidationUtils() {
 			return 'Päivämäärä saa sisältää vain numeroita tai pisteitä';
 		}
 
-		const day = parseInt(parts_DMY[0], 10);
-		const month = parseInt(parts_DMY[1], 10);
-		const year = parseInt(parts_DMY[2], 10);
+		const day = parseInt(parts_DMY[0]);
+		const month = parseInt(parts_DMY[1]);
+		const year = parseInt(parts_DMY[2]);
 
 		if (isNaN(day) || isNaN(month) || isNaN(year) || month < 1 || month > 12 || day < 1 || day > 31) {
 			return 'Virheellinen päivämäärä. Tarkista päivä, kuukausi ja vuosi';

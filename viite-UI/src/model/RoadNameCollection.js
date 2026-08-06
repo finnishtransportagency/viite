@@ -18,7 +18,7 @@ export function RoadNameCollection(backend) {
 
 	const findCurrentRoadName = function (id) {
 		let roadName = _.find(currentRoadNameData, function (roadData) {
-			return roadData.id === parseInt(id, 10);
+			return roadData.id === parseInt(id);
 		});
 		roadName = roadName ? roadName : newRoadName;
 		changedIds.push(roadName.id);
@@ -31,7 +31,7 @@ export function RoadNameCollection(backend) {
 			backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
 				currentRoadNumber = roadNumber;
 				const sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
-					return rd.roadNumber === parseInt(roadNumber, 10);
+					return rd.roadNumber === parseInt(roadNumber);
 				}).map(function (road) {
 					const roadCopy = road;
 					if (road.endDate)

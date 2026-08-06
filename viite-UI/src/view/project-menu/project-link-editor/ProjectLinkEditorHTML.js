@@ -51,7 +51,7 @@ export function createProjectLinkEditorHTML(dependencies) {
 			.map(s => s.roadLinkSource)
 			.uniq()
 			.map(a => {
-				const linkGeom = _.find(LinkSources, source => source.value === parseInt(a, 10));
+				const linkGeom = _.find(LinkSources, source => source.value === parseInt(a));
 				return linkGeom === undefined ? LinkSources.Unknown.descriptionFI : linkGeom.descriptionFI;
 			})
 			.uniq()

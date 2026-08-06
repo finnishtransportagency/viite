@@ -51,7 +51,7 @@ export function SelectedLinkProperty(roadCollection) {
 				return s.roadLinkSource;
 			}).uniq().map(function (a) {
 				const linkGeom = _.find(LinkSource, function (source) {
-					return source.value === parseInt(a, 10);
+					return source.value === parseInt(a);
 				});
 				if (_.isUndefined(linkGeom))
 					return LinkSource.Unknown.descriptionFI;
@@ -73,7 +73,7 @@ export function SelectedLinkProperty(roadCollection) {
 			const elyCodes = {elyCode: extractUniqueValues(selectedData, 'elyCode')};
 			const evkCodes = {evkCode: extractUniqueValues(selectedData, 'evkCode')};
 			// TODO Check that merge was done correctly
-			const discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'), 10)};
+			const discontinuity = {discontinuity: parseInt(extractUniqueValues([endRoadOnSelection], 'discontinuity'))};
 			const addrMRange = {
 				addrMRange: {
 					start: _.minBy(_.chain(selectedData).map('addrMRange.start').uniq().value()),

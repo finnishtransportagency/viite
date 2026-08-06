@@ -168,7 +168,7 @@ export const UpdateUserForm = {
 
 			const east = parseFloat($row.attr('data-east') || DEFAULT_COORDINATES.east);
 			const north = parseFloat($row.attr('data-north') || DEFAULT_COORDINATES.north);
-			const zoom = parseInt($row.attr('data-zoom') || DEFAULT_COORDINATES.zoom, 10);
+			const zoom = parseInt($row.attr('data-zoom') || DEFAULT_COORDINATES.zoom);
 
 			const fields = { roles, elinvoimakeskus };
 			const { valid } = validateUserFieldsAndToastErrors(fields, {

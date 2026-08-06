@@ -12,7 +12,7 @@ export function Backend() {
 				// Extract numbers from each string in roadMaintainers
 				project.evks = project.roadMaintainers.map(rm => {
 					const match = rm.match(/\d+/); // find digits in the string
-					return match ? parseInt(match[0], 10) : null;
+					return match ? parseInt(match[0]) : null;
 				}).filter(num => num !== null); // remove nulls if no number found
 			} else {
 				project.evks = [];

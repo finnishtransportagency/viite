@@ -360,7 +360,7 @@ export function NodeEditor(
 		});
 
 		$container.on('change.nodeEditor', '#nodeTypeDropdown', function () {
-			const val = parseInt($(this).val(), 10);
+			const val = parseInt($(this).val());
 			const typeHasChanged = selectedNodesAndJunctions.typeHasChanged(val);
 			selectedNodesAndJunctions.setNodeType(val);
 			if (!typeHasChanged) {
@@ -387,17 +387,17 @@ export function NodeEditor(
 
 		$container.on('input.nodeEditor change.nodeEditor', '[id^=junction-number-textbox-]', function () {
 			updateJunctionNumberEmptyState(this);
-			selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId'), 10), parseInt(this.value, 10));
+			selectedNodesAndJunctions.setJunctionNumber(parseInt($(this).attr('junctionId')), parseInt(this.value));
 			revalidate();
 		});
 
 		$container.on('change.nodeEditor', '[id^=junction-point-address-input-]', function () {
-			selectedNodesAndJunctions.setJunctionPointAddress($(this).attr('junctionPointId'), parseInt(this.value, 10));
+			selectedNodesAndJunctions.setJunctionPointAddress($(this).attr('junctionPointId'), parseInt(this.value));
 			revalidate();
 		});
 
 		$container.on('change.nodeEditor', '[id^="detach-node-point-"]', function () {
-			const match = junctionAndNodePointsByNodePoint(parseInt(this.value, 10));
+			const match = junctionAndNodePointsByNodePoint(parseInt(this.value));
 			if (this.checked) {
 				if (!_.isEmpty(match.junction) || match.nodePoints.length > 1)
 					confirmDetach(`Haluatko varmasti irrottaa solmukohdat ja liittymän solmusta?${buildDetachMessage(match.junction, match.nodePoints)}`, match, this, true, revalidate);
@@ -412,7 +412,7 @@ export function NodeEditor(
 		});
 
 		$container.on('change.nodeEditor', '[id^="detach-junction-"]', function () {
-			const match = junctionAndNodePointsByJunction(parseInt(this.value, 10));
+			const match = junctionAndNodePointsByJunction(parseInt(this.value));
 			if (this.checked) {
 				if (!_.isEmpty(match.nodePoints))
 					confirmDetach(`Haluatko varmasti irrottaa solmukohdat ja liittymän solmusta?${buildDetachMessage(match.junction, match.nodePoints)}`, match, this, true, revalidate);

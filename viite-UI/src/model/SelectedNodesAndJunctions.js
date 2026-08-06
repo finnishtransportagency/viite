@@ -147,7 +147,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 
 		const normalizedJunctionNumber = _.trim((junctionNumber || '').toString()) === ''
 			? NaN
-			: parseInt(junctionNumber, 10);
+			: parseInt(junctionNumber);
 
 		const junction = _.find(current.node.junctions, function (junctionToSet) {
 			return junctionToSet.id === id ||
@@ -176,7 +176,7 @@ export function SelectedNodesAndJunctions(nodeCollection) {
 		const ids = idString.split("-");
 		if (ids.length === 2) {
 			_.each(ids, function (id) {
-				const jp = getJunctionPoint(parseInt(id, 10));
+				const jp = getJunctionPoint(parseInt(id));
 				if (_.isUndefined(jp)) {
 					console.error("Failed to find junction point " + id + " and set it's address to " + addr + ".");
 				} else {

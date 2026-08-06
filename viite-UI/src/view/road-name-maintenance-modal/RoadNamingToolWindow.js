@@ -140,7 +140,7 @@ export function RoadNamingToolWindow(roadNameCollection) {
 	const retroactivelyAddDatePickers = (originalStartDate) => {
 		const inputs = $('.date-picker-input[data-FieldName="startDate"]:not([placeholder])');
 		inputs.each((_, input) => {
-			if (parseInt(input.dataset.roadid, 10) === newId && !$(input).hasClass('hasDatepicker')) {
+			if (parseInt(input.dataset.roadid) === newId && !$(input).hasClass('hasDatepicker')) {
 				const datePicker = new DatePicker({
 					id: input.id,
 					minDate: originalStartDate,
@@ -190,7 +190,7 @@ export function RoadNamingToolWindow(roadNameCollection) {
 			roadNameCollection.setRoadName(roadId, fieldValue);
 			break;
 		case "startDate":
-			if (parseInt(roadId, 10) === newId) {
+			if (parseInt(roadId) === newId) {
 				const parsedFieldDate = moment(fieldValue, acceptedDateFormats, true);
 				const endDateForPreviousRoadName = parsedFieldDate.isValid()
 					? parsedFieldDate.subtract(1, 'days').format(defaultDateFormat)
