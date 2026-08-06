@@ -276,8 +276,7 @@ class ProjectLinkDAO extends BaseDAO {
     project_link.reversed,
     project_link.connected_link_id,
   CASE
-    WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN NULL
-    WHEN status IN (${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
+    WHEN status IN (${RoadAddressChangeType.NotHandled.value}, ${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
     ELSE prj.start_date END AS start_date,
   CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE NULL END as end_date,
   project_link.ADJUSTED_TIMESTAMP,
@@ -333,8 +332,7 @@ class ProjectLinkDAO extends BaseDAO {
           plh.reversed,
           plh.connected_link_id,
           CASE
-            WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN NULL
-            WHEN status IN (${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
+            WHEN status IN (${RoadAddressChangeType.NotHandled.value}, ${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
             ELSE prj.start_date END as start_date,
           CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE NULL END as end_date,
           plh.adjusted_timestamp,

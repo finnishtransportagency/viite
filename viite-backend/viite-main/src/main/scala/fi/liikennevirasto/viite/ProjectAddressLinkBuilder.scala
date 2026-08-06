@@ -1,9 +1,10 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LifecycleStatus, RoadAddressChangeType, RoadLinkLike, RoadPart, SideCode}
+import fi.vaylavirasto.viite.util.DateTimeFormatters.finnishDateFormatter
 
 object ProjectAddressLinkBuilder extends AddressLinkBuilder {
 
@@ -55,7 +56,8 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       sourceId = "",
       roadAddressRoadPart = pl.roadAddressRoadPart,
       roadwayNumber = pl.roadwayNumber,
-      originalAddrMRange = Some(pl.originalAddrMRange))
+      originalAddrMRange = Some(pl.originalAddrMRange),
+      startDate = pl.startDate.map(finnishDateFormatter.print).getOrElse(""))
   }
 
   @Deprecated
@@ -134,7 +136,9 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       ral.id,
       ral.linearLocationId,
       sourceId = "",
-      originalAddrMRange = None)
+      originalAddrMRange = None,
+      // Set startDate from RoadAddressLink; use an empty string for other road link types. This is needed so start date can be displayed for background project links
+      startDate = ral match { case r: RoadAddressLink => r.startDate; case _ => "" })
   }
 
 

@@ -56,8 +56,7 @@
       return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#node/nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
         nodePointTemplate.roadNumber + ' / ' +
         nodePointTemplate.roadPartNumber + ' / ' +
-        nodePointTemplate.addrM + ' / ' +
-        (nodePointTemplate.validFrom || '') + '</a>';
+        nodePointTemplate.addrM + '</a>';
     };
 
     var junctionTemplateLink = function (junctionTemplate) {
@@ -65,8 +64,7 @@
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
-        junctionTemplate.addrM + ' / ' +
-        (junctionTemplate.startDate || '') + '</a>';
+        junctionTemplate.addrM + '</a>';
     };
 
     var nodesAndRoadAttributesHtmlList = function () {
@@ -129,7 +127,7 @@
         topLabel: 'Käsittelemättömät liittymäaihiot',
         groupKey: 'elinvoimakeskusCode',
         linkRenderer: junctionTemplateLink,
-        addressHeader: '(TIE / AJR / OSA / AET / ALKUPÄIVÄMÄÄRÄ)'
+        addressHeader: '(TIE / AJR / OSA / AET)'
       });
     };
     
@@ -143,7 +141,7 @@
         topLabel: 'Käsittelemättömät solmukohta-aihiot',
         groupKey: 'roadMaintainer',
         linkRenderer: nodePointTemplateLink,
-        addressHeader: '(TIE / OSA / AET / ALKUPÄIVÄMÄÄRÄ)'
+        addressHeader: '(TIE / OSA / AET)'
       });
     };
 
