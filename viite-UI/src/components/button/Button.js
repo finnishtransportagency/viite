@@ -64,7 +64,11 @@ export function button({
 		_registry.delete(id);
 	}
 
-	$(document).on(`click.${id}`, `#${id}:not([disabled])`, onClick);
+	$(document).on(`click.${id}`, `#${id}:not([disabled])`, function (event) {
+		onClick(event);
+		// Prevent the button from remaining stuck in its :focus (darkened) style after click.
+		event.currentTarget.blur();
+	});
 
 	if (disabledWhen && watchSelector) {
 		$(document).on(`keyup.${id} input.${id}`, watchSelector, () => {

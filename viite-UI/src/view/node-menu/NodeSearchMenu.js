@@ -234,15 +234,14 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 					{ content: item.roadNumber, className: 'junction-road-number' },
 					{ content: item.track, className: 'junction-track' },
 					{ content: item.roadPartNumber, className: 'junction-road-part-number' },
-					{ content: item.addrM, className: 'junction-addr-m' },
-					{ content: item.startDate, className: 'junction-start-date' }
+					{ content: item.addrM, className: 'junction-addr-m' }
 				]
 			})
 		);
 		if (hasRowsInGroups(junctionGroups)) {
 			tables.push(renderDataTable({
 				title: 'Käsittelemättömät liittymäaihiot',
-				headers: ['TIE', 'AJR', 'OSA', 'AET', 'Alkupäivämäärä'],
+				headers: ['TIE', 'AJR', 'OSA', 'AET'],
 				evkGroups: junctionGroups
 			}));
 		}
@@ -252,13 +251,13 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 			(item) => ({
 				id: item.id,
 				className: 'node-point-template-link node-template-clickable-row',
-				cells: [item.roadNumber, item.roadPartNumber, item.addrM, item.validFrom]
+				cells: [item.roadNumber, item.roadPartNumber, item.addrM]
 			})
 		);
 		if (hasRowsInGroups(nodePointGroups)) {
 			tables.push(renderDataTable({
 				title: 'Käsittelemättömät solmukohta-aihiot',
-				headers: ['TIE', 'OSA', 'AET', 'Alkupäivämäärä'],
+				headers: ['TIE', 'OSA', 'AET'],
 				evkGroups: nodePointGroups
 			}));
 		}

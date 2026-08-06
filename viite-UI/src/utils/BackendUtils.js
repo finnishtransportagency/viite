@@ -33,26 +33,31 @@ export function Backend() {
 	}
 
 	function latestResponseRequestor(getParameters) {
-		let deferred;
+		// Every call queued while debounce is pending must be settled once the request
+		// actually fires; otherwise callers whose deferred got overwritten by a later
+		// call would wait indefinitely (seen as requests hanging on slow connections).
+		let pendingDeferreds = [];
 		let request;
 		let debounced;
 
 		function doRequest() {
 			if (request) request.abort();
 
+			const deferredsToSettle = pendingDeferreds;
+			pendingDeferreds = [];
+
 			request = $.ajax(getParameters.apply(undefined, arguments))
 				.done(function (result) {
-					deferred.resolve(result);
+					deferredsToSettle.forEach(function (deferred) { deferred.resolve(result); });
 				})
 				.fail(function (error) {
-					deferred.reject(error);
+					deferredsToSettle.forEach(function (deferred) { deferred.reject(error); });
 				});
-
-			return deferred;
 		}
 
 		return function () {
-			deferred = new $.Deferred();
+			const deferred = new $.Deferred();
+			pendingDeferreds.push(deferred);
 
 			if (!debounced) {
 				debounced = _.debounce(doRequest, 200);
