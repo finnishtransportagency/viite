@@ -641,10 +641,8 @@ class RoadwayDAO extends BaseDAO {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
-      else if (roadwayNumbers.size > 1000)
-        massFetchWithRoadwayNumbers(roadwayNumbers, withHistory)
       else
-        fetch(withRoadwayNumbers(roadwayNumbers, withHistory))
+        roadwayNumbers.grouped(1000).toList.flatMap(batch => fetch(withRoadwayNumbers(batch.toSet, withHistory)))
     }
   }
 
@@ -653,7 +651,7 @@ class RoadwayDAO extends BaseDAO {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayNumbersAndDate(roadwayNumbers, searchDate))
+        roadwayNumbers.grouped(1000).toList.flatMap(batch => fetch(withRoadwayNumbersAndDate(batch.toSet, searchDate)))
     }
   }
 
