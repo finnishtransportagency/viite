@@ -8,7 +8,6 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.MassQuery
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -641,10 +640,9 @@ class RoadwayDAO extends BaseDAO {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
-      else if (roadwayNumbers.size > 1000)
-        massFetchWithRoadwayNumbers(roadwayNumbers, withHistory)
       else
-        fetch(withRoadwayNumbers(roadwayNumbers, withHistory))
+        // Group large results into chunks
+        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbers(chunk, withHistory))).toSeq
     }
   }
 
@@ -653,7 +651,7 @@ class RoadwayDAO extends BaseDAO {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayNumbersAndDate(roadwayNumbers, searchDate))
+        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbersAndDate(chunk, searchDate))).toSeq
     }
   }
 
@@ -837,22 +835,11 @@ class RoadwayDAO extends BaseDAO {
             )"""
     }
 
-    if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers)({
-        idTableName =>
-          sql"""
-            $query
-            JOIN $idTableName i ON i.id = a.ROADWAY_NUMBER
-            WHERE a.valid_to IS NULL
-            AND ${dateFilter(table = sqls"a")}
-          """
-      })
-    }
-    else
-      sql"""
-           $query
-           WHERE a.valid_to IS NULL
-           AND ${dateFilter(table = sqls"a")}
+    // Caller (fetchAllByRoadwayNumbers) chunks roadwayNumbers to <=1000 ids, so a plain IN clause is always used here.
+    sql"""
+         $query
+         WHERE a.valid_to IS NULL
+         AND ${dateFilter(table = sqls"a")}
            AND a.roadway_number IN ($roadwayNumbers)
            """
   }
@@ -930,22 +917,6 @@ class RoadwayDAO extends BaseDAO {
          WHERE a.valid_to IS NULL $endDateFilter
          AND a.ROADWAY_NUMBER IN ($roadwayNumbers)
          """
-  }
-
-  private def massFetchWithRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
-    val endDateFilter = if (withHistory) sqls"" else sqls"and a.end_date IS NULL"
-    MassQuery.withIds(roadwayNumbers)({
-      idTableName => {
-        val joinedQuery = (query: SQLSyntax) => {
-          sql"""
-            $query
-            JOIN $idTableName i ON i.id = a.ROADWAY_NUMBER
-            WHERE a.valid_to IS NULL $endDateFilter
-          """
-        }
-        fetch(joinedQuery)
-      }
-    })
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
