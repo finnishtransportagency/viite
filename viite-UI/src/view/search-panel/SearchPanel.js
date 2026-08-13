@@ -12,9 +12,9 @@ export function SearchPanel(map) {
     <div class="panel-group road-links">
       <div class="panel road-link">
         <header class="panel-header expanded">Selite</header>
-        <div class="legend-container no-copy">
-          <div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend no-copy"></div>
-        </div>
+        <div class="legend-container">
+          <div id="legendDiv" class="panel-section panel-legend linear-asset-legend road-class-legend"></div>
+          </div>
       </div>
     </div>`);
 

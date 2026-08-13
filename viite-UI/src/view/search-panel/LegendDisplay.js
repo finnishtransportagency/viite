@@ -81,7 +81,8 @@ const STATIC_ENTRIES = {
 	roadPartStart:    legendEntry('Tieosan alku',     '<div class="calibration-point-image"></div>'),
 	junction:         svgObjectEntry('images/junction.svg',          'Liittymä'),
 	junctionTemplate: svgObjectEntry('images/junction-template.svg', 'Liittymäaihio'),
-	nodeTemplate:     svgObjectEntry('images/node-point-template.svg','Solmukohta-aihio')
+	nodeTemplate:     svgObjectEntry('images/node-point-template.svg','Solmukohta-aihio'),
+	nodeSelectHint:   '<div class="node-select-hint">Valitse solmu klikkaamalla sitä</div>'
 };
 
 // Segment Builders -----------------------------------------------------------------
@@ -163,7 +164,8 @@ function getNodeLegend() {
 		buildNodeEntries(),
 		STATIC_ENTRIES.junction,
 		STATIC_ENTRIES.junctionTemplate,
-		STATIC_ENTRIES.nodeTemplate
+		STATIC_ENTRIES.nodeTemplate,
+		STATIC_ENTRIES.nodeSelectHint
 	].join('');
 }
 
