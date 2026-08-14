@@ -300,7 +300,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 			$changeTableHeader.html($(`
           <div>Validointi ok. Alla näet muutokset projektissa.</div>
           <div>Alkupäivämäärä: ${projectDate}</div>
-        `));
+      `));
 		}
 
 		const currentProject = projectCollection.getCurrentProject();
@@ -358,6 +358,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 	}
 
 	function bindEvents() {
+
 		changeTable.find('.row-changes').remove();
 
 		const MINIMIZED_HEIGHT = '260px';
