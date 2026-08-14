@@ -79,8 +79,14 @@ export function ProjectCollection(backend, startupParameters) {
 		return _.flatten(fetchedProjectLinks);
 	};
 
+	// Fetches the full set of project links directly from the backend (not limited to the
+	// current map bounding box, unlike getAll()). Returns a Promise resolving to the link data.
 	function getProjectLinks() {
-		return backend.getProjectLinksById(currentProject.project.id);
+		return new Promise(function (resolve) {
+			backend.getProjectLinksById(currentProject.project.id, function (data) {
+				resolve(data || []);
+			});
+		});
 	}
 
 	function getAll() {

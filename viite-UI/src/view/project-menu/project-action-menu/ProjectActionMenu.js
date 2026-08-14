@@ -7,7 +7,7 @@
  */
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { ProjectChangeTable } from '@view/project-menu/ProjectChangeTable.js';
+import { ProjectChangeTable } from '@src/view/project-menu/project-change-table/ProjectChangeTable.js';
 import { fetchProjectLinks, clearOnProjectClose as clearProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
@@ -49,7 +49,8 @@ export function ProjectActionMenu(options) {
 		recalculated: false,
 		publishable: false,
 		isProjectPublished: false,
-		isSaveInFlight: false
+		isSaveInFlight: false,
+		hasUnhandledLinks: true // Assume not ready until the async project-links check resolves.
 	}, initialState);
 
 	const config = {
@@ -67,7 +68,7 @@ export function ProjectActionMenu(options) {
 		},
 		buttonStates: {
 			validate: { disabled: false, title: '' },
-			recalculate: { disabled: false, title: '' },
+			recalculate: { disabled: true, title: '' },
 			changes: { disabled: true, title: 'Päivitä etäisyyslukemat ensin' },
 			send: { disabled: true, title: 'Hyväksy yhteenvedon jälkeen' }
 		}
@@ -126,9 +127,9 @@ export function ProjectActionMenu(options) {
 				config.buttonStates.recalculate = { disabled: true, title: 'Avaa yhteenveto ensin' };
 				config.buttonStates.changes = { disabled: false, title: '' };
 			} else {
-				config.buttonStates.recalculate = state.hasFormedLinks !== false
-					? { disabled: false, title: '' }
-					: { disabled: true, title: config.disabledTitles.recalculate };
+				config.buttonStates.recalculate = state.hasUnhandledLinks
+					? { disabled: true, title: config.disabledTitles.recalculate }
+					: { disabled: false, title: '' };
 				config.buttonStates.changes = { disabled: true, title: 'Päivitä etäisyyslukemat ensin' };
 			}
 		}
@@ -152,6 +153,16 @@ export function ProjectActionMenu(options) {
 				$btn.prop('disabled', btnState.disabled);
 				$btn.attr('title', btnState.title);
 			}
+		});
+	};
+
+	// Update menu state based on whether there are unhandled links in the project
+	const refreshUnhandledLinksState = function () {
+		if (!projectCollection.getProjectLinks) return;
+		projectCollection.getProjectLinks().then(function (links) {
+			const hasUnhandledLinks = !links || links.length === 0 ||
+				links.some(link => link.status === ViiteEnumerations.RoadAddressChangeType.NotHandled.value);
+			updateState({ hasUnhandledLinks });
 		});
 	};
 
@@ -436,6 +447,7 @@ export function ProjectActionMenu(options) {
 
 		evaluateButtonStates();
 		refresh();
+		refreshUnhandledLinksState();
 	};
 
 	return {
