@@ -1985,6 +1985,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       "roadNumber" -> nodePoint.roadPart.roadNumber,
       "roadPartNumber" -> nodePoint.roadPart.partNumber,
       "track" -> nodePoint.track,
+      "roadStartDate" -> nodePoint.roadStartDate.map(d => formatToString(d.toString)),
       "coordinates" -> Map(
         "x" ->  nodePoint.coordinates.x,
         "y" ->  nodePoint.coordinates.y)
@@ -2221,6 +2222,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         "sideCode" -> projectAddressLink.sideCode.value,
         "roadLinkSource" -> projectAddressLink.roadLinkSource.value,
         "roadName" -> projectAddressLink.roadName,
+        "startDate" -> projectAddressLink.startDate,
         "id" -> projectAddressLink.id,
         "status" -> projectAddressLink.status.value,
         "reversed" -> projectAddressLink.reversed,

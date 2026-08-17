@@ -13,59 +13,18 @@ tasks:
     cmds:
       - |
         set -euo pipefail
-        : "${DB_SOURCE_ACCESS:?DB_SOURCE_ACCESS missing (ssm|direct)}"
-        if [ "$DB_SOURCE_ACCESS" != "ssm" ]; then
-          echo "DB_SOURCE_ACCESS=$DB_SOURCE_ACCESS -> connect-source not needed."
-          exit 0
-        fi
-        : "${DB_SOURCE_RDS_HOST:?missing}"
-        : "${DB_SOURCE_LOCAL_PORT:?missing}"
-        : "${DB_SOURCE_SSM_TARGET:?missing}"
-        : "${AWS_PROFILE:?missing}"
-        : "${AWS_REGION:?missing}"
-
-        echo "Starting SOURCE SSM tunnel to $DB_SOURCE_RDS_HOST:5432 on localhost:$DB_SOURCE_LOCAL_PORT"
-
-        if tmux has-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null; then
-          if nc -z 127.0.0.1 "$DB_SOURCE_LOCAL_PORT" 2>/dev/null; then
-            echo "SOURCE tunnel already ready: 127.0.0.1:$DB_SOURCE_LOCAL_PORT"
-            exit 0
-          fi
-          echo "Existing SOURCE tunnel session found, but port is closed. Restarting session..."
-          tmux kill-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null || true
-        fi
-
-        tmux new-session -d -s {{.SOURCE_TUNNEL_SESSION}} \
-          "aws ssm start-session \
-            --region '$AWS_REGION' \
-            --profile '$AWS_PROFILE' \
-            --target '$DB_SOURCE_SSM_TARGET' \
-            --document-name AWS-StartPortForwardingSessionToRemoteHost \
-            --parameters host='$DB_SOURCE_RDS_HOST',portNumber='5432',localPortNumber='$DB_SOURCE_LOCAL_PORT'"
-
-        echo -n "Waiting for SOURCE tunnel "
-        for i in {1..30}; do
-          if nc -z 127.0.0.1 "$DB_SOURCE_LOCAL_PORT" 2>/dev/null; then
-            echo ""
-            echo "SOURCE tunnel ready: 127.0.0.1:$DB_SOURCE_LOCAL_PORT -> $DB_SOURCE_RDS_HOST:5432"
-            exit 0
-          fi
-
-          if ! tmux has-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null; then
-            echo ""
-            echo "ERROR: SOURCE tunnel session exited early."
-            exit 1
-          fi
-
-          echo -n "."
-          sleep 0.5
-        done
-
-        echo ""
-        echo "ERROR: SOURCE tunnel did not open in time."
-        echo "Last session output:"
-        tmux capture-pane -p -t {{.SOURCE_TUNNEL_SESSION}} -S -120 2>/dev/null || true
-        exit 1
+        . ./db/admin/task_helpers.sh
+        start_ssm_tunnel \
+          "{{.SOURCE_TUNNEL_SESSION}}" \
+          "SOURCE" \
+          "${DB_SOURCE_ACCESS:?DB_SOURCE_ACCESS missing (ssm|direct)}" \
+          "${DB_SOURCE_RDS_HOST:?missing}" \
+          "${DB_SOURCE_LOCAL_PORT:?missing}" \
+          "${DB_SOURCE_PORT:-5432}" \
+          "${DB_SOURCE_SSM_TARGET:-}" \
+          "${AWS_REGION:-}" \
+          "${AWS_PROFILE:-}" \
+          "false"
     requires:
       vars:
         - AWS_PROFILE
@@ -73,32 +32,30 @@ tasks:
         - DB_SOURCE_ACCESS
         - DB_SOURCE_RDS_HOST
         - DB_SOURCE_LOCAL_PORT
-        - DB_SOURCE_SSM_TARGET
 
   disconnect-source:
     desc: "Stop SOURCE SSM tunnel"
     silent: true
     cmds:
-      - tmux kill-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null || true
+      - |
+        set -euo pipefail
+        . ./db/admin/task_helpers.sh
+        stop_ssm_tunnel \
+          "{{.SOURCE_TUNNEL_SESSION}}" \
+          "SOURCE" \
+          "${DB_SOURCE_ACCESS:-direct}" \
+          "${DB_SOURCE_RDS_HOST:-unknown}" \
+          "${DB_SOURCE_PORT:-5432}" \
+          "${DB_SOURCE_LOCAL_PORT:-unknown}"
 
-  # -------------------------
-  # BACKUP from SOURCE
-  # -------------------------
   backup:
-    desc: "Backup SOURCE (data-only)"
+    desc: "Backup SOURCE DB to dump file [IMPLEMENTATION TASK — prefer db:backup
+      wrapper]"
     silent: true
-    deps: [connect-source]
     cmds:
       - |
         set -euo pipefail
-        cleanup() { tmux kill-session -t {{.SOURCE_TUNNEL_SESSION}} 2>/dev/null || true; }
+        task backup:connect-source
+        cleanup() { task backup:disconnect-source || true; }
         trap cleanup EXIT
-
-        echo "Running DB backup"
         ./db/admin/db_backup.sh
-    requires:
-      vars:
-        - DB_SOURCE_NAME
-        - DB_SOURCE_USER
-        - DB_SOURCE_PASSWORD
-        - DB_SOURCE_LOCAL_PORT

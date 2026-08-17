@@ -2,84 +2,65 @@ version: "3"
 
 vars:
   TUNNEL_SESSION: db-tunnel
-  FLYWAY_SCHEMA: '{{default "public" .FLYWAY_SCHEMA}}'
+  FLYWAY_SCHEMA: "{{default \"public\" .FLYWAY_SCHEMA}}"
 
 tasks:
   # --- Tunnel (dev) ---------------------------------------------------------
   tunnel:start:
+    internal: true
     silent: true
     desc: "Open SSM port-forward to RDS (dev) via tmux"
     cmds:
       - |
         set -euo pipefail
+        . ./db/admin/task_helpers.sh
 
-        # Local run or explicit JDBC URL: no tunnel needed.
+        ACCESS="ssm"
         if [[ -n "${FLYWAY_URL:-}" ]]; then
-          echo "FLYWAY_URL is set. Skipping SSM tunnel."
-          exit 0
-        fi
-        if [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
-          echo "DB_HOST is local (${DB_HOST:-127.0.0.1}). Skipping SSM tunnel."
-          exit 0
-        fi
-
-        : "${AWS_REGION:?AWS_REGION missing (needed for SSM)}"
-        : "${AWS_PROFILE:?AWS_PROFILE missing (needed for SSM)}"
-        : "${SSM_TARGET:?SSM_TARGET missing (needed for SSM)}"
-        : "${DB_HOST:?DB_HOST missing}"
-        : "${DB_PORT:?DB_PORT missing}"
-        : "${LOCAL_DB_PORT:?LOCAL_DB_PORT missing}"
-
-        echo "Starting SSM tunnel to $DB_HOST:$DB_PORT on localhost:$LOCAL_DB_PORT (profile: $AWS_PROFILE)"
-
-        if tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null; then
-          if nc -z 127.0.0.1 "$LOCAL_DB_PORT" 2>/dev/null; then
-            echo "Tunnel already ready: 127.0.0.1:$LOCAL_DB_PORT"
-            exit 0
-          fi
-          echo "Existing tunnel session found, but port is closed. Restarting session..."
-          tmux kill-session -t {{.TUNNEL_SESSION}} 2>/dev/null || true
+          ACCESS="direct"
+        elif [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
+          ACCESS="direct"
+        elif [[ -z "${SSM_TARGET:-}" ]]; then
+          ACCESS="direct"
         fi
 
-        tmux new-session -d -s {{.TUNNEL_SESSION}} \
-          "aws ssm start-session \
-            --region '$AWS_REGION' \
-            --profile '$AWS_PROFILE' \
-            --target '$SSM_TARGET' \
-            --document-name AWS-StartPortForwardingSessionToRemoteHost \
-            --parameters host='$DB_HOST',portNumber='$DB_PORT',localPortNumber='$LOCAL_DB_PORT'"
-
-        echo -n "Waiting for SSM tunnel "
-        for i in {1..30}; do
-          if nc -z 127.0.0.1 "$LOCAL_DB_PORT" 2>/dev/null; then
-            echo ""
-            echo "SSM tunnel ready: 127.0.0.1:$LOCAL_DB_PORT -> $DB_HOST:$DB_PORT"
-            exit 0
-          fi
-
-          if ! tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null; then
-            echo ""
-            echo "ERROR: Tunnel session exited early."
-            tmux capture-pane -p -t {{.TUNNEL_SESSION}} -S -120 2>/dev/null || true
-            exit 1
-          fi
-
-          echo -n "."
-          sleep 0.5
-        done
-
-        echo ""
-        echo "ERROR: Tunnel did not open in time."
-        tmux capture-pane -p -t {{.TUNNEL_SESSION}} -S -120 2>/dev/null || true
-        exit 1
+        start_ssm_tunnel \
+          "{{.TUNNEL_SESSION}}" \
+          "FLYWAY" \
+          "$ACCESS" \
+          "${DB_HOST:-127.0.0.1}" \
+          "${LOCAL_DB_PORT:?LOCAL_DB_PORT missing}" \
+          "${DB_PORT:-5432}" \
+          "${SSM_TARGET:-}" \
+          "${AWS_REGION:-}" \
+          "${AWS_PROFILE:-}" \
+          "false"
 
   tunnel:stop:
+    internal: true
     desc: "Stop SSM tunnel (tmux)"
     silent: true
     cmds:
       - |
         set -euo pipefail
-        tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null && tmux kill-session -t {{.TUNNEL_SESSION}} || true
+        . ./db/admin/task_helpers.sh
+
+        ACCESS="ssm"
+        if [[ -n "${FLYWAY_URL:-}" ]]; then
+          ACCESS="direct"
+        elif [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
+          ACCESS="direct"
+        elif [[ -z "${SSM_TARGET:-}" ]]; then
+          ACCESS="direct"
+        fi
+
+        stop_ssm_tunnel \
+          "{{.TUNNEL_SESSION}}" \
+          "FLYWAY" \
+          "$ACCESS" \
+          "${DB_HOST:-127.0.0.1}" \
+          "${DB_PORT:-5432}" \
+          "${LOCAL_DB_PORT:-unknown}"
 
   # --- Internal helper: build URL and run DataFixture ------------------------
   _run:
@@ -113,12 +94,13 @@ tasks:
         sbt 'project viiteJar' \
             "test:runMain fi.liikennevirasto.viite.util.DataFixture {{.RUNNER_ARG}}"
     requires:
-      vars: [FLYWAY_DB_NAME, FLYWAY_USER]
+      vars: [ FLYWAY_DB_NAME, FLYWAY_USER ]
 
   # --- Public tasks: migrate, history ------------------------------------
   migrate:
     silent: true
-    desc: "Flyway migrate via DataFixture (uses tunnel unless FLYWAY_URL is set)"
+    desc: "Flyway migrate via DataFixture [IMPLEMENTATION TASK — prefer
+      db:flyway:migrate wrapper]"
     deps:
       # tunnel only if you are NOT providing FLYWAY_URL (dev-mode)
       - task: tunnel:start
@@ -131,7 +113,8 @@ tasks:
 
   repair:
     silent: true
-    desc: "Flyway repair via DataFixture (fix checksum metadata)"
+    desc: "Flyway repair via DataFixture [IMPLEMENTATION TASK — prefer
+      db:flyway:repair wrapper]"
     deps:
       - task: tunnel:start
         vars: {}
@@ -142,7 +125,8 @@ tasks:
           RUNNER_ARG: flyway_repair
 
   history:
-    desc: "Show flyway_schema_history"
+    desc: "Show flyway_schema_history [IMPLEMENTATION TASK - prefer
+      db:flyway:history wrapper]"
     deps:
       - task: tunnel:start
         vars: {}
@@ -175,4 +159,4 @@ tasks:
             ORDER BY installed_rank;
           "
     requires:
-      vars: [FLYWAY_DB_NAME, FLYWAY_USER, LOCAL_DB_PORT]
+      vars: [ FLYWAY_DB_NAME, FLYWAY_USER, LOCAL_DB_PORT ]

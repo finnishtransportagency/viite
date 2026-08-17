@@ -1,75 +1,88 @@
 version: "3"
 
-vars:
-  TUNNEL_SESSION: db-tunnel
-
 tasks:
   connect:
+    vars:
+      ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
+      TUNNEL_SESSION: "db-tunnel-{{.ENV_PROFILE}}"
     silent: true
-    desc: "Open SSM port-forward to DEFAULT DB (background via tmux) if configured; otherwise no-op"
+    desc: "Open SSM port-forward with ENV_PROFILE=<local|dev|test|exp|prod> (or no-op
+      for direct/local)"
     cmds:
       - |
         set -euo pipefail
+        . ./db/admin/task_helpers.sh
+        ENV_PROFILE="{{.ENV_PROFILE}}"
+        load_and_map_default_env "$ENV_PROFILE"
+        echo "Running db:connect with ENV_PROFILE=$ENV_PROFILE"
 
-        # Local DB? No tunnel needed.
+        ACCESS="ssm"
         if [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
-          echo "DB_HOST is local ($DB_HOST). No tunnel needed."
-          exit 0
+          ACCESS="direct"
+        elif [[ -z "${SSM_TARGET:-}" ]]; then
+          ACCESS="direct"
         fi
 
-        # No SSM configured? Assume direct access (VPN etc.) and do nothing.
-        if [[ -z "${SSM_TARGET:-}" ]]; then
-          echo "No SSM_TARGET set. Assuming direct access. No tunnel started."
-          exit 0
-        fi
-
-        : "${AWS_REGION:?AWS_REGION missing (needed for SSM)}"
-        : "${AWS_PROFILE:?AWS_PROFILE missing (needed for SSM)}"
-        : "${DB_HOST:?DB_HOST missing}"
-        : "${DB_PORT:?DB_PORT missing}"
-        : "${LOCAL_DB_PORT:?LOCAL_DB_PORT missing}"
-
-        echo "Starting DEFAULT SSM tunnel to $DB_HOST:$DB_PORT on localhost:$LOCAL_DB_PORT (profile: $AWS_PROFILE)"
-        tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null && {
-          echo "Default tunnel already running."
-          exit 0
-        } || true
-        tmux new-session -d -s {{.TUNNEL_SESSION}} \
-          "aws ssm start-session \
-            --region '$AWS_REGION' \
-            --profile '$AWS_PROFILE' \
-            --target '$SSM_TARGET' \
-            --document-name AWS-StartPortForwardingSessionToRemoteHost \
-            --parameters host='$DB_HOST',portNumber='$DB_PORT',localPortNumber='$LOCAL_DB_PORT'"
-        echo "DEFAULT SSM tunnel started (tmux session: {{.TUNNEL_SESSION}})"
+        start_ssm_tunnel \
+          "{{.TUNNEL_SESSION}}" \
+          "{{.ENV_PROFILE}}" \
+          "$ACCESS" \
+          "$DB_HOST" \
+          "$LOCAL_DB_PORT" \
+          "$DB_PORT" \
+          "${SSM_TARGET:-}" \
+          "${AWS_REGION:-}" \
+          "${AWS_PROFILE:-}" \
+          "false"
     status:
       - tmux has-session -t {{.TUNNEL_SESSION}} 2>/dev/null
-    requires:
-      vars: [DB_HOST, DB_PORT, LOCAL_DB_PORT]
-
 
   disconnect:
-    desc: "Stop DEFAULT SSM port-forward"
+    vars:
+      ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
+      TUNNEL_SESSION: "db-tunnel-{{.ENV_PROFILE}}"
+    desc: "Stop DEFAULT SSM port-forward (supports ENV_PROFILE)"
     silent: true
     cmds:
       - |
         set -euo pipefail
-        echo "Stopping DEFAULT SSM tunnel..."
-        tmux kill-session -t {{.TUNNEL_SESSION}} 2>/dev/null || true
-        echo "Default tunnel stopped."
+        . ./db/admin/task_helpers.sh
+        ENV_PROFILE="{{.ENV_PROFILE}}"
+        load_and_map_default_env "$ENV_PROFILE"
+
+        ACCESS="ssm"
+        if [[ "${DB_HOST:-}" == "localhost" || "${DB_HOST:-}" == "127.0.0.1" ]]; then
+          ACCESS="direct"
+        elif [[ -z "${SSM_TARGET:-}" ]]; then
+          ACCESS="direct"
+        fi
+
+        echo "Running db:disconnect with ENV_PROFILE=$ENV_PROFILE"
+        stop_ssm_tunnel "{{.TUNNEL_SESSION}}" "{{.ENV_PROFILE}}" "$ACCESS" "$DB_HOST" "$DB_PORT" "$LOCAL_DB_PORT"
 
   ping:
-    desc: "Ping DEFAULT database and show environment"
-    deps: [connect]
+    vars:
+      ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
+    desc: "Ping database with ENV_PROFILE=<local|dev|test|exp|prod>"
+    deps:
+      - task: connect
+        vars:
+          ENV_PROFILE: "{{.ENV_PROFILE}}"
     silent: true
     cmds:
       - |
         set -euo pipefail
+        . ./db/admin/task_helpers.sh
+        ENV_PROFILE="{{.ENV_PROFILE}}"
+        load_and_map_default_env "$ENV_PROFILE"
+        PSQL_BIN="${PSQL_BIN:-psql}"
+
+        echo "Running db:ping with ENV_PROFILE=$ENV_PROFILE"
 
         echo "Pinging DEFAULT DB via localhost:${LOCAL_DB_PORT} (${DB_NAME}) as ${DB_USER}"
 
         ENV_TYPE=$(PGPASSWORD="$DB_PASSWORD" \
-          psql -X -q -t -A \
+          "$PSQL_BIN" -X -q -t -A \
             -h 127.0.0.1 \
             -p "$LOCAL_DB_PORT" \
             -U "$DB_USER" \
@@ -88,7 +101,7 @@ tasks:
         fi
 
         PGPASSWORD="$DB_PASSWORD" \
-          psql \
+          "$PSQL_BIN" \
             -h 127.0.0.1 \
             -p "$LOCAL_DB_PORT" \
             -U "$DB_USER" \
@@ -103,15 +116,25 @@ tasks:
             "
 
   postgis:
-    desc: "Ensure PostGIS extension exists (idempotent) on DEFAULT DB"
-    deps: [connect]
+    desc: "Ensure PostGIS extension exists with ENV_PROFILE=<local|dev|test|exp|prod>"
+    deps:
+      - task: connect
+        vars:
+          ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
     silent: true
     cmds:
       - |
         set -euo pipefail
+        . ./db/admin/task_helpers.sh
+        ENV_PROFILE="${ENV_PROFILE:-local}"
+        load_and_map_default_env "$ENV_PROFILE"
+        PSQL_BIN="${PSQL_BIN:-psql}"
+
+        echo "Running db:postgis with ENV_PROFILE=$ENV_PROFILE"
+
         echo "Ensuring PostGIS extension exists in DB=$DB_NAME"
         PGPASSWORD="$DB_PASSWORD" \
-          psql \
+          "$PSQL_BIN" \
             -h 127.0.0.1 \
             -p "$LOCAL_DB_PORT" \
             -U "$DB_USER" \
@@ -119,22 +142,35 @@ tasks:
             -v ON_ERROR_STOP=1 \
             -c "CREATE EXTENSION IF NOT EXISTS postgis;" \
             -c "SELECT PostGIS_Version();"
-    requires:
-      vars: [DB_USER, DB_PASSWORD, DB_NAME, LOCAL_DB_PORT]
 
-  schemas:
-    desc: "Create dev users + per-user schemas (idempotent) on DEFAULT DB"
-    deps: [connect]
+  create-user-schema:
+    desc: "Create dev users/schemas with ENV_PROFILE=<local|dev|test|exp|prod>"
+    deps:
+      - task: connect
+        vars:
+          ENV_PROFILE: "{{default \"local\" .ENV_PROFILE}}"
     silent: true
     cmds:
       - |
         set -euo pipefail
+        . ./db/admin/task_helpers.sh
+        ENV_PROFILE="${ENV_PROFILE:-local}"
+        load_and_map_default_env "$ENV_PROFILE"
+        PSQL_BIN="${PSQL_BIN:-psql}"
+        DEV_USERS_FROM_TASK='{{default "" .DEV_USERS}}'
+
+        echo "Running db:create-user-schema with ENV_PROFILE=$ENV_PROFILE"
+
+        if [ -z "${DEV_USERS:-}" ] && [ -n "$DEV_USERS_FROM_TASK" ]; then
+          DEV_USERS="$DEV_USERS_FROM_TASK"
+        fi
+
         : "${DEV_USERS:?DEV_USERS missing}"
         echo "Running schemas for users: $DEV_USERS "
         echo ""
 
         PGPASSWORD="$DB_PASSWORD" \
-          psql \
+          "$PSQL_BIN" \
             -v ON_ERROR_STOP=1 \
             -h 127.0.0.1 \
             -p "$LOCAL_DB_PORT" \
