@@ -19,6 +19,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def municipalityName: String
   def modifiedAt: Option[String]
   def modifiedBy: Option[String]
+  def startDate: String
   def roadPart: RoadPart
   def trackCode: Long
   def roadMaintainer: ArealRoadMaintainer
@@ -71,7 +72,8 @@ case class ProjectAddressLink(id                    : Long,
                               roadwayNumber         : Long = 0,
                               sourceId              : String,
                               roadAddressRoadPart   : Option[RoadPart] = None,
-                              originalAddrMRange    : Option[AddrMRange] = None
+                              originalAddrMRange    : Option[AddrMRange] = None,
+                              startDate             : String = ""
                              ) extends ProjectAddressLinkLike {
   override def partitioningName: String = {
     if (roadPart.roadNumber > 0) // TODO comparing to 0 obsolete, RoadPart does not allow values <1
