@@ -16,14 +16,14 @@ import { button } from '@components/button/Button.js';
 
 const changeTableByProjectCollection = new WeakMap();
 
-function getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection) {
-	if (!projectChangeInfoModel || !projectCollection) {
+function getOrCreateProjectChangeTable(backend, projectCollection) {
+	if (!backend || !projectCollection) {
 		return null;
 	}
 
 	let changeTable = changeTableByProjectCollection.get(projectCollection);
 	if (!changeTable) {
-		changeTable = new ProjectChangeTable(projectChangeInfoModel, projectCollection);
+		changeTable = new ProjectChangeTable(backend, projectCollection);
 		changeTableByProjectCollection.set(projectCollection, changeTable);
 	}
 	return changeTable;
@@ -34,14 +34,13 @@ export function ProjectActionMenu(options) {
 		projectCollection,
 		map,
 		backend,
-		projectChangeInfoModel,
 		container = '#menu-container',
 		closeProjectMenu,
 		initialState = {},
 		onStateChange
 	} = options;
 	const mainMenu = options.mainMenu;
-	const projectChangeTable = getOrCreateProjectChangeTable(projectChangeInfoModel, projectCollection);
+	const projectChangeTable = getOrCreateProjectChangeTable(backend, projectCollection);
 
 	const state = Object.assign({
 		hasErrors: false,

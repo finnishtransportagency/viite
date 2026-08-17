@@ -14,7 +14,6 @@ import { MapView, refreshMap } from '@view/map/MapView.js';
 import { SearchPanel } from '@view/search-panel/SearchPanel.js';
 import { NodeCollection } from '@model/NodeCollection.js';
 import { initNodeLayer } from '@view/map/layers/NodeLayer.js';
-import { ProjectChangeInfoModel } from '@model/ProjectChangeInfoModel.js';
 import { ProjectCollection } from '@model/ProjectCollection.js';
 import { initProjectLinkLayer } from '@view/map/layers/ProjectLinkLayer.js';
 import { RoadCollection } from '@model/RoadCollection.js';
@@ -45,7 +44,6 @@ export function startApplication() {
 		const roadNameCollection = new RoadNameCollection(backend);
 		const selectedLinkProperty = new SelectedLinkProperty(roadCollection);
 		const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
-		const projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 		const nodeCollection = new NodeCollection(backend);
 		const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
 		nodeCollection.setSelectedNodesAndJunctions(selectedNodesAndJunctions);
@@ -53,7 +51,6 @@ export function startApplication() {
 		const models = {
 			roadCollection: roadCollection,
 			projectCollection: projectCollection,
-			projectChangeInfoModel: projectChangeInfoModel,
 			selectedLinkProperty: selectedLinkProperty,
 			selectedProjectLinkProperty: selectedProjectLinkProperty,
 			nodeCollection: nodeCollection,
@@ -160,7 +157,6 @@ const initializeUI = function (map, backend, startupParameters, layers, tileMaps
 		backend: backend,
 		selectedProjectLinkProperty: models.selectedProjectLinkProperty,
 		projectLinkLayer: models.projectLinkLayer,
-		projectChangeInfoModel: models.projectChangeInfoModel,
 		roadNameCollection: roadNameCollection,
 		models: models
 	});

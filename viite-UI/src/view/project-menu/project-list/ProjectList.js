@@ -27,7 +27,6 @@ export function ProjectList(options = {}) {
 			map: options.map,
 			canValidateProject: canUseDevTools,
 			backend: options.backend,
-			projectChangeInfoModel: options.projectChangeInfoModel,
 			mainMenu: options.mainMenu
 		});
 
@@ -41,7 +40,6 @@ export function ProjectList(options = {}) {
 			map: options.map,
 			backend: options.backend,
 			projectChangeTable: actionMenu.getProjectChangeTable(),
-			projectChangeInfoModel: options.projectChangeInfoModel,
 			menu: options.menu,
 			roadCollection: options.roadCollection
 		});

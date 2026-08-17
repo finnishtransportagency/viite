@@ -2,10 +2,11 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 
-export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
+export function ProjectChangeTable(backend, projectCollection) {
 
 	let changeTableOpen = false;
 	let currentValidations = {};
+	let latestChangeData = null;
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
 	const ProjectStatus = ViiteEnumerations.ProjectStatus;
 	let windowMaximized = false;
@@ -160,21 +161,26 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 		return changeType.displayText;
 	}
 
+	function sortLatestChanges(side, reverse) {
+		latestChangeData.changeTable.changeInfoSeq = _.sortBy(latestChangeData.changeTable.changeInfoSeq,
+			[side + '.roadNumber', side + '.startRoadPartNumber', side + '.addrMRange.start', side + '.trackCode']);
+		if (reverse) latestChangeData.changeTable.changeInfoSeq.reverse();
+		return latestChangeData;
+	}
+
 	function getChanges() {
 		const currentProject = projectCollection.getCurrentProject();
-		projectChangeInfoModel.getChanges(
-			currentProject.project.id,
-			function () {
-				const source = changeTable.find('[id=label-source-btn]');
-				const target = changeTable.find('[id=label-target-btn]');
-				if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
-					projectChangeInfoModel.sortChanges('source', source.attr('class').match('fa-sort-up'));
-				} else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
-					projectChangeInfoModel.sortChanges('target', target.attr('class').match('fa-sort-up'));
-				}
-			},
-			showChangeTable
-		);
+		backend.getChangeTable(currentProject.project.id, function (changeData) {
+			latestChangeData = changeData;
+			const source = changeTable.find('[id=label-source-btn]');
+			const target = changeTable.find('[id=label-target-btn]');
+			if (source.hasClass('fa-sort-down') || source.hasClass('fa-sort-up')) {
+				sortLatestChanges('source', source.attr('class').match('fa-sort-up'));
+			} else if (target.hasClass('fa-sort-down') || target.hasClass('fa-sort-up')) {
+				sortLatestChanges('target', target.attr('class').match('fa-sort-up'));
+			}
+			showChangeTable(latestChangeData);
+		});
 	}
 
 	// Most validation logic is in the backend, but we have some redundancy here to highlight errors that might have slipped past initial validation
@@ -413,7 +419,7 @@ export function ProjectChangeTable(projectChangeInfoModel, projectCollection) {
 		otherBtn.removeClass('fa-sort-up');
 		otherBtn.addClass('fa-sort');
 
-		const projectChanges = projectChangeInfoModel.sortChanges(side, btn.className.match('fa-sort-up'));
+		const projectChanges = sortLatestChanges(side, btn.className.match('fa-sort-up'));
 		showChangeTable(projectChanges);
 	}
 
