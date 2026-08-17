@@ -1,3 +1,10 @@
+// Standalone export so callers that only need search (e.g. LocationSearch.js) don't need a Backend() instance
+export function getSearchResults(searchString) {
+	return $.get("api/viite/roadlinks/search", { search: searchString }).then(function (x) {
+		return x;
+	});
+}
+
 export function Backend() {
 	let loadingProject;
 	const gettingRoadLinks = null;
@@ -420,11 +427,7 @@ export function Backend() {
 			$.get('api/viite/notificationbanner', callback);
 		},
 
-		getSearchResults: function (searchString) {
-			return $.get("api/viite/roadlinks/search", { search: searchString }).then(function (x) {
-				return x;
-			});
-		},
+		getSearchResults: getSearchResults,
 
 		reOpenProject: function (projectId, success, errorCallback) {
 			$.ajax({

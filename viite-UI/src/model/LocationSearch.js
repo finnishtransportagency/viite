@@ -8,21 +8,12 @@
  * - Error handling for unknown addresses
  */
 /* eslint-disable new-cap */
-import { Backend } from '@utils/BackendUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { LocationInputParser } from '@utils/LocationInputParser.js';
 import { getCurrentLocation } from '@view/map/MapView.js';
+import { getSearchResults } from '@utils/BackendUtils.js';
 
-let backendService;
-
-function getBackendOrReject() {
-	if (!backendService) {
-		backendService = new Backend();
-	}
-
-	return backendService;
-}
 
 /**
  * Search by street address
@@ -31,12 +22,8 @@ function getBackendOrReject() {
  * @returns {*}
  */
 const geocode = function (street) {
-	const backend = getBackendOrReject();
-	if (!backend) {
-		return $.Deferred().reject('Hakupalvelua ei ole alustettu');
-	}
 
-	return backend.getSearchResults(street.search).then(function (coordinateData) {
+	return getSearchResults(street.search).then(function (coordinateData) {
 		const result = coordinateData[0].street[0].features;
 		const withErrors = _.some(result, function(r) {return !_.isUndefined(r.properties.virheet);});
 		const vkmResultToCoordinates = function(r) {
@@ -96,12 +83,8 @@ function roadLocationAPIResultParser(roadData, addressMValue) {
  * @returns {*}
  */
 const getCoordinatesFromSearchInput = function (input) {
-	const backend = getBackendOrReject();
-	if (!backend) {
-		return $.Deferred().reject('Hakupalvelua ei ole alustettu');
-	}
 
-	return backend.getSearchResults(input.search.trim()).then(function (coordinateData) {
+	return getSearchResults(input.search.trim()).then(function (coordinateData) {
 		const searchResult = [];
 		coordinateData.forEach(function (item) {
 			let partialResult;
