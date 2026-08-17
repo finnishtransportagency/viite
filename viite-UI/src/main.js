@@ -173,7 +173,6 @@ const initializeApplication = function (backend, models, startupParameters, road
 	);
 
 	initializeUI(mapContext.map, backend, startupParameters, mapContext.layers, mapContext.tileMaps, models, roadNameCollection);
-	models.nodeCollection.setMap(mapContext.map);
 	models.selectedLinkProperty.setLinkPropertyLayer(mapContext.layers.linkProperty);
 
 	new MapView(mapContext.map);

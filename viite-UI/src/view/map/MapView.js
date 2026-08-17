@@ -59,6 +59,10 @@ export function moveMapToCoordinates(position) {
 	mapState.map.getView().setZoom(zoomLevel);
 }
 
+export function fitMapToCoordinates(coordinates) {
+	mapState.map.getView().fit(new ol.geom.Polygon([coordinates]), mapState.map.getSize());
+}
+
 export function MapView(map) {
 	mapState.map = map;
 	const centerMarkerLayer = new ol.source.Vector({});

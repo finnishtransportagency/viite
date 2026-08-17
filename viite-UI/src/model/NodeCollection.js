@@ -2,7 +2,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
-import { moveMapToCoordinates } from '@view/map/MapView.js';
+import { fitMapToCoordinates, moveMapToCoordinates } from '@view/map/MapView.js';
 import { addNodesToMap, fetchNodesAndJunctionsFromCurrentMap } from '@view/map/layers/NodeLayer.js';
 
 /**
@@ -23,11 +23,6 @@ export function NodeCollection(backend) {
 	let userNodePointTemplates = [];
 	let userJunctionTemplates = [];
 	const saving = 'node-saving';
-	let map;
-
-	function setMap(m) {
-		map = m;
-	}
 
 	function setSelectedNodesAndJunctions(s) {
 		selectedNodesAndJunctions = s;
@@ -89,7 +84,7 @@ export function NodeCollection(backend) {
 		_.each(nodesWithAttributes, function (node) {
 			coords.push([node.coordinates.x, node.coordinates.y]);
 		});
-		map.getView().fit(new ol.geom.Polygon([coords]), map.getSize());
+		fitMapToCoordinates(coords);
 	}
 
 	function getNodesByRoadAttributes(roadAttributes) {
@@ -307,7 +302,6 @@ export function NodeCollection(backend) {
 		getNodesByRoadAttributes: getNodesByRoadAttributes,
 		getNodePointTemplatesByCoordinates: getNodePointTemplatesByCoordinates,
 		getJunctionTemplateByCoordinates: getJunctionTemplateByCoordinates,
-		setMap: setMap,
 		setSelectedNodesAndJunctions: setSelectedNodesAndJunctions,
 		saveNodeToBackend: saveNodeToBackend,
 		moveToLocation: moveToLocation,
