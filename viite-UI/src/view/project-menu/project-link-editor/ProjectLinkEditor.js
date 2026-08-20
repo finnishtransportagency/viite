@@ -308,7 +308,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 					if (response.success) {
 						$('#tie').val(response.roadNumber);
 						$('#osa').val(response.roadPartNumber);
-						$('#elinvoimakeskus').val(response.evk);
+						$('#elinvoimakeskus').val(response.roadMaintainer);
               
 						const roadNameField = $('#roadName');
 						if (response.roadName !== '') {
