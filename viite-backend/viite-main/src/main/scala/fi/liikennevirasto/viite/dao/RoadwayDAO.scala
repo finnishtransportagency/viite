@@ -1209,9 +1209,6 @@ class RoadwayDAO extends BaseDAO {
   def fetchTracksForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long],
                                        minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[TrackForRoadAddressBrowser] = {
 
-    println(s"IN ROADWAYDAO")
-    println(s"FETCHING TRACKS FOR ROAD ADDRESS BROWSER WITH PARAMETERS: situationDate=$situationDate, roadMaintainer=$roadMaintainer, roadNumber=$roadNumber, minRoadPartNumber=$minRoadPartNumber, maxRoadPartNumber=$maxRoadPartNumber")
-
     val parsedSituationDate = situationDate.map(DateTime.parse)
 
     val dateCondition = situationDate.map(date =>
