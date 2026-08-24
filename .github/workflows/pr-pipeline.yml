@@ -20,13 +20,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
+      pull-requests: write
     steps:
       - name: Checkout viite-infra repository
         uses: actions/checkout@v4
         with:
           repository: finnishtransportagency/viite-infra
-          token: ${{ env.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           ref: main
 
       - name: Configure AWS credentials
@@ -101,7 +101,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: finnishtransportagency/viite-infra
-          token: ${{ env.GITHUB_TOKEN }}
+          token: ${{ github.token }}
           ref: main
 
       - name: Configure AWS credentials
