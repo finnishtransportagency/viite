@@ -1,0 +1,141 @@
+name: Viite PR Pipeline
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+env:
+  AWS_REGION: eu-west-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_REPOSITORY: ${{ github.repository }}
+  GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
+  GITHUB_PR_BRANCH: ${{ github.head_ref }}
+  GITHUB_PR_BASE_BRANCH: ${{ github.base_ref }}
+  GITHUB_PR_TITLE: ${{ github.event.pull_request.title }}
+
+jobs:
+  create-or-update-pr-pipeline:
+    name: Create or Update PR Pipeline
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout viite-infra repository
+        uses: actions/checkout@v4
+        with:
+          repository: finnishtransportagency/viite-infra
+          token: ${{ env.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Get ALB DNS
+        run: |
+          ALB_DNS=$(aws cloudformation describe-stacks \
+            --stack-name $(echo "viite-pr-${{ env.GITHUB_PR_BRANCH }}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')-fargate-stack \
+            --query "Stacks[0].Outputs[?OutputKey=='PrAlbDns'].OutputValue" \
+            --output text --region eu-west-1)
+          echo "ALB_DNS=$ALB_DNS" >> $GITHUB_ENV
+      - name: Deploy Dynamic PR Pipeline
+        run: |
+          cd viite-infra
+          npm install
+          BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
+          echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
+          npx cdk deploy \
+            --context env=pr \
+            --context branch="$BRANCH_NAME" \
+            --require-approval never
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+
+      - name: Post Pipeline Info to PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = "${{ env.GITHUB_PR_BRANCH }}";
+            const cleanBranch = branch.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+            const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-codepipeline/view`;
+            const appUrl = `http://${process.env.ALB_DNS}/pr-${cleanBranch}/`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **PR Pipeline Created**\n\n📋 [View Pipeline](${pipelineUrl})\n🌐 [Access PR App](${appUrl})\n\n**Branch**: \`${branch}\`\n**Status**: Running build and tests...`
+            });
+
+      - name: Post Deployment Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **PR Pipeline Failed**\n\nDeployment did not complete. Check [GitHub Actions logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            });
+
+  destroy-pr-pipeline:
+    name: Destroy PR Pipeline
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout viite-infra repository
+        uses: actions/checkout@v4
+        with:
+          repository: finnishtransportagency/viite-infra
+          token: ${{ env.GITHUB_TOKEN }}
+          ref: main
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Destroy Dynamic PR Pipeline
+        run: |
+          cd viite-infra
+          BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
+          echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
+          npx cdk destroy \
+            --context env=pr \
+            --context branch="$BRANCH_NAME" \
+            --force
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+
+      - name: Post Cleanup Confirmation
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **PR Pipeline Destroyed**\n\nEphemeral resources cleaned up.`
+            });
