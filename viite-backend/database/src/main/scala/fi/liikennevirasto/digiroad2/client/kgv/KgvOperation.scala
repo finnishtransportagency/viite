@@ -1,17 +1,20 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
-import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
+import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
+import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
 import fi.vaylavirasto.viite.model.LinkGeomSource
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
+import org.apache.hc.client5.http.ClientProtocolException
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient, HttpClients}
-import org.apache.hc.client5.http.ClientProtocolException
 import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
 import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.http.message.BasicHttpRequest
-import org.json4s.{DefaultFormats, StreamInput}
+import org.joda.time.DateTime
+import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 
 import java.io.IOException
@@ -42,7 +45,7 @@ trait KgvCollection {
 }
 
 object KgvCollection {
-  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_20251020" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
+  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
   case object UnFrozen                extends KgvCollection { def value = "keskilinjavarasto:road_links" }
   case object LinkVersions            extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
@@ -53,6 +56,10 @@ trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
 
+  // versiondate joka määrittää dynaamisen tien päivitys ajankohdan
+  private lazy val versionDate: String =
+    new DateTime(runWithReadOnlySession(LinkDAO.fetchMaxAdjustedTimestamp()))
+      .toString("yyyy-MM-dd")
   protected val linkGeomSource: LinkGeomSource
   private val cqlLang                             = "cql-text"
   private val bboxCrsType                         = "EPSG%3A3067"
@@ -264,10 +271,13 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
+    logger.info(s"################### VERSIONDATE, JOKA ON KÄYTÖSSÄ: $versionDate ##################")
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    val filterString  = if (municipalities.nonEmpty || filter.isDefined){
-      s"filter=${encode(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))}"
-    }else {
+    val filter2 = encode(combineFiltersWithAnd(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter), Some(withVersionDateFilter(versionDate))))
+    logger.info(s"#### FILTER: $filter2")
+    val filterString = if (municipalities.nonEmpty || filter.isDefined) {
+      s"filter=$filter2"
+    } else {
       ""
     }
     fetchFeatures(s"$restApiEndPoint/$serviceName/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")

@@ -27,6 +27,7 @@ trait Filter {
 
   def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String
 
+  def withVersionDateFilter(date: String): String
 }
 
 object FilterOgc extends Filter {
@@ -95,4 +96,7 @@ object FilterOgc extends Filter {
                                    higherDate:    DateTime
                                   ): String =
     s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
+
+  override def withVersionDateFilter(date: String): String =
+    s"(versionstarttime::date <= '$date'::date AND (versionendtime::date >= '$date'::date OR versionendtime IS NULL))"
 }
