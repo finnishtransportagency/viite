@@ -24,6 +24,18 @@
       });
     }, 1000);
 
+    this.getVelhoSpecialTransportRoutes = _.throttle(function (callback) {
+      return $.get('api/viite/velho/specialTransportRoutes', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getVelhoDetourRoutes = _.throttle(function (callback) {
+      return $.get('api/viite/velho/detourRoutes', function (data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddressbrowser', params, function (data) {
         return _.isFunction(callback) && callback(data);

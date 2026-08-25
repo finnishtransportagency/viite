@@ -131,7 +131,7 @@
 
     var mapPluginsContainer = jQuery('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
-    new TileMapSelector(mapPluginsContainer, applicationModel);
+    new TileMapSelector(mapPluginsContainer, applicationModel, backend);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 

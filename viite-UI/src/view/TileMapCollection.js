@@ -86,18 +86,42 @@
     }, layerConfig));
     terrainMapLayer.set('name', 'terrainMapLayer');
 
+    const specialTransportRoutesLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      visible: false,
+      minZoom: zoomlevels.minZoomForRoadLinks, // same zoom range as regular road links
+      zIndex: 160,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: '#00eeff', width: 3 })
+      })
+    });
+    specialTransportRoutesLayer.set('name', 'specialTransportRoutesLayer');
+
+    const detourRoutesLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      visible: false,
+      minZoom: zoomlevels.minZoomForRoadLinks, // same zoom range as regular road links
+      zIndex: 160,
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({ color: '#03fc5e', width: 3 })
+      })
+    });
+    detourRoutesLayer.set('name', 'detourRoutesLayer');
+
     const tileMapLayers = {
       background: backgroundMapLayer,
       aerial: aerialMapLayer,
       terrain: terrainMapLayer,
       propertyBorder: propertyBorderLayer,
-      regionsBorder: regionBordersLayer
+      regionsBorder: regionBordersLayer,
+      specialTransportRoutes: specialTransportRoutesLayer,
+      detourRoutes: detourRoutesLayer
     };
 
     var selectMap = function (tileMap) {
       _.forEach(tileMapLayers, function (layer, key) {
-        // Don't hide the property and region borders when changing base maps
-        if (key === 'propertyBorder' || key === 'regionsBorder') {
+        // Don't hide the property/region borders, or the Velho overlay layers, when changing base maps
+        if (key === 'propertyBorder' || key === 'regionsBorder' || key === 'specialTransportRoutes' || key === 'detourRoutes') {
           return;
         }
         layer.setVisible(key === tileMap);
@@ -112,10 +136,40 @@
       regionBordersLayer.setVisible(showRegionalBorders); 
     };
 
+    // geoJson coordinates come from Velho in EPSG:4326; reproject to the map's EPSG:3067.
+    const geoJsonFormat = new ol.format.GeoJSON();
+
+    const setVelhoLayerFeatures = function (layer, geoJson) {
+      const source = layer.getSource();
+      source.clear();
+      if (geoJson && geoJson.features && geoJson.features.length) {
+        source.addFeatures(geoJsonFormat.readFeatures(geoJson, {
+          dataProjection: 'EPSG:4326',
+          featureProjection: 'EPSG:3067'
+        }));
+      }
+    };
+
+    const toggleSpecialTransportRoutesVisibility = function (visible, geoJson) {
+      specialTransportRoutesLayer.setVisible(visible);
+      if (visible) {
+        setVelhoLayerFeatures(specialTransportRoutesLayer, geoJson);
+      }
+    };
+
+    const toggleDetourRoutesVisibility = function (visible, geoJson) {
+      detourRoutesLayer.setVisible(visible);
+      if (visible) {
+        setVelhoLayerFeatures(detourRoutesLayer, geoJson);
+      }
+    };
+
     selectMap('background');
     eventbus.on('tileMap:selected', selectMap);
     eventbus.on('tileMap:togglepropertyBorder', togglePropertyBorderVisibility);
     eventbus.on('tileMap:toggleRegionalBorders', toggleRegionalBordersVisibility);
+    eventbus.on('velho:specialTransportRoutesToggled', toggleSpecialTransportRoutesVisibility);
+    eventbus.on('velho:detourRoutesToggled', toggleDetourRoutesVisibility);
 
     return {
       layers: Object.values(tileMapLayers),
