@@ -40,9 +40,20 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
     contentType = formats("json")
   }
 
-  // Returns the cached GeoJSON FeatureCollection (EPSG:4326) for targetClass.
+  // Parses the optional "bbox" query param ("minLon,minLat,maxLon,maxLat" in EPSG:4326); malformed values are ignored (no filtering).
+  private def parseBboxParam(): Option[(Double, Double, Double, Double)] =
+    params.get("bbox").flatMap { raw =>
+      raw.split(",").map(_.trim) match {
+        case Array(minLon, minLat, maxLon, maxLat) =>
+          try Some((minLon.toDouble, minLat.toDouble, maxLon.toDouble, maxLat.toDouble))
+          catch { case _: NumberFormatException => None }
+        case _ => None
+      }
+    }
+
+  // Returns the cached GeoJSON FeatureCollection (EPSG:4326) for targetClass, optionally restricted to the "bbox" query param.
   private def fetchCachedGeoJson(targetClass: String) = runWithReadOnlySession {
-    VelhoGeometryCacheDAO.fetchFeatureCollection(targetClass)
+    VelhoGeometryCacheDAO.fetchFeatureCollection(targetClass, parseBboxParam())
   }
 
   // Erikoiskuljetusreitit (special transport routes)

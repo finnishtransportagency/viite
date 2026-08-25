@@ -251,7 +251,7 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
   def getObjectsWithGeometry(namespace: String, targetClass: String): Either[VelhoError, Seq[(String, JValue)]] = {
     getObjectOids(namespace, targetClass).flatMap { oids =>
       getAccessToken.map { accessToken =>
-        logger.info(s"Found ${oids.size} OIDs for Velho class $targetClass")
+        logger.info(s"Found ${oids.size} OIDs for $targetClass")
 
         val batches = oids.grouped(GEOMETRY_BATCH_SIZE).toSeq
         val batchFutures = Future.traverse(batches) { batch =>

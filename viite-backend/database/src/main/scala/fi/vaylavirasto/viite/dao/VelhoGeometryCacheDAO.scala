@@ -8,12 +8,25 @@ import scalikejdbc._
 // Cache of Velho ("Luokitusrekisteri") object geometries, refreshed once a day by an external job (see VelhoApi.refreshVelhoCache).
 object VelhoGeometryCacheDAO extends BaseDAO {
 
-  /** Builds a GeoJSON FeatureCollection (EPSG:4326) from the cached rows for the given targetClass. */
-  def fetchFeatureCollection(targetClass: String): Map[String, Any] = {
+  /**
+   * Builds a GeoJSON FeatureCollection (EPSG:4326) from the cached rows for the given targetClass.
+   *
+   * @param bbox Optional (minLon, minLat, maxLon, maxLat) in EPSG:4326; restricts rows to those
+   *             whose bounding box overlaps it (uses the geometry GiST index), so panning/zooming
+   *             the map only fetches/serializes the geometries currently in view.
+   */
+  def fetchFeatureCollection(targetClass: String, bbox: Option[(Double, Double, Double, Double)] = None): Map[String, Any] = {
+    val bboxFilter = bbox match {
+      case Some((minLon, minLat, maxLon, maxLat)) =>
+        sqls"AND geometry && ST_MakeEnvelope($minLon, $minLat, $maxLon, $maxLat, 4326)"
+      case None => sqls""
+    }
+
     val features = sql"""
       SELECT oid, ST_AsGeoJSON(geometry) AS geometry_json
       FROM velho_geometry_cache
       WHERE target_class = $targetClass
+      $bboxFilter
     """
       .map(rs => Map("type" -> "Feature", "properties" -> Map("oid" -> rs.string("oid")), "geometry" -> parse(rs.string("geometry_json")).values))
       .list()

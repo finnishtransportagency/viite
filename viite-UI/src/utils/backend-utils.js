@@ -24,17 +24,19 @@
       });
     }, 1000);
 
-    this.getVelhoSpecialTransportRoutes = _.throttle(function (callback) {
-      return $.get('api/viite/velho/specialTransportRoutes', function (data) {
+    // bbox (optional): [minLon, minLat, maxLon, maxLat] in EPSG:4326, restricts the returned geometries to that area.
+    this.getVelhoSpecialTransportRoutes = function (bbox, callback) {
+      return $.get('api/viite/velho/specialTransportRoutes', bbox ? { bbox: bbox.join(',') } : {}, function (data) {
         return _.isFunction(callback) && callback(data);
       });
-    }, 1000);
+    };
 
-    this.getVelhoDetourRoutes = _.throttle(function (callback) {
-      return $.get('api/viite/velho/detourRoutes', function (data) {
+    // bbox (optional): [minLon, minLat, maxLon, maxLat] in EPSG:4326, restricts the returned geometries to that area.
+    this.getVelhoDetourRoutes = function (bbox, callback) {
+      return $.get('api/viite/velho/detourRoutes', bbox ? { bbox: bbox.join(',') } : {}, function (data) {
         return _.isFunction(callback) && callback(data);
       });
-    }, 1000);
+    };
 
     this.getDataForRoadAddressBrowser = _.throttle(function (params, callback) {
       return $.get('api/viite/roadaddressbrowser', params, function (data) {

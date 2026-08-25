@@ -1,5 +1,5 @@
 (function (root) {
-  root.TileMapSelector = function (container, applicationModel, backend) {
+  root.TileMapSelector = function (container, applicationModel, backend, map) {
     const element = `
       <div class="tile-map-selector">
         <ul>
@@ -106,14 +106,42 @@
       detourRoutesVisible: 'detourRoutesVisibleCheckbox'
     };
 
-    let specialTransportRoutesData = null;
-    let detourRoutesData = null;
+    // Fetched lazily on first checkbox toggle, and refetched (bbox-restricted) on map pan/zoom while visible to avoid loading entire dataset
+    let specialTransportRoutesVisible = false;
+    let detourRoutesVisible = false;
+    let currentBbox = null; // [minLon, minLat, maxLon, maxLat] in EPSG:4326, kept in sync with the map view
 
-    backend.getVelhoSpecialTransportRoutes(function (geoJson) {
-      specialTransportRoutesData = geoJson;
-    });
-    backend.getVelhoDetourRoutes(function (geoJson) {
-      detourRoutesData = geoJson;
+    function fetchSpecialTransportRoutes() {
+      backend.getVelhoSpecialTransportRoutes(currentBbox, function (geoJson) {
+        eventbus.trigger('velho:specialTransportRoutesToggled', specialTransportRoutesVisible, geoJson);
+      });
+    }
+
+    function fetchDetourRoutes() {
+      backend.getVelhoDetourRoutes(currentBbox, function (geoJson) {
+        eventbus.trigger('velho:detourRoutesToggled', detourRoutesVisible, geoJson);
+      });
+    }
+
+    // Debounced so continuous panning/zooming only triggers one refetch per layer, after movement settles.
+    const debouncedFetchSpecialTransportRoutes = _.debounce(fetchSpecialTransportRoutes, 300);
+    const debouncedFetchDetourRoutes = _.debounce(fetchDetourRoutes, 300);
+
+    // map:refresh's bbox is a fixed layer extent, not the current viewport, so read the view directly instead.
+    function updateCurrentBbox() {
+      const size = map.getSize();
+      const viewExtent = size && map.getView().calculateExtent(size);
+      // A not-yet-rendered map returns a degenerate/infinite extent; keep the previous (or no) bbox in that case.
+      if (viewExtent && viewExtent.every(isFinite)) {
+        currentBbox = ol.proj.transformExtent(viewExtent, 'EPSG:3067', 'EPSG:4326');
+      }
+    }
+
+    updateCurrentBbox();
+    map.on('moveend', function () {
+      updateCurrentBbox();
+      if (specialTransportRoutesVisible) debouncedFetchSpecialTransportRoutes();
+      if (detourRoutesVisible) debouncedFetchDetourRoutes();
     });
 
     // Sync dropdown checkboxes to match main checkboxes (no events triggered)
@@ -166,26 +194,20 @@
     });
 
     container.on('change', '#specialTransportRoutesVisibleCheckbox', function () {
-      const visible = this.checked;
-      if (visible && _.isNull(specialTransportRoutesData)) {
-        backend.getVelhoSpecialTransportRoutes(function (geoJson) {
-          specialTransportRoutesData = geoJson;
-          eventbus.trigger('velho:specialTransportRoutesToggled', visible, geoJson);
-        });
+      specialTransportRoutesVisible = this.checked;
+      if (specialTransportRoutesVisible) {
+        fetchSpecialTransportRoutes();
       } else {
-        eventbus.trigger('velho:specialTransportRoutesToggled', visible, specialTransportRoutesData);
+        eventbus.trigger('velho:specialTransportRoutesToggled', false);
       }
     });
 
     container.on('change', '#detourRoutesVisibleCheckbox', function () {
-      const visible = this.checked;
-      if (visible && _.isNull(detourRoutesData)) {
-        backend.getVelhoDetourRoutes(function (geoJson) {
-          detourRoutesData = geoJson;
-          eventbus.trigger('velho:detourRoutesToggled', visible, geoJson);
-        });
+      detourRoutesVisible = this.checked;
+      if (detourRoutesVisible) {
+        fetchDetourRoutes();
       } else {
-        eventbus.trigger('velho:detourRoutesToggled', visible, detourRoutesData);
+        eventbus.trigger('velho:detourRoutesToggled', false);
       }
     });
 
