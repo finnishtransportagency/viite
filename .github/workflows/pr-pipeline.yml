@@ -6,6 +6,7 @@ on:
 env:
   AWS_REGION: eu-west-1
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  AWS_DEV_ALB_DNS: ${{ secrets.AWS_DEV_ALB }}
   GITHUB_REPOSITORY: ${{ github.repository }}
   GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
   GITHUB_PR_BRANCH: ${{ github.head_ref }}
@@ -40,13 +41,6 @@ jobs:
         with:
           node-version: 22
 
-      - name: Get ALB DNS
-        run: |
-          ALB_DNS=$(aws cloudformation describe-stacks \
-            --stack-name $(echo "viite-pr-${{ env.GITHUB_PR_BRANCH }}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9-]/-/g')-fargate-stack \
-            --query "Stacks[0].Outputs[?OutputKey=='PrAlbDns'].OutputValue" \
-            --output text --region eu-west-1)
-          echo "ALB_DNS=$ALB_DNS" >> $GITHUB_ENV
       - name: Deploy Dynamic PR Pipeline
         run: |
           cd viite-infra
@@ -70,7 +64,7 @@ jobs:
             const branch = "${{ env.GITHUB_PR_BRANCH }}";
             const cleanBranch = branch.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
             const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-codepipeline/view`;
-            const appUrl = `http://${process.env.ALB_DNS}/pr-${cleanBranch}/`;
+            const appUrl = `http://${process.env.AWS_DEV_ALB}/pr-${cleanBranch}/`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
