@@ -20,6 +20,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     steps:
       - name: Checkout viite-infra repository
         uses: actions/checkout@v4
@@ -56,6 +57,7 @@ jobs:
             --context env=pr \
             --context branch="$BRANCH_NAME" \
             --require-approval never
+            2>&1 | grep -E "^(✓|✔|✅|Successfully|Created|Updated)" || true
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
@@ -95,6 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
     steps:
       - name: Checkout viite-infra repository
         uses: actions/checkout@v4
@@ -123,6 +126,7 @@ jobs:
             --context env=pr \
             --context branch="$BRANCH_NAME" \
             --force
+          2>&1 | grep -E "^(✓|✔|✅|Successfully|Deleted)" || true
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
