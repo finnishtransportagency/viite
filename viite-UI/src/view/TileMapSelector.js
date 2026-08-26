@@ -1,5 +1,5 @@
 (function (root) {
-  root.TileMapSelector = function (container, applicationModel) {
+  root.TileMapSelector = function (container, applicationModel, backend, map) {
     const element = `
       <div class="tile-map-selector">
         <ul>
@@ -13,7 +13,7 @@
           <div class="checkbox">
             <label>
               <input type="checkbox" id="propertyBoundariesVisibleCheckbox">
-              Näytä kiinteistörajat
+              Kiinteistörajat
             </label>
           </div>
         </div>
@@ -22,7 +22,7 @@
           <div class="checkbox">
             <label>
               <input type="checkbox" id="unAddressedRoadsVisibleCheckbox" checked>
-              Näytä tieosoitteettomat-linkit
+              Tieosoitteettomat-linkit
             </label>
           </div>
         </div>
@@ -31,7 +31,7 @@
           <div class="checkbox">
             <label>
               <input type="checkbox" id="underConstructionVisibleCheckbox" checked>
-              Näytä rakenteilla-linkit
+              Rakenteilla-linkit
             </label>
           </div>
         </div>
@@ -40,7 +40,7 @@
           <div class="checkbox">
             <label>
               <input type="checkbox" id="roadsVisibleCheckbox" checked>
-              Näytä tieosoiteverkko
+              Tieosoiteverkko
             </label>
           </div>
         </div>
@@ -49,7 +49,25 @@
           <div class="checkbox">
             <label>
               <input type="checkbox" id="regionalBordersVisibleCheckbox">
-              Näytä maakuntarajat
+              Maakuntarajat
+            </label>
+          </div>
+        </div>
+
+        <div class="roads-visible-wrapper">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" id="specialTransportRoutesVisibleCheckbox">
+              Erikoiskuljetusreitit
+            </label>
+          </div>
+        </div>
+
+        <div class="roads-visible-wrapper">
+          <div class="checkbox">
+            <label>
+              <input type="checkbox" id="detourRoutesVisibleCheckbox">
+              Varareitit
             </label>
           </div>
         </div>
@@ -62,7 +80,9 @@
             <label><input type="checkbox" value="unAddressedRoadsVisible" id="dropdown-unAddressedRoadsVisible"> Näytä tieosoitteettomat-linkit</label><br>
             <label><input type="checkbox" value="underConstructionVisible" id="dropdown-underConstructionVisible"> Näytä rakenteilla-linkit</label><br>
             <label><input type="checkbox" value="roadsVisible" id="dropdown-roadsVisible"> Näytä tieosoiteverkko</label><br>
-            <label><input type="checkbox" value="regionalBordersVisible" id="dropdown-regionalBordersVisible"> Näytä maakuntarajat</label>
+            <label><input type="checkbox" value="regionalBordersVisible" id="dropdown-regionalBordersVisible"> Näytä maakuntarajat</label><br>
+            <label><input type="checkbox" value="specialTransportRoutesVisible" id="dropdown-specialTransportRoutesVisible"> Näytä erikoiskuljetusreitit</label><br>
+            <label><input type="checkbox" value="detourRoutesVisible" id="dropdown-detourRoutesVisible"> Näytä varareitit</label>
           </div>
         </div>
       </div>
@@ -70,7 +90,7 @@
 
     container.append(element);
 
-    const BREAKPOINT_PX = 1470;
+    const BREAKPOINT_PX = 1600;
 
     const $checkboxDropdownWrapper = container.find('.checkbox-dropdown-wrapper');
     const $dropdownToggle = $checkboxDropdownWrapper.find('.dropdown-toggle');
@@ -81,8 +101,48 @@
       unAddressedRoadsVisible: 'unAddressedRoadsVisibleCheckbox',
       underConstructionVisible: 'underConstructionVisibleCheckbox',
       roadsVisible: 'roadsVisibleCheckbox',
-      regionalBordersVisible: 'regionalBordersVisibleCheckbox'
+      regionalBordersVisible: 'regionalBordersVisibleCheckbox',
+      specialTransportRoutesVisible: 'specialTransportRoutesVisibleCheckbox',
+      detourRoutesVisible: 'detourRoutesVisibleCheckbox'
     };
+
+    // Fetched lazily on first checkbox toggle, and refetched (bbox-restricted) on map pan/zoom while visible to avoid loading entire dataset
+    let specialTransportRoutesVisible = false;
+    let detourRoutesVisible = false;
+    let currentBbox = null; // [minLon, minLat, maxLon, maxLat] in EPSG:4326, kept in sync with the map view
+
+    function fetchSpecialTransportRoutes() {
+      backend.getVelhoSpecialTransportRoutes(currentBbox, function (geoJson) {
+        eventbus.trigger('velho:specialTransportRoutesToggled', specialTransportRoutesVisible, geoJson);
+      });
+    }
+
+    function fetchDetourRoutes() {
+      backend.getVelhoDetourRoutes(currentBbox, function (geoJson) {
+        eventbus.trigger('velho:detourRoutesToggled', detourRoutesVisible, geoJson);
+      });
+    }
+
+    // Debounced so continuous panning/zooming only triggers one refetch per layer, after movement settles.
+    const debouncedFetchSpecialTransportRoutes = _.debounce(fetchSpecialTransportRoutes, 300);
+    const debouncedFetchDetourRoutes = _.debounce(fetchDetourRoutes, 300);
+
+    // map:refresh's bbox is a fixed layer extent, not the current viewport, so read the view directly instead.
+    function updateCurrentBbox() {
+      const size = map.getSize();
+      const viewExtent = size && map.getView().calculateExtent(size);
+      // A not-yet-rendered map returns a degenerate/infinite extent; keep the previous (or no) bbox in that case.
+      if (viewExtent && viewExtent.every(isFinite)) {
+        currentBbox = ol.proj.transformExtent(viewExtent, 'EPSG:3067', 'EPSG:4326');
+      }
+    }
+
+    updateCurrentBbox();
+    map.on('moveend', function () {
+      updateCurrentBbox();
+      if (specialTransportRoutesVisible) debouncedFetchSpecialTransportRoutes();
+      if (detourRoutesVisible) debouncedFetchDetourRoutes();
+    });
 
     // Sync dropdown checkboxes to match main checkboxes (no events triggered)
     function syncDropdownCheckboxesFromMain() {
@@ -133,6 +193,24 @@
       eventbus.trigger('tileMap:toggleRegionalBorders', this.checked);
     });
 
+    container.on('change', '#specialTransportRoutesVisibleCheckbox', function () {
+      specialTransportRoutesVisible = this.checked;
+      if (specialTransportRoutesVisible) {
+        fetchSpecialTransportRoutes();
+      } else {
+        eventbus.trigger('velho:specialTransportRoutesToggled', false);
+      }
+    });
+
+    container.on('change', '#detourRoutesVisibleCheckbox', function () {
+      detourRoutesVisible = this.checked;
+      if (detourRoutesVisible) {
+        fetchDetourRoutes();
+      } else {
+        eventbus.trigger('velho:detourRoutesToggled', false);
+      }
+    });
+
     // Tile map selection (keeps single-selection behavior for base maps)
     container.find('li[data-layerid]').on('click', event => {
       container.find('li.selected').removeClass('selected');
@@ -170,7 +248,7 @@
     });
 
     // When any main checkbox changes, sync dropdown checkboxes when on small screens
-    container.on('change', '#propertyBoundariesVisibleCheckbox, #unAddressedRoadsVisibleCheckbox, #underConstructionVisibleCheckbox, #roadsVisibleCheckbox, #regionalBordersVisibleCheckbox', function () {
+    container.on('change', '#propertyBoundariesVisibleCheckbox, #unAddressedRoadsVisibleCheckbox, #underConstructionVisibleCheckbox, #roadsVisibleCheckbox, #regionalBordersVisibleCheckbox, #specialTransportRoutesVisibleCheckbox, #detourRoutesVisibleCheckbox', function () {
       if (window.innerWidth <= BREAKPOINT_PX) {
         syncDropdownCheckboxesFromMain();
       }
