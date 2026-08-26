@@ -465,9 +465,9 @@ class LinkNetworkUpdater {
     def checksForInvalidLinkLengths(oldLink: LinkInfo, newLinks: Seq[LinkInfo], splitInfos: Seq[ReplaceInfo]) = {
       logger.debug(s"data integrity: told lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
       val oldLengthFromOldLink    = GeometryUtils.scaleToThreeDigits(oldLink.linkLength) // may already be rounded to three digits, but whatever
-      val oldLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.oldToMValue-splitInfo.oldFromMValue))
+      val oldLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + (splitInfo.oldToMValue-splitInfo.oldFromMValue).abs))
       val newLengthFromNewLinks   = GeometryUtils.scaleToThreeDigits(newLinks  .foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.linkLength))
-      val newLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.newToMValue-splitInfo.newFromMValue))
+      val newLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + (splitInfo.newToMValue-splitInfo.newFromMValue).abs))
 
       if (oldLengthFromOldLink  != oldLengthFromSplitInfos) {  // old link lengths must always match
         throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. Old link lengths do not match when splitting link $oldLink." +
@@ -521,14 +521,19 @@ class LinkNetworkUpdater {
     //TODO link.geometry vs. link.linkLength checks?
 
     logger.debug("data integrity: digitization")
-    splitInfos.foreach(ri =>
-      if (ri.digitizationChange) {
-        // TODO is digitizationChange always ok as is, or do we have to check something when it is true?
-      }
-    )
+//    splitInfos.foreach(ri =>
+//      if (ri.digitizationChange) {
+//        // TODO is digitizationChange always ok as is, or do we have to check something when it is true?
+//      }
+//    )
+    val normalizedSplitInfos = splitInfos.map { si =>
+      if (si.oldFromMValue > si.oldToMValue)
+        si.copy(oldFromMValue = si.oldToMValue, oldToMValue = si.oldFromMValue)
+      else si
+    }
 
     logger.debug("Validations for a split change passed, returning a proper LinkNetworkSplitChange")
-    Some(LinkNetworkSplitChange(oldLink, newLinks, splitInfos))
+    Some(LinkNetworkSplitChange(oldLink, newLinks, normalizedSplitInfos))
 
   }
 
