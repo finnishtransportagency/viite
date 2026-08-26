@@ -6,7 +6,7 @@ import fi.vaylavirasto.viite.dao.VelhoGeometryCacheDAO
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
-import org.scalatra.ScalatraServlet
+import org.scalatra.{InternalServerError, ScalatraServlet}
 import org.slf4j.LoggerFactory
 
 /* Glossary: 
@@ -29,6 +29,17 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
     ("kansalliset-luokitukset", "erikoiskuljetusreitit"),
     ("varautumiseen-liittyvat-luokitukset", "varareitit")
   )
+
+  private val missingVelhoConfigurationMessage = "Url is not defined, make sure to update envs in parameter store"
+
+  private def isBlank(value: String): Boolean = Option(value).forall(_.trim.isEmpty)
+
+  private def missingVelhoEnvironmentVariables: Seq[String] = Seq(
+    "velhoTokenUrl" -> ViiteProperties.velhoTokenUrl,
+    "velhoApiUrl" -> ViiteProperties.velhoApiUrl,
+    "velhoClientId" -> ViiteProperties.velhoClientId,
+    "velhoClientSecret" -> ViiteProperties.velhoClientSecret
+  ).collect { case (name, value) if isBlank(value) => name }
 
   private lazy val velhoClient = new VelhoClient(
     ViiteProperties.velhoTokenUrl, ViiteProperties.velhoApiUrl,
@@ -69,6 +80,12 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
   // Called once a day by an external job to refresh the DB cache with fresh data from Velho.
   // Can be triggered in local Windows with: curl.exe -X POST "http://localhost:9080/api/viite/velho/refreshVelhoCache"
   post("/refreshVelhoCache") { // If this is changed, make sure to update Lambda function both in repo and AWS
+    val missingEnvs = missingVelhoEnvironmentVariables
+    if (missingEnvs.nonEmpty) {
+      logger.error(s"$missingVelhoConfigurationMessage. Missing envs: ${missingEnvs.mkString(", ")}")
+      halt(InternalServerError(missingVelhoConfigurationMessage))
+    }
+
     val results = cachedObjectClasses.map { case (namespace, targetClass) =>
       velhoClient.getObjectsWithGeometry(namespace, targetClass) match {
         case Right(objects) =>
