@@ -6,7 +6,6 @@ on:
 env:
   AWS_REGION: eu-west-1
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   GITHUB_REPOSITORY: ${{ github.repository }}
   GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
   GITHUB_PR_BRANCH: ${{ github.head_ref }}
@@ -26,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: finnishtransportagency/viite-infra
-          token: ${{ github.token }}
+          token: ${{ secrets.FINE_GRAINED_TOKEN }}
           ref: main
 
       - name: Configure AWS credentials
@@ -101,7 +100,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: finnishtransportagency/viite-infra
-          token: ${{ github.token }}
+          token: ${{ secrets.FINE_GRAINED_TOKEN }}
           ref: main
 
       - name: Configure AWS credentials
