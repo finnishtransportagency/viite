@@ -293,6 +293,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     queryWithPaginationThreaded(s"$restApiEndPoint/$serviceName/items?$filterString&filter-lang=$cqlLang&crs=$crs")
   }
 
+  // search by linkId => used without providing explicit filter
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
     new Parallel().operation(linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par, 4) {
       _.flatMap(ids => {
