@@ -16,8 +16,6 @@ trait ViiteProperties {
   val vkmUrlDev: String
   val vkmApiKey: String
   val vkmApiKeyDev: String
-  val velhoTokenUrl: String
-  val velhoApiUrl: String
   val velhoClientId: String
   val velhoClientSecret: String
   val importOnlyCurrent: Boolean
@@ -66,8 +64,6 @@ class ViitePropertiesFromEnv extends ViiteProperties {
   val vkmUrlDev: String = scala.util.Properties.envOrElse("vkmUrlDev", null) // Only to be used on Viite dev environment when testing VKM dev data
   val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", null)
   val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", null) // Only to be used on Viite dev environment when testing VKM dev data
-  val velhoTokenUrl: String = scala.util.Properties.envOrElse("velhoTokenUrl", null)
-  val velhoApiUrl: String = scala.util.Properties.envOrElse("velhoApiUrl", null)
   val velhoClientId: String = scala.util.Properties.envOrElse("velhoClientId", null)
   val velhoClientSecret: String = scala.util.Properties.envOrElse("velhoClientSecret", null)
   val importOnlyCurrent: Boolean = scala.util.Properties.envOrElse("importOnlyCurrent", "false").toBoolean
@@ -126,8 +122,6 @@ class ViitePropertiesFromFile extends ViiteProperties {
   override val vkmUrlDev: String = scala.util.Properties.envOrElse("vkmUrlDev", envProps.getProperty("vkmUrlDev"))
   override val vkmApiKey: String = scala.util.Properties.envOrElse("vkmApiKey", envProps.getProperty("vkmApiKey"))
   override val vkmApiKeyDev: String = scala.util.Properties.envOrElse("vkmApiKeyDev", envProps.getProperty("vkmApiKeyDev"))
-  override val velhoTokenUrl: String = scala.util.Properties.envOrElse("velhoTokenUrl", envProps.getProperty("velhoTokenUrl"))
-  override val velhoApiUrl: String = scala.util.Properties.envOrElse("velhoApiUrl", envProps.getProperty("velhoApiUrl"))
   override val velhoClientId: String = scala.util.Properties.envOrElse("velhoClientId", envProps.getProperty("velhoClientId"))
   override val velhoClientSecret: String = scala.util.Properties.envOrElse("velhoClientSecret", envProps.getProperty("velhoClientSecret"))
   override val importOnlyCurrent: Boolean = envProps.getProperty("importOnlyCurrent", "false").toBoolean
@@ -184,8 +178,6 @@ object ViiteProperties {
   lazy val vkmUrlDev: String = properties.vkmUrlDev
   lazy val vkmApiKey: String = properties.vkmApiKey
   lazy val vkmApiKeyDev: String = properties.vkmApiKeyDev
-  lazy val velhoTokenUrl: String = properties.velhoTokenUrl
-  lazy val velhoApiUrl: String = properties.velhoApiUrl
   lazy val velhoClientId: String = properties.velhoClientId
   lazy val velhoClientSecret: String = properties.velhoClientSecret
   lazy val importOnlyCurrent: Boolean = properties.importOnlyCurrent
