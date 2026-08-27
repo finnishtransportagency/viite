@@ -80,6 +80,8 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
     queryByLinkIds[LinkType](linkIds)
   }
 
+  def fetchByLinkIdIfActive(linkId: String): Option[LinkType] = queryByLinkIdsActiveOnVersionDate[LinkType](Set(linkId)).headOption
+
   def fetchSuRaVaGeLinksById(linkIds: Set[String]): List[(Option[Long], Option[Long], Int)] =
     queryRoadAndPartWithFilter(
       linkIds,

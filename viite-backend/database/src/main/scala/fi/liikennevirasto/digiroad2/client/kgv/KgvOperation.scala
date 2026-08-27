@@ -18,7 +18,7 @@ import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 
 import java.io.IOException
-import java.net.URLEncoder
+import java.net.{URLDecoder, URLEncoder}
 import java.util.concurrent.TimeUnit
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -87,6 +87,10 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def encode(url: String): String = {
     URLEncoder.encode(url, "UTF-8")
+  }
+
+  protected def decode(url: String): String = {
+    URLDecoder.decode(url, "UTF-8")
   }
 
   protected def addHeaders(request: BasicHttpRequest): Unit = {
@@ -274,7 +278,8 @@ trait KgvOperation extends LinkOperationsAbstract{
     logger.info(s"################### VERSIONDATE, JOKA ON KÄYTÖSSÄ: $versionDate ##################")
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
     val filter2 = encode(combineFiltersWithAnd(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter), Some(withVersionDateFilter(versionDate))))
-    logger.info(s"#### FILTER: $filter2")
+    val decodedFilter = decode(filter2)
+    logger.info(s"#### FILTER: $decodedFilter")
     val filterString = if (municipalities.nonEmpty || filter.isDefined) {
       s"filter=$filter2"
     } else {
@@ -306,6 +311,13 @@ trait KgvOperation extends LinkOperationsAbstract{
     queryByFilter(Some(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter)))
   }
 
+  protected def queryByLinkIdsActiveOnVersionDate[LinkType](linkIds: Set[String]): Seq[LinkType] = {
+    val idFilter = withLinkIdFilter(linkIds)
+    val closed   = queryByFilter[LinkType](Some(combineFiltersWithAnd(withVersionDateClosedFilter(versionDate), idFilter)))
+    val open     = queryByFilter[LinkType](Some(combineFiltersWithAnd(withVersionDateOpenFilter(versionDate), idFilter)))
+    (closed ++ open).distinct
+  }
+
   protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Option[Long], Option[Long], Int)] = {
     val filterString = s"&filter=${encode(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter))}"
     val url          = s"$restApiEndPoint/$serviceName/items?filter-lang=$cqlLang&crs=$crs$filterString"
@@ -318,6 +330,8 @@ trait KgvOperation extends LinkOperationsAbstract{
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
     val url = s"$restApiEndPoint/$serviceName/items?filter-lang=$cqlLang&crs=$crs$filterString"
+    val decodedUrl = decode(url)
+    logger.info(s"######### SEARCH QUERY URL: $decodedUrl #########")
     if(!pagination){
       fetchFeatures(url)
       match {
