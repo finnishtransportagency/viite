@@ -8,7 +8,6 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
-import fi.vaylavirasto.viite.postgis.MassQuery
 import org.joda.time.DateTime
 import scalikejdbc._
 import scalikejdbc.jodatime.JodaWrappedResultSet.fromWrappedResultSetToJodaWrappedResultSet
@@ -641,10 +640,9 @@ class RoadwayDAO extends BaseDAO {
     time(logger, "Fetch all current road addresses by roadway ids") {
       if (roadwayNumbers.isEmpty)
         Seq()
-      else if (roadwayNumbers.size > 1000)
-        massFetchWithRoadwayNumbers(roadwayNumbers, withHistory)
       else
-        fetch(withRoadwayNumbers(roadwayNumbers, withHistory))
+        // Group large results into chunks
+        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbers(chunk, withHistory))).toSeq
     }
   }
 
@@ -653,7 +651,7 @@ class RoadwayDAO extends BaseDAO {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        fetch(withRoadwayNumbersAndDate(roadwayNumbers, searchDate))
+        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbersAndDate(chunk, searchDate))).toSeq
     }
   }
 
@@ -837,22 +835,11 @@ class RoadwayDAO extends BaseDAO {
             )"""
     }
 
-    if (roadwayNumbers.size > 1000) {
-      MassQuery.withIds(roadwayNumbers)({
-        idTableName =>
-          sql"""
-            $query
-            JOIN $idTableName i ON i.id = a.ROADWAY_NUMBER
-            WHERE a.valid_to IS NULL
-            AND ${dateFilter(table = sqls"a")}
-          """
-      })
-    }
-    else
-      sql"""
-           $query
-           WHERE a.valid_to IS NULL
-           AND ${dateFilter(table = sqls"a")}
+    // Caller (fetchAllByRoadwayNumbers) chunks roadwayNumbers to <=1000 ids, so a plain IN clause is always used here.
+    sql"""
+         $query
+         WHERE a.valid_to IS NULL
+         AND ${dateFilter(table = sqls"a")}
            AND a.roadway_number IN ($roadwayNumbers)
            """
   }
@@ -930,22 +917,6 @@ class RoadwayDAO extends BaseDAO {
          WHERE a.valid_to IS NULL $endDateFilter
          AND a.ROADWAY_NUMBER IN ($roadwayNumbers)
          """
-  }
-
-  private def massFetchWithRoadwayNumbers(roadwayNumbers: Set[Long], withHistory: Boolean = false): Seq[Roadway] = {
-    val endDateFilter = if (withHistory) sqls"" else sqls"and a.end_date IS NULL"
-    MassQuery.withIds(roadwayNumbers)({
-      idTableName => {
-        val joinedQuery = (query: SQLSyntax) => {
-          sql"""
-            $query
-            JOIN $idTableName i ON i.id = a.ROADWAY_NUMBER
-            WHERE a.valid_to IS NULL $endDateFilter
-          """
-        }
-        fetch(joinedQuery)
-      }
-    })
   }
 
   private def betweenRoadNumbers(roadNumbers: (Int, Int))(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
@@ -1389,28 +1360,104 @@ class RoadwayDAO extends BaseDAO {
 
   }
 
-  def fetchRoadPartsForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[RoadPartForRoadAddressBrowser] = {
+  def fetchRoadPartsForRoadAddressBrowser(
+                                           situationDate: Option[String],
+                                           roadMaintainer: Option[String],
+                                           roadNumber: Option[Long],
+                                           minRoadPartNumber: Option[Long],
+                                           maxRoadPartNumber: Option[Long]
+                                         ): Seq[RoadPartForRoadAddressBrowser] = {
 
-    val dateCondition = situationDate.map(date =>
-      // using ::date to cast the date string to date type
-      sqls"AND start_date <= $date::date AND (end_date >= $date::date OR end_date IS NULL)"
-    ).getOrElse(sqls"")
+    val parsedSituationDate = situationDate.map(DateTime.parse)
 
-    val roadMaintainerCondition = roadMaintainer.map(roadMaintainer => sqls" AND road_maintainer = $roadMaintainer").getOrElse(sqls"")
+    val dateCondition = situationDate
+      .map(date => sqls"AND start_date <= $date::date AND (end_date >= $date::date OR end_date IS NULL)")
+      .getOrElse(sqls"")
 
-    val roadNumberCondition = roadNumber.map(roadNumber => sqls" AND road_number = $roadNumber").getOrElse(sqls"")
+    val roadMaintainerCondition = roadMaintainer
+      .map(rm => sqls" AND road_maintainer = $rm")
+      .getOrElse(sqls"")
 
-    val roadPartCondition = {
-      val parts = (minRoadPartNumber, maxRoadPartNumber)
-      parts match {
-        case (Some(minPart), Some(maxPart)) => sqls"AND road_part_number BETWEEN $minPart AND $maxPart"
-        case (None, Some(maxPart)) => sqls"AND road_part_number <= $maxPart"
-        case (Some(minPart), None) => sqls"AND road_part_number >= $minPart"
-        case _ => sqls""
-      }
+    val roadNumberCondition = roadNumber
+      .map(rn => sqls" AND road_number = $rn")
+      .getOrElse(sqls"")
+
+    val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
+      case (Some(minPart), Some(maxPart)) => sqls"AND road_part_number BETWEEN $minPart AND $maxPart"
+      case (None, Some(maxPart))          => sqls"AND road_part_number <= $maxPart"
+      case (Some(minPart), None)          => sqls"AND road_part_number >= $minPart"
+      case _                              => sqls""
     }
 
-    val selectPart = sqls"""
+    // EVK evaluation + situationDate boundary evaluation (<= 2025-12-31 vs > 2025-12-31)
+    val isRoadMaintainerEvk = roadMaintainer.exists(_.contains("EVK"))
+    val transitionBoundary = DateTime.parse("2025-12-31")
+
+    val case1 = parsedSituationDate.exists(d => d.isBefore(transitionBoundary.plusDays(1))) && isRoadMaintainerEvk
+    val case2 = parsedSituationDate.exists(_.isAfter(transitionBoundary)) && !isRoadMaintainerEvk
+
+    val roadwaysCtePrefix: SQLSyntax =
+      if (case1) {
+        // EVK + date <= 2025-12-31: anchor by roadway rows that start at transition date
+        sqls"""
+        WITH roadway_numbers AS (
+          SELECT DISTINCT r0.roadway_number
+          FROM roadway r0
+          WHERE r0.valid_to IS NULL
+            $roadNumberCondition
+            $roadMaintainerCondition
+            $roadPartCondition
+            AND r0.start_date = DATE '2026-01-01'
+        ),
+        roadways AS (
+          SELECT r.*
+          FROM roadway r
+          JOIN roadway_numbers rn ON rn.roadway_number = r.roadway_number
+          WHERE r.valid_to IS NULL
+            $dateCondition
+            $roadNumberCondition
+            $roadPartCondition
+        )
+      """
+      } else if (case2) {
+        // non-EVK + date > 2025-12-31: anchor by roadway rows that end at transition date
+        sqls"""
+        WITH roadway_numbers AS (
+          SELECT DISTINCT r0.roadway_number
+          FROM roadway r0
+          WHERE r0.valid_to IS NULL
+            $roadNumberCondition
+            $roadMaintainerCondition
+            $roadPartCondition
+            AND r0.end_date = DATE '2025-12-31'
+        ),
+        roadways AS (
+          SELECT r.*
+          FROM roadway r
+          JOIN roadway_numbers rn ON rn.roadway_number = r.roadway_number
+          WHERE r.valid_to IS NULL
+            $dateCondition
+            $roadNumberCondition
+            $roadPartCondition
+        )
+      """
+      } else {
+        // Default handling
+        sqls"""
+        WITH roadways AS (
+          SELECT *
+          FROM roadway r
+          WHERE r.valid_to IS NULL
+            $dateCondition
+            $roadNumberCondition
+            $roadMaintainerCondition
+            $roadPartCondition
+        )
+      """
+      }
+
+    val query = sql"""
+    $roadwaysCtePrefix
     SELECT
       r.road_maintainer,
       r.road_number,
@@ -1419,23 +1466,10 @@ class RoadwayDAO extends BaseDAO {
       MAX(r.end_addr_m) AS end_addr_m,
       MAX(r.end_addr_m) - MIN(r.start_addr_m) AS length,
       MAX(r.start_date) AS start_date
-  """
-
-    val fromWherePart = sqls"""
-    FROM roadway r
-    WHERE r.valid_to IS NULL
-    $dateCondition
-    $roadMaintainerCondition
-    $roadNumberCondition
-    $roadPartCondition
-  """
-
-    val groupByPart = sqls"""
+    FROM roadways r
     GROUP BY r.road_maintainer, r.road_number, r.road_part_number
     ORDER BY r.road_number, r.road_part_number
   """
-
-    val query = sql"$selectPart $fromWherePart $groupByPart"
 
     runSelectQuery(query.map(RoadPartForRoadAddressBrowser.apply))
   }
