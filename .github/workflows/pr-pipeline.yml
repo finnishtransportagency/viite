@@ -8,7 +8,6 @@ env:
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
   AWS_DEV_ALB_DNS: ${{ secrets.AWS_DEV_ALB }}
   GITHUB_REPOSITORY: ${{ github.repository }}
-  GITHUB_PR_NUMBER: ${{ github.event.pull_request.number }}
   GITHUB_PR_BRANCH: ${{ github.head_ref }}
   GITHUB_PR_BASE_BRANCH: ${{ github.base_ref }}
   GITHUB_PR_TITLE: ${{ github.event.pull_request.title }}
@@ -43,7 +42,6 @@ jobs:
 
       - name: Deploy Dynamic PR Pipeline
         run: |
-          cd viite-infra
           npm install
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
@@ -64,7 +62,7 @@ jobs:
             const branch = "${{ env.GITHUB_PR_BRANCH }}";
             const cleanBranch = branch.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
             const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-codepipeline/view`;
-            const appUrl = `http://${process.env.AWS_DEV_ALB}/pr-${cleanBranch}/`;
+            const appUrl = `http://${process.env.AWS_DEV_ALB_DNS}/pr-${cleanBranch}/`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -113,7 +111,6 @@ jobs:
 
       - name: Destroy Dynamic PR Pipeline
         run: |
-          cd viite-infra
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
           npx cdk destroy \
