@@ -30,19 +30,19 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
     ("varautumiseen-liittyvat-luokitukset", "varareitit")
   )
 
+  private val velhoTokenUrl = "https://vayla-velho-prd.auth.eu-west-1.amazoncognito.com/oauth2/token"
+  private val velhoApiUrl = "https://apiv2prdvelho.vaylapilvi.fi"
   private val missingVelhoConfigurationMessage = "Url is not defined, make sure to update envs in parameter store"
 
   private def isBlank(value: String): Boolean = Option(value).forall(_.trim.isEmpty)
 
   private def missingVelhoEnvironmentVariables: Seq[String] = Seq(
-    "velhoTokenUrl" -> ViiteProperties.velhoTokenUrl,
-    "velhoApiUrl" -> ViiteProperties.velhoApiUrl,
     "velhoClientId" -> ViiteProperties.velhoClientId,
     "velhoClientSecret" -> ViiteProperties.velhoClientSecret
   ).collect { case (name, value) if isBlank(value) => name }
 
   private lazy val velhoClient = new VelhoClient(
-    ViiteProperties.velhoTokenUrl, ViiteProperties.velhoApiUrl,
+    velhoTokenUrl, velhoApiUrl,
     ViiteProperties.velhoClientId, ViiteProperties.velhoClientSecret
   )
 
