@@ -16,7 +16,7 @@
     var wildLetterRegex = /^(\s*[*]*[A-Za-zÀ-ÿ].*)/;
     var roadNumberRegex = /^\s*(\d+(\s+\d+(\s+\d+(\s+\d)?)?)?)\s*$/; // road addr separated with whitespaces.
     var roadNumberRegex2= /^\s*(\d+(\/\d+(\/\d+(\/\d)?)?)?)\s*$/;    // road addr separated with slashes.
-    const linkIdRegex   = /^\s*(\w+-\w+-\w+-\w+-\w+:\d+)\s*$/;
+    const linkIdRegex   = /^\s*(\w+-\w+-\w+-\w+-\w+:\w+)\s*$/;
 
     var matchedCoordinates = input.match(coordinateRegex);
     if      (matchedCoordinates)            {    return parseCoordinates(matchedCoordinates);  }

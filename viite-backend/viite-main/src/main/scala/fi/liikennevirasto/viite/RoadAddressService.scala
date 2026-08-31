@@ -394,7 +394,7 @@ class RoadAddressService(
 
     if (searchString.isEmpty) { Map() } // nothing to parse -> no results.
 
-    val linkIdRegex  = """(\w+-\w+-\w+-\w+-\w+:\d+)""".r // Link UUID
+    val linkIdRegex  = """(\w+-\w+-\w+-\w+-\w+:\w+)""".r // Link UUID
     val linkIds      = linkIdRegex.findFirstIn(searchString)
 
     if (linkIds.nonEmpty)  // We found a linkId; interpret as a linkId.
