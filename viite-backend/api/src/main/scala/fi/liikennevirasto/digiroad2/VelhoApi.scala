@@ -62,6 +62,16 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
       }
     }
 
+  // Logged around the cache refresh to track heap usage; the refresh has previously run the JVM out of memory.
+  private def logMemoryUsage(phase: String): Unit = {
+    val runtime = Runtime.getRuntime
+    logger.info(
+      s"JVM memory ($phase): max=${runtime.maxMemory() / 1024 / 1024}MB, " +
+      s"total=${runtime.totalMemory() / 1024 / 1024}MB, " +
+      s"free=${runtime.freeMemory() / 1024 / 1024}MB"
+    )
+  }
+
   // Returns the cached GeoJSON FeatureCollection (EPSG:4326) for targetClass, optionally restricted to the "bbox" query param.
   private def fetchCachedGeoJson(targetClass: String) = runWithReadOnlySession {
     VelhoGeometryCacheDAO.fetchFeatureCollection(targetClass, parseBboxParam())
@@ -86,17 +96,26 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
       halt(InternalServerError(missingVelhoConfigurationMessage))
     }
 
+    logMemoryUsage("refresh start")
+
     val results = cachedObjectClasses.map { case (namespace, targetClass) =>
-      velhoClient.getObjectsWithGeometry(namespace, targetClass) match {
+      logMemoryUsage(s"before fetching $targetClass")
+      val result = velhoClient.getObjectsWithGeometry(namespace, targetClass) match {
         case Right(objects) =>
+          logMemoryUsage(s"after fetching ${objects.size} $targetClass geometries")
           val rows = objects.map { case (oid, geometry) => (oid, compact(render(geometry))) }
+          logMemoryUsage(s"after rendering ${rows.size} $targetClass rows")
           VelhoGeometryCacheDAO.replaceAll(targetClass, namespace, rows)
           targetClass -> Right(rows.size)
         case Left(error) =>
           logger.error(s"Velho cache refresh failed for $targetClass: ${error.content}")
           targetClass -> Left(error.content.getOrElse("error", "Unknown error"))
       }
+      logMemoryUsage(s"after storing $targetClass")
+      result
     }
+
+    logMemoryUsage("refresh end")
 
     val failures = results.collect { case (targetClass, Left(reason)) => targetClass -> reason }
     Map(
