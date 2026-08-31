@@ -58,7 +58,11 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
 
   // Number of OIDs sent per bulk geometry request. Keeps individual request/response bodies
   // reasonably sized while still cutting request count by this factor vs one-request-per-OID.
-  private val GEOMETRY_BATCH_SIZE = 1000
+  private val GEOMETRY_BATCH_SIZE = 500
+
+  // How many bulk geometry requests may be in flight at once. Peak heap during a refresh is roughly
+  // this times the size of one response body, so keep it low enough for the container's heap.
+  private val CONCURRENT_GEOMETRY_BATCHES = 4
 
   // Parses responseBody as JSON, or throws an IOException with a body snippet if it isn't.
   private def parseJson(responseBody: String): JValue = {
@@ -238,7 +242,8 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
 
   /**
    * Fetches the OIDs for the given Velho object class, then resolves their geometries via the
-   * bulk geometry endpoint, GEOMETRY_BATCH_SIZE OIDs per request. Batches are fetched concurrently.
+   * bulk geometry endpoint, GEOMETRY_BATCH_SIZE OIDs per request. At most
+   * CONCURRENT_GEOMETRY_BATCHES requests are in flight at a time.
    *
    * A batch that fails outright (bad HTTP status, network error) is logged and excluded from the
    * result rather than failing the whole call, so a single bad batch doesn't discard everything
@@ -254,20 +259,22 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
         logger.info(s"Found ${oids.size} OIDs for $targetClass")
 
         val batches = oids.grouped(GEOMETRY_BATCH_SIZE).toSeq
-        val batchFutures = Future.traverse(batches) { batch =>
-          Future {
-            blocking {
-              getGeometryBatch(batch, accessToken) match {
-                case Right(geometries) => geometries
-                case Left(error) =>
-                  logger.warn(s"Velho bulk geometry batch of ${batch.size} OIDs failed: ${error.content}")
-                  Seq.empty
+        val results = batches.grouped(CONCURRENT_GEOMETRY_BATCHES).flatMap { concurrentBatches =>
+          val batchFutures = Future.traverse(concurrentBatches) { batch =>
+            Future {
+              blocking {
+                getGeometryBatch(batch, accessToken) match {
+                  case Right(geometries) => geometries
+                  case Left(error) =>
+                    logger.warn(s"Velho bulk geometry batch of ${batch.size} OIDs failed: ${error.content}")
+                    Seq.empty
+                }
               }
             }
           }
-        }
+          Await.result(batchFutures, Duration.Inf).flatten
+        }.toList
 
-        val results = Await.result(batchFutures, Duration.Inf).flatten
         logger.info(s"Resolved ${results.size}/${oids.size} geometries for Velho class $targetClass")
         results
       }
