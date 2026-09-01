@@ -97,6 +97,12 @@
       unAddressedRoadLayer.setOpacity(opacity);
     };
 
+      // This is needed to allow user click events to pass through layers that are not velho route overlays
+      const isNotVelhoRouteOverlay = function (layer) {
+        return !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
+      };
+
+
     const getStyleForSelection = function (feature) {
       // for normal road links
       if (feature.linkData.roadClass !== ViiteEnumerations.RoadClass.NoClass.value) {
@@ -138,7 +144,7 @@
       if (ctrlPressed) {
         return map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
           return feature;
-        });
+        }, { layerFilter: isNotVelhoRouteOverlay });
       } else {
         // if not, then we want the selection to be undefined if we click a link that was already clicked
         // OR  if the link that is not already selected was clicked, we get linkData
@@ -282,7 +288,7 @@
       }
       var hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function (feature) {
         return feature;
-      }));
+      }, { layerFilter: isNotVelhoRouteOverlay }));
       var nonSpecialSelectionType = !_.includes(applicationModel.specialSelectionTypes, applicationModel.getSelectionType().value);
       if (isActiveLayer) {
         if (hasFeatureOnPoint && nonSpecialSelectionType) {

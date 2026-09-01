@@ -109,17 +109,20 @@
     // Fetched lazily on first checkbox toggle, and refetched (bbox-restricted) on map pan/zoom while visible to avoid loading entire dataset
     let specialTransportRoutesVisible = false;
     let detourRoutesVisible = false;
+    let specialTransportRoutesSelectionOrder = 0;
+    let detourRoutesSelectionOrder = 0;
+    let velhoRouteSelectionOrder = 0;
     let currentBbox = null; // [minLon, minLat, maxLon, maxLat] in EPSG:4326, kept in sync with the map view
 
     function fetchSpecialTransportRoutes() {
       backend.getVelhoSpecialTransportRoutes(currentBbox, function (geoJson) {
-        eventbus.trigger('velho:specialTransportRoutesToggled', specialTransportRoutesVisible, geoJson);
+        eventbus.trigger('velho:specialTransportRoutesToggled', specialTransportRoutesVisible, geoJson, specialTransportRoutesSelectionOrder);
       });
     }
 
     function fetchDetourRoutes() {
       backend.getVelhoDetourRoutes(currentBbox, function (geoJson) {
-        eventbus.trigger('velho:detourRoutesToggled', detourRoutesVisible, geoJson);
+        eventbus.trigger('velho:detourRoutesToggled', detourRoutesVisible, geoJson, detourRoutesSelectionOrder);
       });
     }
 
@@ -196,6 +199,7 @@
     container.on('change', '#specialTransportRoutesVisibleCheckbox', function () {
       specialTransportRoutesVisible = this.checked;
       if (specialTransportRoutesVisible) {
+        specialTransportRoutesSelectionOrder = ++velhoRouteSelectionOrder;
         fetchSpecialTransportRoutes();
       } else {
         eventbus.trigger('velho:specialTransportRoutesToggled', false);
@@ -205,6 +209,7 @@
     container.on('change', '#detourRoutesVisibleCheckbox', function () {
       detourRoutesVisible = this.checked;
       if (detourRoutesVisible) {
+        detourRoutesSelectionOrder = ++velhoRouteSelectionOrder;
         fetchDetourRoutes();
       } else {
         eventbus.trigger('velho:detourRoutesToggled', false);

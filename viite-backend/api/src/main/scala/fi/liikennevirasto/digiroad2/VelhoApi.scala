@@ -89,7 +89,7 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
 
   // Called once a day by an external job to refresh the DB cache with fresh data from Velho.
   // Can be triggered in local Windows with: curl.exe -X POST "http://localhost:9080/api/viite/velho/refreshVelhoCache"
-  post("/refreshVelhoCache") { // If this is changed, make sure to update Lambda function both in repo and AWS
+  post("/refreshVelhoCache") { // If this is changed, make sure to update Lambda function in infra repo and deploy changes
     val missingEnvs = missingVelhoEnvironmentVariables
     if (missingEnvs.nonEmpty) {
       logger.error(s"$missingVelhoConfigurationMessage. Missing envs: ${missingEnvs.mkString(", ")}")

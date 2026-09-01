@@ -27,8 +27,12 @@
 
     map.addOverlay(overlay);
 
+    const isNotVelhoRouteOverlay = function (layer) {
+      return !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
+    };
+
     const displayRoadAddressInfo = (event, pixel) => {
-      const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature);
+      const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature, { layerFilter: isNotVelhoRouteOverlay });
       let coordinate;
       const popupBox = document.getElementById('popup-content').getBoundingClientRect();
 
