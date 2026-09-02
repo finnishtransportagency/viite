@@ -90,38 +90,46 @@ class VelhoApi extends ScalatraServlet with JacksonJsonSupport {
   // Called once a day by an external job to refresh the DB cache with fresh data from Velho.
   // Can be triggered in local Windows with: curl.exe -X POST "http://localhost:9080/api/viite/velho/refreshVelhoCache"
   post("/refreshVelhoCache") { // If this is changed, make sure to update Lambda function in infra repo and deploy changes
-    val missingEnvs = missingVelhoEnvironmentVariables
-    if (missingEnvs.nonEmpty) {
-      logger.error(s"$missingVelhoConfigurationMessage. Missing envs: ${missingEnvs.mkString(", ")}")
-      halt(InternalServerError(missingVelhoConfigurationMessage))
-    }
-
-    logMemoryUsage("refresh start")
-
-    val results = cachedObjectClasses.map { case (namespace, targetClass) =>
-      logMemoryUsage(s"before fetching $targetClass")
-      val result = velhoClient.getObjectsWithGeometry(namespace, targetClass) match {
-        case Right(objects) =>
-          logMemoryUsage(s"after fetching ${objects.size} $targetClass geometries")
-          val rows = objects.map { case (oid, geometry) => (oid, compact(render(geometry))) }
-          logMemoryUsage(s"after rendering ${rows.size} $targetClass rows")
-          VelhoGeometryCacheDAO.replaceAll(targetClass, namespace, rows)
-          targetClass -> Right(rows.size)
-        case Left(error) =>
-          logger.error(s"Velho cache refresh failed for $targetClass: ${error.content}")
-          targetClass -> Left(error.content.getOrElse("error", "Unknown error"))
+    val startTime = System.currentTimeMillis()
+    try {
+      val missingEnvs = missingVelhoEnvironmentVariables
+      if (missingEnvs.nonEmpty) {
+        logger.error(s"$missingVelhoConfigurationMessage. Missing envs: ${missingEnvs.mkString(", ")}")
+        halt(InternalServerError(missingVelhoConfigurationMessage))
       }
-      logMemoryUsage(s"after storing $targetClass")
-      result
+
+      logMemoryUsage("refresh start")
+
+      val results = cachedObjectClasses.map { case (namespace, targetClass) =>
+        logMemoryUsage(s"before fetching $targetClass")
+        val result = velhoClient.getObjectsWithGeometry(namespace, targetClass)(
+          VelhoGeometryCacheDAO.deleteAll(targetClass),
+          objects => {
+            logMemoryUsage(s"before storing ${objects.size} $targetClass geometries")
+            val rows = objects.map { case (oid, geometry) => (oid, compact(render(geometry))) }
+            VelhoGeometryCacheDAO.insertBatch(targetClass, namespace, rows)
+            logMemoryUsage(s"after storing ${rows.size} $targetClass geometries")
+          }
+        ) match {
+          case Right(count) =>
+            targetClass -> Right(count)
+          case Left(error) =>
+            logger.error(s"Velho cache refresh failed for $targetClass: ${error.content}")
+            targetClass -> Left(error.content.getOrElse("error", "Unknown error"))
+        }
+        result
+      }
+
+      logMemoryUsage("refresh end")
+
+      val failures = results.collect { case (targetClass, Left(reason)) => targetClass -> reason }
+      Map(
+        "success" -> failures.isEmpty,
+        "refreshed" -> results.collect { case (targetClass, Right(count)) => Map("targetClass" -> targetClass, "count" -> count) },
+        "errors" -> failures.map { case (targetClass, reason) => Map("targetClass" -> targetClass, "reason" -> reason) }
+      )
+    } finally {
+      logger.info(s"Velho cache refresh completed in ${(System.currentTimeMillis() - startTime) * 0.001}s")
     }
-
-    logMemoryUsage("refresh end")
-
-    val failures = results.collect { case (targetClass, Left(reason)) => targetClass -> reason }
-    Map(
-      "success" -> failures.isEmpty,
-      "refreshed" -> results.collect { case (targetClass, Right(count)) => Map("targetClass" -> targetClass, "count" -> count) },
-      "errors" -> failures.map { case (targetClass, reason) => Map("targetClass" -> targetClass, "reason" -> reason) }
-    )
   }
 }

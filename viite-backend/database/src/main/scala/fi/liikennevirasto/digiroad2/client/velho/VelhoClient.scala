@@ -61,7 +61,7 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
 
   // How many bulk geometry requests may be in flight at once. Peak heap during a refresh is roughly
   // this times the size of one response body, so keep it low enough for the container's heap.
-  private val CONCURRENT_GEOMETRY_BATCHES = 2
+  private val CONCURRENT_GEOMETRY_BATCHES = 1
 
   // Parses responseBody as JSON, or throws an IOException with a body snippet if it isn't.
   private def parseJson(responseBody: String): JValue = {
@@ -250,17 +250,20 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
    *
    * @param namespace Velho namespace, e.g. "kansalliset-luokitukset"
    * @param targetClass Velho object class, e.g. "erikoiskuljetusreitit"
-   * @return Either a VelhoError, or the (oid, geometry) pairs for the given class.
+   * @param onRefreshStarted Called after the OIDs and an access token have been obtained, before replacing the cache.
+   * @param onBatch Called for each completed geometry batch so callers can persist it without retaining all results.
+   * @return Either a VelhoError, or the number of geometries returned for the given class.
    */
-  def getObjectsWithGeometry(namespace: String, targetClass: String): Either[VelhoError, Seq[(String, JValue)]] = {
+  def getObjectsWithGeometry(namespace: String, targetClass: String)(onRefreshStarted: => Unit, onBatch: Seq[(String, JValue)] => Unit): Either[VelhoError, Int] = {
     getObjectOids(namespace, targetClass).flatMap { oids =>
       getAccessToken.map { accessToken =>
         logger.info(s"Found ${oids.size} OIDs for $targetClass")
+        onRefreshStarted
 
         val batches = oids.grouped(GEOMETRY_BATCH_SIZE).toSeq
         logger.info(s"Resolving $targetClass in ${batches.size} geometry batches of at most $GEOMETRY_BATCH_SIZE OIDs; concurrency=$CONCURRENT_GEOMETRY_BATCHES")
 
-        val results = batches.zipWithIndex.grouped(CONCURRENT_GEOMETRY_BATCHES).zipWithIndex.flatMap {
+        val geometryCount = batches.zipWithIndex.grouped(CONCURRENT_GEOMETRY_BATCHES).zipWithIndex.map {
           case (concurrentBatches, waveIndex) =>
           val batchNumbers = concurrentBatches.map { case (_, batchIndex) => batchIndex + 1 }.mkString(", ")
           logger.info(s"Starting geometry batch wave ${waveIndex + 1}/${math.ceil(batches.size.toDouble / CONCURRENT_GEOMETRY_BATCHES).toInt}: batches [$batchNumbers] in flight")
@@ -284,12 +287,13 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
             }
           }
           val waveResults = Await.result(batchFutures, Duration.Inf)
+          waveResults.foreach(onBatch)
           logger.info(s"Completed geometry batch wave ${waveIndex + 1}: ${waveResults.flatten.size} geometries returned from batches [$batchNumbers]")
-          waveResults.flatten
-        }.toList
+          waveResults.map(_.size).sum
+        }.sum
 
-        logger.info(s"Resolved ${results.size}/${oids.size} geometries for Velho class $targetClass")
-        results
+        logger.info(s"Resolved $geometryCount/${oids.size} geometries for Velho class $targetClass")
+        geometryCount
       }
     }
   }
