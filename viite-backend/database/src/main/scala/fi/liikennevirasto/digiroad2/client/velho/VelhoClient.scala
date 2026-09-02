@@ -56,13 +56,12 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
     .setDefaultRequestConfig(RequestConfig.custom().setCookieSpec(StandardCookieSpec.RELAXED).build())
     .build()
 
-  // Number of OIDs sent per bulk geometry request. Keeps individual request/response bodies
-  // reasonably sized while still cutting request count by this factor vs one-request-per-OID.
-  private val GEOMETRY_BATCH_SIZE = 250
+  // Number of OIDs sent per bulk geometry request. Keeps individual request/response bodies reasonably sized
+  private val GEOMETRY_BATCH_SIZE = 2000
 
   // How many bulk geometry requests may be in flight at once. Peak heap during a refresh is roughly
   // this times the size of one response body, so keep it low enough for the container's heap.
-  private val CONCURRENT_GEOMETRY_BATCHES = 1
+  private val CONCURRENT_GEOMETRY_BATCHES = 2
 
   // Parses responseBody as JSON, or throws an IOException with a body snippet if it isn't.
   private def parseJson(responseBody: String): JValue = {
