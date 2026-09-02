@@ -6,7 +6,6 @@ on:
 env:
   AWS_REGION: eu-west-1
   AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  AWS_DEV_ALB_DNS: ${{ secrets.AWS_DEV_ALB }}
   GITHUB_REPOSITORY: ${{ github.repository }}
   GITHUB_PR_BRANCH: ${{ github.head_ref }}
   GITHUB_PR_BASE_BRANCH: ${{ github.base_ref }}
@@ -19,6 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
       pull-requests: write
       id-token: write
     steps:
@@ -45,11 +45,16 @@ jobs:
           npm install
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
-          npx cdk deploy \
+          if ! npx cdk deploy \
+            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
-            --require-approval never
-            2>&1 | grep -E "^(✓|✔|✅|Successfully|Created|Updated)" || true
+            --yes --all \
+            > /dev/null 2>&1; then
+            echo "❌ PR CDK deploy failed. Check AWS CloudWatch/CloudFormation for details."
+            exit 1
+          fi
+          echo "✅ PR CDK deploy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
@@ -59,16 +64,21 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const branch = "${{ env.GITHUB_PR_BRANCH }}";
-            const cleanBranch = branch.replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+            const branch = process.env.GITHUB_PR_BRANCH;
+            const ticketMatch = branch.match(/(?:^|[^a-zA-Z0-9])([a-zA-Z]+-\d+)(?:[^a-zA-Z0-9]|$)/);
+            const branchIdentifier = ticketMatch?.[1] ?? branch;
+            const cleanBranch = branchIdentifier
+              .replace(/[^a-zA-Z0-9-]/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '')
+              .toLowerCase();
             const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-codepipeline/view`;
-            const appUrl = `http://${process.env.AWS_DEV_ALB_DNS}/pr-${cleanBranch}/`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `✅ **PR Pipeline Created**\n\n📋 [View Pipeline](${pipelineUrl})\n🌐 [Access PR App](${appUrl})\n\n**Branch**: \`${branch}\`\n**Status**: Running build and tests...`
+              body: `✅ **PR Pipeline Created**\n\n📋 [View Pipeline](${pipelineUrl})\n\n**Branch**: \`${branch}\`\n**Status**: Running build and tests...\n\nℹ️ E2E tests connect directly via the internal ALB DNS with a \`Host: pr-${cleanBranch}.internal\` header.`
             });
 
       - name: Post Deployment Failure
@@ -89,6 +99,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
       id-token: write
     steps:
       - name: Checkout viite-infra repository
@@ -113,17 +124,34 @@ jobs:
         run: |
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
-          npx cdk destroy \
+          if ! npx cdk destroy \
+            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
-            --force
-          2>&1 | grep -E "^(✓|✔|✅|Successfully|Deleted)" || true
+            --force \
+            pr-cicd-stack \
+            > /dev/null 2>&1; then
+            echo "❌ PR CDK destroy failed for pr-cicd-stack. Check AWS CloudWatch/CloudFormation for details."
+            exit 1
+          fi
+
+          if ! npx cdk destroy \
+            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
+            --context env=pr \
+            --context branch="$BRANCH_NAME" \
+            --force \
+            pr-fargate-stack \
+            > /dev/null 2>&1; then
+            echo "❌ PR CDK destroy failed for pr-fargate-stack. Check AWS CloudWatch/CloudFormation for details."
+            exit 1
+          fi
+          echo "✅ PR CDK destroy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
 
       - name: Post Cleanup Confirmation
-        if: always()
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
@@ -132,4 +160,16 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: `✅ **PR Pipeline Destroyed**\n\nEphemeral resources cleaned up.`
+            });
+
+      - name: Post Cleanup Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **PR Pipeline Cleanup Failed**\n\nAutomatic cleanup did not complete. Check [GitHub Actions logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).`
             });
