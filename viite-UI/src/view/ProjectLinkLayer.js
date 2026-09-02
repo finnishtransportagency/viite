@@ -125,6 +125,10 @@
 
     var possibleStatusForSelection = [RoadAddressChangeType.NotHandled.value, RoadAddressChangeType.New.value, RoadAddressChangeType.Terminated.value, RoadAddressChangeType.Transfer.value, RoadAddressChangeType.Unchanged.value, RoadAddressChangeType.Numbering.value];
 
+    const isNotVelhoRouteOverlay = function (layer) {
+      return !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
+    };
+
     var selectSingleClick = new ol.interaction.Select({
       layer: [projectLinkLayer, underConstructionRoadProjectLayer, unAddressedRoadsProjectLayer, notHandledProjectLinksLayer, terminatedProjectLinkLayer],
       condition: ol.events.condition.singleClick,
@@ -147,7 +151,7 @@
 ) : false;
       var rawSelection = (event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
         return feature;
-      }) : event.selected;
+      }, { layerFilter: isNotVelhoRouteOverlay }) : event.selected;
       var selection = _.find(modPressed? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         if (selectionTarget)
           return !_.isUndefined(selectionTarget.linkData) && (
@@ -375,7 +379,7 @@
       if (lockedLinkIds.length > 0) {
         var hasLockedFeature = map.forEachFeatureAtPixel(pixel, function (feature) {
           return feature.linkData && isLocked(feature.linkData);
-        });
+        }, { layerFilter: isNotVelhoRouteOverlay });
         map.getViewport().style.cursor = hasLockedFeature ? 'wait' : '';
       } else {
         map.getViewport().style.cursor = '';
