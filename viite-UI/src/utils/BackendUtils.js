@@ -102,6 +102,18 @@ export function Backend() {
 			});
 		}, REQUEST_THROTTLE_MS),
 
+		getVelhoSpecialTransportRoutes: function (bbox, callback) {
+			return $.get('api/viite/velho/specialTransportRoutes', bbox ? { bbox: bbox.join(',') } : {}, function (data) {
+				return _.isFunction(callback) && callback(data);
+			});
+		},
+
+		getVelhoDetourRoutes: function (bbox, callback) {
+			return $.get('api/viite/velho/detourRoutes', bbox ? { bbox: bbox.join(',') } : {}, function (data) {
+				return _.isFunction(callback) && callback(data);
+			});
+		},
+
 		// ------------------------------------------------------
 		// Road address browser endpoints
 		// ------------------------------------------------------

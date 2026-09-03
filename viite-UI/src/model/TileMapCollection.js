@@ -2,6 +2,9 @@
  * Creates the background tile layers used by the map view and wires layer visibility events.
  * Manages base maps plus optional property and regional border overlays.
  */
+import { zoomlevels } from '@utils/ZoomLevels.js';
+import { RoadLinkStyler } from '@view/map/RoadLinkStyler.js';
+
 export function TileMapCollection() {
 	const layerConfig = {
 		visible: false,
@@ -89,18 +92,50 @@ export function TileMapCollection() {
 	}, layerConfig));
 	terrainMapLayer.set('name', 'terrainMapLayer');
 
+	const roadLinkStyler = new RoadLinkStyler();
+	const specialTransportRoutesLayer = new ol.layer.Vector({
+		source: new ol.source.Vector(),
+		visible: false,
+		minZoom: zoomlevels.minZoomForRoadLinks,
+		zIndex: 1,
+		style: roadLinkStyler.createVelhoRouteStyle('#5ba115')
+	});
+	specialTransportRoutesLayer.set('name', 'specialTransportRoutesLayer');
+	specialTransportRoutesLayer.set('isVelhoRouteOverlay', true);
+
+	const detourRoutesLayer = new ol.layer.Vector({
+		source: new ol.source.Vector(),
+		visible: false,
+		minZoom: zoomlevels.minZoomForRoadLinks,
+		zIndex: 1,
+		style: roadLinkStyler.createVelhoRouteStyle('#840bdb')
+	});
+	detourRoutesLayer.set('name', 'detourRoutesLayer');
+	detourRoutesLayer.set('isVelhoRouteOverlay', true);
+
+	let highestVelhoRouteSelectionOrder = 0;
+	const applyVelhoRouteOrder = function (layer, selectionOrder) {
+		if (selectionOrder <= highestVelhoRouteSelectionOrder) return;
+		highestVelhoRouteSelectionOrder = selectionOrder;
+		const otherLayer = layer === specialTransportRoutesLayer ? detourRoutesLayer : specialTransportRoutesLayer;
+		otherLayer.setZIndex(1);
+		layer.setZIndex(2);
+	};
+
 	const tileMapLayers = {
 		background: backgroundMapLayer,
 		aerial: aerialMapLayer,
 		terrain: terrainMapLayer,
 		propertyBorder: propertyBorderLayer,
-		regionsBorder: regionBordersLayer
+		regionsBorder: regionBordersLayer,
+		specialTransportRoutes: specialTransportRoutesLayer,
+		detourRoutes: detourRoutesLayer
 	};
 
 	const selectMap = function (tileMap) {
 		_.forEach(tileMapLayers, function (layer, key) {
-			// Don't hide the property and region borders when changing base maps
-			if (key === 'propertyBorder' || key === 'regionsBorder') {
+			// Overlays remain visible when changing the base map.
+			if (key === 'propertyBorder' || key === 'regionsBorder' || key === 'specialTransportRoutes' || key === 'detourRoutes') {
 				return;
 			}
 			layer.setVisible(key === tileMap);
@@ -114,12 +149,35 @@ export function TileMapCollection() {
 		}
 	};
 
+	const geoJsonFormat = new ol.format.GeoJSON();
+	const setVelhoLayerFeatures = function (layer, geoJson) {
+		const source = layer.getSource();
+		source.clear();
+		if (geoJson && geoJson.features && geoJson.features.length) {
+			source.addFeatures(geoJsonFormat.readFeatures(geoJson, {
+				dataProjection: 'EPSG:4326',
+				featureProjection: 'EPSG:3067'
+			}));
+		}
+	};
+
+	const updateVelhoRoutes = function (layerName, visible, geoJson, selectionOrder) {
+		const layer = tileMapLayers[layerName];
+		if (!layer) return;
+		layer.setVisible(visible);
+		if (visible) {
+			applyVelhoRouteOrder(layer, selectionOrder);
+			setVelhoLayerFeatures(layer, geoJson);
+		}
+	};
+
 	selectMap('background');
 
 	return {
 		layers: Object.values(tileMapLayers),
 		selectMap: selectMap,
 		setVisible: setVisible,
+		updateVelhoRoutes: updateVelhoRoutes,
 		getLayer: function(name) {
 			return tileMapLayers[name];
 		}

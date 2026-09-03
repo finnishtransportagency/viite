@@ -445,6 +445,19 @@ export function RoadLinkStyler() {
 			borderStyle.getStyle(linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
 	};
 
+	const getDefaultRoadLinkWidths = function (zoomLevel) {
+		const strokeStyle = new StyleRuleProvider({});
+		strokeStyle.addRules(strokeWidthRules);
+
+		const fillStyle = new StyleRuleProvider({});
+		fillStyle.addRules(fillWidthRules);
+
+		return {
+			stroke: strokeStyle.getStyle({}, {zoomLevel: zoomLevel}).getStroke().getWidth(),
+			fill: fillStyle.getStyle({}, {zoomLevel: zoomLevel}).getStroke().getWidth()
+		};
+	};
+
 	const getUnderConstructionStyles = function (linkData, map) {
 		const underConstructionStrokeStyle = new StyleRuleProvider({});
 		underConstructionStrokeStyle.addRules(strokeRulesForUnderConstruction);
@@ -471,9 +484,29 @@ export function RoadLinkStyler() {
 			unAddressedFillStyle.getStyle(linkData, {zoomLevel: zoomlevels.getViewZoom(map)})];
 	};
 
+	const createVelhoRouteStyle = function (color) {
+		const styles = {};
+		return function (feature, resolution) {
+			const zoom = Math.max(5, Math.min(15, Math.round(Math.log(2048 / resolution) / Math.LN2)));
+			if (!styles[zoom]) {
+				const widths = getDefaultRoadLinkWidths(zoom);
+				styles[zoom] = [
+					new ol.style.Style({
+						stroke: new ol.style.Stroke({color: color, width: widths.stroke, lineCap: 'round'})
+					}),
+					new ol.style.Style({
+						stroke: new ol.style.Stroke({color: '#000', width: widths.fill, lineCap: 'butt', lineDash: [10, 10]})
+					})
+				];
+			}
+			return styles[zoom];
+		};
+	};
+
 	return {
 		getRoadLinkStyles: getRoadLinkStyles,
 		getUnAddressedStyles: getUnAddressedStyles,
-		getUnderConstructionStyles: getUnderConstructionStyles
+		getUnderConstructionStyles: getUnderConstructionStyles,
+		createVelhoRouteStyle: createVelhoRouteStyle
 	};
 }

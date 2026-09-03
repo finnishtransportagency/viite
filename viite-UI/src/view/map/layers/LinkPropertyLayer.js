@@ -28,6 +28,7 @@ export function clearLinkPropertyLayer() { return _instance.clearOnProjectClose(
 export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, roadCollection) {
 
 	const eventListener = _.extend({}, Backbone.Events);
+	const isNotVelhoRouteOverlay = layer => !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
 	let layerStarted = false;
 
 	const directionMarkerVector = new ol.source.Vector({});
@@ -146,7 +147,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 		if (ctrlPressed) {
 			return map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
 				return feature;
-			});
+			}, {layerFilter: isNotVelhoRouteOverlay});
 		} else {
 			return _.find(event.selected, function (selectionTarget) {
 				return !_.isUndefined(selectionTarget.linkData);
@@ -241,7 +242,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 
 		const hasFeatureOnPoint = _.isUndefined(map.forEachFeatureAtPixel(event.pixel, function (feature) {
 			return feature;
-		}));
+		}, {layerFilter: isNotVelhoRouteOverlay}));
 
 		if (isActiveLayer && hasFeatureOnPoint) {
 			selectedLinkProperty.close();

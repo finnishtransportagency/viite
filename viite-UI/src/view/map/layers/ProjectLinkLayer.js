@@ -31,6 +31,7 @@ export function unlockProjectLinks() { return _instance.unlockProjectLinks(); }
 
 export function initProjectLinkLayer(map, projectCollection, selectedProjectLinkProperty) {
 	const eventListener = _.extend({}, Backbone.Events);
+	const isNotVelhoRouteOverlay = layer => !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
 
 	const SideCode = ViiteEnumerations.SideCode;
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
@@ -178,7 +179,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 		) : false;
 		const rawSelection = (event.mapBrowserEvent) ? map.forEachFeatureAtPixel(event.mapBrowserEvent.pixel, function (feature) {
 			return feature;
-		}) : event.selected;
+		}, {layerFilter: isNotVelhoRouteOverlay}) : event.selected;
 		const selection = _.find(modPressed ? [rawSelection] : [rawSelection].concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
 			if (selectionTarget)
 				return !_.isUndefined(selectionTarget.linkData) && (

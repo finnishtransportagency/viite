@@ -22,6 +22,7 @@ export function refreshRoadLayer(mapState) {
 }
 export function initRoadLayer(map) {
 	const eventListener = _.extend({}, Backbone.Events);
+	const isNotVelhoRouteOverlay = layer => !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
 
 	const roadLinkStyler = new RoadLinkStyler();
 	const roadVector = new ol.source.Vector({});
@@ -98,7 +99,7 @@ export function initRoadLayer(map) {
 			originalEvent.clientY > popupBox.top &&
 			originalEvent.clientY < popupBox.bottom;
 
-		const feature = map.forEachFeatureAtPixel(pixel, f => f);
+		const feature = map.forEachFeatureAtPixel(pixel, f => f, {layerFilter: isNotVelhoRouteOverlay});
 		const roadData = feature?.linkData;
 
 		const validRoad =

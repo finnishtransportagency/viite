@@ -8,15 +8,47 @@ import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 - CrosshairToggle: A checkbox for toggling a crosshair in the center of the map and clicking on the map through it to support test automation
 */
 
-export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {
+export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection, backend) {
   const footerContainer = $('<div class="map-footer"></div>').appendTo(container);
-	renderTileMapSelector(footerContainer, linkPropertyLayer, projectLinkLayer, tileMapCollection);
+	renderTileMapSelector(footerContainer, linkPropertyLayer, projectLinkLayer, tileMapCollection, map, backend);
 	renderCoordinatesDisplay(footerContainer, map);
 	createCrosshairToggle(footerContainer.find('.mapplugin.coordinates'), map);
 }
 
-function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {
-	const BREAKPOINT_PX = 1470;
+function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, tileMapCollection, map, backend) {
+	const BREAKPOINT_PX = 1800;
+	let currentBbox = null;
+	let selectionOrder = 0;
+	let specialTransportRoutesVisible = false;
+	let detourRoutesVisible = false;
+
+	function updateCurrentBbox() {
+		const size = map.getSize();
+		const extent = size && map.getView().calculateExtent(size);
+		if (extent && extent.every(isFinite)) {
+			currentBbox = ol.proj.transformExtent(extent, 'EPSG:3067', 'EPSG:4326');
+		}
+	}
+
+	function fetchVelhoRoutes(layerName, visible, fetchRoutes, routeSelectionOrder) {
+		fetchRoutes(currentBbox, function (geoJson) {
+			tileMapCollection.updateVelhoRoutes(layerName, visible, geoJson, routeSelectionOrder);
+		});
+	}
+
+	const fetchSpecialTransportRoutes = _.debounce(function () {
+		fetchVelhoRoutes('specialTransportRoutes', specialTransportRoutesVisible, backend.getVelhoSpecialTransportRoutes, selectionOrder);
+	}, 300);
+	const fetchDetourRoutes = _.debounce(function () {
+		fetchVelhoRoutes('detourRoutes', detourRoutesVisible, backend.getVelhoDetourRoutes, selectionOrder);
+	}, 300);
+
+	updateCurrentBbox();
+	map.on('moveend', function () {
+		updateCurrentBbox();
+		if (specialTransportRoutesVisible) fetchSpecialTransportRoutes();
+		if (detourRoutesVisible) fetchDetourRoutes();
+	});
 
 	const layerOptions = [
 		{
@@ -61,6 +93,34 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 			checked: false,
 			onChange(checked) {
 				tileMapCollection.setVisible('regionsBorder', checked);
+			}
+		},
+		{
+			id: 'specialTransportRoutesVisible',
+			label: 'Näytä erikoiskuljetusreitit',
+			checked: false,
+			onChange(checked) {
+				specialTransportRoutesVisible = checked;
+				if (checked) {
+					selectionOrder += 1;
+					fetchSpecialTransportRoutes();
+				} else {
+					tileMapCollection.updateVelhoRoutes('specialTransportRoutes', false, null, selectionOrder);
+				}
+			}
+		},
+		{
+			id: 'detourRoutesVisible',
+			label: 'Näytä varareitit',
+			checked: false,
+			onChange(checked) {
+				detourRoutesVisible = checked;
+				if (checked) {
+					selectionOrder += 1;
+					fetchDetourRoutes();
+				} else {
+					tileMapCollection.updateVelhoRoutes('detourRoutes', false, null, selectionOrder);
+				}
 			}
 		}
 	];

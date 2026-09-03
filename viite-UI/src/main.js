@@ -146,7 +146,7 @@ const initializeUI = function (map, backend, startupParameters, layers, tileMaps
 
 	new ScaleBar(map, mapPluginsContainer);
 	new ZoomBox(map, mapPluginsContainer);
-	new Footer(map, mapPluginsContainer, layers.linkProperty, layers.roadAddressProject, tileMaps);
+	new Footer(map, mapPluginsContainer, layers.linkProperty, layers.roadAddressProject, tileMaps, backend);
 	new Header(backend, startupParameters);
 	new SearchPanel(map);
 
