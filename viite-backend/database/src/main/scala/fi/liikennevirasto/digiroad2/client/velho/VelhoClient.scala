@@ -57,7 +57,7 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
     .build()
 
   // Number of OIDs sent per bulk geometry request. Keeps individual request/response bodies reasonably sized
-  private val GEOMETRY_BATCH_SIZE = 2000
+  private val GEOMETRY_BATCH_SIZE = 1000
 
   // How many bulk geometry requests may be in flight at once. Peak heap during a refresh is roughly
   // this times the size of one response body, so keep it low enough for the container's heap.
@@ -218,6 +218,11 @@ class VelhoClient(tokenUrl: String, apiUrl: String, clientId: String, clientSecr
       @throws[IOException]
       override def handleResponse(response: ClassicHttpResponse): Either[VelhoError, Seq[(String, JValue)]] = {
         val responseBody = EntityUtils.toString(response.getEntity, StandardCharsets.UTF_8)
+
+        logger.info(
+          s"Velho geometry response size: ${responseBody.getBytes(StandardCharsets.UTF_8).length / 1024 / 1024} MB"
+        )
+
         if (response.getCode == HttpStatus.SC_OK) {
               val geometries = splitConcatenatedJsonObjects(responseBody).flatMap { objectText =>
             val parsedObject = parseJson(objectText)
