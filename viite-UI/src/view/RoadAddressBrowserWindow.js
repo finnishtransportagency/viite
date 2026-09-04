@@ -510,13 +510,16 @@
               };
 
               // Handle ELY/EVK selection
-              if (elyEvkSelector && elyEvkSelector.length > 0) {
-
-                // Remove prefix (ELY_ or EVK_) from the selected values
-                  const selectedElys = elyEvkSelector.filter(value => value.startsWith('ELY_')).map(value => value.substring(4));
-                  const selectedEvks = elyEvkSelector.filter(value => value.startsWith('EVK_')).map(value => value.substring(4));
-                  if (selectedElys.length > 0) params.ely = selectedElys.join(',');
-                  if (selectedEvks.length > 0) params.roadMaintainer = selectedEvks.join(',');
+              const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
+              const selectedByColumn = selectorComponents && selectorComponents.elyEvk &&
+                  typeof selectorComponents.elyEvk.getSelectedValuesByColumn === 'function'
+                  ? selectorComponents.elyEvk.getSelectedValuesByColumn()
+                  : {};
+              if (selectedByColumn[1] && selectedByColumn[1].length > 0) {
+                  params.ely = selectedByColumn[1].join(',');
+              }
+              if (selectedByColumn[0] && selectedByColumn[0].length > 0) {
+                  params.roadMaintainer = selectedByColumn[0].join(',');
               }
 
               if (roadNumber.value) params.roadNumber = roadNumber.value;

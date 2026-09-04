@@ -30,7 +30,7 @@
             if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
               const evkData = ViiteEnumerations.EVKCodes[evk];
               evkItems.push({
-                value: `EVK_${evkData.value}`,
+                value: evkData.value,
                 label: `${evkData.value} (${evkData.shortName})`
               });
             }
@@ -43,7 +43,7 @@
             if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
               const elyData = ViiteEnumerations.ElyCodes[ely];
               elyItems.push({
-                value: `ELY_${elyData.value}`,
+                value: elyData.value,
                 label: `${elyData.value} (${elyData.shortName})`
               });
             }

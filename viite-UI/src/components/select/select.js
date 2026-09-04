@@ -316,6 +316,19 @@ return `<div>${selector.render()}</div>`;
       return config.multiSelect ? (config.values || []) : config.value;
     }
 
+    function getSelectedValuesByColumn() {
+      if (!config.multiSelect) return {};
+
+      const selectedValues = config.values || [];
+      return Object.keys(config.data).reduce((valuesByColumn, columnIndex) => {
+        const selectedValuesInColumn = (config.data[columnIndex].items || [])
+          .filter(item => selectedValues.includes(String(item.value)))
+          .map(item => item.value);
+        if (selectedValuesInColumn.length > 0) valuesByColumn[columnIndex] = selectedValuesInColumn;
+        return valuesByColumn;
+      }, {});
+    }
+
     // This can be used to disable the selector (not used currently, so not tested)
     function setDisabled(disabled) {
       config.disabled = disabled;
@@ -345,6 +358,7 @@ return `<div>${selector.render()}</div>`;
       bindEvents: bindEvents,
       setValue: setValue,
       getSelectedValue: getSelectedValue,
+      getSelectedValuesByColumn: getSelectedValuesByColumn,
       setDisabled: setDisabled,
       updateData: updateData,
       getElement: getElement,
