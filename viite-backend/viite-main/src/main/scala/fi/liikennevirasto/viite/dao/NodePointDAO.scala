@@ -354,7 +354,7 @@ class NodePointDAO extends BaseDAO {
             NULL AS start_date, NULL AS end_date,
             np.valid_from, np.valid_to, np.created_by, np.created_time,
             rp.roadway_number, rp.addr_m,
-            NULL AS road_number, NULL AS road_part_number, NULL AS track, NULL as road_maintainer
+              NULL AS road_number, NULL AS road_part_number, NULL AS track, NULL AS road_maintainer, NULL AS road_start_date
        FROM node_point np
        JOIN roadway_point rp ON (rp.id = roadway_point_id)
        WHERE np.valid_to IS NULL AND np.node_number = $nodeNumber
