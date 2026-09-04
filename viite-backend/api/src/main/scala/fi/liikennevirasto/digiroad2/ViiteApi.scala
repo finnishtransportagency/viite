@@ -27,7 +27,7 @@ import org.slf4j.{Logger, LoggerFactory}
 
 import java.text.SimpleDateFormat
 import scala.concurrent.Future
-import scala.util.{Left, Right}
+import scala.util.{Left, Right, Try}
 import scala.concurrent.ExecutionContext.Implicits.global
 import fi.liikennevirasto.viite.UserService
 
@@ -518,8 +518,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     apiOperation[Map[String,Any]]("getDataForRoadAddressBrowser").parameters(
       queryParam[String]("situationDate").description("Situation date (yyyy-MM-dd)"),
       queryParam[String]("target").description("What data to fetch (Tracks, RoadParts, Nodes, Junctions, RoadNames)"),
-      queryParam[Long]("ely").description("Ely number of a road address").optional,
-      queryParam[Long]("roadMaintainer").description("Elinvoimakeskus number of a road address in road maintainer format").optional,
+      queryParam[String]("ely").description("Comma-separated Ely numbers of a road address").optional,
+      queryParam[String]("roadMaintainer").description("Comma-separated Elinvoimakeskus numbers of a road address in road maintainer format").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
       queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
@@ -529,7 +529,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     )
   get("/roadaddressbrowser", operation(getDataForRoadAddressBrowser)) {
     time(logger, s"GET request for /roadaddressbrowser", params=Some(params.toMap)) {
-      def validateInputs(situationDate: Option[String], target: Option[String], ely: Option[Long], roadMaintainer: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+      def validateInputs(situationDate: Option[String], target: Option[String], elys: Seq[Long], roadMaintainers: Seq[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
         def parseDate(dateString: Option[String]): Option[DateTime] = {
           try {
             if (dateString.isDefined) {
@@ -544,7 +544,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
         val mandatoryInputsDefinedAndValid =
           parseDate(situationDate).isDefined && // situationDate is mandatory for all targets
           target.isDefined && // target is always mandatory
-            (ely.isDefined && ely.get > 0L && ely.get <= 14L || roadMaintainer.isDefined && roadMaintainer.get > 0L && roadMaintainer.get < 11 || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || //either ely OR road number is required
+            (elys.forall(ely => ely > 0L && ely <= 14L) && elys.nonEmpty || roadMaintainers.forall(roadMaintainer => roadMaintainer > 0L && roadMaintainer < 11) && roadMaintainers.nonEmpty || (roadNumber.isDefined && roadNumber.get > 0L && roadNumber.get <= 99999L)) || //either ely OR road number is required
             target.get == "RoadNames" || //  unless target is RoadNames
             target.get == "Nodes" || // unless target is Nodes
             target.get == "Junctions" // unless target is Junctions
@@ -560,29 +560,39 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
 
       val situationDate = params.get("situationDate")
       val target = params.get("target")
-      val ely = params.get("ely").map(_.toLong)
-      val roadMaintainer = params.get("roadMaintainer").map(_.toLong)
+
+      // Helper function to convert a comma-separated string of numbers into a list of Long values
+      def parseLongList(value: Option[String]): Option[Seq[Long]] = value match {
+        case None => Some(Seq.empty)
+        case Some(values) if values.nonEmpty => Try(values.split(",").map(_.trim).filter(_.nonEmpty).map(_.toLong).toSeq).toOption
+        case _ => Some(Seq.empty)
+      }
+      val elys = parseLongList(params.get("ely")).getOrElse(Seq(Long.MinValue))
+      val roadMaintainers = parseLongList(params.get("roadMaintainer")).getOrElse(Seq(Long.MinValue))
       val roadNumber = params.get("roadNumber").map(_.toLong)
       val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
       val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
 
       try {
-        if (validateInputs(situationDate, target, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+        if (validateInputs(situationDate, target, elys, roadMaintainers, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+          val elyOptions = elys.map(ely => ArealRoadMaintainer.fromLongToRoadMaintainerId(Some(ely), elyContext = true))
+          val roadMaintainerOptions = roadMaintainers.map(roadMaintainer => ArealRoadMaintainer.fromLongToRoadMaintainerId(Some(roadMaintainer), elyContext = false))
+          val selectedRoadMaintainers = if (elyOptions.nonEmpty || roadMaintainerOptions.nonEmpty) elyOptions ++ roadMaintainerOptions else Seq(None)
           target match {
             case Some("Tracks") =>
-              val tracksForRoadAddressBrowser = roadAddressService.getTracksForRoadAddressBrowser(situationDate, ArealRoadMaintainer.fromLongToRoadMaintainerId(ely, elyContext = true), ArealRoadMaintainer.fromLongToRoadMaintainerId(roadMaintainer, elyContext = false), roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val tracksForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadAddressService.getTracksForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
               Map("success" -> true, "results" -> tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
             case Some("RoadParts") =>
-              val roadPartsForRoadAddressBrowser = roadAddressService.getRoadPartsForRoadAddressBrowser(situationDate, ArealRoadMaintainer.fromLongToRoadMaintainerId(ely, elyContext = true), ArealRoadMaintainer.fromLongToRoadMaintainerId(roadMaintainer, elyContext = false), roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val roadPartsForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadAddressService.getRoadPartsForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
               Map("success" -> true, "results" -> roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi))
             case Some("Nodes") =>
-              val nodesForRoadAddressBrowser = nodesAndJunctionsService.getNodesForRoadAddressBrowser(situationDate, ArealRoadMaintainer.fromLongToRoadMaintainerId(ely, elyContext = true), ArealRoadMaintainer.fromLongToRoadMaintainerId(roadMaintainer, elyContext = false), roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val nodesForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => nodesAndJunctionsService.getNodesForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
               Map("success" -> true, "results" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
             case Some("Junctions") =>
-              val junctionsForRoadAddressBrowser = nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(situationDate, ArealRoadMaintainer.fromLongToRoadMaintainerId(ely, elyContext = true), ArealRoadMaintainer.fromLongToRoadMaintainerId(roadMaintainer, elyContext = false), roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val junctionsForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
               Map("success" -> true, "results" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
             case Some("RoadNames") =>
-              val roadNamesForRoadAddressBrowser = roadNameService.getRoadNamesForRoadAddressBrowser(situationDate, ArealRoadMaintainer.fromLongToRoadMaintainerId(ely, elyContext = true), ArealRoadMaintainer.fromLongToRoadMaintainerId(roadMaintainer, elyContext = false), roadNumber, minRoadPartNumber, maxRoadPartNumber)
+              val roadNamesForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadNameService.getRoadNamesForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
               Map("success" -> true, "results" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
             case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
           }
@@ -602,8 +612,8 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       queryParam[String]("startDate").description("Start date (yyyy-MM-dd)"),
       queryParam[String]("endDate").description("End date (yyyy-MM-dd)"),
       queryParam[String]("dateTarget").description("What start and end dates are used for"),
-      queryParam[Long]("ely").description("Ely number of a road address").optional,
-      queryParam[Long]("roadMaintainer").description("Evk or Ely code of a road address").optional,
+      queryParam[String]("ely").description("Comma-separated Ely numbers of a road address").optional,
+      queryParam[String]("roadMaintainer").description("Comma-separated Evk or Ely codes of a road address").optional,
       queryParam[Long]("roadNumber").description("Road Number of a road address").optional,
       queryParam[Long]("minRoadPartNumber").description("Min Road Part Number of a road address").optional,
       queryParam[Long]("maxRoadPartNumber").description("Max Road Part Number of a road address").optional
@@ -614,7 +624,7 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
 
   get("/roadaddresschangesbrowser", operation(getDataForRoadAddressChangesBrowser)) {
     time(logger, s"GET request for /roadaddresschangesbrowser") {
-      def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], ely: Option[Long], roadMaintainer: Option[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
+      def validateInputs(startDate: Option[String], endDate: Option[String], dateTarget: Option[String], elys: Seq[Long], roadMaintainers: Seq[Long], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Boolean = {
         def parseDate(dateString: Option[String]): Option[DateTime] = {
           try {
             if (dateString.isDefined) {
@@ -644,16 +654,10 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
               true
           }
           val elyValid = {
-            if (ely.isDefined)
-              ely.get > 0L && ely.get <= 14L
-            else
-              true
+            elys.forall(ely => ely > 0L && ely <= 14L)
           }
           val roadMaintainerValid = {
-            if (roadMaintainer.isDefined)
-              roadMaintainer.get > 0L && roadMaintainer.get <= 10L /*&& evk.get <= 10L */ // TODO: CORRECT AMOUNT?
-            else
-              true
+            roadMaintainers.forall(roadMaintainer => roadMaintainer > 0L && roadMaintainer <= 10L)
           }
           val roadNumberValid = {
             if (roadNumber.isDefined)
@@ -670,17 +674,23 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
       val startDate = params.get("startDate")
       val endDate = params.get("endDate")
       val dateTarget = params.get("dateTarget")
-      val ely = params.get("ely").map(_.toLong)
-      val roadMaintainer = params.get("roadMaintainer").map(_.toLong)
+      def parseLongList(value: Option[String]): Option[Seq[Long]] = value match {
+        case None => Some(Seq.empty)
+        case Some(values) if values.nonEmpty => Try(values.split(",").map(_.trim).filter(_.nonEmpty).map(_.toLong).toSeq).toOption
+        case _ => Some(Seq.empty)
+      }
+      val elys = parseLongList(params.get("ely")).getOrElse(Seq(Long.MinValue))
+      val roadMaintainers = parseLongList(params.get("roadMaintainer")).getOrElse(Seq(Long.MinValue))
       val roadNumber = params.get("roadNumber").map(_.toLong)
       val minRoadPartNumber = params.get("minRoadPartNumber").map(_.toLong)
       val maxRoadPartNumber = params.get("maxRoadPartNumber").map(_.toLong)
 
-      println("getRoadAddressChangesBrowser roadMaintainer: ", roadMaintainer)
-
       try {
-        if (validateInputs(startDate, endDate, dateTarget, ely, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
-          val changeInfosForRoadAddressChangesBrowser = roadAddressService.getChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, ArealRoadMaintainer.fromLongToRoadMaintainerId(ely, elyContext = true), ArealRoadMaintainer.fromLongToRoadMaintainerId(roadMaintainer, elyContext = false), roadNumber, minRoadPartNumber, maxRoadPartNumber)
+        if (validateInputs(startDate, endDate, dateTarget, elys, roadMaintainers, roadNumber, minRoadPartNumber, maxRoadPartNumber)) {
+          val elyOptions = elys.map(ely => ArealRoadMaintainer.fromLongToRoadMaintainerId(Some(ely), elyContext = true))
+          val roadMaintainerOptions = roadMaintainers.map(roadMaintainer => ArealRoadMaintainer.fromLongToRoadMaintainerId(Some(roadMaintainer), elyContext = false))
+          val selectedRoadMaintainers = if (elyOptions.nonEmpty || roadMaintainerOptions.nonEmpty) elyOptions ++ roadMaintainerOptions else Seq(None)
+          val changeInfosForRoadAddressChangesBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadAddressService.getChangeInfosForRoadAddressChangesBrowser(startDate, endDate, dateTarget, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
           Map("success" -> true, "changeInfos" -> changeInfosForRoadAddressChangesBrowser.map(roadAddressChangeInfoToApi))
         } else
           Map("success" -> false, "error" -> "Tieosoitemuutosten haku epäonnistui, tarkista syöttämäsi tiedot")

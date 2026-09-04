@@ -448,7 +448,7 @@
           function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
               
               // If neither ELY/EVK or road number is provided, show error
-              if (!elyValue && (!roadNumberElement || !roadNumberElement.value)) {
+              if ((!elyValue || elyValue.length === 0) && (!roadNumberElement || !roadNumberElement.value)) {
                   if (roadNumberElement) {
                       roadNumberElement.setCustomValidity("Elinvoimakeskus, Ely tai Tie on pakollinen tieto");
                   }
@@ -510,23 +510,19 @@
               };
 
               // Handle ELY/EVK selection
-              if (elyEvkSelector) {
-                if (elyEvkSelector.startsWith('EVK_')) {
-                    params.roadMaintainer = elyEvkSelector.substring(4); // Backend expects EVK as roadMaintainer
-                } else if (elyEvkSelector.startsWith('ELY_')) {
-                    params.ely = elyEvkSelector.substring(4); // Remove 'ELY_' prefix
-                } else {
-                    // Fallback in case the value doesn't have a prefix
-                    params.ely = elyEvkSelector;
-                }
+              if (elyEvkSelector && elyEvkSelector.length > 0) {
+
+                // Remove prefix (ELY_ or EVK_) from the selected values
+                  const selectedElys = elyEvkSelector.filter(value => value.startsWith('ELY_')).map(value => value.substring(4));
+                  const selectedEvks = elyEvkSelector.filter(value => value.startsWith('EVK_')).map(value => value.substring(4));
+                  if (selectedElys.length > 0) params.ely = selectedElys.join(',');
+                  if (selectedEvks.length > 0) params.roadMaintainer = selectedEvks.join(',');
               }
 
-              if (roadNumber.value)
-                  params.roadNumber = roadNumber.value;
-              if (minRoadPartNumber.value)
-                  params.minRoadPartNumber = minRoadPartNumber.value;
-              if (maxRoadPartNumber.value)
-                  params.maxRoadPartNumber = maxRoadPartNumber.value;
+              if (roadNumber.value) params.roadNumber = roadNumber.value;
+              if (minRoadPartNumber.value) params.minRoadPartNumber = minRoadPartNumber.value;
+              if (maxRoadPartNumber.value) params.maxRoadPartNumber = maxRoadPartNumber.value;
+              
               return params;
           }
 

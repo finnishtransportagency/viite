@@ -108,6 +108,7 @@
             elyEvkSelector = new Selector({
                 id: 'roadAddrChangesInputEly',
                 placeholder: 'Valitse Elinvoimakeskus / ELY',
+                multiSelect: true,
                 width: 240,
                 data: createElyEvkData()
             });
@@ -356,20 +357,16 @@
                   : null;
 
                 // Add ELY/EVK to params
-                if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
-                    const parts = selected.split('_');
-                    if (parts[1]) params.ely = parts[1];
-                } else if (selected && selected.startsWith('EVK_')) {
-                    const parts = selected.split('_');
-                    if (parts[1]) params.roadMaintainer = parts[1]; // Backend handles evk value as roadMaintainer, so convert evk to that
+                if (selected && selected.length > 0) {
+                    const selectedElys = selected.filter(value => value.startsWith('ELY_')).map(value => value.substring(4));
+                    const selectedEvks = selected.filter(value => value.startsWith('EVK_')).map(value => value.substring(4));
+                    if (selectedElys.length > 0) params.ely = selectedElys.join(',');
+                    if (selectedEvks.length > 0) params.roadMaintainer = selectedEvks.join(',');
                 }
                 
-                if (roadNumber.value)
-                    params.roadNumber = roadNumber.value;
-                if (minRoadPartNumber.value)
-                    params.minRoadPartNumber = minRoadPartNumber.value;
-                if (maxRoadPartNumber.value)
-                    params.maxRoadPartNumber = maxRoadPartNumber.value;
+                if (roadNumber.value) params.roadNumber = roadNumber.value;
+                if (minRoadPartNumber.value) params.minRoadPartNumber = minRoadPartNumber.value;
+                if (maxRoadPartNumber.value) params.maxRoadPartNumber = maxRoadPartNumber.value;
                 return params;
             }
 

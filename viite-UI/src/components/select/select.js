@@ -83,6 +83,7 @@ return `<div>${selector.render()}</div>`;
       selectedItem: null,
       placeholder: 'Valitse...',
       disabled: false,
+      multiSelect: false,
       onSelectionChange: null,
       className: '',
       width: null // Optional width for the control. Accepts number (px) or string (any CSS unit)
@@ -128,10 +129,15 @@ return `<div>${selector.render()}</div>`;
 
         colData.items.forEach(item => {
           const itemId = `${item.value}-${item.label}`;
-          const selected = itemId === config.selectedItem ? ' selected' : '';
+          const isSelected = config.multiSelect
+            ? (config.values || []).includes(item.value)
+            : itemId === config.selectedItem;
+          const selected = isSelected ? ' selected' : '';
           html += `
-            <div class="modern-item${selected}" data-id="${itemId}">
-              <span class="modern-circle${selected ? ' filled' : ''}"></span>
+            <div class="modern-item${selected}" data-id="${itemId}" data-value="${item.value}">
+              ${config.multiSelect
+                ? `<input type="checkbox" class="modern-checkbox"${selected ? ' checked' : ''} tabindex="-1" />`
+                : `<span class="modern-circle${selected ? ' filled' : ''}"></span>`}
               <span class="modern-item-label">${item.label}</span>
             </div>
           `;
@@ -150,7 +156,13 @@ return `<div>${selector.render()}</div>`;
       let selectedLabel = null;
       const allItems = Object.values(config.data).flatMap(c => c.items || []);
 
-      if (config.value) {
+      if (config.multiSelect) {
+        config.values = config.values || (config.value ? [config.value] : []);
+        const selectedLabels = allItems
+          .filter(it => config.values.includes(it.value))
+          .map(it => it.label);
+        selectedLabel = selectedLabels.join(', ');
+      } else if (config.value) {
         const found = allItems.find(it => it.value === config.value);
         if (found) {
           selectedLabel = found.label;
@@ -214,7 +226,23 @@ return `<div>${selector.render()}</div>`;
           e.stopPropagation();
 
           const itemId = itemEl.getAttribute('data-id');
-          const itemValue = itemId.split('-')[0];
+          const itemValue = itemEl.getAttribute('data-value');
+
+          if (config.multiSelect) {
+            config.values = config.values || [];
+            const valueIndex = config.values.indexOf(itemValue);
+            if (valueIndex === -1) config.values.push(itemValue);
+            else config.values.splice(valueIndex, 1);
+            const isSelected = config.values.includes(itemValue);
+            itemEl.classList.toggle('selected', isSelected);
+            itemEl.querySelector('.modern-checkbox').checked = isSelected;
+            label.textContent = Array.from(dropdown.querySelectorAll('.modern-item.selected'))
+              .map(item => item.querySelector('.modern-item-label').textContent)
+              .join(', ') || config.placeholder;
+            config.value = config.values;
+            if (config.onSelectionChange) config.onSelectionChange(config.values, e);
+            return;
+          }
 
           // Update selection state
           dropdown.querySelectorAll('.modern-item').forEach(item => {
@@ -285,7 +313,7 @@ return `<div>${selector.render()}</div>`;
     }
 
     function getSelectedValue() {
-      return config.value;
+      return config.multiSelect ? (config.values || []) : config.value;
     }
 
     // This can be used to disable the selector (not used currently, so not tested)

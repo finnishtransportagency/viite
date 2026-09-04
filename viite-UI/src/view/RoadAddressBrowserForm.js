@@ -66,6 +66,7 @@
       elyEvkSelector = new Selector({
         id: 'roadAddrInputElyEvk',
         placeholder: 'Valitse Elinvoimakeskus / ELY',
+        multiSelect: true,
         width: 240,
         data: createElyEvkData()
       });
