@@ -1,0 +1,175 @@
+name: Viite PR Pipeline
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+env:
+  AWS_REGION: eu-west-1
+  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+  GITHUB_REPOSITORY: ${{ github.repository }}
+  GITHUB_PR_BRANCH: ${{ github.head_ref }}
+  GITHUB_PR_BASE_BRANCH: ${{ github.base_ref }}
+  GITHUB_PR_TITLE: ${{ github.event.pull_request.title }}
+
+jobs:
+  create-or-update-pr-pipeline:
+    name: Create or Update PR Pipeline
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      id-token: write
+    steps:
+      - name: Checkout viite-infra repository
+        uses: actions/checkout@v4
+        with:
+          repository: finnishtransportagency/viite-infra
+          token: ${{ secrets.FINE_GRAINED_TOKEN }}
+          ref: main
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Deploy Dynamic PR Pipeline
+        run: |
+          npm install
+          BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
+          echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
+          if ! npx cdk deploy \
+            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
+            --context env=pr \
+            --context branch="$BRANCH_NAME" \
+            --yes --all \
+            > /dev/null 2>&1; then
+            echo "❌ PR CDK deploy failed. Check AWS CloudWatch/CloudFormation for details."
+            exit 1
+          fi
+          echo "✅ PR CDK deploy completed."
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+
+      - name: Post Pipeline Info to PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = process.env.GITHUB_PR_BRANCH;
+            const ticketMatch = branch.match(/(?:^|[^a-zA-Z0-9])([a-zA-Z]+-\d+)(?:[^a-zA-Z0-9]|$)/);
+            const branchIdentifier = ticketMatch?.[1] ?? branch;
+            const cleanBranch = branchIdentifier
+              .replace(/[^a-zA-Z0-9-]/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '')
+              .toLowerCase();
+            const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-codepipeline/view`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **PR Pipeline Created**\n\n📋 [View Pipeline](${pipelineUrl})\n\n**Branch**: \`${branch}\`\n**Status**: Running build and tests...\n\nℹ️ E2E tests connect directly via the internal ALB DNS with a \`Host: pr-${cleanBranch}.internal\` header.`
+            });
+
+      - name: Post Deployment Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **PR Pipeline Failed**\n\nDeployment did not complete. Check [GitHub Actions logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+            });
+
+  destroy-pr-pipeline:
+    name: Destroy PR Pipeline
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+    steps:
+      - name: Checkout viite-infra repository
+        uses: actions/checkout@v4
+        with:
+          repository: finnishtransportagency/viite-infra
+          token: ${{ secrets.FINE_GRAINED_TOKEN }}
+          ref: main
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/GitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Destroy Dynamic PR Pipeline
+        run: |
+          BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
+          echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
+          if ! npx cdk destroy \
+            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
+            --context env=pr \
+            --context branch="$BRANCH_NAME" \
+            --force \
+            pr-cicd-stack \
+            > /dev/null 2>&1; then
+            echo "❌ PR CDK destroy failed for pr-cicd-stack. Check AWS CloudWatch/CloudFormation for details."
+            exit 1
+          fi
+
+          if ! npx cdk destroy \
+            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
+            --context env=pr \
+            --context branch="$BRANCH_NAME" \
+            --force \
+            pr-fargate-stack \
+            > /dev/null 2>&1; then
+            echo "❌ PR CDK destroy failed for pr-fargate-stack. Check AWS CloudWatch/CloudFormation for details."
+            exit 1
+          fi
+          echo "✅ PR CDK destroy completed."
+        env:
+          CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
+          CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
+
+      - name: Post Cleanup Confirmation
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `✅ **PR Pipeline Destroyed**\n\nEphemeral resources cleaned up.`
+            });
+
+      - name: Post Cleanup Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `❌ **PR Pipeline Cleanup Failed**\n\nAutomatic cleanup did not complete. Check [GitHub Actions logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}).`
+            });
