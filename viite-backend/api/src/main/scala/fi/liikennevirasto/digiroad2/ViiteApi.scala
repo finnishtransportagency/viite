@@ -578,22 +578,36 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
           val elyOptions = elys.map(ely => ArealRoadMaintainer.fromLongToRoadMaintainerId(Some(ely), elyContext = true))
           val roadMaintainerOptions = roadMaintainers.map(roadMaintainer => ArealRoadMaintainer.fromLongToRoadMaintainerId(Some(roadMaintainer), elyContext = false))
           val selectedRoadMaintainers = if (elyOptions.nonEmpty || roadMaintainerOptions.nonEmpty) elyOptions ++ roadMaintainerOptions else Seq(None)
+
+          // Helper function to filter results based on the selected road maintainers.
+          // Without this selected ELY14 would also return EVK10 rows for example.
+          def filterBySelectedMaintainers(results: Seq[Map[String, Any]]): Seq[Map[String, Any]] = {
+            if (elys.nonEmpty || roadMaintainers.nonEmpty) {
+              results.filter { result =>
+                elys.contains(result("ely").toString.toLong) ||
+                  roadMaintainers.contains(result("evk").toString.toLong)
+              }
+            } else {
+              results
+            }
+          }
+
           target match {
             case Some("Tracks") =>
               val tracksForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadAddressService.getTracksForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
-              Map("success" -> true, "results" -> tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi))
+              Map("success" -> true, "results" -> filterBySelectedMaintainers(tracksForRoadAddressBrowser.map(roadAddressBrowserTracksToApi)))
             case Some("RoadParts") =>
               val roadPartsForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadAddressService.getRoadPartsForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
-              Map("success" -> true, "results" -> roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi))
+              Map("success" -> true, "results" -> filterBySelectedMaintainers(roadPartsForRoadAddressBrowser.map(roadAddressBrowserRoadPartsToApi)))
             case Some("Nodes") =>
               val nodesForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => nodesAndJunctionsService.getNodesForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
-              Map("success" -> true, "results" -> nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi))
+              Map("success" -> true, "results" -> filterBySelectedMaintainers(nodesForRoadAddressBrowser.map(roadAddressBrowserNodesToApi)))
             case Some("Junctions") =>
               val junctionsForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => nodesAndJunctionsService.getJunctionsForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
               Map("success" -> true, "results" -> junctionsForRoadAddressBrowser.map(roadAddressBrowserJunctionsToApi))
             case Some("RoadNames") =>
               val roadNamesForRoadAddressBrowser = selectedRoadMaintainers.flatMap(roadMaintainer => roadNameService.getRoadNamesForRoadAddressBrowser(situationDate, roadMaintainer, None, roadNumber, minRoadPartNumber, maxRoadPartNumber))
-              Map("success" -> true, "results" -> roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi))
+              Map("success" -> true, "results" -> filterBySelectedMaintainers(roadNamesForRoadAddressBrowser.map(roadAddressBrowserRoadNamesToApi)))
             case _ => Map("success" -> false, "error" -> "Tieosoitteiden haku epäonnistui, haun kohdearvo puuttuu tai on väärin syötetty")
           }
         } else
