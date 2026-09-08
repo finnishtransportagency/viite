@@ -43,18 +43,14 @@ jobs:
       - name: Deploy Dynamic PR Pipeline
         run: |
           npm install
-          BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
-          echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
-          if ! npx cdk deploy \
-            --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
-            --context env=pr \
-            --context branch="$BRANCH_NAME" \
-            --yes --all \
-            > /dev/null 2>&1; then
-            echo "❌ PR CDK deploy failed. Check AWS CloudWatch/CloudFormation for details."
-            exit 1
-          fi
-          echo "✅ PR CDK deploy completed."
+           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
+           echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
+           npx cdk deploy \
+             --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
+             --context env=pr \
+             --context branch="$BRANCH_NAME" \
+             --yes --all
+           echo "✅ PR CDK deploy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
