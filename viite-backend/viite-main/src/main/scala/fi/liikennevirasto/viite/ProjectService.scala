@@ -2248,7 +2248,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     project.projectState match {
-      case ProjectState.Accepted | ProjectState.InUpdateQueue | ProjectState.UpdatingToRoadNetwork => (true, None)
+      case ProjectState.Accepted | ProjectState.Pending | ProjectState.InUpdateQueue | ProjectState.UpdatingToRoadNetwork => (true, None)
       case _ =>
         roadwayChangesDAO.clearRoadChangeTable(projectId)
         roadwayChangesDAO.insertDeltaToRoadChangeTable(projectId, projectOpt)
@@ -2301,10 +2301,16 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         return PublishResult(validationSuccess = false, sendSuccess = false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))
       }
       else {
-        projectDAO.updateProjectStatus(projectId, InUpdateQueue)
+        projectDAO.updateProjectStatus(projectId, ProjectState.Pending)
         logger.info(s"Returning dummy 'Yesyes, TR part ok', as TR call removed")
         PublishResult(validationSuccess = true, sendSuccess = true, Some(""))
       }
+    }
+  }
+
+  def cancelPendingProject(projectId: Long): Boolean = {
+    runWithTransaction {
+      projectDAO.cancelPendingProject(projectId)
     }
   }
 
@@ -2410,6 +2416,11 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     * @throws SQLException if there is an error with preserving the reserved project to the db.
     * @throws Exception if an unexpected exception occurred. */
   def preserveSingleProjectToBeTakenToRoadNetwork(): Unit = {
+      val pendingProjectMovedToQueue = runWithTransaction {
+        projectDAO.moveSinglePendingProjectToUpdateQueue()
+      }
+      if (pendingProjectMovedToQueue)
+      return
     // Get a project to update to db, if any. Reserved apart from db preserve, to communicate the reservation asap.
     val projectIdOpt: Option[Long] = atomicallyReserveProjectInUpdateQueue
 
