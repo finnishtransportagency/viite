@@ -68,7 +68,7 @@ jobs:
               .replace(/-+/g, '-')
               .replace(/^-|-$/g, '')
               .toLowerCase();
-            const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-codepipeline/view`;
+            const pipelineUrl = `https://${{ env.AWS_REGION }}.console.aws.amazon.com/codesuite/codepipeline/pipelines/${cleanBranch}-code-pipeline/view`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
