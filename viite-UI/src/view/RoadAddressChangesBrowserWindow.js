@@ -77,7 +77,7 @@
                   if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
                       const evkData = ViiteEnumerations.EVKCodes[evk];
                       evkItems.push({
-                          value: `EVK_${evkData.value}`,
+                          value: evkData.value,
                           label: `${evkData.value} (${evkData.shortName})`
                       });
                   }
@@ -89,7 +89,7 @@
                   if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
                       const elyData = ViiteEnumerations.ElyCodes[ely];
                       elyItems.push({
-                          value: `ELY_${elyData.value}`,
+                          value: elyData.value,
                           label: `${elyData.value} (${elyData.shortName})`
                       });
                   }
@@ -108,6 +108,7 @@
             elyEvkSelector = new Selector({
                 id: 'roadAddrChangesInputEly',
                 placeholder: 'Valitse Elinvoimakeskus / ELY',
+                multiSelect: true,
                 width: 240,
                 data: createElyEvkData()
             });
@@ -351,25 +352,19 @@
 
                 // Add end date to params
                 if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
-                const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
-                  ? elyEvkSelector.getSelectedValue()
-                  : null;
+                    const selectedByColumn = elyEvkSelector?.getSelectedValuesByColumn() || {};
 
-                // Add ELY/EVK to params
-                if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
-                    const parts = selected.split('_');
-                    if (parts[1]) params.ely = parts[1];
-                } else if (selected && selected.startsWith('EVK_')) {
-                    const parts = selected.split('_');
-                    if (parts[1]) params.roadMaintainer = parts[1]; // Backend handles evk value as roadMaintainer, so convert evk to that
-                }
+                    // Add numeric ELY/EVK values to the corresponding backend parameters.
+                    if (selectedByColumn[1] && selectedByColumn[1].length > 0) {
+                      params.ely = selectedByColumn[1].join(',');
+                    }
+                    if (selectedByColumn[0] && selectedByColumn[0].length > 0) {
+                      params.roadMaintainer = selectedByColumn[0].join(',');
+                    }
                 
-                if (roadNumber.value)
-                    params.roadNumber = roadNumber.value;
-                if (minRoadPartNumber.value)
-                    params.minRoadPartNumber = minRoadPartNumber.value;
-                if (maxRoadPartNumber.value)
-                    params.maxRoadPartNumber = maxRoadPartNumber.value;
+                if (roadNumber.value) params.roadNumber = roadNumber.value;
+                if (minRoadPartNumber.value) params.minRoadPartNumber = minRoadPartNumber.value;
+                if (maxRoadPartNumber.value) params.maxRoadPartNumber = maxRoadPartNumber.value;
                 return params;
             }
 
