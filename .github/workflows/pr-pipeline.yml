@@ -120,27 +120,20 @@ jobs:
         run: |
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
-          if ! npx cdk destroy \
+          npx cdk destroy \
             --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
             --force \
             pr-cicd-stack \
-            > /dev/null 2>&1; then
             echo "❌ PR CDK destroy failed for pr-cicd-stack. Check AWS CloudWatch/CloudFormation for details."
-            exit 1
-          fi
-
-          if ! npx cdk destroy \
+          npx cdk destroy \
             --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
             --force \
             pr-fargate-stack \
-            > /dev/null 2>&1; then
             echo "❌ PR CDK destroy failed for pr-fargate-stack. Check AWS CloudWatch/CloudFormation for details."
-            exit 1
-          fi
           echo "✅ PR CDK destroy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
