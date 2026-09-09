@@ -352,7 +352,7 @@
 
                 // Add end date to params
                 if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
-                    const selectedByColumn = elyEvkSelector?.getSelectedValuesByColumn() || {};
+                    const selectedByColumn = (elyEvkSelector && elyEvkSelector.getSelectedValuesByColumn()) || {};
 
                     // Add numeric ELY/EVK values to the corresponding backend parameters.
                     if (selectedByColumn[1] && selectedByColumn[1].length > 0) {

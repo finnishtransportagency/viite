@@ -195,6 +195,70 @@ return `<div>${selector.render()}</div>`;
       setupEventDelegation();
     }
 
+    function handleMultiSelectItemClick(e, itemEl, columnIndex, itemValue, dropdown, label) {
+      config.values = config.values || [];
+      config.selectedItemKeys = config.selectedItemKeys || [];
+      const selectionKey = `${columnIndex}:${itemValue}`;
+      const valueIndex = config.selectedItemKeys.indexOf(selectionKey);
+      if (valueIndex === -1) {
+        config.selectedItemKeys.push(selectionKey);
+        config.values.push(itemValue);
+      } else {
+        config.selectedItemKeys.splice(valueIndex, 1);
+        const selectedValueIndex = config.values.indexOf(itemValue);
+        if (selectedValueIndex !== -1) config.values.splice(selectedValueIndex, 1);
+      }
+      const isSelected = config.selectedItemKeys.includes(selectionKey);
+      itemEl.classList.toggle('selected', isSelected);
+      itemEl.querySelector('.modern-checkbox').checked = isSelected;
+      label.textContent = Array.from(dropdown.querySelectorAll('.modern-item.selected'))
+        .map(item => item.querySelector('.modern-item-label').textContent)
+        .join(', ') || config.placeholder;
+      config.value = config.values;
+      if (config.onSelectionChange) config.onSelectionChange(config.values, e);
+    }
+
+    function handleSingleSelectItemClick(e, itemEl, itemId, itemValue, dropdown, button, label) {
+      // Update selection state
+      dropdown.querySelectorAll('.modern-item').forEach(item => {
+        item.classList.remove('selected');
+        const circle = item.querySelector('.modern-circle');
+        if (circle) circle.classList.remove('filled');
+      });
+
+      const isSame = config.selectedItem === itemId;
+      config.selectedItem = isSame ? null : itemId;
+      config.value = isSame ? null : itemValue;
+
+      if (config.selectedItem) {
+        itemEl.classList.add('selected');
+        const circle = itemEl.querySelector('.modern-circle');
+        if (circle) circle.classList.add('filled');
+        label.textContent = itemEl.querySelector('.modern-item-label').textContent;
+      } else {
+        label.textContent = config.placeholder;
+      }
+
+      if (config.onSelectionChange) {
+        config.onSelectionChange(config.value, e);
+      }
+
+      dropdown.classList.add('hidden');
+      button.classList.remove('open');
+    }
+
+    function handleItemClick(e, itemEl, dropdown, button, label) {
+      const itemId = itemEl.getAttribute('data-id');
+      const columnIndex = itemEl.getAttribute('data-column');
+      const itemValue = itemEl.getAttribute('data-value');
+
+      if (config.multiSelect) {
+        handleMultiSelectItemClick(e, itemEl, columnIndex, itemValue, dropdown, label);
+      } else {
+        handleSingleSelectItemClick(e, itemEl, itemId, itemValue, dropdown, button, label);
+      }
+    }
+
     function setupEventDelegation() {
       // Remove existing listener if any
       if (config._globalClickHandler) {
@@ -226,61 +290,7 @@ return `<div>${selector.render()}</div>`;
         if (itemEl && dropdown.contains(itemEl)) {
           e.preventDefault();
           e.stopPropagation();
-
-          const itemId = itemEl.getAttribute('data-id');
-          const columnIndex = itemEl.getAttribute('data-column');
-          const itemValue = itemEl.getAttribute('data-value');
-
-          if (config.multiSelect) {
-            config.values = config.values || [];
-            config.selectedItemKeys = config.selectedItemKeys || [];
-            const selectionKey = `${columnIndex}:${itemValue}`;
-            const valueIndex = config.selectedItemKeys.indexOf(selectionKey);
-            if (valueIndex === -1) {
-              config.selectedItemKeys.push(selectionKey);
-              config.values.push(itemValue);
-            } else {
-              config.selectedItemKeys.splice(valueIndex, 1);
-              const selectedValueIndex = config.values.indexOf(itemValue);
-              if (selectedValueIndex !== -1) config.values.splice(selectedValueIndex, 1);
-            }
-            const isSelected = config.selectedItemKeys.includes(selectionKey);
-            itemEl.classList.toggle('selected', isSelected);
-            itemEl.querySelector('.modern-checkbox').checked = isSelected;
-            label.textContent = Array.from(dropdown.querySelectorAll('.modern-item.selected'))
-              .map(item => item.querySelector('.modern-item-label').textContent)
-              .join(', ') || config.placeholder;
-            config.value = config.values;
-            if (config.onSelectionChange) config.onSelectionChange(config.values, e);
-            return;
-          }
-
-          // Update selection state
-          dropdown.querySelectorAll('.modern-item').forEach(item => {
-            item.classList.remove('selected');
-            const circle = item.querySelector('.modern-circle');
-            if (circle) circle.classList.remove('filled');
-          });
-
-          const isSame = config.selectedItem === itemId;
-          config.selectedItem = isSame ? null : itemId;
-          config.value = isSame ? null : itemValue;
-
-          if (config.selectedItem) {
-            itemEl.classList.add('selected');
-            const circle = itemEl.querySelector('.modern-circle');
-            if (circle) circle.classList.add('filled');
-            label.textContent = itemEl.querySelector('.modern-item-label').textContent;
-          } else {
-            label.textContent = config.placeholder;
-          }
-
-          if (config.onSelectionChange) {
-            config.onSelectionChange(config.value, e);
-          }
-
-          dropdown.classList.add('hidden');
-          button.classList.remove('open');
+          handleItemClick(e, itemEl, dropdown, button, label);
           return;
         }
 
