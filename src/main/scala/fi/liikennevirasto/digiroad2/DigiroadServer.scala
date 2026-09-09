@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import java.lang.management.ManagementFactory
+
 import fi.liikennevirasto.digiroad2.util.ViiteProperties
 import javax.servlet.http.{HttpServletRequest, HttpServletResponse}
 import org.eclipse.jetty.client.api.Request
@@ -9,7 +10,6 @@ import org.eclipse.jetty.jmx.MBeanContainer
 import org.eclipse.jetty.proxy.ProxyServlet
 import org.eclipse.jetty.server._
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
-import org.eclipse.jetty.server.handler.gzip.GzipHandler
 import org.eclipse.jetty.servlet.{DefaultServlet, ServletHolder}
 import org.eclipse.jetty.util.ssl.SslContextFactory
 import org.eclipse.jetty.webapp.WebAppContext
@@ -26,9 +26,7 @@ trait DigiroadServer {
     server.addBean(mbContainer)
     val handlers = Array(createViiteContext())
     handler.setHandlers(handlers.map(_.asInstanceOf[Handler]))
-    val gzipHandler = new GzipHandler()
-    gzipHandler.setHandler(handler)
-    server.setHandler(gzipHandler)
+    server.setHandler(handler)
     server.start()
     server.join()
   }
