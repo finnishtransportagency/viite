@@ -49,7 +49,8 @@ jobs:
              --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
              --context env=pr \
              --context branch="$BRANCH_NAME" \
-             --yes --all
+             --yes --all \
+             > /dev/null 2>&1
            echo "✅ PR CDK deploy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
@@ -124,16 +125,16 @@ jobs:
             --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
-            --force \
+            --yes \
             pr-cicd-stack \
-            echo "❌ PR CDK destroy failed for pr-cicd-stack. Check AWS CloudWatch/CloudFormation for details."
+            > /dev/null 2>&1
           npx cdk destroy \
             --app "npx ts-node --prefer-ts-exts bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
-            --force \
+            --yes \
             pr-fargate-stack \
-            echo "❌ PR CDK destroy failed for pr-fargate-stack. Check AWS CloudWatch/CloudFormation for details."
+            > /dev/null 2>&1
           echo "✅ PR CDK destroy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
