@@ -119,6 +119,7 @@ jobs:
 
       - name: Destroy Dynamic PR Pipeline
         run: |
+          npm install
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
           npx cdk destroy \
