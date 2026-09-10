@@ -731,13 +731,9 @@ class RoadNetworkDAO extends BaseDAO {
                                                  AND r.end_addr_m <= r2.end_addr_m )
                                             OR ( r.start_addr_m < r2.start_addr_m
                                                  AND r.end_addr_m > r2.end_addr_m ) )
-                                     AND r2.valid_to IS NULL --and r2.end_date is null
-                                     AND ( ( r.start_date > r2.start_date
-                                             AND r.start_date < r2.end_date )
-                                            OR ( r.end_date > r2.start_date
-                                                 AND r.end_date < r2.end_date )
-                                            OR ( r.start_date < r2.start_date
-                                                 AND r.end_date > r2.end_date ) )) )
+                                      AND r2.valid_to IS NULL --and r2.end_date is null
+                                      AND r.start_date <= COALESCE(r2.end_date, 'infinity'::date)
+                                      AND COALESCE(r.end_date, 'infinity'::date) >= r2.start_date) )
          ORDER  BY r.road_number,
                    r.road_part_number,
                    r.start_addr_m,
@@ -773,13 +769,9 @@ class RoadNetworkDAO extends BaseDAO {
                                                  AND r.end_addr_m <= r2.end_addr_m )
                                             OR ( r.start_addr_m < r2.start_addr_m
                                                  AND r.end_addr_m > r2.end_addr_m ) )
-                                     AND r2.valid_to IS NULL --and r2.end_date is null
-                                     AND ( ( r.start_date > r2.start_date
-                                             AND r.start_date < r2.end_date )
-                                            OR ( r.end_date > r2.start_date
-                                                 AND r.end_date < r2.end_date )
-                                            OR ( r.start_date < r2.start_date
-                                                 AND r.end_date > r2.end_date ) )) )
+                                      AND r2.valid_to IS NULL --and r2.end_date is null
+                                      AND r.start_date <= COALESCE(r2.end_date, 'infinity'::date)
+                                      AND COALESCE(r.end_date, 'infinity'::date) >= r2.start_date) )
          ORDER  BY r.road_number,
                    r.road_part_number,
                    r.start_addr_m,
