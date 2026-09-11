@@ -806,22 +806,14 @@ class LinearLocationDAO extends BaseDAO {
     if (roadwayNumbers.isEmpty) {
       Seq()
     } else {
-      val query = if (roadwayNumbers.size > 1000) {
-        MassQuery.withIds(roadwayNumbers)({
-          idTableName =>
-            sql"""
-                $selectFromLinearLocation
-                JOIN $idTableName i ON i.id = loc.roadway_number
-                WHERE loc.valid_to IS NULL
-              """
-        })
-      } else {
-        sql"""
+      roadwayNumbers.grouped(1000).flatMap { chunk =>
+        val query =
+          sql"""
               $selectFromLinearLocation
-              WHERE loc.valid_to IS NULL and loc.roadway_number IN ($roadwayNumbers)
+              WHERE loc.valid_to IS NULL AND loc.geometry IS NOT NULL AND loc.roadway_number IN ($chunk)
             """
-      }
-      queryList(query)
+        queryList(query)
+      }.toVector
     }
   }
 
