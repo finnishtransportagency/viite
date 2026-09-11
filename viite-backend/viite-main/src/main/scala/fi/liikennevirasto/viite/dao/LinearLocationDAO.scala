@@ -854,11 +854,13 @@ class LinearLocationDAO extends BaseDAO {
 
   def fetchUpdatedSince(sinceDate: DateTime): Seq[LinearLocation] = {
     time(logger, "Fetch linear locations updated since date") {
+      // Rows with a NULL geometry are corrupt data; without this guard ST_StartPoint returns NULL and the extractor throws.
       val query =
         sql"""
       $selectFromLinearLocation
-      WHERE loc.valid_from >= $sinceDate::date
-      OR (loc.valid_to IS NOT NULL AND loc.valid_to >= $sinceDate::date)
+      WHERE loc.geometry IS NOT NULL
+      AND (loc.valid_from >= $sinceDate::date
+      OR (loc.valid_to IS NOT NULL AND loc.valid_to >= $sinceDate::date))
     """
 
       runSelectQuery(query.map(LinearLocation.apply))
