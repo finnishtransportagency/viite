@@ -27,6 +27,73 @@
         margin:0;
         background: #fafafa;
       }
+
+      .copy-endpoint-button
+      {
+        align-items: center;
+        background: transparent;
+        border: 1px solid rgba(59, 65, 81, .3);
+        border-radius: 4px;
+        color: #3b4151;
+        cursor: pointer;
+        display: inline-flex;
+        flex: 0 0 auto;
+        height: 28px;
+        justify-content: center;
+        margin-left: auto;
+        margin-right: 8px;
+        opacity: 0;
+        padding: 0;
+        position: relative;
+        transition: opacity .15s ease, border-color .15s ease, color .15s ease;
+        width: 28px;
+      }
+
+      .opblock-summary-description
+      {
+        align-items: center;
+        justify-content: space-between;
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+      }
+
+      .copy-endpoint-button:before,
+      .copy-endpoint-button:after
+      {
+        border: 2px solid currentColor;
+        border-radius: 2px;
+        content: '';
+        height: 12px;
+        position: absolute;
+        width: 10px;
+      }
+
+      .copy-endpoint-button:before
+      {
+        left: 8px;
+        top: 6px;
+      }
+
+      .copy-endpoint-button:after
+      {
+        background: #fafafa;
+        left: 11px;
+        top: 9px;
+      }
+
+      .opblock-summary:hover .copy-endpoint-button,
+      .copy-endpoint-button:focus
+      {
+        opacity: 1;
+      }
+
+      .copy-endpoint-button:hover,
+      .copy-endpoint-button:focus
+      {
+        border-color: #4990e2;
+        color: #4990e2;
+      }
     </style>
   </head>
 
@@ -54,6 +121,72 @@
         ],
         layout: "StandaloneLayout"
       })
+
+      function copyTextToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          return navigator.clipboard.writeText(text)
+        }
+
+        const textarea = document.createElement('textarea')
+        textarea.value = text
+        textarea.setAttribute('readonly', '')
+        textarea.style.position = 'absolute'
+        textarea.style.left = '-9999px'
+        document.body.appendChild(textarea)
+        textarea.select()
+
+        try {
+          document.execCommand('copy')
+          return Promise.resolve()
+        } finally {
+          document.body.removeChild(textarea)
+        }
+      }
+
+      function endpointPath(pathElement) {
+        return pathElement.textContent.trim()
+      }
+
+      function addCopyEndpointButtons() {
+        document.querySelectorAll('.opblock-summary-path').forEach(function(pathElement) {
+          const summaryElement = pathElement.closest('.opblock-summary')
+          const descriptionElement = summaryElement && summaryElement.querySelector('.opblock-summary-description')
+
+          if (!summaryElement || summaryElement.querySelector('.copy-endpoint-button')) {
+            return
+          }
+
+          const copyButton = document.createElement('button')
+          copyButton.className = 'copy-endpoint-button'
+          copyButton.type = 'button'
+          copyButton.setAttribute('aria-label', 'Copy endpoint path')
+          copyButton.title = 'Copy endpoint path'
+
+          copyButton.addEventListener('click', function(event) {
+            event.preventDefault()
+            event.stopPropagation()
+
+            copyTextToClipboard(endpointPath(pathElement)).then(function() {
+              copyButton.setAttribute('aria-label', 'Endpoint path copied')
+              copyButton.title = 'Endpoint path copied'
+              window.setTimeout(function() {
+                copyButton.setAttribute('aria-label', 'Copy endpoint path')
+                copyButton.title = 'Copy endpoint path'
+              }, 1500)
+            })
+          })
+
+          if (descriptionElement) {
+            descriptionElement.appendChild(copyButton)
+          } else {
+            pathElement.insertAdjacentElement('afterend', copyButton)
+          }
+        })
+      }
+
+      const endpointObserver = new MutationObserver(addCopyEndpointButtons)
+      endpointObserver.observe(document.getElementById('swagger-ui'), { childList: true, subtree: true })
+      addCopyEndpointButtons()
 
       window.ui = ui
     }
