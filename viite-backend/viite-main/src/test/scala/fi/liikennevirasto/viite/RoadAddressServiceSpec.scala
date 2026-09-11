@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{ComplementaryLinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -40,6 +40,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
  val nodePointDAO = new NodePointDAO
  val junctionDAO = new JunctionDAO
  val junctionPointDAO = new JunctionPointDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
  val roadwayDAO = new RoadwayDAO
  val linearLocationDAO = new LinearLocationDAO
@@ -78,6 +79,7 @@ class RoadAddressServiceSpec extends AnyFunSuite with Matchers{
                                          roadwayPointDAO,
                                          linearLocationDAO,
                                          projectDAO,
+                                         complementaryLinkDAO,
                                          projectLinkDAO,
                                          nodeDAO,
                                          nodePointDAO,

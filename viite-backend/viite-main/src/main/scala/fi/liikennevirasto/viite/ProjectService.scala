@@ -2630,7 +2630,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       val linearLocationsToFuse = linearLocationsToInsert.groupBy(ll => (ll.roadwayNumber, ll.linkId)).values.filter(_.size > 1)
       val linearLocationsToFuseIds = linearLocationsToFuse.flatten.map(_.id).toSeq
       val fusedLinearLocations = linearLocationsToFuse.map(lls => {
-        val firstLl =  lls.minBy(_.startMValue)
+        val firstLl = lls.minBy(_.startMValue)
         val lastLl = lls.maxBy(_.endMValue)
         val geometries =
           if (lls.head.sideCode == SideCode.TowardsDigitizing)
@@ -2647,8 +2647,8 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         val lins = linearLocationsToInsert.filter(l => l.roadwayNumber == r).toList
         val lins_link_ids = lins.map(_.linkId)
         val sorted_pls = projectLinks.filter(pl => lins_link_ids.contains(pl.linkId)).sortBy(_.addrMRange.start)
-        val sorted_lins: Seq[LinearLocation] = sorted_pls.flatMap(pl => lins.filter(l => l.linkId == pl.linkId && l.startMValue == pl.startMValue).sortBy(_.startMValue) )
-        sorted_lins.zip(1 to lins.size).map(ls => ls._1.copy(orderNumber =  ls._2))
+        val sorted_lins: Seq[LinearLocation] = sorted_pls.flatMap(pl => lins.filter(l => l.linkId == pl.linkId && l.startMValue == pl.startMValue).sortBy(_.startMValue))
+        sorted_lins.zip(1 to lins.size).map(ls => ls._1.copy(orderNumber = ls._2))
       })
 
       // Separate linear locations that are terminated from the rest
@@ -2659,7 +2659,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         .map(rw => rw.roadwayNumber -> rw.roadPart)
         .toMap
 
-      lazy val fetchedRoadLinks = roadLinkService.getRoadLinksVersionsByIds(terminatingLinearLocationsToInsert.map(_.linkId).toSet)
+      val fetchedRoadLinks = roadLinkService.getRoadLinksVersionsByIds(terminatingLinearLocationsToInsert.map(_.linkId).toSet)
 
       def parseComplementaryLinkID(linkId: String): String = {
         if (linkId == null || linkId.length < 2) return linkId
@@ -2676,7 +2676,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             last match {
               case 'z' => 'a' // wrap lowercase
               case 'Z' => 'A' // wrap uppercase
-              case c   => (c + 1).toChar
+              case c => (c + 1).toChar
             }
           } else {
             last // unchanged if neither digit nor letter
@@ -2700,14 +2700,14 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             adminclass = fetchedLink.administrativeClass.value,
             municipalitycode = fetchedLink.municipalityCode,
             featureclass = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
-            roadclass = 0, // TODO: Tarkista, mitä tällä haetaan. Onko nolla vai null parempi?
+            roadclass = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
             roadnamefin = None,
             roadnameswe = None,
             roadnamesme = None,
             roadnamesmn = None,
             roadnamesms = None,
-            roadnumber = roadPart.roadNumber.toInt,// roadWaysAndRoadPartsInGenerated.find(_._1 == ll.roadwayNumber).map(_._2.roadNumber).getOrElse(0).toInt, //ll.roadwayNumber.toInt, // TODO: This is a hack, we should get the road number from the roadway table
-            roadpartnumber = roadPart.partNumber.toInt, //roadWaysAndRoadPartsInGenerated.find(_._1 == ll.roadwayNumber).map(_._2.partNumber).getOrElse(0).toInt,
+            roadnumber = roadPart.roadNumber.toInt,
+            roadpartnumber = roadPart.partNumber.toInt,
             surfacetype = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
             lifecyclestatus = fetchedLinkOpt.map(_.lifecycleStatus.value).getOrElse(0),
             directiontype = 0,
@@ -2741,7 +2741,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
           ll
         }
       })
-
 
       val reunitedLinearLocationsToInsert = nonTerminatingLinearLocationsToInsert ++ idUpdatedTerminatingLinearLocationsToInsert
 
@@ -3010,7 +3009,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
   }
 
   def validateLinkTrack(track: Int): Boolean = {
-    println(s"VALIDATING TRACK CODE ::: $track")
     Track.values.filterNot(_.value == Track.Unknown.value).exists(_.value == track)
   }
 

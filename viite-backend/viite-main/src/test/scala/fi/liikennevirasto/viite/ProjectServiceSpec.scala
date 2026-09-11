@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.process.strategy.DefaultSectionCalculatorStrategy
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.{BaseDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, ComplementaryLinkDAO, ProjectLinkNameDAO, RoadName, RoadNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.FrozenLinkInterface
@@ -52,6 +52,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
  val junctionPointDAO = new JunctionPointDAO
  val nodeDAO = new NodeDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
  val mockProjectLinkDAO: ProjectLinkDAO = MockitoSugar.mock[ProjectLinkDAO]
  val mockRoadwayDAO: RoadwayDAO = MockitoSugar.mock[RoadwayDAO]
@@ -88,6 +89,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
                        roadwayPointDAO,
                        linearLocationDAO,
                        projectDAO,
+                       complementaryLinkDAO,
                        projectLinkDAO,
                        nodeDAO,
                        nodePointDAO,
@@ -110,6 +112,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
                        roadwayPointDAO,
                        linearLocationDAO,
                        projectDAO,
+                       complementaryLinkDAO,
                        projectLinkDAO,
                        nodeDAO,
                        nodePointDAO,
@@ -1953,11 +1956,21 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
 
  test("Test updateRoadwaysAndLinearLocationsWithProjectLinks When ProjectLink is terminated Then linear location with same link id should be expired.") {
    runWithRollback {
+
      // Create roadway
-     val linkId          = 10000.toString
-     val linkId2         = 10001.toString
+     val linkId          = "10000:1"
+     val linkId2         = "10001:1"
+
+     val complementaryLinkId = "10000:a"
+     val complementaryLinkId2 = "10001:a"
+
      val roadwayNumber   = Sequences.nextRoadwayNumber
      val roadway  = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(9999, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, 100), reversed = false, DateTime.now().minusYears(10), None, "test", Some("Test Road"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
+
+     val roadLink1: RoadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId1")
+     val roadLink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 100.0), Point(0.0, 200.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId2")
+
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
 
      roadwayDAO.create(Seq(roadway))
 
@@ -1976,10 +1989,13 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
      linearLocationDAO.create(Seq(linearLocation, linearLocation2))
      projectLinkDAO.create(Seq(terminatedProjectLink, transferredProjectLink))
 
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
 
      // Run the method to update the project
      val updatedRoadParts = projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
+
 
      // Check that the terminated linear location is expired and the transferred linear location is not expired
      val linearLocationToExpire = linearLocationDAO.fetchByLinkId(Set(linkId))
@@ -1989,6 +2005,10 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
      val linearLocationToBeValid = linearLocationDAO.fetchByLinkId(Set(linkId2))
      linearLocationToBeValid.foreach { ll =>
        ll.validTo should be(None) // Should be "NULL"
+     }
+     val terminatedLinearLocationPointingToAComplementaryLink = linearLocationDAO.fetchByLinkId(Set(complementaryLinkId))
+     terminatedLinearLocationPointingToAComplementaryLink.foreach { ll =>
+       ll.validTo should be(None) // Not "NULL"
      }
    }
  }
@@ -2001,6 +2021,14 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
      val roadName       = None
      val projectId      = Sequences.nextViiteProjectId
      val linkIdToTest   = 12179260.toString
+
+     val roadLink1: RoadLink = RoadLink(linkIdToTest, Seq(Point(393383.0,7288225.0,0.0), Point(393376.0,7288232.0,0.0)), 10.117, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId1")
+     val roadLink2: RoadLink = RoadLink(linkIdToTest, Seq(Point(393376.0,7288232.0,0.0), Point(393372.0,7288235.0,0.0), Point(393361.0,7288245.0,0.0)), 20.234, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId2")
+
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
 
      val projectLinks = Seq(
        ProjectLink(1025,roadPart,Track.RightSide,Discontinuity.Continuous,AddrMRange(3689,3699),AddrMRange(3825,3835),None,None,Some(createdBy),linkIdToTest, 0.0  ,10.117,SideCode.TowardsDigitizing,(NoCP,NoCP         ),(NoCP,JunctionPointCP),List(Point(393383.0,7288225.0,0.0), Point(393376.0,7288232.0,0.0)),projectId,RoadAddressChangeType.Transfer,AdministrativeClass.State, LinkGeomSource.FrozenLinkInterface,10.117,57052,393536,ArealRoadMaintainer.getEVK(10),reversed = false,Some(linkIdToTest),1615244419000L,13659596,roadName,None,None,None,None,None),
@@ -2023,6 +2051,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
      roadwayDAO.create(roadways)
      linearLocationDAO.create(linearLocations)
      projectLinkDAO.create(projectLinks)
+
 
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
 
@@ -3429,6 +3458,14 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
          ProjectLink(1017,roadPart,Track.RightSide,Discontinuity.EndOfRoad, AddrMRange(938,1035),AddrMRange(  0,  0),None,None,createdBy,2621724.toString,  0.0,   99.195,SideCode.TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,         NoCP),List(Point(565406.0,6769245.0,0.0), Point(565485.0,6769303.0,0.0)),project_id,RoadAddressChangeType.New,      AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 99.195,     0,     0,ArealRoadMaintainer.getEVK(3),false,None,1634598047000L,335562044,roadName),
          ProjectLink(1018,roadPart,Track.LeftSide, Discontinuity.EndOfRoad, AddrMRange(936,1035),AddrMRange(  0,  0),None,None,createdBy,2621723.toString,  0.0,   97.837,SideCode.TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,         NoCP),List(Point(565402.0,6769253.0,0.0), Point(565485.0,6769303.0,0.0)),project_id,RoadAddressChangeType.New,      AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 97.837,     0,     0,ArealRoadMaintainer.getEVK(3),false,None,1634598047000L,335562043,roadName)
        )
+
+     val roadLink1: RoadLink = RoadLink("1234", Seq(Point(393383.0,7288225.0,0.0), Point(393376.0,7288232.0,0.0)), 10.117, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId1")
+     val roadLink2: RoadLink = RoadLink("3456", Seq(Point(393376.0,7288232.0,0.0), Point(393372.0,7288235.0,0.0), Point(393361.0,7288245.0,0.0)), 20.234, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId2")
+
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
      projectLinkDAO.create(projecLinks)
      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(project_id)
@@ -3493,6 +3530,16 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
        ProjectLink(1016,roadPart,Track.RightSide,Discontinuity.Continuous,AddrMRange(794, 938),AddrMRange(794, 938),None,None,createdBy,2621709.toString,  0.0,  146.366,SideCode.AgainstDigitizing,(NoCP,NoCP         ),(NoCP,NoCP         ),List(Point(565406.0,6769245.0,0.0), Point(565266.0,6769255.0,0.0)),project_id,RoadAddressChangeType.Transfer, AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface,146.366,  1111,490283,ArealRoadMaintainer.getEVK(3),false,None,1634598047000L,335560417,roadName),
        ProjectLink(1017,roadPart,Track.RightSide,Discontinuity.EndOfRoad, AddrMRange(938,1035),AddrMRange(938,1035),None,None,createdBy,2621724.toString,  0.0,   99.195,SideCode.TowardsDigitizing,(NoCP,RoadAddressCP),(NoCP,NoCP         ),List(Point(565406.0,6769245.0,0.0), Point(565485.0,6769303.0,0.0)),project_id,RoadAddressChangeType.Transfer, AdministrativeClass.Municipality, LinkGeomSource.FrozenLinkInterface, 99.195,  1111,490284,ArealRoadMaintainer.getEVK(3),false,None,1634598047000L,335560417,roadName)
      )
+
+     val roadLink1: RoadLink = RoadLink("linkIdToTest", Seq(Point(393383.0,7288225.0,0.0), Point(393376.0,7288232.0,0.0)), 10.117, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId1")
+     val roadLink2: RoadLink = RoadLink("linkIdToTest2", Seq(Point(393376.0,7288232.0,0.0), Point(393372.0,7288235.0,0.0), Point(393361.0,7288245.0,0.0)), 20.234, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId2")
+
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
+
+
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
      projectLinkDAO.create(projecLinks)
      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(project_id)
@@ -3508,9 +3555,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
    }
  }
 
- test("Test defaultSectionCalculatorStrategy.updateRoadwaysAndLinearLocationsWithProjectLinks() " +
-      "When project has splitted projectLinks with sidecode againstDigitizing " +
-      "Then linearLocations should have correct ordering and geometries.") {
+ test("Test defaultSectionCalculatorStrategy.updateRoadwaysAndLinearLocationsWithProjectLinks() when project has splitted projectLinks with sidecode againstDigitizing then linearLocations should have correct ordering and geometries.") {
          /*
                     / \
                    / \/\
@@ -3565,6 +3610,15 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
        LinearLocation(501527, 3.0, 1633239.toString, 0.0, 121.649, SideCode.AgainstDigitizing, 1614640323000L, (CalibrationPointReference(None,None),CalibrationPointReference(Some(429),Some(RoadAddressCP))), List(Point(388654.231,7292308.876,0.0), Point(388576.757,7292402.664,0.0)), LinkGeomSource.FrozenLinkInterface, 335718842, Some(DateTime.parse("2022-06-03T00:00:00.000+03:00")), None),
        LinearLocation(501530, 3.0, 1633240.toString, 0.0, 121.571, SideCode.AgainstDigitizing, 1614640323000L, (CalibrationPointReference(None,None),CalibrationPointReference(Some(429),Some(RoadAddressCP))), List(Point(388638.159,7292295.894,0.0), Point(388560.601,7292389.512,0.0)), LinkGeomSource.FrozenLinkInterface, 335718841, Some(DateTime.parse("2022-06-03T00:00:00.000+03:00")), None)
      )
+
+     val roadLink1: RoadLink = RoadLink("linkIdToTest", Seq(Point(393383.0,7288225.0,0.0), Point(393376.0,7288232.0,0.0)), 10.117, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId1")
+     val roadLink2: RoadLink = RoadLink("linkIdToTest2", Seq(Point(393376.0,7288232.0,0.0), Point(393372.0,7288235.0,0.0), Point(393361.0,7288245.0,0.0)), 20.234, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 57052, "sourceId2")
+
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
+
 
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
      roadwayDAO.create(roadways)
