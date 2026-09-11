@@ -827,10 +827,11 @@ class LinearLocationDAO extends BaseDAO {
   }
 
   def fetchCurrentLinearLocations: Seq[LinearLocation] = {
+    // Rows with a NULL geometry are corrupt data; without this guard ST_StartPoint returns NULL and the extractor throws.
     val query =
       sql"""
             $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL
+            WHERE loc.valid_to IS NULL AND loc.geometry IS NOT NULL
          """
     queryList(query)
   }
