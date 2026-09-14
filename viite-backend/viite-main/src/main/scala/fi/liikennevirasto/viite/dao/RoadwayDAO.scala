@@ -642,7 +642,9 @@ class RoadwayDAO extends BaseDAO {
         Seq()
       else
         // Group large results into chunks
-        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbers(chunk, withHistory))).toSeq
+        // .toVector forces eager evaluation - Iterator.toSeq would return a lazy Stream, whose chunk
+        // fetches could otherwise run after the enclosing DB session has already been closed.
+        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbers(chunk, withHistory))).toVector
     }
   }
 
@@ -651,7 +653,7 @@ class RoadwayDAO extends BaseDAO {
       if (roadwayNumbers.isEmpty)
         Seq()
       else
-        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbersAndDate(chunk, searchDate))).toSeq
+        roadwayNumbers.grouped(1000).flatMap(chunk => fetch(withRoadwayNumbersAndDate(chunk, searchDate))).toVector
     }
   }
 
