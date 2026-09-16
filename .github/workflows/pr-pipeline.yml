@@ -56,7 +56,7 @@ jobs:
 
       - name: Deploy Dynamic PR Pipeline
         run: |
-          npm install
+          npm install --include=dev
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
           npx cdk deploy \
@@ -64,7 +64,7 @@ jobs:
             --context env=pr \
             --context branch="$BRANCH_NAME" \
             --yes --all
-           echo "✅ PR CDK deploy completed."
+          echo "✅ PR CDK deploy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
           CDK_DEFAULT_REGION: ${{ env.AWS_REGION }}
@@ -133,7 +133,7 @@ jobs:
 
       - name: Destroy Dynamic PR Pipeline
         run: |
-          npm install
+          npm install --include=dev
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🧹 Destroying PR pipeline for branch: $BRANCH_NAME"
           npx cdk destroy \
