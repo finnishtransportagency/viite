@@ -42,6 +42,7 @@ jobs:
           repository: finnishtransportagency/viite-infra
           token: ${{ secrets.FINE_GRAINED_TOKEN }}
           ref: main
+          path: .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -119,6 +120,7 @@ jobs:
           repository: finnishtransportagency/viite-infra
           token: ${{ secrets.FINE_GRAINED_TOKEN }}
           ref: main
+          path: .
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
