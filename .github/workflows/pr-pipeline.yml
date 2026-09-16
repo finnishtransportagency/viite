@@ -110,6 +110,7 @@ jobs:
     if: github.event.action == 'closed'
     runs-on: ubuntu-latest
     permissions:
+      pull-requests: write
       contents: read
       issues: write
       id-token: write
