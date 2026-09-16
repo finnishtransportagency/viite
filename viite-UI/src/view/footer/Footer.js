@@ -98,6 +98,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		{
 			id: 'specialTransportRoutesVisible',
 			label: 'Näytä erikoiskuljetusreitit',
+      tooltip: "Data haettu Velhosta",
 			checked: false,
 			onChange(checked) {
 				specialTransportRoutesVisible = checked;
@@ -112,6 +113,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		{
 			id: 'detourRoutesVisible',
 			label: 'Näytä varareitit',
+      tooltip: "Data haettu Velhosta",
 			checked: false,
 			onChange(checked) {
 				detourRoutesVisible = checked;
@@ -130,7 +132,8 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
       ${checkbox({
         id: `${option.id}Checkbox`,
         label: option.label,
-        checked: option.checked
+        checked: option.checked,
+        tooltip: option.tooltip
       })}
     </div>
   `;
@@ -139,7 +142,8 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		checkbox({
 			id: `dropdown-${option.id}`,
 			label: option.label,
-			value: option.id
+			value: option.id,
+			tooltip: option.tooltip
 		});
 
 	const element = `

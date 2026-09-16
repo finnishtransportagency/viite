@@ -16,13 +16,15 @@ export function checkbox({
 	name = id, 
 	value = '', 
 	label = '', 
-	checked = false
+	checked = false,
+	tooltip = ''
 } = {}) {
 	const checkedAttribute = checked ? 'checked' : '';
+	const titleAttribute = tooltip ? ` title="${tooltip}"` : '';
 
 	return `
     <div class="checkbox">
-      <label class="checkbox-label">
+      <label class="checkbox-label"${titleAttribute}>
         <input
           class="checkbox-input"
           type="checkbox"
