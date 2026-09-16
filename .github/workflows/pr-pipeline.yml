@@ -61,7 +61,7 @@ jobs:
           echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
           npx cdk synth --app "npx tsx bin/cdk-pr.ts" -c env=pr -c branch="$BRANCH_NAME"
           npx cdk deploy \
-            --app \"npx tsx bin/cdk-pr.ts\" \
+            --app "npx tsx bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
             --yes --all 
