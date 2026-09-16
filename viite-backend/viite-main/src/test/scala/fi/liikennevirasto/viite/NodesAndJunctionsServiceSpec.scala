@@ -6,9 +6,8 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.{BaseDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, ComplementaryLinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
-import fi.vaylavirasto.viite.model.ArealRoadMaintainer.EVKTEST
 import fi.vaylavirasto.viite.model.CalibrationPointType.{NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, BeforeAfter, CalibrationPointLocation, Discontinuity, LinkGeomSource, NodePointType, NodeType, RoadAddressChangeType, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -45,6 +44,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
  val linearLocationDAO = new LinearLocationDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
  val projectDAO = new ProjectDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val projectLinkDAO = new ProjectLinkDAO
  val projectReservedPartDAO = new ProjectReservedPartDAO
  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
@@ -78,6 +78,7 @@ class NodesAndJunctionsServiceSpec extends AnyFunSuite with Matchers with Before
      roadwayPointDAO,
      linearLocationDAO,
      projectDAO,
+     complementaryLinkDAO,
      projectLinkDAO,
      nodeDAO,
      nodePointDAO,

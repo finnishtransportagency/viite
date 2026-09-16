@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.client.kgv.{KgvRoadLink, KgvRoadLinkClient}
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import fi.vaylavirasto.viite.dao.ProjectLinkNameDAO
+import fi.vaylavirasto.viite.dao.{ComplementaryLinkDAO, ProjectLinkNameDAO}
 import fi.vaylavirasto.viite.model.RoadLink
 import fi.vaylavirasto.viite.postgis.DbUtils.runUpdateToDb
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -37,6 +37,7 @@ class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAft
   val projectReservedPartDAO = new ProjectReservedPartDAO
   val roadwayPointDAO = new RoadwayPointDAO
   val nodeDAO = new NodeDAO
+  val complementaryLinkDAO = new ComplementaryLinkDAO
   val nodePointDAO = new NodePointDAO
   val junctionPointDAO = new JunctionPointDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
@@ -72,6 +73,7 @@ class ProjectLinkNameDAOSpec extends AnyFunSuite with Matchers with BeforeAndAft
     roadwayPointDAO,
     linearLocationDAO,
     projectDAO,
+    complementaryLinkDAO,
     projectLinkDAO,
     nodeDAO,
     nodePointDAO,

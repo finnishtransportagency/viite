@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
@@ -35,6 +36,7 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
  val linearLocationDAO = new LinearLocationDAO
  val roadwayPointDAO = new RoadwayPointDAO
  val nodeDAO = new NodeDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val nodePointDAO = new NodePointDAO
  val junctionPointDAO = new JunctionPointDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
@@ -66,6 +68,7 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
                        roadwayPointDAO,
                        linearLocationDAO,
                        projectDAO,
+                       complementaryLinkDAO,
                        projectLinkDAO,
                        nodeDAO,
                        nodePointDAO,

@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{ComplementaryLinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point, Vector3d}
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
@@ -45,6 +45,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
  val nodeDAO = new NodeDAO
  val nodePointDAO = new NodePointDAO
  val junctionPointDAO = new JunctionPointDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
@@ -61,6 +62,7 @@ class ProjectValidatorSpec extends AnyFunSuite with Matchers {
                        roadwayPointDAO,
                        linearLocationDAO,
                        projectDAO,
+                       complementaryLinkDAO,
                        projectLinkDAO,
                        nodeDAO,
                        nodePointDAO,

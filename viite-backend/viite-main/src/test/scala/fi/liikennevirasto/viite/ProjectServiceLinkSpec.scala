@@ -9,7 +9,7 @@ import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectSectionCalculator, RoadwayAddressMapper}
 import fi.liikennevirasto.viite.util.{StaticTestData, _}
-import fi.vaylavirasto.viite.dao.{ProjectLinkNameDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{ComplementaryLinkDAO, ProjectLinkNameDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point, PolyLine}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointType, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
@@ -45,6 +45,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
   val junctionPointDAO = new JunctionPointDAO
   val roadwayChangesDAO = new RoadwayChangesDAO
   val projectReservedPartDAO = new ProjectReservedPartDAO
+  val complementaryLinkDAO = new ComplementaryLinkDAO
   val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
   val roadAddressService: RoadAddressService =
@@ -73,6 +74,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                         roadwayPointDAO,
                         linearLocationDAO,
                         projectDAO,
+                        complementaryLinkDAO,
                         projectLinkDAO,
                         nodeDAO,
                         nodePointDAO,
@@ -95,6 +97,7 @@ class ProjectServiceLinkSpec extends AnyFunSuite with Matchers with BeforeAndAft
                         roadwayPointDAO,
                         linearLocationDAO,
                         projectDAO,
+                        complementaryLinkDAO,
                         projectLinkDAO,
                         nodeDAO,
                         nodePointDAO,

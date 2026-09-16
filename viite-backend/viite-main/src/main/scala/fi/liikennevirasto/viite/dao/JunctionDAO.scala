@@ -306,49 +306,155 @@ class JunctionDAO extends BaseDAO {
     }
   }
 
-  def fetchJunctionsForRoadAddressBrowser(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long],
-                                          minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[JunctionForRoadAddressBrowser] = {
-    val baseQuery =
-      sqls"""
-        SELECT node.node_number, ST_X(node.COORDINATES) AS xcoord, ST_Y(node.COORDINATES) AS ycoord, node.name, node.type,
-        ${j.startDate}, ${j.junctionNumber}, ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m, json_agg(jp.before_after) as beforeafter
-		    FROM junction j
-       	JOIN node node ON node.node_number = ${j.nodeNumber} AND node.end_date IS NULL AND node.valid_to IS NULL
-       	JOIN junction_point jp ON ${j.id} = jp.junction_id  AND jp.valid_to IS NULL
-        JOIN roadway_point rp ON jp.roadway_point_id  = rp.id
-        JOIN roadway rw ON rp.roadway_number = ${rw.roadwayNumber} AND ${rw.validTo} IS NULL AND ${rw.endDate} IS NULL
-        WHERE ${j.validTo} IS NULL AND ${j.endDate} IS NULL
-    """
 
-    def withOptionalParameters(situationDate: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long],
-                               maxRoadPartNumber: Option[Long])(baseQuery: SQLSyntax): SQL[Nothing, NoExtractor] = {
-      val dateCast = sqls"CAST(${situationDate.get} AS DATE)" // Scalike doesn't support directly casting to date TODO scalike: Better way to do this as a more reusable solution?
-      val dateCondition = sqls"AND ${rw.startDate} <= $dateCast"
-      val roadMaintainerCondition = roadMaintainer.map(e => sqls"AND ${rw.column("road_maintainer")} = $e").getOrElse(sqls"")
-      val roadNumberCondition = roadNumber.map(rn => sqls"AND ${rw.column("road_number")} = $rn").getOrElse(sqls"")
+  def fetchJunctionsForRoadAddressBrowser(
+                                           situationDate: Option[String],
+                                           roadMaintainer: Option[String],
+                                           roadNumber: Option[Long],
+                                           minRoadPartNumber: Option[Long],
+                                           maxRoadPartNumber: Option[Long]
+                                         ): Seq[JunctionForRoadAddressBrowser] = {
 
-      println(s"ROAD MAINTAINER CONDITION ::: ${roadMaintainerCondition}")
+    val parsedSituationDate = situationDate.map(DateTime.parse)
 
+    // Keep existing junction-browser semantics: only start_date upper bound when date is provided.
+    val dateCondition = situationDate
+      .map(date => sqls"AND r.start_date <= $date::date")
+      .getOrElse(sqls"")
 
-      val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
-        case (Some(minPart), Some(maxPart)) => sqls"AND ${rw.column("road_part_number")} BETWEEN $minPart AND $maxPart"
-        case (None, Some(maxPart)) => sqls"AND ${rw.column("road_part_number")} <= $maxPart"
-        case (Some(minPart), None) => sqls"AND ${rw.column("road_part_number")} >= $minPart"
-        case _ => sqls""
-      }
+    val roadMaintainerCondition = roadMaintainer
+      .map(rm => sqls"AND r.road_maintainer = $rm")
+      .getOrElse(sqls"")
 
-      sql"""
-        $baseQuery $dateCondition $roadNumberCondition $roadPartCondition $roadMaintainerCondition
-        GROUP BY  node.node_number, xcoord, ycoord, node.name, node.TYPE, ${j.startDate}, ${j.junctionNumber},
-                  ${rw.column("road_number")}, ${rw.track}, ${rw.column("road_part_number")}, rp.addr_m
-        ORDER BY  ${rw.column("road_number")}, ${rw.column("road_part_number")}, rp.addr_m
-        """
+    val roadNumberCondition = roadNumber
+      .map(rn => sqls"AND r.road_number = $rn")
+      .getOrElse(sqls"")
+
+    val roadPartCondition = (minRoadPartNumber, maxRoadPartNumber) match {
+      case (Some(minPart), Some(maxPart)) => sqls"AND r.road_part_number BETWEEN $minPart AND $maxPart"
+      case (None, Some(maxPart))          => sqls"AND r.road_part_number <= $maxPart"
+      case (Some(minPart), None)          => sqls"AND r.road_part_number >= $minPart"
+      case _                              => sqls""
     }
 
-    val fullQuery = withOptionalParameters(situationDate, roadMaintainer, roadNumber, minRoadPartNumber, maxRoadPartNumber)(baseQuery)
-    runSelectQuery(fullQuery.map(JunctionForRoadAddressBrowser.apply))
+    val isRoadMaintainerEvk = roadMaintainer.exists(_.contains("EVK"))
+    val transitionBoundary = DateTime.parse("2025-12-31")
 
+    val case1 = parsedSituationDate.exists(d => d.isBefore(transitionBoundary.plusDays(1))) && isRoadMaintainerEvk
+    val case2 = parsedSituationDate.exists(_.isAfter(transitionBoundary)) && !isRoadMaintainerEvk
+
+    val roadwaysCtePrefix: SQLSyntax =
+      if (case1) {
+        // EVK + date <= 2025-12-31: anchor by roadway rows that start at transition date
+        sqls"""
+      WITH roadway_numbers AS (
+        SELECT DISTINCT r0.roadway_number
+        FROM roadway r0
+        WHERE r0.valid_to IS NULL
+          ${roadNumber.map(v => sqls"AND r0.road_number = $v").getOrElse(sqls"")}
+          ${roadMaintainer.map(v => sqls"AND r0.road_maintainer = $v").getOrElse(sqls"")}
+          ${(minRoadPartNumber, maxRoadPartNumber) match {
+          case (Some(minPart), Some(maxPart)) => sqls"AND r0.road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart))          => sqls"AND r0.road_part_number <= $maxPart"
+          case (Some(minPart), None)          => sqls"AND r0.road_part_number >= $minPart"
+          case _                              => sqls""
+        }}
+          AND r0.start_date = DATE '2026-01-01'
+      ),
+      roadways AS (
+        SELECT r.*
+        FROM roadway r
+        JOIN roadway_numbers n ON n.roadway_number = r.roadway_number
+        WHERE r.valid_to IS NULL
+          AND r.end_date IS NULL
+          $dateCondition
+          $roadNumberCondition
+          $roadPartCondition
+      )
+      """
+      } else if (case2) {
+        // non-EVK + date > 2025-12-31: anchor by roadway rows that end at transition date
+        sqls"""
+      WITH roadway_numbers AS (
+        SELECT DISTINCT r0.roadway_number
+        FROM roadway r0
+        WHERE r0.valid_to IS NULL
+          ${roadNumber.map(v => sqls"AND r0.road_number = $v").getOrElse(sqls"")}
+          ${roadMaintainer.map(v => sqls"AND r0.road_maintainer = $v").getOrElse(sqls"")}
+          ${(minRoadPartNumber, maxRoadPartNumber) match {
+          case (Some(minPart), Some(maxPart)) => sqls"AND r0.road_part_number BETWEEN $minPart AND $maxPart"
+          case (None, Some(maxPart))          => sqls"AND r0.road_part_number <= $maxPart"
+          case (Some(minPart), None)          => sqls"AND r0.road_part_number >= $minPart"
+          case _                              => sqls""
+        }}
+          AND r0.end_date = DATE '2025-12-31'
+      ),
+      roadways AS (
+        SELECT r.*
+        FROM roadway r
+        JOIN roadway_numbers n ON n.roadway_number = r.roadway_number
+        WHERE r.valid_to IS NULL
+          AND r.end_date IS NULL
+          $dateCondition
+          $roadNumberCondition
+          $roadPartCondition
+      )
+      """
+      } else {
+        // Default handling
+        sqls"""
+      WITH roadways AS (
+        SELECT *
+        FROM roadway r
+        WHERE r.valid_to IS NULL
+          AND r.end_date IS NULL
+          $dateCondition
+          $roadMaintainerCondition
+          $roadNumberCondition
+          $roadPartCondition
+      )
+      """
+      }
+
+    val query = sql"""
+    $roadwaysCtePrefix
+    SELECT
+      node.node_number,
+      ST_X(node.coordinates) AS xcoord,
+      ST_Y(node.coordinates) AS ycoord,
+      node.name,
+      node.type,
+      ${j.startDate},
+      ${j.junctionNumber},
+      rw.road_number,
+      rw.track,
+      rw.road_part_number,
+      rp.addr_m,
+      json_agg(jp.before_after) AS beforeafter
+    FROM junction j
+    JOIN node node
+      ON node.node_number = ${j.nodeNumber}
+      AND node.end_date IS NULL
+      AND node.valid_to IS NULL
+    JOIN junction_point jp
+      ON ${j.id} = jp.junction_id
+      AND jp.valid_to IS NULL
+    JOIN roadway_point rp
+      ON jp.roadway_point_id = rp.id
+    JOIN roadways rw
+      ON rp.roadway_number = rw.roadway_number
+    WHERE ${j.validTo} IS NULL
+      AND ${j.endDate} IS NULL
+    GROUP BY
+      node.node_number, xcoord, ycoord, node.name, node.type,
+      ${j.startDate}, ${j.junctionNumber},
+      rw.road_number, rw.track, rw.road_part_number, rp.addr_m
+    ORDER BY rw.road_number, rw.road_part_number, rp.addr_m
+  """
+
+    runSelectQuery(query.map(JunctionForRoadAddressBrowser.apply))
   }
+
 
   def create(junctions: Iterable[Junction]): Seq[Long] = {
 

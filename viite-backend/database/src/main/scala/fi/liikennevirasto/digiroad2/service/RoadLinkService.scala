@@ -232,4 +232,12 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
     val roadLinks = if (useFrozenLinkInterface) kgvClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds) else kgvClient.roadLinkData.fetchByLinkIds(linkIds)
     kgvClient.complementaryData.fetchByLinkIdsInReadOnlySession(linkIds) ++ roadLinks
   }
+
+  def getRoadLinksVersionsByIds(linkIds: Set[String]): Seq[RoadLink] = {
+    if (linkIds.nonEmpty) {
+      kgvClient.roadLinkVersionsData.fetchByLinkIds(linkIds)
+    } else Seq.empty[RoadLink]
+  }
+
+
 }

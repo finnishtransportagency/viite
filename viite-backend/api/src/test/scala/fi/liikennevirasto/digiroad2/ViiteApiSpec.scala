@@ -78,7 +78,7 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
   }
 
   val projectService: ProjectService = new ProjectService(roadAddressService, mockRoadLinkService, mockNodesAndJunctionsService, roadwayDAO,
-    roadwayPointDAO, linearLocationDAO, projectDAO, new ProjectLinkDAO,
+    roadwayPointDAO, linearLocationDAO, projectDAO, complementaryData, new ProjectLinkDAO,
     nodeDAO, nodePointDAO, junctionPointDAO, projectReservedPartDAO, roadwayChangesDAO,
     roadwayAddressMapper, eventbus, useFrozenLinkInterface) {
     override def runWithTransaction[T](f: => T): T = runWithRollback(f)
