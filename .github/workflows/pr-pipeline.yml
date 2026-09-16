@@ -59,6 +59,7 @@ jobs:
           npm install
           BRANCH_NAME="${{ env.GITHUB_PR_BRANCH }}"
           echo "🚀 Creating PR pipeline for branch: $BRANCH_NAME"
+          npx cdk synth --app "npx tsx bin/cdk-pr.ts" -c env=pr -c branch="$BRANCH_NAME"
           npx cdk deploy \
             --app \"npx tsx bin/cdk-pr.ts\" \
             --context env=pr \
