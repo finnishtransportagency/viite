@@ -3,76 +3,164 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 
 export function LinkInfo(selectedLinkProperty) {
 
-	// Helper to handle null/undefined values by returning a fallback string.
-	function withFallback(val, fallback = '') {
-		if (val === null || val === undefined || Number.isNaN(val)) return fallback;
-		return val;
-	}
+	// --- Main render function ---
 
-	function formatRowsNoWrap(values) {
-		return values
-			.map(v => `<span style="white-space: nowrap; display: inline-block;">${withFallback(v)}</span>`)
-			.join('<br>');
-	}
-
-	function createAttributesFromEnum(enumObj, useName) {
-		return _.map(enumObj, i => ({
-			value: i.value,
-			description: useName ? i.name : i.description
-		}));
-	}
-
-	const decodedAttributes = [
-		{
-			id: 'AJORATA',
-			attributes: [
-				{ value: 0, description: "Yksiajoratainen osuus" },
-				{ value: 1, description: "Oikeanpuoleinen ajorata" },
-				{ value: 2, description: "Vasemmanpuoleinen ajorata" }
-			]
-		},
-		{ id: 'ELINVOIMAKESKUS', attributes: createAttributesFromEnum(ViiteEnumerations.EVKCodes, true) },
-		{
-			id: 'HALLINNOLLINEN LUOKKA',
-			attributes: [
-				{ value: ViiteEnumerations.AdministrativeClass.PublicRoad.value, description: ViiteEnumerations.AdministrativeClass.PublicRoad.textValue },
-				{ value: ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.value, description: ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.textValue },
-				{ value: ViiteEnumerations.AdministrativeClass.PrivateRoad.value, description: ViiteEnumerations.AdministrativeClass.PrivateRoad.textValue },
-				{ value: ViiteEnumerations.AdministrativeClass.Unknown.value, description: ViiteEnumerations.AdministrativeClass.Unknown.description }
-			]
-		},
-		{ id: 'JATKUVUUS', attributes: createAttributesFromEnum(ViiteEnumerations.Discontinuity, false).concat([{ value: 6, description: "Rinnakkainen linkki" }]) }
-	];
-
-	function decodeAttributes(attrId, value) {
-		if (value === null) return "";
-
-		const category = _.find(decodedAttributes, o => o.id === attrId);
-		if (category) {
-			const attribute = _.find(category.attributes, a => a.value === value);
-			return attribute ? attribute.description : "Ei määritelty";
-		}
-		return "";
-	}
-
-	function showMunicipality() {
+	this.render = function (props) {
 		const links = selectedLinkProperty.get();
+		const count = selectedLinkProperty.count();
+		const firstLink = _.head(links) || props;
+		const isSingle = count === 1;
+
+		return `
+        <div class="wrapper read-only link-info-wrapper">
+          <div class="form form-horizontal form-dark link-info-content">
+            <div class="metadata-container">
+              ${renderMetadata(props, links, count, firstLink, isSingle)}
+            </div>
+
+            <div class="attribute-section">
+                ${renderAttributeSection(props, links, firstLink, isSingle)}
+            </div>
+          </div>
+        </div>`;
+	};
+
+	// --- Metadata section (top of the panel) ---
+
+	function renderMetadata(props, links, count, firstLink, isSingle) {
+		return `
+              <div class="form-group-metadata">
+                 Muokattu viimeksi: ${withFallback(firstLink.modifiedBy, '-')} ${withFallback(firstLink.modifiedAt)}
+              </div>
+              <div class="form-group-metadata">Linkkien lukumäärä: ${withFallback(count, 0)}</div>
+              <div class="form-group-metadata">
+                 Geometrian lähde: ${withFallback(props.roadLinkSource)}${isSingle && props.mmlId ? '; MTKID: ' + props.mmlId : ''}
+              </div>
+              ${renderMunicipality(links)}
+              ${renderLinkId(props, isSingle)}
+              ${renderGeometryLength(props, links, isSingle)}`;
+	}
+
+	function renderMunicipality(links) {
 		const firstMuni = _.get(links, '[0].municipalityName');
 		const allSame = _.every(links, l => l.municipalityName === firstMuni);
 		return (allSame && firstMuni) ? `<div class="form-group-metadata">Kunta: ${withFallback(firstMuni)}</div>` : '';
 	}
 
-	function showLinkId(props) {
-		return (selectedLinkProperty.count() === 1) ? `<div class="form-group-metadata">Linkin ID: ${withFallback(props.linkId)}</div>` : '';
+	function renderLinkId(props, isSingle) {
+		return isSingle ? `<div class="form-group-metadata">Linkin ID: ${withFallback(props.linkId)}</div>` : '';
 	}
 
-	function showLinkLength(props) {
-		const links = selectedLinkProperty.get();
-		const totalLength = (selectedLinkProperty.count() === 1)
+	// Total geometry length (endMValue - startMValue), distinct from the
+	// address-based length shown in lengthField().
+	function renderGeometryLength(props, links, isSingle) {
+		const totalLength = isSingle
 			? Math.round(props.endMValue - props.startMValue)
 			: _.reduce(links, (sum, l) => sum + Math.round(l.endMValue - l.startMValue), 0);
 
 		return `<div class="form-group-metadata">Geometrioiden yhteenlaskettu pituus: ${withFallback(totalLength)}</div>`;
+	}
+
+	// --- Attribute section (road number, part, track, distances, ...) ---
+
+	function renderAttributeSection(props, links, firstLink, isSingle) {
+		const roadNumbers = _.uniq(_.map(links, 'roadNumber'));
+		const roadPartNumbers = _.uniq(_.map(links, 'roadPartNumber'));
+		const roadNames = _.uniq(_.map(links, 'roadName').filter(name => name && name.trim() !== ''));
+		const administrativeClasses = _.uniq(_.map(links, 'administrativeClassId'));
+		const evkCodes = _.uniq(_.map(links, 'evkCode'));
+
+		const isSameRoad = roadNumbers.length === 1;
+		const isSamePart = isSameRoad && roadPartNumbers.length === 1;
+
+		return `
+                ${singleOrJoinedField('TIEN NIMI', isSingle, firstLink.roadName, roadNames)}
+                ${singleOrJoinedField('TIENUMERO', isSingle, firstLink.roadNumber, roadNumbers)}
+
+                ${conditionalField(isSameRoad, 'TIEOSANUMERO', () => dynamicField('TIEOSANUMERO', 'roadPartNumber', links))}
+                ${conditionalField(isSamePart, 'AJORATA', () => dynamicField('AJORATA', 'trackCode', links))}
+                ${conditionalField(isSamePart, 'ALKUETÄISYYS', () => staticField('ALKUETÄISYYS', _.get(props, 'addrMRange.start')))}
+                ${conditionalField(isSamePart, 'LOPPUETÄISYYS', () => staticField('LOPPUETÄISYYS', _.get(props, 'addrMRange.end')))}
+
+                ${lengthField(links)}
+                ${singleOrJoinedDecodedField('ELINVOIMAKESKUS', isSingle, firstLink.evkCode, evkCodes)}
+                ${singleOrJoinedDecodedField('HALLINNOLLINEN LUOKKA', isSingle, firstLink.administrativeClassId, administrativeClasses)}
+                ${conditionalField(isSamePart, 'JATKUVUUS', () => dynamicField('JATKUVUUS', 'discontinuity', links))}
+                ${conditionalField(isSamePart, 'ALKUPÄIVÄMÄÄRÄ', () => startDateField(links))}`;
+	}
+
+	// --- Field renderers / builders ---
+
+	// Renders `renderFn()` only when `condition` holds, otherwise an empty field
+	// with the same label. Used for fields that only make sense when every
+	// selected link shares the same road / road part.
+	function conditionalField(condition, label, renderFn) {
+		return condition ? renderFn() : constructField(label, '');
+	}
+
+	// Renders a single value when exactly one link is selected, otherwise the
+	// distinct values across all selected links, joined by comma.
+	function singleOrJoinedField(label, isSingle, singleValue, values) {
+		return isSingle
+			? staticField(label, withFallback(singleValue))
+			: constructField(label, values.map(v => withFallback(v)).join(', '));
+	}
+
+	// Same as singleOrJoinedField, but each multi-value entry is annotated with
+	// its decoded description and rows are kept from wrapping.
+	function singleOrJoinedDecodedField(label, isSingle, singleValue, values) {
+		return isSingle
+			? staticField(label, singleValue)
+			: constructField(label, formatRowsNoWrap(values.map(v => `${withFallback(v)} ${decodeAttribute(label, v)}`.trim())));
+	}
+
+	// Renders every distinct value of `propertyName` across the selected links.
+	function dynamicField(id, propertyName, links) {
+		const uniqueValues = _.uniq(_.map(links, propertyName));
+		const htmlContent = uniqueValues
+			.map(v => `${withFallback(v)} ${decodeAttribute(id, v)}`)
+			.join(', <br> ');
+		return constructField(id, htmlContent);
+	}
+
+	function lengthField(links) {
+		const hasAllDistances = _.every(links, l => {
+			const start = _.get(l, 'addrMRange.start');
+			const end = _.get(l, 'addrMRange.end');
+			return Number.isFinite(start) && Number.isFinite(end);
+		});
+
+		const totalLength = hasAllDistances
+			? _.reduce(links, (acc, l) => acc + (l.addrMRange.end - l.addrMRange.start), 0)
+			: '';
+
+		const label = (links.length === 1) ? 'PITUUS' : 'YHTEENLASKETTU PITUUS';
+		return constructField(label, totalLength);
+	}
+
+	function startDateField(links) {
+		const dates = _.compact(_.map(links, l => {
+			if (!l.startDate) return null;
+			const [d, m, y] = l.startDate.split('.');
+			return new Date(y, m - 1, d);
+		}));
+
+		if (!dates.length) return constructField('ALKUPÄIVÄMÄÄRÄ', '');
+
+		const latest = new Date(Math.max(...dates));
+		const formatted = `${String(latest.getDate()).padStart(2, '0')}.${String(latest.getMonth() + 1).padStart(2, '0')}.${latest.getFullYear()}`;
+		return constructField('ALKUPÄIVÄMÄÄRÄ', formatted);
+	}
+
+	// --- Low-level field construction ---
+
+	function staticField(label, val) {
+		const decoded = decodeAttribute(label, val);
+		return `
+        <div class="attribute-row attribute-row-static">
+          <label class="attribute-label">${label}</label>
+          <div class="attribute-value">${withFallback(val)} ${withFallback(decoded)}</div>
+        </div>`;
 	}
 
 	function constructField(label, data) {
@@ -83,107 +171,52 @@ export function LinkInfo(selectedLinkProperty) {
         </div>`;
 	}
 
-	function staticField(label, val) {
-		const decoded = decodeAttributes(label, val);
-		return `
-        <div class="attribute-row attribute-row-static">
-          <label class="attribute-label">${label}</label>
-          <div class="attribute-value">${withFallback(val)} ${withFallback(decoded)}</div>
-        </div>`;
+	// --- Attribute code -> description lookup ---
+
+	function decodeAttribute(attrId, value) {
+		if (value === null) return '';
+		const options = ATTRIBUTE_OPTIONS[attrId];
+		if (!options) return '';
+		return Object.prototype.hasOwnProperty.call(options, value) ? options[value] : 'Ei määritelty';
 	}
 
-	function dynamicField(id, propertyName) {
-		const uniqueValues = _.uniq(_.map(selectedLinkProperty.get(), propertyName));
-		const htmlContent = _.map(uniqueValues, v => {
-			const val = withFallback(v);
-			const desc = decodeAttributes(id, v);
-			return `${val} ${desc}`;
-		}).join(', <br> ');
-		return constructField(id, htmlContent);
+	function optionsFromEnum(enumObj, useName) {
+		return _.reduce(enumObj, (options, i) => {
+			options[i.value] = useName ? i.name : i.description;
+			return options;
+		}, {});
 	}
 
-	function lengthDynamicField() {
-		const links = selectedLinkProperty.get();
-		const hasAllDistances = _.every(links, l => {
-			const start = _.get(l, 'addrMRange.start');
-			const end = _.get(l, 'addrMRange.end');
-			return Number.isFinite(start) && Number.isFinite(end);
-		});
-
-		const totalLen = hasAllDistances
-			? _.reduce(links, (acc, l) => {
-				const start = _.get(l, 'addrMRange.start');
-				const end = _.get(l, 'addrMRange.end');
-				return acc + (end - start);
-			}, 0)
-			: '';
-
-		const label = (links.length === 1) ? 'PITUUS' : 'YHTEENLASKETTU PITUUS';
-		return constructField(label, totalLen);
-	}
-
-	function dateDynamicField() {
-		const dates = _.compact(_.map(selectedLinkProperty.get(), l => {
-			if (!l.startDate) return null;
-			const [d, m, y] = l.startDate.split(".");
-			return new Date(y, m - 1, d);
-		}));
-
-		if (!dates.length) return constructField('ALKUPÄIVÄMÄÄRÄ', '');
-
-		const maxDate = new Date(Math.max(...dates));
-		const formattedDate = `${String(maxDate.getDate()).padStart(2, '0')}.${String(maxDate.getMonth() + 1).padStart(2, '0')}.${maxDate.getFullYear()}`;
-		return constructField('ALKUPÄIVÄMÄÄRÄ', formattedDate);
-	}
-
-	// --- Main Render Function ---
-	this.render = function (props) {
-		const links = selectedLinkProperty.get();
-		const count = selectedLinkProperty.count();
-		const firstLink = _.head(links) || props;
-		const isSingle = count === 1;
-
-		const roadNumbers = _.uniq(_.map(links, 'roadNumber'));
-		const roadPartNumbers = _.uniq(_.map(links, 'roadPartNumber'));
-		const roadNames = _.uniq(_.map(links, 'roadName').filter(name => name && name.trim() !== ''));
-		const administrativeClasses = _.uniq(_.map(links, 'administrativeClassId'));
-		const evkCodes = _.uniq(_.map(links, 'evkCode'));
-      
-		const isSameRoad = roadNumbers.length === 1;
-		const isSamePart = isSameRoad && roadPartNumbers.length === 1;
-
-		return `
-        <div class="wrapper read-only link-info-wrapper">
-          <div class="form form-horizontal form-dark link-info-content">
-            <div class="metadata-container">
-              <div class="form-group-metadata">
-                 Muokattu viimeksi: ${withFallback(firstLink.modifiedBy, '-')} ${withFallback(firstLink.modifiedAt)}
-              </div>
-              <div class="form-group-metadata">Linkkien lukumäärä: ${withFallback(count, 0)}</div>
-              <div class="form-group-metadata">
-                 Geometrian lähde: ${withFallback(props.roadLinkSource)}${isSingle && props.mmlId ? '; MTKID: ' + props.mmlId : ''}
-              </div>
-              ${showMunicipality()}
-              ${showLinkId(props)}
-              ${showLinkLength(props)}
-            </div>
-
-            <div class="attribute-section">
-                ${isSingle ? staticField('TIEN NIMI', withFallback(firstLink.roadName)) : constructField('TIEN NIMI', roadNames.length > 0 ? roadNames.map(v => withFallback(v)).join(', ') : '')}
-                ${isSingle ? staticField('TIENUMERO', withFallback(firstLink.roadNumber)) : constructField('TIENUMERO', roadNumbers.map(v => withFallback(v)).join(', '))}
-                
-                ${isSameRoad ? dynamicField('TIEOSANUMERO', 'roadPartNumber') : constructField('TIEOSANUMERO', '')}
-                ${isSamePart ? dynamicField('AJORATA', 'trackCode') : constructField('AJORATA', '')}
-                ${isSamePart ? staticField('ALKUETÄISYYS', _.get(props, 'addrMRange.start')) : constructField('ALKUETÄISYYS', '')}
-                ${isSamePart ? staticField('LOPPUETÄISYYS', _.get(props, 'addrMRange.end')) : constructField('LOPPUETÄISYYS', '')}
-                
-                ${lengthDynamicField()}
-                ${isSingle ? staticField('ELINVOIMAKESKUS', firstLink.evkCode) : constructField('ELINVOIMAKESKUS', formatRowsNoWrap(evkCodes.map(v => `${withFallback(v)} ${decodeAttributes('ELINVOIMAKESKUS', v)}`.trim())))}
-                ${isSingle ? staticField('HALLINNOLLINEN LUOKKA', firstLink.administrativeClassId) : constructField('HALLINNOLLINEN LUOKKA', formatRowsNoWrap(administrativeClasses.map(v => `${withFallback(v)} ${decodeAttributes('HALLINNOLLINEN LUOKKA', v)}`.trim())))}
-                ${isSamePart ? dynamicField('JATKUVUUS', 'discontinuity') : constructField('JATKUVUUS', '')}
-                ${isSamePart ? dateDynamicField() : constructField('ALKUPÄIVÄMÄÄRÄ', '')}
-            </div>
-          </div>
-        </div>`;
+	// Maps an attribute id (e.g. 'AJORATA') to a { value: description } lookup.
+	const ATTRIBUTE_OPTIONS = {
+		AJORATA: {
+			0: 'Yksiajoratainen osuus',
+			1: 'Oikeanpuoleinen ajorata',
+			2: 'Vasemmanpuoleinen ajorata'
+		},
+		ELINVOIMAKESKUS: optionsFromEnum(ViiteEnumerations.EVKCodes, true),
+		'HALLINNOLLINEN LUOKKA': {
+			[ViiteEnumerations.AdministrativeClass.PublicRoad.value]: ViiteEnumerations.AdministrativeClass.PublicRoad.textValue,
+			[ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.value]: ViiteEnumerations.AdministrativeClass.MunicipalityStreetRoad.textValue,
+			[ViiteEnumerations.AdministrativeClass.PrivateRoad.value]: ViiteEnumerations.AdministrativeClass.PrivateRoad.textValue,
+			[ViiteEnumerations.AdministrativeClass.Unknown.value]: ViiteEnumerations.AdministrativeClass.Unknown.description
+		},
+		// Enum values win over the fallback default if 6 is ever defined there too
+		// (mirrors the previous "first match wins" lookup order).
+		JATKUVUUS: Object.assign({ 6: 'Rinnakkainen linkki' }, optionsFromEnum(ViiteEnumerations.Discontinuity, false))
 	};
+
+	// --- Formatting helpers ---
+
+	// Helper to handle null/undefined/NaN values by returning a fallback string.
+	function withFallback(val, fallback = '') {
+		if (val === null || val === undefined || Number.isNaN(val)) return fallback;
+		return val;
+	}
+
+	function formatRowsNoWrap(values) {
+		return values
+			.map(v => `<span style="white-space: nowrap; display: inline-block;">${withFallback(v)}</span>`)
+			.join('<br>');
+	}
 }

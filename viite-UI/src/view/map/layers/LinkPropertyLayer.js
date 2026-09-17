@@ -156,7 +156,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 	};
 
 	selectDoubleClick.on('select', function (event) {
-		const visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
+		const visibleFeatures = getVisibleFeatures();
 		selectSingleClick.getFeatures().clear();
 		const ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
 		selectDoubleClick.getFeatures().clear();
@@ -207,7 +207,7 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 
 	selectSingleClick.on('select', function (event) {
 		const ctrlPressed = (event.mapBrowserEvent) ? event.mapBrowserEvent.originalEvent.ctrlKey : false;
-		const visibleFeatures = getVisibleFeatures(true, true, true, true, true, true, true);
+		const visibleFeatures = getVisibleFeatures();
 		selectDoubleClick.getFeatures().clear();
 
 		const selectedF = getSelectedF(ctrlPressed, event);
@@ -296,12 +296,12 @@ export function initLinkPropertyLayer(map, roadLayer, selectedLinkProperty, road
 		}
 	}
 
-	function getVisibleFeatures(withRoads, withDirectionalMarkers, withUnderConstructionRoads, withVisibleUnAddressedRoads) {
+	function getVisibleFeatures() {
 		const extent = map.getView().calculateExtent(map.getSize());
-		const visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
-		const visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
-		const visibleUnderConstructionRoads = withUnderConstructionRoads ? underConstructionRoadLayer.getSource().getFeaturesInExtent(extent) : [];
-		const visibleUnAddressedRoads = withVisibleUnAddressedRoads ? unAddressedRoadLayer.getSource().getFeaturesInExtent(extent) : [];
+		const visibleRoads = roadLayer.layer.getSource().getFeaturesInExtent(extent);
+		const visibleDirectionalMarkers = directionMarkerLayer.getSource().getFeaturesInExtent(extent);
+		const visibleUnderConstructionRoads = underConstructionRoadLayer.getSource().getFeaturesInExtent(extent);
+		const visibleUnAddressedRoads = unAddressedRoadLayer.getSource().getFeaturesInExtent(extent);
 		return visibleRoads.concat(visibleDirectionalMarkers).concat(visibleUnderConstructionRoads).concat(visibleUnAddressedRoads);
 	}
 
