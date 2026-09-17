@@ -22,4 +22,5 @@ revision.properties
 bonecp.properties
 .env
 .env.*
+/viite-backend/base/src/main/resources/env.properties
 /.db
