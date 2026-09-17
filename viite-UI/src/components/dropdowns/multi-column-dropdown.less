@@ -8,7 +8,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 200px;
+    width: 100%;
     padding: 3px 6px;
     border: 1px solid #ccc;
     border-radius: @border-radius-base;
@@ -32,13 +32,15 @@
       text-align: left;
     }
 
-    .modern-arrow {
+    .chevron {
+      width: 14px;
+      height: 14px;
       margin-left: 6px;
       transition: transform 0.2s;
     }
 
     &.open {
-      .modern-arrow {
+      .chevron {
         transform: rotate(180deg);
       }
     }
@@ -143,20 +145,15 @@
 
         &.selected {
           background-color: #e6f0ff;
-
-          .modern-circle {
-            background-color: @blue;
-            border-color: @blue-lighter;
-          }
         }
 
-        .modern-circle {
-          width: 12px;
-          height: 12px;
-          border: 2px solid @gray;
-          border-radius: 50%;
+        .modern-checkbox {
+          width: 14px;
+          height: 14px;
           margin-right: 8px;
           flex-shrink: 0;
+          cursor: pointer;
+          accent-color: @blue;
         }
 
         .modern-item-label {

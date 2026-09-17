@@ -4,7 +4,7 @@
  * @param {Object} backend - Backend API wrapper
  */
 
-import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
+import { MultiColumnDropdown } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { Spinner } from '@components/spinner/Spinner.js';
@@ -80,10 +80,11 @@ export function RoadAddressChangesBrowserWindow(backend) {
 	// Instantiate selector and inject it into the Changes form
 	function insertElyEvkSelector() {
 		// Render selector with id expected by getData()
-		elyEvkSelector = new Selector({
+		elyEvkSelector = new MultiColumnDropdown({
 			id: 'roadAddrChangesInputEly',
 			placeholder: 'Valitse Elinvoimakeskus / ELY',
 			width: 240,
+			multiple: true,
 			data: createElyEvkSelectorData()
 		});
 
@@ -103,9 +104,6 @@ export function RoadAddressChangesBrowserWindow(backend) {
 			// Fallback: append to end of form
 			$form.append($elyContainer);
 		}
-
-		// Bind selector events (global/default binding)
-		elyEvkSelector.bindEvents();
 	}
 
 	function getChangeTypeDisplayText(changeTypeValue) {
@@ -309,24 +307,22 @@ export function RoadAddressChangesBrowserWindow(backend) {
 			const parsedDateString = dateutil.parseDateToString(roadAddrStartDateObject);
 			const params = {
 				startDate: parsedDateString,
-				dateTarget: dateTargetSelector && dateTargetSelector.getSelectedValue ? dateTargetSelector.getSelectedValue() : 'ProjectAcceptedDate'
+				dateTarget: dateTargetSelector && typeof dateTargetSelector.getValue === 'function' && dateTargetSelector.getValue().length ? dateTargetSelector.getValue()[0] : 'ProjectAcceptedDate'
 			};
 
 			// Add end date to params
 			if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
-			const selected = elyEvkSelector && typeof elyEvkSelector.getSelectedValue === 'function'
-				? elyEvkSelector.getSelectedValue()
-				: null;
+			const selected = elyEvkSelector && typeof elyEvkSelector.getValue === 'function'
+				? elyEvkSelector.getValue()
+				: [];
+			const selectedValues = Array.isArray(selected) ? selected : [selected].filter(Boolean);
 
-			// Add ELY/EVK to params
-			if (selected && typeof selected === 'string' && selected.startsWith('ELY_')) {
-				const parts = selected.split('_');
-				if (parts[1]) params.ely = parts[1];
-			} else if (selected && selected.startsWith('EVK_')) {
-				const parts = selected.split('_');
-				if (parts[1]) params.roadMaintainer = parts[1]; // Backend handles evk value as roadMaintainer, so convert evk to that
-			}
-          
+			// Add ELY/EVK to params (multiple selections are sent as comma-separated lists)
+			const elyValues = selectedValues.filter(v => v.startsWith('ELY_')).map(v => v.split('_')[1]).filter(Boolean);
+			const evkValues = selectedValues.filter(v => v.startsWith('EVK_')).map(v => v.split('_')[1]).filter(Boolean);
+			if (elyValues.length) params.ely = elyValues.join(',');
+			if (evkValues.length) params.roadMaintainer = evkValues.join(','); // Backend handles evk value as roadMaintainer, so convert evk to that
+
 			if (roadNumber.value)
 				params.roadNumber = roadNumber.value;
 			if (minRoadPartNumber.value)
@@ -474,11 +470,6 @@ export function RoadAddressChangesBrowserWindow(backend) {
 				exportDataAsCsvFile
 			)
 		});
-
-		const formEl = modal.getContent().find('#roadAddressChangesBrowser')[0];
-		if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
-			roadAddressBrowserForm.bindSelectorEvents(formEl);
-		}
 
 		if (modal.getContent().find('#roadAddrChangesInputEly').length === 0) {
 			insertElyEvkSelector();

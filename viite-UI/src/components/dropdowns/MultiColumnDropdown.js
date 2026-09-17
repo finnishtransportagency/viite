@@ -1,301 +1,224 @@
+
 /*
-This is more advanced dropdown that supports multiple columns
+ * MultiColumnDropdown
+ *
+ * Creates a multi-column dropdown with multiple selectable items.
+ *
+ * Usage:
+ *
+ * const dateTargetSelector = MultiColumnDropdown({
+ *   placeholder: 'Valitse Elinvoimakeskus / ELY',
+ *   width: 240,
+ *   data: {
+ *     0: {
+ *       columnTitle: 'ELY',
+ *       items: [
+ *         { value: 1, label: 'ELY 1' },
+ *         { value: 2, label: 'ELY 2', selected: true }
+ *       ]
+ *     },
+ *     1: {
+ *       columnTitle: 'Target',
+ *       items: [
+ *         { value: 'A', label: 'Roads' },
+ *         { value: 'B', label: 'Nodes' }
+ *       ]
+ *     }
+ *   }
+ * });
+ *
+ * Use in a template:
+ *
+ * const html = `
+ *   <div class="input-container">
+ *     <label>Rajausperuste</label>
+ *     ${dateTargetSelector.render()}
+ *   </div>
+ * `;
+ *
+ * Get selected values:
+ *
+ * dateTargetSelector.getValue();
+ *
+ * Set selected values:
+ *
+ * dateTargetSelector.setValue([1, 'A']);
+ *
+ * Clear selection:
+ *
+ * dateTargetSelector.clear();
+ *
+ * DOM events (open/close, item selection) are bound automatically - no setup call needed,
+ * even if the markup is inserted into the document afterwards. To react to selection
+ * changes, register a callback:
+ *
+ * dateTargetSelector.setOnChange(function (values) { ... }); 
+ * */
 
-Props (constructor argument):
-- id (string, required): DOM id for the root container element
-- data: {
-    [columnIndex: number]: {
-      columnTitle?: string, // optional
-      items: Array<{ value: string|number, label: string }>
-    }
-  }
-  Columns mapped by index (0, 1, 2, ...), each with a title and an items array
-- selectedItem (string|null): Initially selected item id in the form `value-label`, or null
-- value (string|number|undefined): Alternatively, provide just the item `value`; label is resolved from data
-- placeholder (string): Text shown on the button when nothing is selected
-- disabled (boolean)
-- onSelectionChange (function): Callback as onSelectionChange(value|null, event) when selection changes
-- className (string): Extra CSS classes for the container
+export function MultiColumnDropdown(options) {
+  const id = options.id || 'multiColumnDropdown-' + Date.now();
+  const placeholder = options.placeholder || 'Valitse';
+  const width = options.width || '100%';
+  const data = options.data || {};
+  const multiple = Boolean(options.multiple);
+  let onChange = options.onChange;
 
-Callable methods:
-- render(): string              -> Returns component HTML (button + hidden dropdown)
-- bindEvents(): void            -> Attaches event listeners; call after inserting the HTML
-- setValue(value): void         -> Programmatically select by item value; updates button label and dropdown state
- - getSelectedValue(): string|number|null -> Returns  the selected item `value` or null
-- setDisabled(bool): void       -> Enables/disables the button
-- updateData(newData): void     -> Replaces column data and re-renders the dropdown section.
-- getElement(): HTMLElement?    -> Returns the root element by `id`.
-- config: object                -> Exposes current configuration for advanced use.
+  let selectedValues = new Set();
+  Object.keys(data).forEach(function (key) {
+    data[key].items.forEach(function (item) {
+      if (item.selected) selectedValues.add(String(item.value));
+    });
+  });
 
-Example: Single column
+  function render() {
+    const columns = Object.keys(data).map(function(key) {
+      const column = data[key];
+      const title = column.columnTitle
+        ? `<div class="modern-column-title">${column.columnTitle}</div>`
+        : '';
 
-```
-const targetSelector = new Selector({
-  id: 'targetValue',
-  placeholder: 'Valitse hakukohde...',
-  value: 'Tracks',
-  data: {
-    0: {
-      columnTitle: 'Hakukohde',
-      items: [
-        { value: 'Tracks', label: 'Ajoradat' },
-        { value: 'RoadParts', label: 'Tieosat' },
-        { value: 'Nodes', label: 'Solmut' },
-        { value: 'Junctions', label: 'Liittymät' },
-        { value: 'RoadNames', label: 'Tiennimet' }
-      ]
-    }
-  }
-});
+      const items = column.items.map(function(item) {
+        const selected = selectedValues.has(String(item.value));
 
-return `<div>${targetSelector.render()}</div>`;
-```
+        return `
+          <div
+            class="modern-item${selected ? ' selected' : ''}"
+            data-value="${item.value}"
+          >
+            <input
+              type="checkbox"
+              class="modern-checkbox"
+              ${selected ? 'checked' : ''}
+            >
+            <span class="modern-item-label">${item.label}</span>
+          </div>
+        `;
+      }).join('');
 
-Example: Multi-column
-
-```
-const selector = new Selector({
-  id: 'roadAddress',
-  data: {
-    0: {
-      columnTitle: 'ELY',
-      items: [ { value: 1, label: 'ELY 1' }, { value: 2, label: 'ELY 2' } ]
-    },
-    1: {
-      columnTitle: 'Target',
-      items: [ { value: 'A', label: 'Roads' }, { value: 'B', label: 'Nodes' } ]
-    }
-  },
-  placeholder: 'Valitse...',
-  onSelectionChange: (value) => console.log('Changed to', value)
-});
-
-return `<div>${selector.render()}</div>`;
-```
-*/
-
-export function Selector(props) {
-	const defaults = {
-		id: '',
-		data: {},
-		selectedItem: null,
-		placeholder: 'Valitse...',
-		disabled: false,
-		onSelectionChange: null,
-		className: '',
-		width: null // Optional width for the control. Accepts number (px) or string (any CSS unit)
-	};
-
-	const config = Object.assign({}, defaults, props);
-
-	// Trigger error if passed data or id are invalid
-	function validateConfig() {
-		if (!config.id) {
-			throw new Error('Selector: id is required');
-		}
-		if (typeof config.data !== 'object') {
-			throw new Error('Selector: data must be an object');
-		}
-	}
-
-	function createButton(selectedLabel) {
-		const disabledAttr = config.disabled ? ' disabled' : '';
-		const widthStyle = (config.width !== null && config.width !== undefined)
-			? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
-			: '';
-		return `
-        <button id="${config.id}-button" class="modern-button"${widthStyle} ${disabledAttr}>
-          <span class="modern-label">${selectedLabel || config.placeholder}</span>
-          <span class="modern-arrow" style="font-size: 1.5em;">&#9662;</span>
-        </button>
-      `;
-	}
-
-	function createDropdown() {
-		const columns = Object.keys(config.data).map(Number).sort();
-		let html = `<div id="${config.id}-dropdown" class="modern-dropdown hidden"><div class="modern-columns">`;
-
-		columns.forEach((colIndex) => {
-			const colData = config.data[colIndex];
-			if (!colData) return;
-
-			html += `<div class="modern-column">`;
-			if (colData.columnTitle) {
-				html += `<div class="modern-column-title">${colData.columnTitle}</div>`;
-			}
-
-			colData.items.forEach(item => {
-				const itemId = `${item.value}-${item.label}`;
-				const selected = itemId === config.selectedItem ? ' selected' : '';
-				html += `
-            <div class="modern-item${selected}" data-id="${itemId}">
-              <span class="modern-circle${selected ? ' filled' : ''}"></span>
-              <span class="modern-item-label">${item.label}</span>
-            </div>
-          `;
-			});
-
-			html += `</div>`;
-		});
-
-		html += `</div></div>`;
-		return html;
-	}
-
-	function createComponent() {
-		validateConfig();
-
-		let selectedLabel = null;
-		const allItems = Object.values(config.data).flatMap(c => c.items || []);
-
-		if (config.value) {
-			const found = allItems.find(it => it.value === config.value);
-			if (found) {
-				selectedLabel = found.label;
-				config.selectedItem = `${found.value}-${found.label}`;
-			}
-		} else if (config.selectedItem) {
-			const found = allItems.find(it => `${it.value}-${it.label}` === config.selectedItem);
-			if (found) {
-				selectedLabel = found.label;
-				config.value = found.value;
-			}
-		}
-
-		const containerWidthStyle = (config.width !== null && config.width !== undefined)
-			? ` style="width: ${typeof config.width === 'number' ? config.width + 'px' : config.width};"`
-			: '';
-
-		return `
-        <div id="${config.id}" class="modern-container ${config.className}"${containerWidthStyle}>
-          ${createButton(selectedLabel)}
-          ${createDropdown()}
+      return `
+        <div class="modern-column">
+          ${title}
+          ${items}
         </div>
       `;
-	}
+    }).join('');
 
-	function bindEvents() {
-		// Use event delegation to handle clicks on the button and menu items
-		setupEventDelegation();
-	}
+    return `
+      <div
+        id="${id}"
+        class="modern-container"
+        style="width: ${typeof width === 'number' ? width + 'px' : width}"
+      >
+        <button type="button" class="modern-button">
+          <span class="modern-label">${getLabel()}</span>
+          <img src="images/chevron-down.svg" class="chevron" alt="">
+        </button>
 
-	function setupEventDelegation() {
-		// Remove existing listener if any
-		if (config._globalClickHandler) {
-			document.removeEventListener('click', config._globalClickHandler);
-		}
+        <div class="modern-dropdown hidden">
+          <div class="modern-columns">
+            ${columns}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
-		// Create global click handler
-		config._globalClickHandler = function (e) {
-			const rootEl = document.getElementById(config.id);
-			if (!rootEl) return;
+  function getLabel() {
+    const selectedLabels = [];
 
-			const button = rootEl.querySelector('.modern-button');
-			const dropdown = rootEl.querySelector('.modern-dropdown');
-			const label = rootEl.querySelector('.modern-label');
+    Object.keys(data).forEach(function(key) {
+      data[key].items.forEach(function(item) {
+        if (selectedValues.has(String(item.value))) {
+          selectedLabels.push(item.label);
+        }
+      });
+    });
 
-			if (!button || !dropdown || !label) return;
+    return selectedLabels.length
+      ? selectedLabels.join(', ')
+      : placeholder;
+  }
 
-			// Handle button clicks
-			if (button.contains(e.target)) {
-				e.preventDefault();
-				e.stopPropagation();
-				dropdown.classList.toggle('hidden');
-				button.classList.toggle('open', !dropdown.classList.contains('hidden'));
-				return;
-			}
+  function setSelected(value, selected) {
+    if (selected) {
+      selectedValues.add(String(value));
+    } else {
+      selectedValues.delete(String(value));
+    }
+  }
 
-			// Handle item clicks
-			const itemEl = e.target.closest('.modern-item');
-			if (itemEl && dropdown.contains(itemEl)) {
-				e.preventDefault();
-				e.stopPropagation();
+  function getValue() {
+    return Array.from(selectedValues);
+  }
 
-				const itemId = itemEl.getAttribute('data-id');
-				const itemValue = itemId.split('-')[0];
+  function setValue(values) {
+    selectedValues = new Set(
+      (values || []).map(function(value) {
+        return String(value);
+      })
+    );
+  }
 
-				// Update selection state
-				dropdown.querySelectorAll('.modern-item').forEach(item => {
-					item.classList.remove('selected');
-					const circle = item.querySelector('.modern-circle');
-					if (circle) circle.classList.remove('filled');
-				});
+  function clear() {
+    selectedValues.clear();
+  }
 
-				const isSame = config.selectedItem === itemId;
-				config.selectedItem = isSame ? null : itemId;
-				config.value = isSame ? null : itemValue;
+  function setOnChange(fn) {
+    onChange = fn;
+  }
 
-				if (config.selectedItem) {
-					itemEl.classList.add('selected');
-					const circle = itemEl.querySelector('.modern-circle');
-					if (circle) circle.classList.add('filled');
-					label.textContent = itemEl.querySelector('.modern-item-label').textContent;
-				} else {
-					label.textContent = config.placeholder;
-				}
+  // Bound once via document-level delegation, so it keeps working even though the markup
+  // returned by render() is (re)inserted into the DOM after this constructor runs.
+  function bindEvents() {
+    const ns = `.multiColumnDropdown-${id}`;
 
-				if (config.onSelectionChange) {
-					config.onSelectionChange(config.value, e);
-				}
+    $(document).off(`click${ns}-button`).on(`click${ns}-button`, `#${id} .modern-button`, function (e) {
+      e.stopPropagation();
+      $(`#${id} .modern-dropdown`).toggleClass('hidden');
+      $(this).toggleClass('open');
+    });
 
-				dropdown.classList.add('hidden');
-				button.classList.remove('open');
-				return;
-			}
+    $(document).off(`click${ns}-item`).on(`click${ns}-item`, `#${id} .modern-item`, function (e) {
+      e.stopPropagation();
+      const value = $(this).attr('data-value');
+      const isSelected = selectedValues.has(value);
 
-			// Close menu when clicking outside
-			if (!rootEl.contains(e.target)) {
-				dropdown.classList.add('hidden');
-				button.classList.remove('open');
-			}
-		};
+      if (multiple) {
+        setSelected(value, !isSelected);
+      } else {
+        setValue([value]);
+      }
 
-		// Add global event listener
-		document.addEventListener('click', config._globalClickHandler);
-	}
+      const wasOpen = !$(`#${id} .modern-dropdown`).hasClass('hidden');
+      const $new = $(render());
+      if (wasOpen) {
+        $new.find('.modern-dropdown').removeClass('hidden');
+        $new.find('.modern-button').addClass('open');
+      }
+      $(`#${id}`).replaceWith($new);
 
-	function setValue(value) {
-		const allItems = Object.values(config.data).flatMap(c => c.items || []);
-		const found = allItems.find(it => it.value === value);
+      if (!multiple) {
+        $(`#${id} .modern-dropdown`).addClass('hidden');
+        $(`#${id} .modern-button`).removeClass('open');
+      }
+      if (onChange) onChange(getValue());
+    });
 
-		if (found) {
-			config.selectedItem = `${found.value}-${found.label}`;
-			config.value = found.value;
-		} else {
-			config.selectedItem = null;
-			config.value = null;
-		}
+    $(document).off(`click${ns}-outside`).on(`click${ns}-outside`, function () {
+      $(`#${id} .modern-dropdown`).addClass('hidden');
+      $(`#${id} .modern-button`).removeClass('open');
+    });
+  }
 
-		const el = document.getElementById(config.id);
-		if (el) {
-			const label = el.querySelector('.modern-label');
-			label.textContent = found ? found.label : config.placeholder;
+  bindEvents();
 
-			// Update dropdown items state
-			const dropdown = el.querySelector('.modern-dropdown');
-			dropdown.querySelectorAll('.modern-item').forEach(item => {
-				const isSelected = item.getAttribute('data-id') === config.selectedItem;
-				item.classList.toggle('selected', isSelected);
-				const circle = item.querySelector('.modern-circle');
-				if (circle) circle.classList.toggle('filled', isSelected);
-			});
-		}
-	}
-
-	function getSelectedValue() {
-		return config.value;
-	}
-
-	function getElement() {
-		return document.getElementById(config.id);
-	}
-
-	return {
-		render: createComponent,
-		bindEvents: bindEvents,
-		setValue: setValue,
-		getSelectedValue: getSelectedValue,
-		getElement: getElement,
-		config: config
-	};
+  return {
+    render: render,
+    getValue: getValue,
+    setValue: setValue,
+    clear: clear,
+    setSelected: setSelected,
+    setOnChange: setOnChange
+  };
 }
+

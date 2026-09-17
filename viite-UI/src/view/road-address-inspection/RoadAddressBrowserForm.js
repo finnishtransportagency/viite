@@ -1,5 +1,5 @@
 // This form is used to enter search criteria for road addresses, and supports CSV export
-import { Selector } from '@components/dropdowns/MultiColumnDropdown.js';
+import { MultiColumnDropdown } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { button } from '@components/button/Button.js';
@@ -53,38 +53,37 @@ export function RoadAddressBrowserForm() {
 
 	function initializeSelectors() {
 		// Date target selector for changes browser
-		dateTargetSelector = new Selector({
+		dateTargetSelector = new MultiColumnDropdown({
 			id: 'dateTarget',
 			placeholder: 'Valitse rajausperuste',
-			value: 'ProjectAcceptedDate',
 			data: {
 				0: {
 					items: [
-						{ value: 'ProjectAcceptedDate', label: 'Projektin hyväksymispvm' },
+						{ value: 'ProjectAcceptedDate', label: 'Projektin hyväksymispvm', selected: true },
 						{ value: 'RoadAddressStartDate', label: 'Muutoksen voimaantulopvm' }
 					]
 				}
 			}
 		});
 
-		// ELY/EVK selector for address browser
-		elyEvkSelector = new Selector({
+		// ELY/EVK selector for address browser (multi-select: several ELY/EVK codes can be searched at once)
+		elyEvkSelector = new MultiColumnDropdown({
 			id: 'roadAddrInputElyEvk',
 			placeholder: 'Valitse Elinvoimakeskus / ELY',
 			width: 240,
+			multiple: true,
 			data: createElyEvkSelectorData()
 		});
 
 		// Target selector for address browser
-		targetSelector = new Selector({
+		targetSelector = new MultiColumnDropdown({
 			id: 'targetValue',
 			placeholder: 'Valitse hakukohde',
-			value: 'Tracks',
 			width: 100,
 			data: {
 				0: {
 					items: [
-						{ value: 'Tracks', label: 'Ajoradat' },
+						{ value: 'Tracks', label: 'Ajoradat', selected: true },
 						{ value: 'RoadParts', label: 'Tieosat' },
 						{ value: 'Nodes', label: 'Solmut' },
 						{ value: 'Junctions', label: 'Liittymät' },
@@ -101,7 +100,7 @@ export function RoadAddressBrowserForm() {
 		const html = `
         <form class="road-address-browser-form" id="roadAddressChangesBrowser">
           <div class="input-container">
-            <label >Rajausperuste</label>
+            <label>Rajausperuste</label>
             ${dateTargetSelector.render()}
           </div>
           <div class="input-container">
@@ -112,7 +111,7 @@ export function RoadAddressBrowserForm() {
           </div>
           <div class="input-container"> <b style="margin-top: 25px"> - </b></div>
           <div class="input-container">
-            <label >Loppupvm</label>
+            <label>LOPPUPVM</label>
             <div>
               <input type="text" class="modern-input road-address-browser-date-input" id="roadAddrChangesEndDate" style="width: 80px" />
             </div>
@@ -134,19 +133,19 @@ export function RoadAddressBrowserForm() {
 		const html = `
         <form id="roadAddressBrowser" class="road-address-browser-form">
           <div class="input-container">
-            <label>Tilannepvm</label>
+            <label>TILANNEPVM</label>
             <div>
               <input type="text" class="modern-input" id="roadAddrSituationDate" value="${dateutil.getCurrentDateString()}" style="width: 90px !important" required />
             </div>
           </div>
           <div class="input-container">
-            <label >Elinvoimakeskus / ELY</label>
+            <label>ELINVOIMAKESKUS / ELY</label>
             ${elyEvkSelector.render()}
           </div>
           ${createRoadNumberInputField('roadAddrInputRoad')}
           ${createRoadPartNumberInputFields('roadAddrInputStartPart', 'roadAddrInputEndPart')}
           <div class="input-container">
-            <label >Hakukohde</label>
+            <label>HAKUKOHDE</label>
             ${targetSelector.render()}
           </div>
           <div class="button-container">
@@ -158,20 +157,13 @@ export function RoadAddressBrowserForm() {
 		return html;
 	}
 
-	// Bind events for all selector components after form is rendered
-	function bindSelectorEvents(container) {
-		if (dateTargetSelector) dateTargetSelector.bindEvents(container);
-		if (elyEvkSelector) elyEvkSelector.bindEvents(container);
-		if (targetSelector) targetSelector.bindEvents(container);
-	}
-
 	function createRoadNumberInputField(id) {
-		return `<div class="input-container"><label >Tie</label><input class="modern-input road-address-browser-road-input" type="number" min="1" max="99999" id="${id}" /></div>`;
+		return `<div class="input-container"><label >TIE</label><input class="modern-input road-address-browser-road-input" type="number" min="1" max="99999" id="${id}" /></div>`;
 	}
 
 	function createRoadPartNumberInputFields(idStart, idEnd) {
-		return `<div class="input-container"><label >Aosa</label><input class="modern-input" type="number" min="1" max="999" id="${idStart}"/></div>` +
-        `<div class="input-container"><label >Losa</label><input class="modern-input" type="number" min="1" max="999" id="${idEnd}"/></div>`;
+		return `<div class="input-container"><label >AOSA</label><input class="modern-input" type="number" min="1" max="999" id="${idStart}"/></div>` +
+        `<div class="input-container"><label >LOSA</label><input class="modern-input" type="number" min="1" max="999" id="${idEnd}"/></div>`;
 	}
 
 	function createCsvDownloadButton(onClick) {
@@ -185,7 +177,6 @@ export function RoadAddressBrowserForm() {
 	return {
 		getRoadAddressChangesBrowserForm: getRoadAddressChangesBrowserForm,
 		getRoadAddressBrowserForm: getRoadAddressBrowserForm,
-		bindSelectorEvents: bindSelectorEvents,
 		getSelectorComponents: function () {
 			return {
 				dateTarget: dateTargetSelector,

@@ -436,7 +436,7 @@ export function RoadAddressBrowserWindow(backend) {
 		function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
               
 			// If neither ELY/EVK or road number is provided, show error
-			if (!elyValue && (!roadNumberElement || !roadNumberElement.value)) {
+			if ((!elyValue || elyValue.length === 0) && (!roadNumberElement || !roadNumberElement.value)) {
 				if (roadNumberElement) {
 					roadNumberElement.setCustomValidity("Elinvoimakeskus, Ely tai Tie on pakollinen tieto");
 				}
@@ -485,16 +485,13 @@ export function RoadAddressBrowserWindow(backend) {
 				target: targetValue
 			};
 
-			// Handle ELY/EVK selection
-			if (elyEvkSelector) {
-				if (elyEvkSelector.startsWith('EVK_')) {
-					params.roadMaintainer = elyEvkSelector.substring(4); // Backend expects EVK as roadMaintainer
-				} else if (elyEvkSelector.startsWith('ELY_')) {
-					params.ely = elyEvkSelector.substring(4); // Remove 'ELY_' prefix
-				} else {
-					// Fallback in case the value doesn't have a prefix
-					params.ely = elyEvkSelector;
-				}
+			// Handle ELY/EVK selection (multiple selections are sent as comma-separated lists)
+			if (elyEvkSelector && elyEvkSelector.length) {
+				const elyValues = elyEvkSelector.filter(v => v.startsWith('ELY_')).map(v => v.substring(4));
+				const evkValues = elyEvkSelector.filter(v => v.startsWith('EVK_')).map(v => v.substring(4));
+				const otherValues = elyEvkSelector.filter(v => !v.startsWith('ELY_') && !v.startsWith('EVK_'));
+				if (evkValues.length) params.roadMaintainer = evkValues.join(','); // Backend expects EVK as roadMaintainer
+				if (elyValues.length || otherValues.length) params.ely = elyValues.concat(otherValues).join(',');
 			}
 
 			if (roadNumber.value)
@@ -599,7 +596,7 @@ export function RoadAddressBrowserWindow(backend) {
 	function getElyEvkSelectorValue() {
 		const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
 		if (selectorComponents && selectorComponents.elyEvk) {
-			return selectorComponents.elyEvk.getSelectedValue();
+			return selectorComponents.elyEvk.getValue();
 		}
 		return null;
 	}
@@ -607,15 +604,35 @@ export function RoadAddressBrowserWindow(backend) {
 	function getTargetSelectorValue() {
 		const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
 		if (selectorComponents && selectorComponents.target) {
-			const value = selectorComponents.target.getSelectedValue();
-			if (value) return value;
+			const values = selectorComponents.target.getValue();
+			if (values && values.length) return values[0];
 		}
 		return 'Tracks'; // Default value
 	}
 
-	function getTargetSelector() {
-		const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
-		return selectorComponents ? selectorComponents.target : null;
+	/**
+	 * Situation date input field is disabled when Nodes or Junctions are selected as the target value.
+	 * Nodes and Junctions can only be browsed on the current road network (complete history info not available).
+	 */
+	function onTargetSelectionChange(values) {
+		const value = values && values.length ? values[0] : 'Tracks';
+		const situationDate = modal.getContent().find('#roadAddrSituationDate')[0];
+		if (!situationDate) return;
+		switch (value) {
+		case "Tracks":
+		case "RoadParts":
+		case "RoadNames":
+			situationDate.disabled = false;
+			situationDate.title = "";
+			break;
+		case "Nodes":
+		case "Junctions":
+			situationDate.value = dateutil.getCurrentDateString();
+			situationDate.disabled = true;
+			situationDate.title = "Solmuja ja liittymiä voi tarkastella vain nykyisellä tieverkolla";
+			break;
+		default:
+		}
 	}
 
 	function bindEvents() {
@@ -705,38 +722,6 @@ export function RoadAddressBrowserWindow(backend) {
 			};
 		}
 
-		/**
-           * Situation date input field is disabled when Nodes or Junctions are selected as the target value
-           * Nodes and Junctions can only be browsed on the current road network (complete history info not available)
-           */
-		const targetSelector = getTargetSelector();
-		if (targetSelector && targetSelector.config) {
-			const originalOnChange = targetSelector.config.onSelectionChange;
-			targetSelector.config.onSelectionChange = function(value, event) {
-				const situationDate = modal.getContent().find('#roadAddrSituationDate')[0];
-				if (situationDate) {
-					switch (value) {
-					case "Tracks":
-					case "RoadParts":
-					case "RoadNames":
-						situationDate.disabled = false;
-						situationDate.title = "";
-						break;
-					case "Nodes":
-					case "Junctions":
-						situationDate.value = dateutil.getCurrentDateString();
-						situationDate.disabled = true;
-						situationDate.title = "Solmuja ja liittymiä voi tarkastella vain nykyisellä tieverkolla";
-						break;
-					default:
-					}
-				}
-				if (originalOnChange) {
-					originalOnChange(value, event);
-				}
-			};
-		}
-
 		$content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
 			modal.close();
 		});
@@ -752,10 +737,8 @@ export function RoadAddressBrowserWindow(backend) {
 			)
 		});
 
-		const formEl = modal.getContent().find('#roadAddressBrowser')[0];
-		if (formEl && roadAddressBrowserForm.bindSelectorEvents) {
-			roadAddressBrowserForm.bindSelectorEvents(formEl);
-		}
+		const targetSelector = roadAddressBrowserForm.getSelectorComponents().target;
+		if (targetSelector) targetSelector.setOnChange(onTargetSelectionChange);
 		bindEvents();
 	}
 
