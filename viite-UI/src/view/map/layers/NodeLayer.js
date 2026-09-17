@@ -310,8 +310,13 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		layers: [nodeMarkerSelectedLayer]
 	});
 
+	const setNodeDragCursor = function () {
+		map.getViewport().style.cursor = 'grabbing';
+	};
+
 	nodeTranslate.on('translatestart', function (evt) {
 		isDraggingNode = true;
+		setNodeDragCursor();
 		const feature = evt.features && evt.features.item(0);
 		const geometry = feature && feature.getGeometry && feature.getGeometry();
 		const geometryCoordinates = geometry && geometry.getCoordinates && geometry.getCoordinates();
@@ -332,6 +337,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	const maxNodeMovementDistance = 200;
 
 	nodeTranslate.on('translating', function (evt) {
+		setNodeDragCursor();
 		const coordinates = { x: evt.coordinate[0], y: evt.coordinate[1] };
 		const startingCoordinates = selectedNodesAndJunctions.getStartingCoordinates();
 		if (!startingCoordinates) return;
@@ -387,6 +393,10 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		if (featureAtPixel && (featureAtPixel.node || featureAtPixel.junction)) {
 			clearOverlay();
 		}
+	});
+
+	map.on('pointerdrag', function () {
+		if (isNodeDragged()) setNodeDragCursor();
 	});
 
 	map.on('pointermove', function (evt) {

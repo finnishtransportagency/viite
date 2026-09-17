@@ -125,6 +125,7 @@ const NodeTableUtils = {
 				roadPartNumber: p.roadPartNumber,
 				addr:           p.addrM,
 				beforeAfter:    p.beforeAfter,
+				startDate:      p.startDate,
 				type:           p.type
 			};
 		});

@@ -20,10 +20,6 @@ export function setNodeCreateModeEnabled(enabled) {
 	return nodeCreateMode;
 }
 
-export function toggleNodeCreateMode() {
-	return setNodeCreateModeEnabled(!nodeCreateMode);
-}
-
 /**
  * NodeDataMenu - Read-only detail panel for searched node and template data.
  * Shows node/junction tables and exposes buttons that continue into editing flows.
@@ -80,6 +76,24 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 		});
 	};
 
+	const getNodePointStartDate = function (nodePoint, junctions) {
+		if (nodePoint.startDate || nodePoint.roadStartDate) {
+			return nodePoint.startDate || nodePoint.roadStartDate;
+		}
+
+		const matchingJunction = _.find(junctions || [], function (junction) {
+			return _.some(junction.junctionPoints || [], function (junctionPoint) {
+				return (nodePoint.roadwayPointId !== undefined && nodePoint.roadwayPointId === junctionPoint.roadwayPointId) ||
+					(nodePoint.roadNumber === junctionPoint.roadNumber &&
+					 nodePoint.roadPartNumber === junctionPoint.roadPartNumber &&
+					 nodePoint.addrM === junctionPoint.addrM &&
+					 nodePoint.track === junctionPoint.track);
+			});
+		});
+
+		return matchingJunction && matchingJunction.startDate;
+	};
+
 	const renderBody = function (templates) {
 		const effectiveTemplates = templates || selectedNodesAndJunctions.getCurrentTemplates() || {};
 		const safeTemplates = {
@@ -110,7 +124,12 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 			}));
 		}
 
-		const sortedNodePointRows = _.map(_.sortBy(NodeTableUtils.getNodePointsRowsInfo(safeTemplates.nodePoints), ['roadNumber', 'roadPartNumber', 'addr']), function (item) {
+		const nodePointsWithStartDates = _.map(safeTemplates.nodePoints, function (nodePoint) {
+			return _.assign({}, nodePoint, {
+				startDate: getNodePointStartDate(nodePoint, safeTemplates.junctions)
+			});
+		});
+		const sortedNodePointRows = _.map(_.sortBy(NodeTableUtils.getNodePointsRowsInfo(nodePointsWithStartDates), ['roadNumber', 'roadPartNumber', 'addr']), function (item) {
 			return {
 				id: item.id,
 				className: 'node-point-template-static-row',
@@ -118,7 +137,8 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 					item.roadNumber,
 					item.roadPartNumber,
 					item.addr,
-					item.beforeAfter
+					item.beforeAfter,
+					item.startDate
 				]
 			};
 		});
@@ -126,7 +146,7 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 		if (sortedNodePointRows.length > 0) {
 			templateTables.push(renderDataTable({
 				title: 'Solmukohdat',
-				headers: ['TIE', 'OSA', 'ET', 'EJ'],
+				headers: ['TIE', 'OSA', 'ET', 'EJ', 'ALKUPVM'],
 				rows: sortedNodePointRows
 			}));
 		}
@@ -151,7 +171,7 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
             id: 'attachToNewNode',
             label: 'Luo uusi solmu, johon haluat liittää aihiot',
             className: 'btn-primary btn-block' + attachToNewNodeClass,
-            onClick: () => { toggleNodeCreateMode(); } 
+            onClick: () => { setNodeCreateModeEnabled(!nodeCreateMode); } // Toggle node creation mode
           })}
           <div class="node-template-actions-split-row">
             ${button({ id: 'btn-edit-node-save', label: 'Tallenna', className: 'btn-primary btn-edit-node-save btn-block', disabled: true, onClick: onSaveTemplates })}
