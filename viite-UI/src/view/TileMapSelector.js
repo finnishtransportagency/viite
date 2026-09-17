@@ -56,7 +56,7 @@
 
         <div class="roads-visible-wrapper">
           <div class="checkbox">
-            <label>
+            <label title="Data haettu Velhosta">
               <input type="checkbox" id="specialTransportRoutesVisibleCheckbox">
               Erikoiskuljetusreitit
             </label>
@@ -65,7 +65,7 @@
 
         <div class="roads-visible-wrapper">
           <div class="checkbox">
-            <label>
+            <label title="Data haettu Velhosta">
               <input type="checkbox" id="detourRoutesVisibleCheckbox">
               Varareitit
             </label>
