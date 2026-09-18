@@ -389,7 +389,9 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	addInteractions();
 
 	map.on('pointerdown', function (evt) {
-		const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
+		const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
+			return feature.node || feature.nodePointTemplate ? feature : undefined;
+		});
 		if (featureAtPixel && (featureAtPixel.node || featureAtPixel.junction)) {
 			clearOverlay();
 		}
@@ -406,11 +408,12 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		}
 
 		const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) { return feature; });
-		const isHoveringNode = featureAtPixel && (featureAtPixel.node || featureAtPixel.nodePointTemplate);
+		const isHoveringNode = Boolean(featureAtPixel && (featureAtPixel.node || featureAtPixel.nodePointTemplate));
 		const currentNode = selectedNodesAndJunctions.getCurrentNode();
 
 		if (isHoveringNode) {
 			map.getViewport().style.cursor = currentNode ? 'grab' : 'pointer';
+      console.log('Hovering over node:', featureAtPixel);
 		} else {
 			map.getViewport().style.cursor = 'default';
 		}

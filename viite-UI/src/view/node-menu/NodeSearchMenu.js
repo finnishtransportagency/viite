@@ -1,5 +1,4 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
-import { Spinner } from '@components/spinner/Spinner.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { moveMapToCoordinates } from '@view/map/MapView.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
@@ -37,14 +36,12 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	}
 
 	function fetchAndRenderTemplates() {
-		Spinner.show('node-menu-templates');
 		backend.getTemplates((data) => {
 			const nodePointTemplates = _.get(data, 'nodePointTemplates', []);
 			const junctionTemplates = _.get(data, 'junctionTemplates', []);
 			storedTemplates = { nodePoints: nodePointTemplates, junctions: junctionTemplates };
 			nodeCollection.setUserTemplates(nodePointTemplates, junctionTemplates);
 			setUntreatedTemplates(nodePointTemplates, junctionTemplates);
-			Spinner.hide('node-menu-templates');
 		});
 	}
 
@@ -100,7 +97,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	// --- BUTTON LOGIC ---
 
 	function handleSearch() {
-		Spinner.show('node-menu-search');
 		clearSearchResults();
 		clearUntreatedTemplates();
 		(async () => {
@@ -113,9 +109,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 				nodeCollection.fitMapToSearchResults();
 			} catch (error) {
 				console.error('Search failed:', error);
-			} finally {
-				Spinner.hide('node-menu-search');
-			}
+			} 
 		})();
 	}
 
@@ -123,12 +117,6 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		clearSearchResults();
 		$('#clear-node-search').prop('disabled', true);
 		fetchAndRenderTemplates();
-	}
-
-	function getIsSearchDisabled() {
-		const aosa = Number(root().find('#aosa').val()) || 0;
-		const losa = Number(root().find('#losa').val()) || 999;
-		return root().find('#tie').val() && aosa > losa;
 	}
 
 	// EVENT BINDING
@@ -180,12 +168,11 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
         <div class="grid-column-center-2"><label class="label-centered">AOSA</label></div>
         <div class="grid-column-center-3"><label class="label-centered">LOSA</label></div>
         <div class="grid-column-button"></div>
-
         <div class="grid-column-input-1"><input type="number" class="form-control node-input" id="tie" maxlength="5"></div>
         <div class="grid-column-input-2"><input type="number" class="form-control node-input" id="aosa" maxlength="3"></div>
         <div class="grid-column-input-3"><input type="number" class="form-control node-input" id="losa" maxlength="3"></div>
         <div class="grid-column-button">
-          ${button({ id: 'node-search-btn', label: 'Hae solmut', onClick: handleSearch, disabled: true, disabledWhen: getIsSearchDisabled, watchSelector: `${ROOT} .node-input` })}
+		      ${button({ id: 'node-search-btn', label: 'Hae solmut', onClick: handleSearch })}
         </div>
         <div class="grid-column-clear-button">
           ${button({ id: 'clear-node-search', label: 'Tyhjennä tulokset', onClick: handleClear, className: 'btn-secondary btn-clean-node-search', disabled: true })}

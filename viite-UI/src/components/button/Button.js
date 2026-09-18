@@ -18,15 +18,6 @@
  *   ${button({ id: 'save-btn', label: 'Save', onClick: handleSave, disabled: true })}
  *   $('#save-btn').prop('disabled', false);
  *
- *   // Self-managing disabled state — re-evaluated on every change to watchSelector elements:
- *   ${button({
- *     id: 'search-btn',
- *     label: 'Search',
- *     onClick: handleSearch,
- *     disabled: true,
- *     disabledWhen: () => !$('#query').val(),
- *     watchSelector: '#query'
- *   })}
  */
 
 const _registry = new Map(); // id -> cleanup fn
@@ -52,9 +43,7 @@ export function button({
 	className = 'btn-primary',
 	type = 'button',
 	disabled = false,
-	title = '',
-	disabledWhen = null,  // () => boolean — re-evaluated on changes to watchSelector
-	watchSelector = null  // CSS selector for elements that trigger re-evaluation
+	title = ''
 } = {}) {
 	_ensureObserver();
 
@@ -70,13 +59,7 @@ export function button({
 		event.currentTarget.blur();
 	});
 
-	if (disabledWhen && watchSelector) {
-		$(document).on(`keyup.${id} input.${id}`, watchSelector, () => {
-			$(`#${id}`).prop('disabled', disabledWhen());
-		});
-	}
-
-	// .off(`.${id}`) removes ALL events under this namespace (click + optional keyup/input).
+	// .off(`.${id}`) removes all events under this namespace.
 	_registry.set(id, () => $(document).off(`.${id}`));
 
 	return `<button id="${id}" type="${type}" class="${className}"${disabled ? ' disabled' : ''}${title ? ` title="${title}"` : ''}>${label}</button>`;

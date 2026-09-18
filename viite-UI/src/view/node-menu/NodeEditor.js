@@ -192,6 +192,9 @@ export function NodeEditor(
 
 	const buildJunctionsTable = (data) => {
 		const opts = data.options || {};
+		const rowOptions = (isTemplate) => (isTemplate
+			? { ...opts, disabledAttribute: _.trim(`${opts.disabledAttribute || ''} disabled`) }
+			: opts);
 		const columns = [
 			...(opts.checkbox          ? [{ label: 'Irrota<br>liittymä<br>solmusta', className: 'detach-column-left' }] : []),
 			...(opts.junctionInputNumber ? [{ label: 'NRO' }] : []),
@@ -199,11 +202,12 @@ export function NodeEditor(
 			{ label: 'ET', className: ' junction-address-header' }, { label: 'EJ' }
 		];
 
-		const toRows = (junctions, _isTemplate) => _.map(junctions || [], j => {
+		const toRows = (junctions, isTemplate) => _.map(junctions || [], j => {
+			const rowOpts = rowOptions(isTemplate);
 			const jps   = NodeTableUtils.getJunctionPointsInfo(j);
 			const cells = [
-				...(opts.checkbox          ? [{ className: 'detach-column-left', content: detachJunctionBox(j, opts) }] : []),
-				...(opts.junctionInputNumber ? [{ content: junctionNumberInput(j, opts) }] : []),
+				...(opts.checkbox          ? [{ className: 'detach-column-left', content: detachJunctionBox(j, rowOpts) }] : []),
+				...(opts.junctionInputNumber ? [{ content: junctionNumberInput(j, rowOpts) }] : []),
 				{ content: NodeTableUtils.asFlexColumn(_.map(jps, 'roadNumber')) },
 				{ content: NodeTableUtils.asFlexColumn(_.map(jps, 'track')) },
 				{ content: NodeTableUtils.asFlexColumn(_.map(jps, 'roadPartNumber')) },
@@ -221,17 +225,20 @@ export function NodeEditor(
 
 	const buildNodePointsTable = (data) => {
 		const opts = data.options || {};
+		const rowOptions = (isTemplate) => (isTemplate
+			? { ...opts, disabledAttribute: _.trim(`${opts.disabledAttribute || ''} disabled`) }
+			: opts);
 		const columns = [
 			...(opts.checkbox ? [{ label: 'Irrota<br>solmukohta', className: 'detach-column-left' }] : []),
 			{ label: 'TIE' }, { label: 'OSA' }, { label: 'ET' }, { label: 'EJ' }
 		];
 
-		const toRows = (nodePoints, _isTemplate) => _.map(
+		const toRows = (nodePoints, isTemplate) => _.map(
 			_.sortBy(NodeTableUtils.getNodePointsRowsInfo(nodePoints), ['roadNumber', 'roadPartNumber', 'addr']),
 			row => ({
 				className: 'node-point-template-static-row',
 				cells: [
-					...(opts.checkbox ? [{ className: 'detach-column-left', content: detachNodePointBox(row, opts) }] : []),
+					...(opts.checkbox ? [{ className: 'detach-column-left', content: detachNodePointBox(row, rowOptions(isTemplate)) }] : []),
 					{ content: row.roadNumber }, { content: row.roadPartNumber },
 					{ content: row.addr },       { content: row.beforeAfter }
 				]
@@ -248,6 +255,7 @@ export function NodeEditor(
 
 	const junctionAndNodePointsByJunction = (junctionId) => {
 		const junction   = _.find(selectedNodesAndJunctions.getJunctions(), j => j.id === junctionId);
+		if (!junction) return { nodePoints: [] };
 		const jpCoords   = _.map(junction.junctionPoints, 'coordinates');
 		const nodePoints = _.filter(selectedNodesAndJunctions.getNodePoints(), np =>
 			!_.isEmpty(_.intersectionWith(jpCoords, [np.coordinates], _.isEqual)) &&
@@ -258,6 +266,7 @@ export function NodeEditor(
 
 	const junctionAndNodePointsByNodePoint = (nodePointId) => {
 		const target  = _.find(selectedNodesAndJunctions.getNodePoints(), np => np.id === nodePointId);
+		if (!target) return { nodePoints: [] };
 		const junction = _.find(selectedNodesAndJunctions.getJunctions(), j =>
 			!_.isEmpty(_.intersectionWith(_.map(j.junctionPoints, 'coordinates'), [target.coordinates], _.isEqual))
 		);

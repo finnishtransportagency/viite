@@ -390,7 +390,7 @@ export function initProjectLinkLayer(map, projectCollection, selectedProjectLink
 
   // Change cursor to 'wait' when hovering over locked links
 	eventListener.listenTo(eventbus, 'map:mouseMoved', function (event, pixel) {
-		if (event.dragging) { return; }
+		if (!isActiveLayer || event.dragging) { return; }
 
 		if (lockedLinkIds.length > 0) {
 			const hasLockedFeature = map.forEachFeatureAtPixel(pixel, function (feature) {
