@@ -1,9 +1,3 @@
-/**
- * RoadAddressChangesBrowserWindow component
- * Allows users to search road address change history data and export it as CSV.
- * @param {Object} backend - Backend API wrapper
- */
-
 import { MultiColumnDropdown } from '@components/dropdowns/MultiColumnDropdown.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
@@ -13,8 +7,81 @@ import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/Viite
 import { dateutil } from '@utils/DateUtils.js';
 import { RoadAddressBrowserForm, createElyEvkSelectorData } from './RoadAddressBrowserForm.js';
 
+// Renders '—' for missing values instead of 'undefined'/'null' in the table and CSV export.
+function dash(value) {
+	return value === undefined || value === null ? '—' : value;
+}
+
+function getChangeTypeDisplayText(changeTypeValue) {
+	const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
+		return obj.value === changeTypeValue;
+	});
+	return changeType.displayText;
+}
+
+/**
+ * Column definitions for the change-history table/CSV, in display order. Each entry
+ * knows its own header and how to read its value off a result row, so the header
+ * row, the HTML table body, and the CSV export are all generated from this single
+ * list instead of three separate hand-written templates.
+ */
+const COLUMNS = [
+	{ header: 'Voimaantulopvm', get: r => r.startDate },
+	{ header: 'Elinvoimakeskus', get: r => dash(r.oldEvk) },
+	{ header: 'Ely', get: r => dash(r.oldEly) },
+	{ header: 'Tie', get: r => r.oldRoadNumber },
+	{ header: 'Ajr', get: r => r.oldTrack },
+	{ header: 'Aosa', get: r => r.oldRoadPartNumber },
+	{ header: 'Aet', get: r => r.oldStartAddrM },
+	{ header: 'Losa', get: r => r.oldRoadPartNumber },
+	{ header: 'Let', get: r => r.oldEndAddrM },
+	{ header: 'Pituus', get: r => r.oldLength },
+	{ header: 'Hall. luokka', get: r => getAdministrativeClassTextValue(r.oldAdministrativeClass) },
+	{ header: 'Muutos', get: r => getChangeTypeDisplayText(r.changeType) },
+	{ header: 'u_Elinvoimakeskus', get: r => dash(r.newEvk) },
+	{ header: 'u_Tie', get: r => r.newRoadNumber },
+	{ header: 'u_Ajr', get: r => r.newTrack },
+	{ header: 'u_Aosa', get: r => r.newRoadPartNumber },
+	{ header: 'u_Aet', get: r => r.newAddrMRange.start },
+	{ header: 'u_Losa', get: r => r.newRoadPartNumber },
+	{ header: 'u_Let', get: r => r.newAddrMRange.end },
+	{ header: 'u_Pituus', get: r => r.newLength },
+	{ header: 'u_Hall. luokka', get: r => getAdministrativeClassTextValue(r.newAdministrativeClass) },
+	{ header: 'Käännetty', get: r => r.reversed },
+	{ header: 'Tien nimi', get: r => r.roadName },
+	{ header: 'Projektin Nimi', get: r => r.projectName },
+	{ header: 'Projektin hyväksymispvm', get: r => r.projectAcceptedDate }
+];
+
+// HTML table for on-screen display.
+function resultsToTable(results) {
+	const headHtml = COLUMNS.map(c => `<th>${c.header}</th>`).join('');
+	const bodyHtml = results.map((row) => {
+		const cells = COLUMNS.map(c => `<td>${c.get(row)}</td>`).join('');
+		return `<tr>${cells}</tr>`;
+	}).join('');
+
+	return $(`<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table viite-table">
+                  <thead><tr>${headHtml}</tr></thead>
+                  <tbody>${bodyHtml}</tbody>
+              </table>`);
+}
+
+// Rows as plain arrays (header row + one row per result) for CSV export, built
+// straight from the same data/columns as the table above rather than re-reading
+// the rendered DOM table's cell text.
+function resultsToArray(results) {
+	return [COLUMNS.map(c => c.header), ...results.map(row => COLUMNS.map(c => c.get(row)))];
+}
+
+/**
+ * RoadAddressChangesBrowserWindow component
+ * Allows users to search road address change history data and export it as CSV.
+ * @param {Object} backend - Backend API wrapper
+ */
 export function RoadAddressChangesBrowserWindow(backend) {
 	let searchParams = {};
+	let searchResults = [];
 	let elyEvkSelector;
 	let modal = null;
 
@@ -106,87 +173,6 @@ export function RoadAddressChangesBrowserWindow(backend) {
 		}
 	}
 
-	function getChangeTypeDisplayText(changeTypeValue) {
-		const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
-			return obj.value === changeTypeValue;
-		});
-		return changeType.displayText;
-	}
-
-	/**
-    *      Function is performance critical. Pointers in use for reasonable processing time.
-   *      If edited be sure to measure table creation time with the largest possible dataset!
-   */
-	function createResultTable(results) {
-		const arr = [];
-		let arrPointer = -1;
-		arr[++arrPointer] = `<table id="roadAddressChangesBrowserTable" class="road-address-browser-window-results-table viite-table">
-                              <thead>
-                                  <tr>
-                                      <th>Voimaantulopvm</th>
-                                      <th>Elinvoimakeskus</th>
-                                      <th>Ely</th>
-                                      <th>Tie</th>
-                                      <th>Ajr</th>
-                                      <th>Aosa</th>
-                                      <th>Aet</th>
-                                      <th>Losa</th>
-                                      <th>Let</th>
-                                      <th>Pituus</th>
-                                      <th>Hall. luokka</th>
-                                      <th>Muutos</th>
-                                      <th>u_Elinvoimakeskus</th>
-                                      <th>u_Tie</th>
-                                      <th>u_Ajr</th>
-                                      <th>u_Aosa</th>
-                                      <th>u_Aet</th>
-                                      <th>u_Losa</th>
-                                      <th>u_Let</th>
-                                      <th>u_Pituus</th>
-                                      <th>u_Hall. luokka</th>
-                                      <th>Käännetty</th>
-                                      <th>Tien nimi</th>
-                                      <th>Projektin Nimi</th>
-                                      <th>Projektin hyväksymispvm</th>
-                                  </tr>
-                              </thead>
-                              <tbody>`;
-
-		for (let i = 0, len = results.length; i < len; i++) {
-			arr[++arrPointer] = `   <tr>
-                                      <td>${results[i].startDate}</td>
-                                      <td>${results[i].oldEvk}</td>
-                                      <td>${typeof results[i].oldEly === 'undefined' || results[i].oldEly === null ? '-' : results[i].oldEly}</td>
-                                      <td>${results[i].oldRoadNumber}</td>
-                                      <td>${results[i].oldTrack}</td>
-                                      <td>${results[i].oldRoadPartNumber}</td>
-                                      <td>${results[i].oldStartAddrM}</td><!-- Refactor AddrMRange when PR passed-->
-                                      <td>${results[i].oldRoadPartNumber}</td>
-                                      <td>${results[i].oldEndAddrM}</td>
-                                      <td>${results[i].oldLength}</td>
-                                      <td>${getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
-                                      <td>${getChangeTypeDisplayText(results[i].changeType)}</td>
-                                      <td>${results[i].newEvk}</td>
-
-                                      <td>${results[i].newRoadNumber}</td>
-                                      <td>${results[i].newTrack}</td>
-                                      <td>${results[i].newRoadPartNumber}</td>
-                                      <td>${results[i].newAddrMRange.start}</td>
-                                      <td>${results[i].newRoadPartNumber}</td>
-                                      <td>${results[i].newAddrMRange.end}</td>
-                                      <td>${results[i].newLength}</td>
-                                      <td>${getAdministrativeClassTextValue(results[i].newAdministrativeClass)}</td>
-                                      <td>${results[i].reversed}</td>
-                                      <td>${results[i].roadName}</td>
-                                      <td>${results[i].projectName}</td>
-                                      <td>${results[i].projectAcceptedDate}</td>
-                                  </tr>`;
-		}
-		arr.push(`    </tbody>
-                          </table>`);
-		return $(arr.join('')); // join the array to one large string and create jquery element from said string
-	}
-
 	function showData(results, table) {
 		if (results.length === 0) {
 			modal.getContent().append($('<p id="tableNotification"><b>Hakuehdoilla ei löytynyt yhtäkään osumaa</b></p>'));
@@ -221,20 +207,9 @@ export function RoadAddressChangesBrowserWindow(backend) {
 		const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
 		const fileName = fileNameString.replaceAll("undefined", "-");
 
-		const table = modal.getContent().find('#roadAddressChangesBrowserTable')[0];
-		if (!table) {
-			console.error('Table not found for CSV export');
-			return;
-		}
+		const data = resultsToArray(searchResults);
 		let csvContent = "\uFEFF"; // UTF-8 BOM
-
-		for (const row of table.rows) {
-			const rowData = [];
-			for (const cell of row.cells) {
-				rowData.push(cell.innerText);
-			}
-			csvContent += rowData.join(";") + "\n"; // Join cells with semicolons
-		}
+		csvContent += data.map((row) => row.join(";")).join("\n");
 
 		// Create a downloadable CSV file
 		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;"}); // Create a file like object containing the CSV data
@@ -280,8 +255,6 @@ export function RoadAddressChangesBrowserWindow(backend) {
               validateBeginningAndEndParts();
 		}
 
-		// Input listeners moved to bindEvents() to avoid re-attaching on each search
-
 		function willPassValidations() {
 			// If start date is provided, validate it
 			if (roadAddrChangesStartDate.value.trim().length > 0) {
@@ -297,10 +270,6 @@ export function RoadAddressChangesBrowserWindow(backend) {
 				}
 			}
 			return reportValidations();
-		}
-
-		if (!willPassValidations()) {
-			return; // Stop execution if validation fails
 		}
 
 		function createParams() {
@@ -336,11 +305,13 @@ export function RoadAddressChangesBrowserWindow(backend) {
 		roadAddrChangesStartDate.setCustomValidity("");
 		roadAddrChangesEndDate.setCustomValidity("");
 
-		if (willPassValidations()) {
-			// Sets the end date 1 day ahead, so that the inputted end date is included in project listing.
-			dateutil.addOneDayToDate(roadAddrEndDateObject);
-			fetchRoadAddressChanges(createParams());
+		if (!willPassValidations()) {
+			return;
 		}
+
+		// Sets the end date 1 day ahead, so that the inputted end date is included in project listing.
+		dateutil.addOneDayToDate(roadAddrEndDateObject);
+		fetchRoadAddressChanges(createParams());
 	}
 
 	function fetchRoadAddressChanges(params) {
@@ -349,7 +320,8 @@ export function RoadAddressChangesBrowserWindow(backend) {
 			if (result.success) {
 				Spinner.hide();
 				searchParams = params;
-				showData(result.changeInfos, createResultTable(result.changeInfos));
+				searchResults = result.changeInfos;
+				showData(result.changeInfos, resultsToTable(result.changeInfos));
 			} else {
 				Spinner.hide();
 				new ConfirmPopup(result.error, { type: "alert" });
@@ -358,9 +330,24 @@ export function RoadAddressChangesBrowserWindow(backend) {
 	}
 
 	function clearResultsAndDisableCsvButton() {
+		searchResults = [];
 		$('.road-address-browser-window-results-table').remove(); // empty the result table
 		$('#exportAsCsvFile').prop("disabled", true); //disable CSV download button
 		$('#tableNotification').remove(); // remove notification if present
+	}
+
+	// Truncates to the max length and re-checks the A-osa/L-osa range on every
+	// keystroke; shared by the start and end road-part inputs.
+	function bindPartNumberInput(element) {
+		if (!element) return;
+		element.oninput = function (event) {
+			const input = event.currentTarget;
+			if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
+				input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
+			}
+			validateBeginningAndEndParts();
+			input.setCustomValidity("");
+		};
 	}
 
 	function bindEvents() {
@@ -401,61 +388,23 @@ export function RoadAddressChangesBrowserWindow(backend) {
 			};
 		}
 
-		const startPartInput = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
-		if (startPartInput) {
-			startPartInput.oninput = function (event) {
-				const input = event.currentTarget;
-				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
-				}
-			};
-		}
 
-		const endPartInput = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
-		if (endPartInput) {
-			endPartInput.oninput = function (event) {
-				const input = event.currentTarget;
-				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
-					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
-				}
-			};
-		}
+		bindPartNumberInput(modal.getContent().find('#roadAddrChangesInputStartPart')[0]);
+		bindPartNumberInput(modal.getContent().find('#roadAddrChangesInputEndPart')[0]);
 
-		// Attach validation listeners once
 		const startDateEl = modal.getContent().find('#roadAddrChangesStartDate')[0];
 		const endDateEl = modal.getContent().find('#roadAddrChangesEndDate')[0];
 		if (startDateEl) {
 			startDateEl.oninput = function (event) {
-				const input = event.currentTarget;
-				validateDate(input.value, input);
-				input.setCustomValidity("");
+				event.currentTarget.setCustomValidity("");
 			};
 		}
 		if (endDateEl) {
 			endDateEl.oninput = function (event) {
-				const input = event.currentTarget;
-				validateDate(input.value, input);
-				input.setCustomValidity("");
+				event.currentTarget.setCustomValidity("");
 			};
 		}
 
-		const startPartEl = modal.getContent().find('#roadAddrChangesInputStartPart')[0];
-		const endPartEl = modal.getContent().find('#roadAddrChangesInputEndPart')[0];
-		if (startPartEl) {
-			startPartEl.oninput = function (event) {
-				const input = event.currentTarget;
-				validateBeginningAndEndParts();
-				input.setCustomValidity("");
-			};
-		}
-		if (endPartEl) {
-			endPartEl.oninput = function (event) {
-				const input = event.currentTarget;
-				validateBeginningAndEndParts();
-				input.setCustomValidity("");
-			};
-		}
-      
 		$content.off('click' + eventNs, 'button.close').on('click' + eventNs, 'button.close', function () {
 			modal.close();
 		});

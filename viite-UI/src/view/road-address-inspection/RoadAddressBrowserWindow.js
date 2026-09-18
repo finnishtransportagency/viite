@@ -6,6 +6,116 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 
+// Renders '—' for missing values instead of 'undefined'/'null' in tables and CSV exports.
+function dash(value) {
+	return value === undefined || value === null ? '—' : value;
+}
+
+function getBeforeAfterDisplayText(beforeAfterValues) {
+	let letterString = "";
+	beforeAfterValues.forEach((value) => {
+		const beforeAfter = _.find(ViiteEnumerations.BeforeAfter, function (obj) {
+			return obj.value === value;
+		});
+		letterString += beforeAfter.displayLetter;
+	});
+	return letterString.split('').sort().join(''); // sort letter string so that 'JE' becomes 'EJ'
+}
+
+const TARGET_CONFIG = {
+	Tracks: {
+		requiresElyValidation: true,
+		columns: [
+			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
+			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Tie', get: r => r.roadNumber },
+			{ header: 'Ajr', get: r => r.track },
+			{ header: 'Osa', get: r => r.roadPartNumber },
+			{ header: 'Aet', get: r => r.addrMRange.start },
+			{ header: 'Let', get: r => r.addrMRange.end },
+			{ header: 'Pituus', get: r => r.lengthAddrM },
+			{ header: 'Hall. luokka', get: r => getAdministrativeClassTextValue(r.administrativeClass) },
+			{ header: 'Alkupvm', get: r => r.startDate }
+		]
+	},
+	RoadParts: {
+		requiresElyValidation: true,
+		columns: [
+			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
+			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Tie', get: r => r.roadNumber },
+			{ header: 'Osa', get: r => r.roadPartNumber },
+			{ header: 'Aet', get: r => r.addrMRange.start },
+			{ header: 'Let', get: r => r.addrMRange.end },
+			{ header: 'Pituus', get: r => r.lengthAddrM },
+			{ header: 'Alkupvm', get: r => r.startDate }
+		]
+	},
+	Nodes: {
+		lockToCurrentNetwork: true,
+		columns: [
+			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
+			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Tie', get: r => r.roadNumber },
+			{ header: 'Osa', get: r => r.roadPartNumber },
+			{ header: 'Et', get: r => r.addrM },
+			{ header: 'Alkupvm', get: r => r.startDate },
+			{ header: 'Tyyppi', get: r => r.nodeType },
+			{ header: 'Nimi', get: r => r.nodeName },
+			{ header: 'P-Koord', get: r => r.nodeCoordinates.y },
+			{ header: 'I-Koord', get: r => r.nodeCoordinates.x },
+			{ header: 'Solmunumero', get: r => r.nodeNumber }
+		]
+	},
+	Junctions: {
+		lockToCurrentNetwork: true,
+		columns: [
+			{ header: 'Solmu-numero', get: r => r.nodeNumber },
+			{ header: 'P-Koord', get: r => r.nodeCoordinates.y },
+			{ header: 'I-Koord', get: r => r.nodeCoordinates.x },
+			{ header: 'Nimi', get: r => r.nodeName },
+			{ header: 'Solmu-tyyppi', get: r => r.nodeType },
+			{ header: 'Alkupvm', get: r => r.startDate },
+			{ header: 'Liittymä-nro', get: r => r.junctionNumber },
+			{ header: 'Tie', get: r => r.roadNumber },
+			{ header: 'Ajr', get: r => r.track },
+			{ header: 'Osa', get: r => r.roadPartNumber },
+			{ header: 'Et', get: r => r.addrM },
+			{ header: 'EJ', get: r => getBeforeAfterDisplayText(r.beforeAfter) }
+		]
+	},
+	RoadNames: {
+		columns: [
+			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
+			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Tie', get: r => r.roadNumber },
+			{ header: 'Nimi', get: r => r.roadName }
+		]
+	}
+};
+
+// Rows as plain arrays (header row + one row per result) for CSV export.
+function resultsToArray(target, results) {
+	const { columns } = TARGET_CONFIG[target];
+	return [columns.map(c => c.header), ...results.map(row => columns.map(c => c.get(row)))];
+}
+
+// Same data as an HTML table, using the same column definitions as resultsToArray
+// so the export and the on-screen table can never drift apart.
+function resultsToTable(target, results) {
+	const { columns } = TARGET_CONFIG[target];
+	const headHtml = columns.map(c => `<th>${c.header}</th>`).join('');
+	const bodyHtml = results.map((row) => {
+		const cells = columns.map(c => `<td>${c.get(row)}</td>`).join('');
+		return `<tr>${cells}</tr>`;
+	}).join('');
+
+	return $(`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
+                  <thead><tr>${headHtml}</tr></thead>
+                  <tbody>${bodyHtml}</tbody>
+              </table>`);
+}
+
 /**
  * RoadAddressBrowserWindow component
  * Displays a modal for searching, viewing, and exporting road address data.
@@ -25,320 +135,6 @@ export function RoadAddressBrowserWindow(backend) {
 			modal = null;
 		}
 	});
-
-	function getBeforeAfterDisplayText(beforeAfterValues) {
-		let letterString = "";
-		beforeAfterValues.forEach((value) => {
-			const beforeAfter = _.find(ViiteEnumerations.BeforeAfter, function (obj) {
-				return obj.value === value;
-			});
-			letterString += beforeAfter.displayLetter;
-		});
-		return letterString.split('').sort().join(''); // sort letter string so that 'JE' becomes 'EJ'
-	}
-
-	function createArrayOfArraysForTracks(results) {
-		const array = [];
-		let arrayPointer = -1;
-		array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
-		for (let i = 0, len = results.length; i < len; i++) {
-			array[++arrayPointer] = [
-				results[i].evk,
-				typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
-				results[i].roadNumber,
-				results[i].track,
-				results[i].roadPartNumber,
-				results[i].addrMRange.start,
-				results[i].addrMRange.end,
-				results[i].lengthAddrM,
-				getAdministrativeClassTextValue(results[i].administrativeClass),
-				results[i].startDate
-			];
-		}
-		return array; // join the array to one large string and create jquery element from said string
-	}
-
-	/**
-       *      This function is performance critical. Pointers in use for reasonable processing time.
-       *      If edited be sure to measure table creation time with the largest possible dataset!
-       */
-	function createResultTableForTracks(results) {
-		const arr = [];
-		let arrPointer = -1;
-		arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
-                                  <thead>
-                                      <tr>
-                                          <th>Elinvoimakeskus</th>
-                                          <th>Ely</th>
-                                          <th>Tie</th>
-                                          <th>Ajr</th>
-                                          <th>Osa</th>
-                                          <th>Aet</th>
-                                          <th>Let</th>
-                                          <th>Pituus</th>
-                                          <th>Hall. luokka</th>
-                                          <th>Alkupvm</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>`;
-		for (let i = 0, len = results.length; i < len; i++) {
-			arr[++arrPointer] =`    <tr>
-              <td>${results[i].evk}</td>
-                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
-                                          <td>${results[i].roadNumber}</td>
-                                          <td>${results[i].track}</td>
-                                          <td>${results[i].roadPartNumber}</td>
-                                          <td>${results[i].addrMRange.start}</td>
-                                          <td>${results[i].addrMRange.end}</td>
-                                          <td>${results[i].lengthAddrM}</td>
-                                          <td>${getAdministrativeClassTextValue(results[i].administrativeClass)}</td>
-                                          <td>${results[i].startDate}</td>
-                                      </tr>`;
-		}
-		arr.push(`    </tbody>
-                          </table>`);
-		return $(arr.join('')); // join the array to one large string and create jquery element from said string
-	}
-
-	function createArrayOfArraysForRoadParts(results) {
-		const array = [];
-		let arrayPointer = -1;
-		array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
-		for (let i = 0, len = results.length; i < len; i++) {
-			array[++arrayPointer] = [
-				results[i].evk,
-				typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
-				results[i].roadNumber,
-				results[i].roadPartNumber,
-				results[i].addrMRange.start,
-				results[i].addrMRange.end,
-				results[i].lengthAddrM,
-				results[i].startDate
-			];
-		}
-		return array; // join the array to one large string and create jquery element from said string
-	}
-
-	/**
-       *      This function is performance critical. Pointers in use for reasonable processing time.
-       *      If edited be sure to measure table creation time with the largest possible dataset!
-       */
-	function createResultTableForRoadParts(results) {
-		const arr = [];
-		let arrPointer = -1;
-		arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
-                                  <thead>
-                                      <tr>
-                                          <th>Elinvoimakeskus</th>
-                                          <th>Ely</th>
-                                          <th>Tie</th>
-                                          <th>Osa</th>
-                                          <th>Aet</th>
-                                          <th>Let</th>
-                                          <th>Pituus</th>
-                                          <th>Alkupvm</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>`;
-		for (let i = 0, len = results.length; i < len; i++) {
-			arr[++arrPointer] =`    <tr>
-                                          <td>${results[i].evk}</td>
-                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
-                                          <td>${results[i].roadNumber}</td>
-                                          <td>${results[i].roadPartNumber}</td>
-                                          <td>${results[i].addrMRange.start}</td>
-                                          <td>${results[i].addrMRange.end}</td>
-                                          <td>${results[i].lengthAddrM}</td>
-                                          <td>${results[i].startDate}</td>
-                                      </tr>`;
-		}
-		arr.push(`    </tbody>
-                          </table>`);
-		return $(arr.join('')); // join the array to one large string and create jquery element from said string
-	}
-
-	function createArrayOfArraysForNodes(results) {
-		const array = [];
-		let arrayPointer = -1;
-		array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
-		for (let i = 0, len = results.length; i < len; i++) {
-			array[++arrayPointer] = [
-				results[i].evk,
-				typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
-				results[i].roadNumber,
-				results[i].roadPartNumber,
-				results[i].addrM,
-				results[i].startDate,
-				results[i].nodeType,
-				results[i].nodeName,
-				results[i].nodeCoordinates.y,
-				results[i].nodeCoordinates.x,
-				results[i].nodeNumber
-			];
-		}
-		return array; // join the array to one large string and create jquery element from said string
-	}
-
-	/**
-       *      This function is performance critical. Pointers in use for reasonable processing time.
-       *      If edited be sure to measure table creation time with the largest possible dataset!
-       */
-	function createResultTableForNodes(results) {
-		const arr = [];
-		let arrPointer = -1;
-		arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
-                                  <thead>
-                                      <tr>
-                                          <th>Elinvoimakeskus</th>
-                                          <th>Ely</th>
-                                          <th>Tie</th>
-                                          <th>Osa</th>
-                                          <th>Et</th>
-                                          <th>Alkupvm</th>
-                                          <th>Tyyppi</th>
-                                          <th>Nimi</th>
-                                          <th>P-Koord</th>
-                                          <th>I-Koord</th>
-                                          <th>Solmunumero</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>`;
-
-		for (let i = 0, len = results.length; i < len; i++) {
-			arr[++arrPointer] =`    <tr>
-                                          <td>${results[i].evk}</td>
-                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
-                                          <td>${results[i].roadNumber}</td>
-                                          <td>${results[i].roadPartNumber}</td>
-                                          <td>${results[i].addrM}</td>
-                                          <td>${results[i].startDate}</td>
-                                          <td>${results[i].nodeType}</td>
-                                          <td>${results[i].nodeName}</td>
-                                          <td>${results[i].nodeCoordinates.y}</td>
-                                          <td>${results[i].nodeCoordinates.x}</td>
-                                          <td>${results[i].nodeNumber}</td>
-                                      </tr>`;
-		}
-		arr.push(`</tbody>
-                              </table>`);
-		return $(arr.join('')); // join the array to one large string and create jquery element from said string
-	}
-
-	function createArrayOfArraysForJunctions(results) {
-		const array = [];
-		let arrayPointer = -1;
-		array[++arrayPointer] = ['Solmu-numero','P-Koord', 'I-Koord', 'Nimi', 'Solmu-tyyppi', 'Alkupvm', 'Liittymä-nro', 'Tie', 'Ajr', 'Osa', 'Et', 'EJ'];
-		for (let i = 0, len = results.length; i < len; i++) {
-			array[++arrayPointer] = [
-				results[i].nodeNumber,
-				results[i].nodeCoordinates.y,
-				results[i].nodeCoordinates.x,
-				results[i].nodeName,
-				results[i].nodeType,
-				results[i].startDate,
-				results[i].junctionNumber,
-				results[i].roadNumber,
-				results[i].track,
-				results[i].roadPartNumber,
-				results[i].addrM,
-				getBeforeAfterDisplayText(results[i].beforeAfter)
-			];
-		}
-		return array; // join the array to one large string and create jquery element from said string
-	}
-
-	/**
-       *      This function is performance critical. Pointers in use for reasonable processing time.
-       *      If edited be sure to measure table creation time with the largest possible dataset!
-       */
-	function createResultTableForJunctions(results) {
-		const arr = [];
-		let arrPointer = -1;
-		arr[++arrPointer] =`<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
-                                  <thead>
-                                      <tr>
-                                          <th>Solmu-numero</th>
-                                          <th>P-Koord</th>
-                                          <th>I-Koord</th>
-                                          <th>Nimi</th>
-                                          <th>Solmu-tyyppi</th>
-                                          <th>Alkupvm</th>
-                                          <th>Liittymä-nro</th>
-                                          <th>Tie</th>
-                                          <th>Ajr</th>
-                                          <th>Osa</th>
-                                          <th>Et</th>
-                                          <th>EJ</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>`;
-
-		for (let i = 0, len = results.length; i < len; i++) {
-			arr[++arrPointer] =`    <tr>
-                                          <td>${results[i].nodeNumber}</td>
-                                          <td>${results[i].nodeCoordinates.y}</td>
-                                          <td>${results[i].nodeCoordinates.x}</td>
-                                          <td>${results[i].nodeName}</td>
-                                          <td>${results[i].nodeType}</td>
-                                          <td>${results[i].startDate}</td>
-                                          <td>${results[i].junctionNumber}</td>
-                                          <td>${results[i].roadNumber}</td>
-                                          <td>${results[i].track}</td>
-                                          <td>${results[i].roadPartNumber}</td>
-                                          <td>${results[i].addrM}</td>
-                                          <td>${getBeforeAfterDisplayText(results[i].beforeAfter)}</td>
-                                      </tr>`;
-		}
-		arr.push(`    </tbody>
-                              </table>`);
-		return $(arr.join('')); // join the array to one large string and create jquery element from said string
-	}
-
-	function createArrayOfArraysForRoadNames(results) {
-		const array = [];
-		let arrayPointer = -1;
-		array[++arrayPointer] = ['Elinvoimakeskus', 'Ely', 'Tie', 'Nimi'];
-		for (let i = 0, len = results.length; i < len; i++) {
-			array[++arrayPointer] = [
-				results[i].evk,
-				typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely,
-				results[i].roadNumber,
-				results[i].roadName
-			];
-		}
-		return array; // join the array to one large string and create jquery element from said string
-	}
-
-	/**
-       *      This function is performance critical. Pointers in use for reasonable processing time.
-       *      If edited be sure to measure table creation time with the largest possible dataset!
-       */
-	function createResultTableForRoadNames(results) {
-		const arr = [];
-		let arrPointer = -1;
-		arr[++arrPointer] = `<table id="roadAddressBrowserTable" class="road-address-browser-window-results-table viite-table">
-                                  <thead>
-                                      <tr>
-                                          <th>Elinvoimakeskus</th>
-                                          <th>Ely</th>
-                                          <th>Tie</th>
-                                          <th>Nimi</th>
-                                      </tr>
-                                  </thead>
-                                  <tbody>`;
-
-		for (let i = 0, len = results.length; i < len; i++) {
-			arr[++arrPointer] = `   <tr>
-                                          <td>${results[i].evk}</td>
-                                          <td>${typeof results[i].ely === 'undefined' || results[i].ely === null ? '-' : results[i].ely}</td>
-                                          <td>${results[i].roadNumber}</td>
-                                          <td>${results[i].roadName}</td>
-                                      </tr>`;
-		}
-		arr.push(`    </tbody>
-                              </table>`);
-		return $(arr.join('')); // join the array to one large string and create jquery element from said string
-	}
 
 	function exportDataAsCsvFile() {
 		function arrayToCSV(data) {
@@ -360,25 +156,7 @@ export function RoadAddressBrowserWindow(backend) {
 		const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
 		const fileName = fileNameString.replaceAll("undefined", "-");
 
-		let data = [];
-		switch (params.target) {
-		case "Tracks":
-			data = createArrayOfArraysForTracks(searchResults);
-			break;
-		case "RoadParts":
-			data = createArrayOfArraysForRoadParts(searchResults);
-			break;
-		case "Nodes":
-			data = createArrayOfArraysForNodes(searchResults);
-			break;
-		case "Junctions":
-			data = createArrayOfArraysForJunctions(searchResults);
-			break;
-		case "RoadNames":
-			data = createArrayOfArraysForRoadNames(searchResults);
-			break;
-		default:
-		}
+		const data = resultsToArray(params.target, searchResults);
 		let csvContent = "\uFEFF"; // UTF-8 BOM
 		csvContent += arrayToCSV(data);
 
@@ -397,13 +175,28 @@ export function RoadAddressBrowserWindow(backend) {
 		document.body.removeChild(link);
 	}
 
+	// Keeps L-osa (end part) from being set below A-osa (start part); shared by both
+	// the live oninput handlers and the pre-submit validation in getData().
+	function syncPartRangeValidation() {
+		const startPart = modal.getContent().find('#roadAddrInputStartPart')[0];
+		const endPart = modal.getContent().find('#roadAddrInputEndPart')[0];
+		if (!startPart || !endPart) return true;
+
+		const startValue = Number(startPart.value);
+		const endValue = Number(endPart.value);
+		const isInvalidRange = !isNaN(startValue) && !isNaN(endValue) && startValue > endValue;
+
+		endPart.setCustomValidity(isInvalidRange ? "L-osa ei voi olla pienempi kuin A-osa" : "");
+		return !isInvalidRange;
+	}
+
 	function getData() {
-		const roadAddrSituationDate   = modal.getContent().find('#roadAddrSituationDate')[0];
-		const elyEvkSelector      = getElyEvkSelectorValue();
-		const roadNumber          = modal.getContent().find('#roadAddrInputRoad')[0];
-		const minRoadPartNumber   = modal.getContent().find('#roadAddrInputStartPart')[0];
-		const maxRoadPartNumber   = modal.getContent().find('#roadAddrInputEndPart')[0];
-		const targetValue         = getTargetSelectorValue();
+		const roadAddrSituationDate = modal.getContent().find('#roadAddrSituationDate')[0];
+		const elyEvkSelector = getElyEvkSelectorValue();
+		const roadNumber = modal.getContent().find('#roadAddrInputRoad')[0];
+		const minRoadPartNumber = modal.getContent().find('#roadAddrInputStartPart')[0];
+		const maxRoadPartNumber = modal.getContent().find('#roadAddrInputEndPart')[0];
+		const targetValue = getTargetSelectorValue();
 
 		// Validate elements exist
 		if (!roadAddrSituationDate || !roadNumber || !minRoadPartNumber || !maxRoadPartNumber) {
@@ -412,7 +205,7 @@ export function RoadAddressBrowserWindow(backend) {
 		}
 
 		// convert date input text to date object
-		const roadAddrSituationDateObject  = moment(roadAddrSituationDate.value, "DD-MM-YYYY").toDate();
+		const roadAddrSituationDateObject = moment(roadAddrSituationDate.value, "DD-MM-YYYY").toDate();
 
 		function reportValidations() {
 			return roadAddrSituationDate.reportValidity() &&
@@ -433,8 +226,7 @@ export function RoadAddressBrowserWindow(backend) {
 			}
 		}
 
-		function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
-              
+		function validateElyEvkAndRoadNumber(elyValue, roadNumberElement) {
 			// If neither ELY/EVK or road number is provided, show error
 			if ((!elyValue || elyValue.length === 0) && (!roadNumberElement || !roadNumberElement.value)) {
 				if (roadNumberElement) {
@@ -442,39 +234,14 @@ export function RoadAddressBrowserWindow(backend) {
 				}
 				return false;
 			}
-              
-			return true;
-		}
-
-		// Validate A-osa and L-osa
-		function validateBeginningAndEndParts () {
-			const aOsa = document.getElementById('roadAddrInputStartPart');
-			const lOsa = document.getElementById('roadAddrInputEndPart');
-
-			const aOsaValue = Number(aOsa.value);
-			const lOsaValue = Number(lOsa.value);
-
-			const aOsaIsNumber = !isNaN(aOsaValue);
-			const lOsaIsNumber = !isNaN(lOsaValue);
-
-			// If both values are valid numbers, validate the range
-			if (aOsaIsNumber && lOsaIsNumber && aOsaValue > lOsaValue) {
-				lOsa.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
-				return false;
-			}
-
-			// Clear error if input is valid or values are not both numbers
-			lOsa.setCustomValidity("");
 			return true;
 		}
 
 		function willPassValidations() {
 			validateDate(roadAddrSituationDate.value);
 			const elyEvkValid = validateElyEvkAndRoadNumber(elyEvkSelector, roadNumber);
-			const partsValid = validateBeginningAndEndParts();
+			const partsValid = syncPartRangeValidation();
 			const formValid = reportValidations();
-              
-			// Only proceed with search if all validations pass
 			return elyEvkValid && partsValid && formValid;
 		}
 
@@ -507,45 +274,17 @@ export function RoadAddressBrowserWindow(backend) {
 		roadNumber.setCustomValidity("");
 		roadAddrSituationDate.setCustomValidity("");
 
-		switch (targetValue) {
-		case "Tracks":
-		case "RoadParts":
+		// Tracks/RoadParts require an ELY/EVK-or-road-number check; the other targets
+		// only need the situation date validated (see TARGET_CONFIG).
+		if (TARGET_CONFIG[targetValue].requiresElyValidation) {
 			validateElyEvkAndRoadNumber(elyEvkSelector, roadNumber);
 			if (willPassValidations())
 				fetchByTargetValue(createParams());
-			break;
-		case "Nodes":
-		case "Junctions":
-		case "RoadNames":
+		} else {
 			validateDate(roadAddrSituationDate.value);
 			if (reportValidations())
 				fetchByTargetValue(createParams());
-			break;
-		default:
 		}
-	}
-
-	function createResultTable(params, results) {
-		let resultTable;
-		switch (params.target) {
-		case "Tracks":
-			resultTable = createResultTableForTracks(results);
-			break;
-		case "RoadParts":
-			resultTable = createResultTableForRoadParts(results);
-			break;
-		case "Nodes":
-			resultTable = createResultTableForNodes(results);
-			break;
-		case "Junctions":
-			resultTable = createResultTableForJunctions(results);
-			break;
-		case "RoadNames":
-			resultTable = createResultTableForRoadNames(results);
-			break;
-		default:
-		}
-		return resultTable;
 	}
 
 	function showData(table) {
@@ -571,14 +310,13 @@ export function RoadAddressBrowserWindow(backend) {
 				searchResults = result.results;
 				if (result.results.length > 0) {
 					if (result.results.length <= ViiteConstants.MAX_ROWS_TO_DISPLAY) {
-						showData(createResultTable(params, result.results));
+						showData(resultsToTable(params.target, result.results));
 					} else {
 						showTableTooBigNotification();
 					}
 				} else {
 					showNoResultsFoundNotification();
 				}
-
 			} else {
 				Spinner.hide();
 				new ConfirmPopup(result.error, { type: "alert" });
@@ -618,20 +356,14 @@ export function RoadAddressBrowserWindow(backend) {
 		const value = values && values.length ? values[0] : 'Tracks';
 		const situationDate = modal.getContent().find('#roadAddrSituationDate')[0];
 		if (!situationDate) return;
-		switch (value) {
-		case "Tracks":
-		case "RoadParts":
-		case "RoadNames":
-			situationDate.disabled = false;
-			situationDate.title = "";
-			break;
-		case "Nodes":
-		case "Junctions":
+
+		if (TARGET_CONFIG[value] && TARGET_CONFIG[value].lockToCurrentNetwork) {
 			situationDate.value = dateutil.getCurrentDateString();
 			situationDate.disabled = true;
 			situationDate.title = "Solmuja ja liittymiä voi tarkastella vain nykyisellä tieverkolla";
-			break;
-		default:
+		} else {
+			situationDate.disabled = false;
+			situationDate.title = "";
 		}
 	}
 
@@ -641,7 +373,6 @@ export function RoadAddressBrowserWindow(backend) {
 
 		// Bind the enter key to the search button
 		$(document).off('keydown' + eventNs).on('keydown' + eventNs, function(e) {
-
 			// ModalContainer does not expose isVisible(); skip when modal is detached from DOM.
 			if (!modal || !modal.getContent().closest('body').length) {
 				return;
@@ -673,6 +404,8 @@ export function RoadAddressBrowserWindow(backend) {
 			};
 		}
 
+		// Start/end part inputs share the same length cap and both need to re-check
+		// the A-osa/L-osa range whenever either one changes.
 		const startPartInput = modal.getContent().find('#roadAddrInputStartPart')[0];
 		if (startPartInput) {
 			startPartInput.oninput = function (event) {
@@ -680,6 +413,7 @@ export function RoadAddressBrowserWindow(backend) {
 				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
 					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
 				}
+				syncPartRangeValidation();
 			};
 		}
 
@@ -690,14 +424,7 @@ export function RoadAddressBrowserWindow(backend) {
 				if (input.value.length > ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER) {
 					input.value = input.value.slice(0, ViiteConstants.MAX_LENGTH_FOR_ROAD_PART_NUMBER);
 				}
-				const startPart = modal.getContent().find('#roadAddrInputStartPart')[0];
-				const startValue = startPart ? Number(startPart.value) : NaN;
-				const endValue = Number(input.value);
-				if (!isNaN(startValue) && !isNaN(endValue) && startValue > endValue) {
-					input.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
-				} else {
-					input.setCustomValidity("");
-				}
+				syncPartRangeValidation();
 			};
 		}
 
@@ -705,20 +432,6 @@ export function RoadAddressBrowserWindow(backend) {
 		if (situationDateInput) {
 			situationDateInput.oninput = function (event) {
 				event.currentTarget.setCustomValidity("");
-			};
-		}
-
-		if (startPartInput) {
-			const originalStartPartInput = startPartInput.oninput;
-			startPartInput.oninput = function(event) {
-				originalStartPartInput(event);
-				const startValue = Number(event.currentTarget.value);
-				const endValue = endPartInput ? Number(endPartInput.value) : NaN;
-				if (endPartInput && !isNaN(startValue) && !isNaN(endValue) && startValue > endValue) {
-					endPartInput.setCustomValidity("L-osa ei voi olla pienempi kuin A-osa");
-				} else if (endPartInput) {
-					endPartInput.setCustomValidity("");
-				}
 			};
 		}
 
