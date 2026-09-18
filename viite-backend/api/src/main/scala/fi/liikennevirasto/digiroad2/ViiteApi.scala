@@ -1244,6 +1244,23 @@ class ViiteApi(val roadLinkService: RoadLinkService,           val KGVClient: Kg
     }
   }
 
+  private val cancelPendingProject: SwaggerSupportSyntax.OperationBuilder = (
+    apiOperation[Map[String, Any]]("cancelPendingProject")
+      .parameters(pathParam[Long]("projectId").description("Id of the project to cancel"))
+      tags "ViiteAPI - Project"
+      summary "Cancels a project while it is pending acceptance."
+    )
+  post("/project/id/:projectId/cancel", operation(cancelPendingProject)) {
+    val projectId = params("projectId").toLong
+    time(logger, s"POST request for /project/id/$projectId/cancel") {
+      if (projectService.cancelPendingProject(projectId)) {
+        Map("success" -> true)
+      } else {
+        Conflict(Map("success" -> false, "message" -> "Projektia ei voi enää peruuttaa"))
+      }
+    }
+  }
+
   private def mapSourceChangeInfoToUI(change: RoadwayChangeSection) = {
     Map(
       "roadNumber" -> change.roadNumber,

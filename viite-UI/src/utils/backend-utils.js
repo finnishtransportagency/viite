@@ -366,6 +366,15 @@
       });
     };
 
+    this.cancelPendingProject = function (projectId, success, errorCallback) {
+      $.ajax({
+        type: "POST",
+        url: "api/viite/project/id/" + projectId + "/cancel",
+        success: success,
+        error: errorCallback
+      });
+    };
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function (parameter, callback) {
