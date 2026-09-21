@@ -3,7 +3,7 @@ import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { clearNodeLayerHighlights, onNodeLayerUnselected, onNodeChanged, onTemplatesSelected, onJunctionDetach, onJunctionAttach, onNodePointDetach, onNodePointAttach } from '@view/map/layers/NodeLayer.js';
 
 /**
- * SelectedNodesAndJunctions - Manages selected nodes and junctions state
+ * SelectedNodesAndJunctions - Manages selected nodes and junctions state in active editing session
  * 
  * Handles node and junction selection including:
  * - Node selection and template management

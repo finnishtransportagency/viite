@@ -1,7 +1,4 @@
 export const zoomlevels = {
-	getAssetZoomLevelIfNotCloser: function (zoom) {
-		return zoom < 10 ? 10 : zoom;
-	},
 	getViewZoom: function (map) {
 		return Math.round(map.getView().getZoom());
 	},

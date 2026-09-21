@@ -17,12 +17,10 @@ import { addNodesToMap, fetchNodesAndJunctionsFromCurrentMap } from '@view/map/l
  */
 export function NodeCollection(backend) {
 	let nodes = [];
-	let nodesWithAttributes = [];
 	let selectedNodesAndJunctions;
 	let mapTemplates = [];
 	let userNodePointTemplates = [];
 	let userJunctionTemplates = [];
-	const saving = 'node-saving';
 
 	function setSelectedNodesAndJunctions(s) {
 		selectedNodesAndJunctions = s;
@@ -45,14 +43,6 @@ export function NodeCollection(backend) {
 		return _.find(nodes, function (node) {
 			return node.nodeNumber === nodeNumber;
 		});
-	}
-
-	function getNodesWithAttributes() {
-		return nodesWithAttributes;
-	}
-
-	function setNodesWithAttributes(list) {
-		nodesWithAttributes = list;
 	}
 
 	function applyFetchedNodesAndJunctions(fetchResult, zoom) {
@@ -78,10 +68,10 @@ export function NodeCollection(backend) {
 	}
 
 	// Fits map view to include all nodes returned by the latest node search.
-	function fitMapToSearchResults() {
-		if (_.isEmpty(nodesWithAttributes)) return;
+	function fitMapToSearchResults(searchResults) {
+		if (_.isEmpty(searchResults)) return;
 		const coords = [];
-		_.each(nodesWithAttributes, function (node) {
+		_.each(searchResults, function (node) {
 			coords.push([node.coordinates.x, node.coordinates.y]);
 		});
 		fitMapToCoordinates(coords);
@@ -91,9 +81,7 @@ export function NodeCollection(backend) {
 		return new Promise((resolve, reject) => {
 			backend.getNodesByRoadAttributes(roadAttributes, function (result) {
 				if (result.success) {
-					const searchResult = result.nodes;
-					setNodesWithAttributes(searchResult);
-					resolve(searchResult);
+					resolve(result.nodes);
 				} else {
 					Spinner.hide();
 					new ConfirmPopup(result.errorMessage, { type: "alert" });
@@ -143,13 +131,11 @@ export function NodeCollection(backend) {
 			const result = searchResults[0];
 
 			// Move map to found location with appropriate zoom level
-
 			moveMapToCoordinates({
 				lon: result.lon,
 				lat: result.lat,
 				zoom: zoomlevels.minZoomForJunctions
 			});
-
 
 			// Fetch node data for the selected location
 			const fetchedNodesAndJunctions = await fetchAndApplyNodesAndJunctions(zoomlevels.minZoomForJunctions);
@@ -196,18 +182,18 @@ export function NodeCollection(backend) {
 
 	function saveNodeToBackend(node, onSuccess, onFail) {
 		const fail = function (message) {
-			onFail(message.errorMessage || 'Solmun tallennus epäonnistui.', saving);
+			onFail(message.errorMessage || 'Solmun tallennus epäonnistui.');
 		};
 
 		const handleSuccess = function () {
 			fetchAndApplyNodesAndJunctions().finally(function () {
-				Spinner.hide(saving);
+				Spinner.hide();
 				onSuccess();
 			});
 		};
 
 		if (!_.isUndefined(node)) {
-			Spinner.show(saving);
+			Spinner.show();
 			if (node.id) {
 				backend.updateNodeInfo(node, function (result) {
 					if (result.success) {
@@ -294,8 +280,6 @@ export function NodeCollection(backend) {
 		setUserTemplates: setUserTemplates,
 		setNodes: setNodes,
 		getNodeByNodeNumber: getNodeByNodeNumber,
-		getNodesWithAttributes: getNodesWithAttributes,
-		setNodesWithAttributes: setNodesWithAttributes,
 		applyFetchedNodesAndJunctions: applyFetchedNodesAndJunctions,
 		fetchAndApplyNodesAndJunctions: fetchAndApplyNodesAndJunctions,
 		fitMapToSearchResults: fitMapToSearchResults,

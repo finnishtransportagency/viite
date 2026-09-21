@@ -52,11 +52,7 @@ export function refreshMap(zoomLevel, bbox, center) {
 }
 
 export function moveMapToCoordinates(position) {
-	let zoomLevel = zoomlevels.getAssetZoomLevelIfNotCloser(zoomlevels.getViewZoom(mapState.map));
-	if (!_.isUndefined(position.zoom))
-		zoomLevel = position.zoom;
 	mapState.map.getView().setCenter([position.lon, position.lat]);
-	mapState.map.getView().setZoom(zoomLevel);
 }
 
 export function fitMapToCoordinates(coordinates) {

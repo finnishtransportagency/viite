@@ -11,6 +11,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	const ROOT = '.node-search-root';
 	let pendingSearchNodeNumber = null;
 	let storedTemplates = { nodePoints: [], junctions: [] };
+	let searchResults = [];
 
 	function hasCompleteNodeData(node) {
 		return Boolean(node) && _.isArray(node.nodePoints) && _.isArray(node.junctions);
@@ -50,10 +51,12 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	}
 
 	function setSearchResults(nodes) {
+		searchResults = nodes;
 		root().find('#node-search-results-content').html(!_.isEmpty(nodes) ? renderSearchResults(nodes) : '');
 	}
 
 	function clearSearchResults() {
+		searchResults = [];
 		root().find('#node-search-results-content').html('');
 	}
 
@@ -101,12 +104,11 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 		clearUntreatedTemplates();
 		(async () => {
 			try {
-				await nodeCollection.getNodesByRoadAttributes(getSearchData());
+				const nodes = await nodeCollection.getNodesByRoadAttributes(getSearchData());
 				if (!root().length) return;
-				const nodes = nodeCollection.getNodesWithAttributes();
 				setSearchResults(nodes);
 				$('#clear-node-search').prop('disabled', false);
-				nodeCollection.fitMapToSearchResults();
+				nodeCollection.fitMapToSearchResults(nodes);
 			} catch (error) {
 				console.error('Search failed:', error);
 			} 
@@ -124,7 +126,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	$(document).on('click', `${ROOT} [data-action="result-click"]`, function (event) {
 		event.preventDefault();
 		const id = $(event.currentTarget).attr('id');
-		const node = nodeCollection.getNodesWithAttributes()[id];
+		const node = searchResults[id];
 		if (node) {
 			moveMapToCoordinates({
 				lon: node.coordinates.x,
