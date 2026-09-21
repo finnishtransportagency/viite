@@ -341,11 +341,14 @@ class LinearLocationDAO extends BaseDAO {
    * @return List of Linear locations within given range, ordered by their start measures.
    *         An overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range.
    */
-  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+  /** Active linear locations of <i>linkId</i> overlapping the given M-range. The bounds may be given
+   * in either order: a change's M-range on the old link is descending when the change runs against
+   * the old link's digitization direction. */
+  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalue1: Double, filterMvalue2: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
 
-      val mustStartBefore = filterMvalueMax - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
-      val mustEndAfter = filterMvalueMin + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
+      val mustStartBefore = math.max(filterMvalue1, filterMvalue2) - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
+      val mustEndAfter = math.min(filterMvalue1, filterMvalue2) + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
 
       val query =
         sql"""

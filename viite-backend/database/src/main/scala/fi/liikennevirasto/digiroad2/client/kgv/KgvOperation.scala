@@ -45,7 +45,8 @@ trait KgvCollection {
 }
 
 object KgvCollection {
-  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
+  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   
+  case object Dynamic                 extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
   case object UnFrozen                extends KgvCollection { def value = "keskilinjavarasto:road_links" }
   case object LinkVersions            extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
@@ -275,13 +276,11 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
-    logger.info(s"################### VERSIONDATE, JOKA ON KÄYTÖSSÄ: $versionDate ##################")
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    val filter2 = encode(combineFiltersWithAnd(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter), Some(withVersionDateFilter(versionDate))))
-    val decodedFilter = decode(filter2)
-    logger.info(s"#### FILTER: $decodedFilter")
+    val encoded = encode(combineFiltersWithAnd(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter), Some(withVersionDateFilter(versionDate))))
+    val decodedFilter = decode(encoded)
     val filterString = if (municipalities.nonEmpty || filter.isDefined) {
-      s"filter=$filter2"
+      s"filter=$encoded"
     } else {
       ""
     }
@@ -331,7 +330,6 @@ trait KgvOperation extends LinkOperationsAbstract{
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
     val url = s"$restApiEndPoint/$serviceName/items?filter-lang=$cqlLang&crs=$crs$filterString"
     val decodedUrl = decode(url)
-    logger.info(s"######### SEARCH QUERY URL: $decodedUrl #########")
     if(!pagination){
       fetchFeatures(url)
       match {
