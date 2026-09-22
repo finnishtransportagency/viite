@@ -102,7 +102,7 @@ object FilterOgc extends Filter {
     s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
 
   override def withVersionDateFilter(date: String): String =
-    s"(versionstarttime::date <= '$date'::date AND (versionendtime::date >= '$date'::date OR versionendtime IS NULL))"
+    s"(versionstarttime <= '${date}T00:00:00Z' AND (versionendtime >= '${date}T00:00:00Z' OR versionendtime IS NULL))"
 
   override def withVersionDateClosedFilter(date: String): String =
     s"versionstarttime <= '${date}T00:00:00Z' AND versionendtime >= '${date}T00:00:00Z'"
