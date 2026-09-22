@@ -63,8 +63,7 @@ jobs:
             --app "npx tsx bin/cdk-pr.ts" \
             --context env=pr \
             --context branch="$BRANCH_NAME" \
-            --yes --all \
-            > /dev/null 2>&1
+            --yes --all
            echo "✅ PR CDK deploy completed."
         env:
           CDK_DEFAULT_ACCOUNT: ${{ env.AWS_ACCOUNT_ID }}
