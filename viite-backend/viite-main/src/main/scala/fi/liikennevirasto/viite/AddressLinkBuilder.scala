@@ -15,17 +15,13 @@ trait AddressLinkBuilder {
 
   /** Viite municipality to EVK code mapping */
   def municipalityToViiteEVKMapping: Map[Long, String] = {
-   // println(s"Fetching municipality to EVK mapping from database")
-    val result = runWithReadOnlySession {
+  runWithReadOnlySession {
       MunicipalityDAO.getViiteMunicipalityToEvkMapping
     }
-   // println(s"Fetched ${result.size} municipality to EVK mappings from database")
-   // result.foreach(r => println(s"Municipality code: ${r._1}, EVK code: ${r._2}"))
-    result
   }
 
   def municipalityNamesMapping: Map[Long, String] = {
-    runWithReadOnlySession {
+  runWithReadOnlySession {
       MunicipalityDAO.getMunicipalityNames
     }
   }

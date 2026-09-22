@@ -27,8 +27,12 @@
 
     map.addOverlay(overlay);
 
+    const isNotVelhoRouteOverlay = function (layer) {
+      return !layer || !layer.get || !layer.get('isVelhoRouteOverlay');
+    };
+
     const displayRoadAddressInfo = (event, pixel) => {
-      const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature);
+      const featureAtPixel = map.forEachFeatureAtPixel(pixel, (feature) => feature, { layerFilter: isNotVelhoRouteOverlay });
       let coordinate;
       const popupBox = document.getElementById('popup-content').getBoundingClientRect();
 
@@ -53,6 +57,7 @@
                 <div class="popup-line-div"><div>AET:&nbsp;</div><div class="selectable">${roadData.addrMRange.start}</div></div>
                 <div class="popup-line-div"><div>LET:&nbsp;</div><div class="selectable">${roadData.addrMRange.end}</div></div>
                 <div class="popup-line-div"><div>Hall. luokka:&nbsp;</div><div class="selectable">${displayAdministrativeClass(roadData.administrativeClassId)}</div></div>
+                <div class="popup-line-div"><div>Alkupäivämäärä:&nbsp;</div><div class="selectable">${roadData.startDate || '-'}</div></div>
               `;
 
               const altShiftPressed = event.originalEvent.shiftKey && event.originalEvent.altKey;

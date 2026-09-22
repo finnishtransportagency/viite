@@ -276,8 +276,7 @@ class ProjectLinkDAO extends BaseDAO {
     project_link.reversed,
     project_link.connected_link_id,
   CASE
-    WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN NULL
-    WHEN status IN (${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
+    WHEN status IN (${RoadAddressChangeType.NotHandled.value}, ${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
     ELSE prj.start_date END AS start_date,
   CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE NULL END as end_date,
   project_link.ADJUSTED_TIMESTAMP,
@@ -333,8 +332,7 @@ class ProjectLinkDAO extends BaseDAO {
           plh.reversed,
           plh.connected_link_id,
           CASE
-            WHEN status = ${RoadAddressChangeType.NotHandled.value} THEN NULL
-            WHEN status IN (${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
+            WHEN status IN (${RoadAddressChangeType.NotHandled.value}, ${RoadAddressChangeType.Termination.value}, ${RoadAddressChangeType.Unchanged.value}) THEN roadway.START_DATE
             ELSE prj.start_date END as start_date,
           CASE WHEN status = ${RoadAddressChangeType.Termination.value} THEN prj.start_date - 1 ELSE NULL END as end_date,
           plh.adjusted_timestamp,
@@ -800,6 +798,23 @@ class ProjectLinkDAO extends BaseDAO {
               $projectLinkQueryBase
               WHERE $filter project_link.road_number = ${roadPart.roadNumber}
               AND project_link.road_part_number = ${roadPart.partNumber}
+              AND project_link.project_id = $projectId
+              ORDER BY project_link.road_number, project_link.road_part_number, project_link.end_addr_m
+              """
+      listQuery(query)
+    }
+  }
+
+  /** Fetches all project links in the given project whose ORIGINAL road part (from the roadway table)
+    * matches the given roadPart. This finds links regardless of whether they have been moved to a
+    * different current road part via Transfer or Renumeration. */
+  def fetchProjectLinksByOriginalRoadPart(roadPart: RoadPart, projectId: Long): Seq[ProjectLink] = {
+    time(logger, "Get project links by original road part") {
+      val query =
+        sql"""
+              $projectLinkQueryBase
+              WHERE roadway.road_number = ${roadPart.roadNumber}
+              AND roadway.road_part_number = ${roadPart.partNumber}
               AND project_link.project_id = $projectId
               ORDER BY project_link.road_number, project_link.road_part_number, project_link.end_addr_m
               """

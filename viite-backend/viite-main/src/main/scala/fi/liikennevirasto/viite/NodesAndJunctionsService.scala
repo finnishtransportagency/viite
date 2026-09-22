@@ -223,7 +223,6 @@ class NodesAndJunctionsService(roadwayDAO: RoadwayDAO, roadwayPointDAO: RoadwayP
 
   def getNodesForRoadAddressBrowser(situationDate: Option[String], ely: Option[String], roadMaintainer: Option[String], roadNumber: Option[Long], minRoadPartNumber: Option[Long], maxRoadPartNumber: Option[Long]): Seq[NodeForRoadAddressBrowser] = {
 
-
     val roadMaintainerOpt = (ely, roadMaintainer) match {
       case (ely, None) => ely
       case (None, roadMaintainer) => roadMaintainer

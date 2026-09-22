@@ -56,7 +56,7 @@
       return '<a id=' + nodePointTemplate.id + ' class="node-point-template-link" href="#node/nodePointTemplate/' + nodePointTemplate.id + '" style="font-weight:bold;cursor:pointer;color: darkorange;">' +
         nodePointTemplate.roadNumber + ' / ' +
         nodePointTemplate.roadPartNumber + ' / ' +
-        nodePointTemplate.addrM + '</a>';
+        nodePointTemplate.addrM;
     };
 
     var junctionTemplateLink = function (junctionTemplate) {
@@ -64,7 +64,7 @@
         junctionTemplate.roadNumber + ' / ' +
         junctionTemplate.track + ' / ' +
         junctionTemplate.roadPartNumber + ' / ' +
-        junctionTemplate.addrM + '</a>';
+        junctionTemplate.addrM;
     };
 
     var nodesAndRoadAttributesHtmlList = function () {

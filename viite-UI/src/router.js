@@ -111,12 +111,17 @@
         var linkIdUrl = linkId ? '/' + linkId : '';
         router.navigate(baseUrl + linkIdUrl);
         var initialCenter = map.getView().getCenter();
+        var alreadyInProjectMode = applicationModel.getSelectedLayer() === 'roadAddressProject';
         if (!_.isUndefined(project.coordX) && project.coordX !== 0 && !_.isUndefined(project.coordY) && project.coordY !== 0 && !_.isUndefined(project.zoomLevel) && project.zoomLevel !== 0) {
-          applicationModel.selectLayer('linkProperty', false);
+          if (!alreadyInProjectMode) {
+            applicationModel.selectLayer('linkProperty', false);
+          }
           map.getView().setCenter([project.coordX, project.coordY]);
           map.getView().setZoom(project.zoomLevel);
         } else if (typeof linkId !== 'undefined') {
-          applicationModel.selectLayer('linkProperty', false);
+          if (!alreadyInProjectMode) {
+            applicationModel.selectLayer('linkProperty', false);
+          }
           backend.getProjectLinkByLinkId(linkId, function (response) {
             map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           });

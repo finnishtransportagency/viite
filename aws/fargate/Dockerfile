@@ -1,5 +1,10 @@
 FROM amazoncorretto:11-alpine-jdk
-RUN apk update && apk upgrade && apk --no-cache add curl
+
+# Update package index, upgrade existing system packages, and install curl + openssl without caching apk index
+RUN apk update && \
+    apk upgrade --no-cache && \
+    apk add --no-cache curl openssl
+
 RUN mkdir /src
 RUN mkdir /src/main
 RUN mkdir /src/main/webapp

@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.util._
-import fi.vaylavirasto.viite.dao.{Link, LinkDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{ComplementaryLinkDAO, Link, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.{GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP, UserDefinedCP}
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadPart, SideCode, Track}
@@ -35,6 +35,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
  val junctionDAO = new JunctionDAO
  val junctionPointDAO = new JunctionPointDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val roadwayDAO = new RoadwayDAO
  val linearLocationDAO = new LinearLocationDAO
  val roadNetworkDAO = new RoadNetworkDAO
@@ -66,6 +67,7 @@ class ProjectSectionCalculatorSpec extends AnyFunSuite with Matchers {
                        roadwayPointDAO,
                        linearLocationDAO,
                        projectDAO,
+                       complementaryLinkDAO,
                        projectLinkDAO,
                        nodeDAO,
                        nodePointDAO,

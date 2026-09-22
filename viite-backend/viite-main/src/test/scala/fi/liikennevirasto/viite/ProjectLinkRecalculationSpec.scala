@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.DigiroadEventBus
 import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao.{CalibrationPointReference, JunctionPointDAO, LinearLocation, LinearLocationDAO, NodeDAO, NodePointDAO, Project, ProjectDAO, ProjectLink, ProjectLinkDAO, ProjectReservedPart, ProjectReservedPartDAO, ProjectState, RoadNetworkDAO, Roadway, RoadwayChangesDAO, RoadwayDAO, RoadwayPointDAO, TerminationCode}
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
-import fi.vaylavirasto.viite.dao.Sequences
+import fi.vaylavirasto.viite.dao.{ComplementaryLinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.{JunctionPointCP, NoCP, RoadAddressCP}
 import fi.vaylavirasto.viite.model.LinkGeomSource.{ComplementaryLinkInterface, FrozenLinkInterface}
@@ -28,6 +28,7 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
  val junctionPointDAO = new JunctionPointDAO
  val nodeDAO = new NodeDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
 
  val roadwayAddressMapper = new RoadwayAddressMapper(roadwayDAO, linearLocationDAO)
 
@@ -57,6 +58,7 @@ class ProjectLinkRecalculationSpec extends AnyFunSuite with Matchers {
      roadwayPointDAO,
      linearLocationDAO,
      projectDAO,
+     complementaryLinkDAO,
      projectLinkDAO,
      nodeDAO,
      nodePointDAO,

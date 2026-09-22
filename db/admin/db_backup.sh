@@ -34,7 +34,8 @@ esac
 ENV_LABEL="unknown"
 
 host_to_env() {
-  local h="${1,,}"  # lowercase
+  local h
+  h="$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')"
   if [[ "$h" == *prod* ]]; then
     echo "prod"
   elif [[ "$h" == *test* ]]; then
@@ -80,7 +81,10 @@ if [[ ! -f "$TABLES_FILE" ]]; then
   exit 1
 fi
 
-mapfile -t TABLES < <(grep -vE '^\s*(#|$)' "$TABLES_FILE" | tr -d '\r')
+TABLES=()
+while IFS= read -r line; do
+  TABLES+=("$line")
+done < <(grep -vE '^\s*(#|$)' "$TABLES_FILE" | tr -d '\r')
 
 if [[ "${#TABLES[@]}" -eq 0 ]]; then
   echo "No tables found in TABLES_FILE: $TABLES_FILE"

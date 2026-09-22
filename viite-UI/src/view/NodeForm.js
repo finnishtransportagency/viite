@@ -394,7 +394,8 @@
           return '<td class="' + tableRowClass + '">' + rowInfo.roadNumber + '</td>' +
             '<td class="' + tableRowClass + '">' + rowInfo.roadPartNumber + '</td>' +
             '<td class="' + tableRowClass + '">' + rowInfo.addr + '</td>' +
-            '<td class="' + tableRowClass + '">' + rowInfo.beforeAfter + '</td>';
+            '<td class="' + tableRowClass + '">' + rowInfo.beforeAfter + '</td>' +
+            ((options && options.showRoadStartDate) ? '<td class="' + tableRowClass + '">' + (rowInfo.roadStartDate || '') + '</td>' : '');
         };
 
         var rowsInfo = getNodePointsRowsInfo(nodePointsInfo);
@@ -430,7 +431,8 @@
               roadPartNumber: point.roadPartNumber,
               addr: point.addrM,
               beforeAfter: point.beforeAfter,
-              type: point.type
+              type: point.type,
+              roadStartDate: point.roadStartDate
             };
             nodePointsRows.push(row);
           });
@@ -455,7 +457,8 @@
               roadPartNumber: first.roadPartNumber,
               addr: first.addr,
               beforeAfter: "EJ",
-              type: first.type
+              type: first.type,
+              roadStartDate: first.roadStartDate
             };
           });
 
@@ -468,7 +471,8 @@
               roadPartNumber: first.roadPartNumber,
               addr: first.addr,
               beforeAfter: (first.beforeAfter === 1 ? "E" : "J"),
-              type: first.type
+              type: first.type,
+              roadStartDate: first.roadStartDate
             };
           });
 
@@ -488,6 +492,7 @@
           ' <th class="node-points-table-header">OSA</th>' +
           ' <th class="node-points-table-header">ET</th>' +
           ' <th class="node-points-table-header">EJ</th>' +
+          ((options && options.showRoadStartDate) ? ' <th class="node-points-table-header">ALKUPVM</th>' : '') +
           '</tr>';
       };
 
@@ -767,7 +772,7 @@
         if (!_.isEmpty(templates.nodePoints) || !_.isEmpty(templates.junctions)) {
           rootElement.html(templatesForm('Aihioiden tiedot:'));
           var nodePointsElement = $('#node-points-info-content');
-          nodePointsElement.html(nodePointsTable.toHtmlTable({nodePointTemplates: templates.nodePoints}));
+          nodePointsElement.html(nodePointsTable.toHtmlTable({nodePointTemplates: templates.nodePoints, options: {showRoadStartDate: true}}));
           var junctionsElement = $('#junctions-info-content');
           junctionsElement.html(junctionsTable.toHtmlTemplateTable(templates.junctions));
         }

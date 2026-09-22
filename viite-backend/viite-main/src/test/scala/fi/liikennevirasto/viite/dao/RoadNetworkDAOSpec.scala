@@ -76,6 +76,32 @@ class RoadNetworkDAOSpec extends AnyFunSuite with Matchers {
    }
  }
 
+ test("Test When overlapping roadway rows have same start and end dates Then Identify them") {
+   runWithRollback {
+     val roadPart = RoadPart(180, 3)
+     val roadway1 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.MinorDiscontinuity, AddrMRange(5123, 5152), reversed = false, DateTime.parse("2011-11-01"), Some(DateTime.parse("2018-06-30")), "test", Some("TEST ROAD 180"), ArealRoadMaintainer.getEVK(2), TerminationCode.NoTermination)
+     val roadway2 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(5147, 5157), reversed = false, DateTime.parse("2011-11-01"), Some(DateTime.parse("2018-06-30")), "test", Some("TEST ROAD 180"), ArealRoadMaintainer.getEVK(2), TerminationCode.NoTermination)
+
+     roadwayDAO.create(Seq(roadway1, roadway2))
+
+     val res = dao.fetchOverlappingRoadwaysInHistory(roadPart)
+     res.size should be (2)
+   }
+ }
+
+ test("Test When overlapping roadway rows have open-ended dates Then Identify them") {
+   runWithRollback {
+     val roadPart = RoadPart(181, 3)
+     val roadway1 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.MinorDiscontinuity, AddrMRange(5123, 5152), reversed = false, DateTime.parse("2011-11-01"), None, "test", Some("TEST ROAD 181"), ArealRoadMaintainer.getEVK(2), TerminationCode.NoTermination)
+     val roadway2 = Roadway(NewIdValue, Sequences.nextRoadwayNumber, roadPart, AdministrativeClass.State, Track.Combined, Discontinuity.EndOfRoad, AddrMRange(5147, 5157), reversed = false, DateTime.parse("2018-06-30"), None, "test", Some("TEST ROAD 181"), ArealRoadMaintainer.getEVK(2), TerminationCode.NoTermination)
+
+     roadwayDAO.create(Seq(roadway1, roadway2))
+
+     val res = dao.fetchOverlappingRoadwaysInHistory(roadPart)
+     res.size should be (2)
+   }
+ }
+
  //TODO better name for this test (when the case class and query gets better name)
  test("Test When there are overlapping roadways on linear locations Then identify them") {
    runWithRollback {

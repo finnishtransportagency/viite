@@ -62,11 +62,17 @@ SEQFILE_EXISTS=0
 # Parse sidecar file once to a VALUES list for readable apply output.
 SEQ_VALUES_SQL="$({
   awk -F"'" '
-    /^SELECT[[:space:]]+setval\(/ {
+    /^SELECT[ \t]+setval\(/ {
       seq_name = $2
       if (seq_name == "public.db_restore_log_id_seq") next
-      if (match($0, /,[[:space:]]*([0-9]+)[[:space:]]*,[[:space:]]*true\)[[:space:]]*;/, m)) {
-        printf "(\047%s\047, %s),\n", seq_name, m[1]
+      # Extract number: split by comma, trim spaces, get second field (the number)
+      rest = $3
+      sub(/^[ \t]*,[ \t]*/, "", rest)
+      split(rest, parts, ",")
+      seq_value = parts[1]
+      gsub(/[ \t]/, "", seq_value)
+      if (seq_value ~ /^[0-9]+$/) {
+        printf "(\047%s\047, %s),\n", seq_name, seq_value
       }
     }
   ' "$SEQFILE"
@@ -100,7 +106,10 @@ TABLES_FILE="${TABLES_FILE:-$SCRIPT_DIR/tables.txt}"
 [[ -f "$TABLES_FILE" ]] || die "Missing tables file: $TABLES_FILE"
 
 # Read tables (ignore empty + comments)
-mapfile -t TABLES < <(grep -vE '^\s*($|#)' "$TABLES_FILE" | sed 's/^\s*//;s/\s*$//')
+TABLES=()
+while IFS= read -r line; do
+  TABLES+=("$line")
+done < <(grep -vE '^\s*($|#)' "$TABLES_FILE" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 [[ "${#TABLES[@]}" -gt 0 ]] || die "No tables found in $TABLES_FILE"
 
 # Logging
@@ -219,7 +228,7 @@ DUMP_TABLES="$(printf "%s" "$DUMP_LIST_RAW" \
 
 if [[ -z "$DUMP_TABLES" ]]; then
   echo "  ⚠️  Could not detect TABLE DATA entries (continuing)."
-else
+  echo
   for dt in $DUMP_TABLES; do
     schema="${dt%%.*}"; table="${dt##*.}"
     [[ "$schema" == "$SCHEMA" ]] || die "Refusing: dump contains non-${SCHEMA} schema table: $dt"

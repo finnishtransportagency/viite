@@ -31,6 +31,7 @@ class ScalatraBootstrap extends LifeCycle {
       "/api/viite/*")
     context.mount(new ResourcesApp, "/api-docs")
     context.mount(new RasterProxy, "/rasteripalvelu")
+    context.mount(new VelhoApi, "/api/viite/velho/*")
   }
 }
 

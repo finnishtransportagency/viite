@@ -51,7 +51,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               "Uses HTTP redirects for the heavier queries, to address some timeout issues."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[Int]("municipality").required
-        .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
+        .description("The municipality identifier.\nFor the list, see https://stat.fi/fi/luokitukset")
       parameter queryParam[String]("situationDate").optional
         .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
     )
@@ -111,7 +111,7 @@ class IntegrationApi(val roadAddressService: RoadAddressService, val roadNameSer
               "Uses HTTP redirects for the heavier queries, to address some timeout issues."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam[Int]("municipality").required
-        .description("The municipality identifier.\nFor the list, see https://www2.tilastokeskus.fi/fi/luokitukset/kunta/.")
+        .description("The municipality identifier.\nFor the list, see https://stat.fi/fi/luokitukset")
       parameter queryParam[String]("situationDate").optional
         .description("(Optional) The road address information is returned from this exact moment (instead of the newest data).\n" + ISOdateTimeDescription)
     )
@@ -506,7 +506,7 @@ println(s"fetchAllValidNodesWithJunctions GOT RESULT, of size ${result.size}") /
       summary "Returns the changes of the linear locations dated after (and including) the given date."
       parameter headerParam[String]("X-API-Key").required.description(XApiKeyDescription)
       parameter queryParam [String]("since").required
-        .description("The earliest moment, from where the linear location changes are listed.\n" + ISOdateTimeDescription))
+        .description("The earliest moment, from where the linear location changes are listed. NOTE: This can return over 50mb of data which Swagger doesn't seem to handle well. If you encounter crashes when testing this endpoint, try to adjust \"since\" parameter.\n" + ISOdateTimeDescription))
 
   get("/linear_location/changes", operation(getLinearLocationChanges)) {
     contentType = formats("json")

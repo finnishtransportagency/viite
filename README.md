@@ -143,13 +143,13 @@ UI will be available in this address: <http://localhost:9003/>.
 Initializing the database
 =========================
 Empty database must be initialized for the Flyway by running the task "Flyway init"
-or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_init>.
+or by calling the Viite AdminAPI: <http://localhost:9080/api/admin/flyway_init>.
 
 All the tables can be created and populated with the test data by running the task "Fixture reset test".
 TODO: nodes and junctions test data must be created too.
 
 Flyway migrations can be run by running the task "Flyway migrate"
-or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrate>.
+or by calling the Viite AdminAPI: <http://localhost:9080/api/admin/flyway_migrate>.
 ("Fixture reset test" does this already.)
 
 [Deployment and Infra related instructions](https://github.com/finnishtransportagency/viite-infra?tab=readme-ov-file#viite-infrastructure)

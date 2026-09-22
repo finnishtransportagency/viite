@@ -213,6 +213,8 @@
                 '<th>Ajr</th>' +
                 '<th>Aet</th>' +
                 '<th>Let</th>' +
+                '<th>Alkupäivä</th>' +
+                '<th>Loppupäivä</th>' +
                 '<th>Pituus</th>' +
                 '<th>Roadway numero</th>' +
                 '</thead>' +
@@ -224,6 +226,8 @@
                                     <td>${rw.track}</td>
                                     <td>${rw.addrMRange.start}</td>
                                     <td>${rw.addrMRange.end}</td>
+                                    <td>${rw.startDate}</td>
+                                    <td>${rw.endDate || ''}</td>
                                     <td>${rw.length}</td>
                                     <td>${rw.roadwayNumber}</td>
                                 </tr>`);
@@ -242,6 +246,8 @@
                 '<th>Ajr</th>' +
                 '<th>Aet</th>' +
                 '<th>Let</th>' +
+                '<th>Alkupäivä</th>' +
+                '<th>Loppupäivä</th>' +
                 '<th>Roadway numero</th>' +
                 '</thead>' +
                 '<tbody></tbody></table>');
@@ -252,6 +258,8 @@
                                     <td>${rw.track}</td>
                                     <td>${rw.addrMRange.start}</td>
                                     <td>${rw.addrMRange.end}</td>
+                                    <td>${rw.startDate}</td>
+                                    <td>${rw.endDate || ''}</td>
                                     <td>${rw.roadwayNumber}</td>
                                 </tr>`);
                 table.append(tableRow);
@@ -269,6 +277,8 @@
                 '<th>Ajr</th>' +
                 '<th>Aet</th>' +
                 '<th>Let</th>' +
+                '<th>Alkupäivä</th>' +
+                '<th>Loppupäivä</th>' +
                 '<th>Roadway numero</th>' +
                 '<th>Lineaarilokaatio Id</th>' +
                 '<th>Link Id</th>' +
@@ -281,6 +291,8 @@
                                     <td>${rw.track}</td>
                                     <td>${rw.addrMRange.start}</td>
                                     <td>${rw.addrMRange.end}</td>
+                                    <td>${rw.startDate}</td>
+                                    <td>${rw.endDate || ''}</td>
                                     <td>${rw.roadwayNumber}</td>
                                     <td>${rw.linearLocationId}</td>
                                     <td>${rw.linkId}</td>

@@ -149,6 +149,25 @@
     const isProjectPublishable = () => projectCollection.getPublishableStatus();
     const isProjectEditable = () => _.includes(editableStatus, projectCollection.getCurrentProject().project.statusCode);
 
+    const originalLinksStorageKey = (projectId) => `original_links_${projectId}`;
+
+    // Used for form validation
+    const getStoredOriginalLinks = (projectId) => {
+      // Original link values contains road part, number and track code for each link in the project when it was first opened in the edit form.
+      const originalLinkValues = sessionStorage.getItem(originalLinksStorageKey(projectId));
+      if (!originalLinkValues) return {};
+      try {
+        const parsed = JSON.parse(originalLinkValues);
+        return _.isObject(parsed) ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    };
+
+    const setStoredOriginalLinks = (projectId, linksByLinkId) => {
+      sessionStorage.setItem(originalLinksStorageKey(projectId), JSON.stringify(linksByLinkId));
+    };
+
     const checkInputs = () => {
       const rootElement = $('#feature-attributes');
       const inputs = rootElement.find('input');
@@ -327,6 +346,30 @@
         if (roadwayCheckbox) {
           roadwayCheckbox.dataset.initialValue = roadwayCheckbox.checked ? '1' : '0';
         }
+
+        // Store original road address values in one sessionStorage object per project.
+        // Persist only once per link so later re-open/saves do not overwrite originals.
+        if (selectedProjectLink && selectedProjectLink.length > 0) {
+          const currentProjectId = projectCollection.getCurrentProject().project.id;
+          const storedOriginalLinks = getStoredOriginalLinks(currentProjectId);
+          let hasChanges = false;
+
+          // If any of the selected links are not yet stored in sessionStorage, add them with their current values.
+          _.each(selectedProjectLink, (link) => {
+            if (!storedOriginalLinks[link.linkId]) {
+              storedOriginalLinks[link.linkId] = {
+                roadNumber: link.roadNumber,
+                roadPartNumber: link.roadPartNumber,
+                trackCode: link.trackCode
+              };
+              hasChanges = true;
+            }
+          });
+
+          if (hasChanges) {
+            setStoredOriginalLinks(currentProjectId, storedOriginalLinks);
+          }
+        }
       };
 
       eventbus.on('projectLink:errorClicked', (selected, errorMessage) => {
@@ -340,10 +383,13 @@
       });
 
       eventbus.on('roadAddress:projectFailed', () => {
+        eventbus.trigger('roadAddressProject:unlockLinks');
         applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectLinksUpdateFailed', (errorCode) => {
+        console.log(`Project links update failed with error code: ${errorCode}`);
+        eventbus.trigger('roadAddressProject:unlockLinks');
         applicationModel.removeSpinner();
         const errorMessages = {
           400: 'Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.',
@@ -358,7 +404,7 @@
         return new ModalConfirm(message);
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated', (response) => {
+      eventbus.on('roadAddress:projectLinksUpdated', (response, dataJson) => {
         //eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
@@ -368,12 +414,11 @@
         selectedProjectLinkProperty.cleanIds();
         
         const { projectErrors } = response;
-        // show disabled buttons
+        const containsFormedLinks =response.formedInfo.length > 0;
         rootElement.html(emptyTemplateDisabledButtons(projectCollection.getCurrentProject().project));
-        
         if (Object.keys(projectErrors).length === 0) {
           // if no (high priority) validation errors are present, then show recalculate button and remove title
-          formCommon.setDisabledAndTitleAttributesById("recalculate-button", false, "");
+          formCommon.setDisabledAndTitleAttributesById("recalculate-button", !containsFormedLinks, "");
           formCommon.setInformationContent();
           formCommon.setInformationContentText("Päivitä etäisyyslukemat jatkaaksesi projektia.");
         } else {
@@ -382,12 +427,8 @@
         formCommon.toggleAdditionalControls();
         // changes made to project links, set recalculated flag to false
         eventbus.trigger('roadAddressProject:setRecalculatedAfterChangesFlag', false);
-        applicationModel.removeSpinner();
-        if (typeof response !== 'undefined' && typeof response.publishable !== 'undefined' && response.publishable) {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable);
-        } else {
-          eventbus.trigger('roadAddressProject:projectLinkSaved');
-        }
+        eventbus.trigger('roadAddressProject:lockLinks', dataJson.ids, dataJson.linkIds); // Lock the saved links against interaction until the background re-fetch redraws them
+        eventbus.trigger('roadAddressProject:projectLinkSaved', response.id, response.publishable, containsFormedLinks);
       });
 
       eventbus.on('roadAddress:projectSentSuccess', () => {
@@ -428,6 +469,7 @@
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', (result) => {
+        eventbus.trigger('roadAddressProject:unlockLinks');
         new ModalConfirm(result.toString());
       });
 
@@ -440,12 +482,9 @@
         selectedProjectLinkProperty.clean();
         $('.wrapper').remove();
         
-        // Trigger cleanup events
-        [
-          'roadAddress:projectLinksEdited',
-          'roadAddressProject:toggleEditingRoad',
-          'roadAddressProject:reOpenCurrent'
-        ].forEach(event => eventbus.trigger(event, event.includes('toggleEditingRoad') ? true : undefined));
+        eventbus.trigger('roadAddress:projectLinksEdited');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+        eventbus.trigger('roadAddressProject:reOpenCurrent', true);
       };
 
       eventbus.on('roadAddressProject:discardChanges', cancelChanges);
@@ -474,18 +513,112 @@
           }
         }
 
+        // For "Ennallaan" and "Numerointi", enforce action-specific field constraints.
+        if (changeType.value === RoadAddressChangeType.Unchanged.value || changeType.value === RoadAddressChangeType.Numbering.value) {
+          
+          const isUnchanged = changeType.value === RoadAddressChangeType.Unchanged.value;
+
+          const currentRoadNumber = Number($('#tie').val());
+          const currentRoadPartNumber = Number($('#osa').val());
+          const currentTrackCode = Number($('#trackCodeDropdown').val());
+
+          // Get original values for all selected links from sessionStorage.
+          const currentProjectId = projectCollection.getCurrentProject().project.id;
+          const storedOriginalLinks = getStoredOriginalLinks(currentProjectId);
+          const storedOriginals = selectedProjectLink.map((link) => {
+            const stored = storedOriginalLinks[link.linkId];
+
+            if (stored) { return stored; }
+
+            return {
+              roadNumber: link.roadNumber,
+              roadPartNumber: link.roadPartNumber,
+              trackCode: link.trackCode
+            };
+          });
+
+          const expectedRoadNumbers = _.chain(storedOriginals)
+            .map(original => Number(original.roadNumber))
+            .uniq()
+            .value();
+          const expectedRoadPartNumbers = _.chain(storedOriginals)
+            .map(original => Number(original.roadPartNumber))
+            .uniq()
+            .value();
+          const expectedTrackCodes = _.chain(storedOriginals)
+            .map(original => Number(original.trackCode))
+            .uniq()
+            .value();
+
+          const roadNumberMismatch = isUnchanged && !expectedRoadNumbers.includes(currentRoadNumber);
+          const roadPartNumberMismatch = isUnchanged && !expectedRoadPartNumbers.includes(currentRoadPartNumber);
+          const trackCodeMismatch = !expectedTrackCodes.includes(currentTrackCode);
+
+          const hasMismatch = roadNumberMismatch || roadPartNumberMismatch || trackCodeMismatch;
+
+          if (hasMismatch) {
+            const formatExpected = (values) => (values.length === 1 ? values[0] : values.join(' / '));
+
+            const changes = [roadPartNumberMismatch &&
+                `Muuta osa ${currentRoadPartNumber} -> ${formatExpected(expectedRoadPartNumbers)}`,
+
+              roadNumberMismatch &&
+                `Muuta tie ${currentRoadNumber} -> ${formatExpected(expectedRoadNumbers)}`,
+
+              trackCodeMismatch &&
+                `Muuta ajr ${currentTrackCode} -> ${formatExpected(expectedTrackCodes)}`
+            ].filter(Boolean);
+
+            return new ModalConfirm(
+              `${
+                isUnchanged
+                  ? 'Ennallaan-toimenpiteellä tie, osa ja ajr eivät saa muuttua.'
+                  : 'Numerointi-toimenpiteellä ajr ei saa muuttua.'
+              }<br>${changes.join('<br>')}`
+            );
+          }
+        }
+
         if (changeType.value === RoadAddressChangeType.Revert.value) {
           projectCollection.revertChangesRoadlink(selectedProjectLink);
         } else {
           const linksToSave = projectCollection.getTmpDirty().length > 0 
             ? projectCollection.getTmpDirty() 
             : selectedProjectLink;
+
+          const lockedIds = _.chain(linksToSave)
+            .map(link => link.id)
+            .filter(id => _.isNumber(id) && id > 0)
+            .uniq()
+            .value();
+          const lockedLinkIds = _.chain(linksToSave)
+            .map(link => link.linkId)
+            .filter(linkId => !_.isUndefined(linkId) && linkId !== null)
+            .uniq()
+            .value();
+
+          // Lock exactly the links being saved so only those links are blocked/cursor-marked.
+          eventbus.trigger('roadAddressProject:lockLinks', lockedIds, lockedLinkIds);
+
           const isEndDistanceModified = projectCollection.getTmpDirty().length > 0 
             ? isEndDistanceTouched() 
             : false;
             
           projectCollection.saveProjectLinks(linksToSave, changeType.value, isEndDistanceModified);
         }
+        projectLinkLayer.clearHighlights();
+        selectedProjectLinkProperty.setCurrent([]);
+        selectedProjectLinkProperty.cleanIds();
+        selectedProjectLinkProperty.clean();
+        selectedProjectLinkProperty.setDirty(false);
+        selectedProjectLink = false;
+        // Close the edit form immediately so the user sees the map without waiting for the HTTP response
+
+        const currentProject = projectCollection.getCurrentProject().project;
+        rootElement.html(emptyTemplateDisabledButtons(currentProject));
+        formCommon.toggleAdditionalControls();
+        // Signal that a save is in-flight so footer buttons go to disabled state
+        eventbus.trigger('roadAddressProject:linksSaving');
         return true;
       };
 
@@ -601,6 +734,8 @@
           case RoadAddressChangeType.Numbering.description:
             uiElements.devTool.prop('hidden', false);
             new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
+            formControls.tie.prop('disabled', false);
+            formControls.osa.prop('disabled', false);
             formControls.trackCode.prop('disabled', true);
             formControls.discontinuity.prop('disabled', false);
             formControls.adminClass.prop('disabled', true);
@@ -669,6 +804,7 @@
         if (changeLayerMode) {
           eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true, noSave);
+          Backbone.history.navigate('linkProperty/'); // Force layer refresh to avoid wrong state (VIITE-3961)
         }
       };
 

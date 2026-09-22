@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.service.RoadLinkService
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.dao.TerminationCode.NoTermination
 import fi.liikennevirasto.viite.process.RoadwayAddressMapper
+import fi.vaylavirasto.viite.dao.ComplementaryLinkDAO
 import fi.vaylavirasto.viite.geometry.Point
 import fi.vaylavirasto.viite.model.CalibrationPointType.NoCP
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, Discontinuity, LifecycleStatus, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track, TrafficDirection}
@@ -35,6 +36,7 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
  val linearLocationDAO = new LinearLocationDAO
  val roadwayPointDAO = new RoadwayPointDAO
  val nodeDAO = new NodeDAO
+ val complementaryLinkDAO = new ComplementaryLinkDAO
  val nodePointDAO = new NodePointDAO
  val junctionPointDAO = new JunctionPointDAO
  val roadwayChangesDAO = new RoadwayChangesDAO
@@ -66,6 +68,7 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
                        roadwayPointDAO,
                        linearLocationDAO,
                        projectDAO,
+                       complementaryLinkDAO,
                        projectLinkDAO,
                        nodeDAO,
                        nodePointDAO,
@@ -86,7 +89,7 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
    runWithRollback {
      val roadAddress = RoadAddress(1, 1234, RoadPart(5, 999), AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0L, 10L), Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, ArealRoadMaintainer.getEVK(8), NoTermination, 0)
 
-     val roadAddressLink = roadAddressLinkBuilder.build(roadAddress)
+     val roadAddressLink = roadAddressLinkBuilder.buildWithRoadAddress(roadAddress)
      roadAddressLink.length should be (22.808)
      roadAddressLink.linearLocationId should be (1234)
      roadAddressLink.linkId should be (12345L.toString)
@@ -99,7 +102,10 @@ class RoadAddressLinkBuilderSpec extends AnyFunSuite with Matchers {
      val roadAddress = RoadAddress(1, 1234, RoadPart(5, 999), AdministrativeClass.Unknown, Track.Combined, Discontinuity.Discontinuous, AddrMRange(0L, 10L), Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 12345L.toString, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), Seq(Point(0.0, 0.0), Point(2.0, 9.8), Point(2.0, 9.8), Point(10.0, 19.8)), LinkGeomSource.NormalLinkInterface, ArealRoadMaintainer.getEVK(8), NoTermination, 0)
      val roadlink = RoadLink(linkId = 1L.toString, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, AdministrativeClass.Municipality, TrafficDirection.BothDirections, None, None, municipalityCode = 0, sourceId = "")
 
-     val roadAddressLink = roadAddressLinkBuilder.build(roadlink, roadAddress)
+     val municipalityNamesMapping = ProjectAddressLinkBuilder.municipalityNamesMapping
+     val municipalityName = municipalityNamesMapping.getOrElse(roadlink.municipalityCode, "")
+
+     val roadAddressLink = roadAddressLinkBuilder.buildWithRoadLinkAndRoadAddress(roadlink, roadAddress, municipalityName)
      roadAddressLink.length should be (9.8)
      roadAddressLink.linearLocationId should be (1234)
      roadAddressLink.linkId should be (1L.toString)
