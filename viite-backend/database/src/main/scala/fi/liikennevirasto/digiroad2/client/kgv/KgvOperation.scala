@@ -277,19 +277,24 @@ trait KgvOperation extends LinkOperationsAbstract{
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    val encoded = encode(combineFiltersWithAnd(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter), Some(withVersionDateFilter(versionDate))))
-    val decodedFilter = decode(encoded)
-    val filterString = if (municipalities.nonEmpty || filter.isDefined) {
-      s"filter=$encoded"
-    } else {
-      ""
+    val baseFilter = combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter)
+
+    // KGV's CQL engine mishandles an OR predicate combined with AND, so withVersionDateFilter's
+    // internal OR is split into two "closed"/"open" queries and merged here instead
+    def fetchVersionLayer(versionFilter: String): Seq[Feature] = {
+      val encodedFilter = encode(combineFiltersWithAnd(baseFilter, versionFilter))
+      val url = s"$restApiEndPoint/$serviceName/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&filter=$encodedFilter"
+      fetchFeatures(url) match {
+        case Right(features) => features.toSeq.flatMap(_.features)
+        case Left(error) => throw new ClientException(error.toString)
+      }
     }
-    fetchFeatures(s"$restApiEndPoint/$serviceName/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")
-    match {
-      case Right(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
-      case Left(error) => throw new ClientException(error.toString)
-    }
+
+    val features = (
+      fetchVersionLayer(withVersionDateClosedFilter(versionDate)) ++ fetchVersionLayer(withVersionDateOpenFilter(versionDate))
+    ).distinct
+
+    features.map(feature => Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
   }
 
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {

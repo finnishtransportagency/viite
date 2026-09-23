@@ -59,11 +59,16 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
     * Returns road links in bounding box area. Municipalities are optional.
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[LinkType] = {
-    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
-      Some(filter.withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
+    if (includeAllPublicRoads)
+      queryByMunicipalitiesAndBounds(bounds, municipalities, Some(filter.withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)))
+    else if (roadNumbers.isEmpty)
+      queryByMunicipalitiesAndBounds(bounds, municipalities, None)
     else
-      None
-    queryByMunicipalitiesAndBounds(bounds, municipalities, roadNumberFilters)
+      // KGV's endpoint returns 500 for bbox queries whose filter contains an OR
+      // so each road number range is queried separately here instead of OR-ing them into one CQL filter.
+      roadNumbers.flatMap(range =>
+        queryByMunicipalitiesAndBounds(bounds, municipalities, Some(filter.withRoadNumbersFilter(Seq(range), includeAllPublicRoads = false)))
+      ).distinct
   }
 
   def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
