@@ -1613,6 +1613,7 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
             addrMRange = AddrMRange(ra.addrMRange.start, ra.addrMRange.end),
             originalAddrMRange = ra.addrMRange,
             calibrationPointTypes = (startCpType, endCpType),
+            // TODO: Should this be "originalCalibrationPointTypes = (startCpType, endCpType)," instead?
             originalCalibrationPointTypes = (startCpType, startCpType),
             sideCode = ra.sideCode,
             roadMaintainer = ra.roadMaintainer,
