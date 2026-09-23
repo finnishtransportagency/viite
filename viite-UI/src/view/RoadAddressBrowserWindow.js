@@ -19,8 +19,8 @@
       roadAddrBrowserWindow.append(roadAddressChangesBrowserHeader);
       roadAddrBrowserWindow.append(roadAddressBrowserForm.getRoadAddressBrowserForm());
 
-      function formatElyValue(elyValue) {
-          return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+      function formatElyEvkValue(elyEvkValue) {
+          return (elyEvkValue === undefined || elyEvkValue === null || elyEvkValue === '' || elyEvkValue === 'undefined' || elyEvkValue === 0 || elyEvkValue === '0') ? '-' : elyEvkValue;
       }
 
       function createArrayOfArraysForTracks(results) {
@@ -29,8 +29,8 @@
           array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Ajr', 'Osa', 'Aet', 'Let', 'Pituus', 'Hall. luokka', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
-                  results[i].evk,
-                  formatElyValue(results[i].ely),
+                  formatElyEvkValue(results[i].evk),
+                  formatElyEvkValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].track,
                   results[i].roadPartNumber,
@@ -69,8 +69,8 @@
                                   <tbody>`;
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
-              <td>${results[i].evk}</td>
-                                          <td>${formatElyValue(results[i].ely)}</td>
+              <td>${formatElyEvkValue(results[i].evk)}</td>
+                                          <td>${formatElyEvkValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].track}</td>
                                           <td>${results[i].roadPartNumber}</td>
@@ -92,8 +92,8 @@
           array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Osa', 'Aet', 'Let', 'Pituus', 'Alkupvm'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
-                  results[i].evk,
-                  formatElyValue(results[i].ely),
+                  formatElyEvkValue(results[i].evk),
+                  formatElyEvkValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].roadPartNumber,
                   results[i].addrMRange.start,
@@ -128,8 +128,8 @@
                                   <tbody>`;
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
-                                          <td>${results[i].evk}</td>
-                                          <td>${formatElyValue(results[i].ely)}</td>
+                                          <td>${formatElyEvkValue(results[i].evk)}</td>
+                                          <td>${formatElyEvkValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrMRange.start}</td>
@@ -149,8 +149,8 @@
           array[++arrayPointer] = ['Elinvoimakeskus', 'Ely','Tie', 'Osa', 'Et', 'Alkupvm', 'Tyyppi', 'Nimi', 'P-Koord', 'I-Koord', 'Solmunumero'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
-                  results[i].evk,
-                  formatElyValue(results[i].ely),
+                  formatElyEvkValue(results[i].evk),
+                  formatElyEvkValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].roadPartNumber,
                   results[i].addrM,
@@ -192,8 +192,8 @@
 
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] =`    <tr>
-                                          <td>${results[i].evk}</td>
-                                          <td>${formatElyValue(results[i].ely)}</td>
+                                          <td>${formatElyEvkValue(results[i].evk)}</td>
+                                          <td>${formatElyEvkValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadPartNumber}</td>
                                           <td>${results[i].addrM}</td>
@@ -286,8 +286,8 @@
           array[++arrayPointer] = ['Elinvoimakeskus', 'Ely', 'Tie', 'Nimi'];
           for (let i = 0, len = results.length; i < len; i++) {
               array[++arrayPointer] = [
-                  results[i].evk,
-                  formatElyValue(results[i].ely),
+                  formatElyEvkValue(results[i].evk),
+                  formatElyEvkValue(results[i].ely),
                   results[i].roadNumber,
                   results[i].roadName
               ];
@@ -315,8 +315,8 @@
 
           for (let i = 0, len = results.length; i < len; i++) {
               arr[++arrPointer] = `   <tr>
-                                          <td>${results[i].evk}</td>
-                                          <td>${formatElyValue(results[i].ely)}</td>
+                                          <td>${formatElyEvkValue(results[i].evk)}</td>
+                                          <td>${formatElyEvkValue(results[i].ely)}</td>
                                           <td>${results[i].roadNumber}</td>
                                           <td>${results[i].roadName}</td>
                                       </tr>`;
@@ -348,6 +348,7 @@
       }
 
       function hide() {
+          roadAddressBrowserForm.resetElyEvkSelector();
           roadAddrBrowserWindow.hide();
           $('.road-address-browser-modal-overlay').remove();
       }
@@ -446,15 +447,22 @@
           });
 
           function validateElyEvkAndRoadNumber (elyValue, roadNumberElement) {
-              
-              // If neither ELY/EVK or road number is provided, show error
-              if ((!elyValue || elyValue.length === 0) && (!roadNumberElement || !roadNumberElement.value)) {
-                  if (roadNumberElement) {
-                      roadNumberElement.setCustomValidity("Elinvoimakeskus, Ely tai Tie on pakollinen tieto");
-                  }
-                  return false;
+              // Empty ELY/EVK selection means "all" and should be allowed.
+              // Road number remains optional; when neither is given, the backend will return all results.
+              if (roadNumberElement && roadNumberElement.value) {
+                  roadNumberElement.setCustomValidity("");
+                  return true;
               }
-              
+
+              if (elyValue && elyValue.length > 0) {
+                  roadNumberElement && roadNumberElement.setCustomValidity("");
+                  return true;
+              }
+
+              // No filters selected at all is valid; it will query across all ELY/EVK values.
+              if (roadNumberElement) {
+                  roadNumberElement.setCustomValidity("");
+              }
               return true;
           }
 
@@ -509,18 +517,26 @@
                   target: targetValue
               };
 
-              // Handle ELY/EVK selection
+              // Handle ELY/EVK selection.
+              // If no values are selected, the backend should receive the full range of allowed values.
+              const allElyValues = Object.values(ViiteEnumerations.ElyCodes || {})
+                  .map(code => code.value)
+                  .sort((a, b) => a - b);
+              const allRoadMaintainerValues = Object.values(ViiteEnumerations.EVKCodes || {})
+                  .map(code => code.value)
+                  .sort((a, b) => a - b);
+
               const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
               const selectedByColumn = selectorComponents && selectorComponents.elyEvk &&
                   typeof selectorComponents.elyEvk.getSelectedValuesByColumn === 'function'
                   ? selectorComponents.elyEvk.getSelectedValuesByColumn()
                   : {};
-              if (selectedByColumn[1] && selectedByColumn[1].length > 0) {
-                  params.ely = selectedByColumn[1].join(',');
-              }
-              if (selectedByColumn[0] && selectedByColumn[0].length > 0) {
-                  params.roadMaintainer = selectedByColumn[0].join(',');
-              }
+
+              const selectedElyValues = selectedByColumn[1] || [];
+              const selectedRoadMaintainerValues = selectedByColumn[0] || [];
+
+              params.ely = (selectedElyValues.length > 0 ? selectedElyValues : allElyValues).join(',');
+              params.roadMaintainer = (selectedRoadMaintainerValues.length > 0 ? selectedRoadMaintainerValues : allRoadMaintainerValues).join(',');
 
               if (roadNumber.value) params.roadNumber = roadNumber.value;
               if (minRoadPartNumber.value) params.minRoadPartNumber = minRoadPartNumber.value;
@@ -686,6 +702,8 @@
           if (targetSelector && targetSelector.config) {
               const originalOnChange = targetSelector.config.onSelectionChange;
               targetSelector.config.onSelectionChange = function(value, event) {
+                  roadAddressBrowserForm.resetElyEvkSelector();
+
                   const situationDate = document.getElementById('roadAddrSituationDate');
                   switch (value) {
                       case "Tracks":
