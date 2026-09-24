@@ -168,6 +168,10 @@
       if (targetSelector) targetSelector.bindEvents(container);
     }
 
+    function resetElyEvkSelector() {
+        elyEvkSelector.reset();
+    }
+
     function createRoadNumberInputField(id) {
       return `<div class="input-container"><label class="control-label-small">Tie</label><input class="modern-input road-address-browser-road-input" type="number" min="1" max="99999" id="${id}" /></div>`;
     }
@@ -189,6 +193,7 @@
       getRoadAddressChangesBrowserForm: getRoadAddressChangesBrowserForm,
       getRoadAddressBrowserForm: getRoadAddressBrowserForm,
       bindSelectorEvents: bindSelectorEvents,
+      resetElyEvkSelector: resetElyEvkSelector,
       getSelectorComponents: function () {
         return {
           dateTarget: dateTargetSelector,

@@ -19,8 +19,8 @@
         roadAddressChangesBrowserWindow.append(roadAddressChangesBrowserHeader);
         roadAddressChangesBrowserWindow.append(roadAddressBrowserForm.getRoadAddressChangesBrowserForm());
 
-        function formatElyValue(elyValue) {
-            return (elyValue === undefined || elyValue === null || elyValue === '' || elyValue === 'undefined') ? 0 : elyValue;
+        function formatElyEvkValue(elyEvkValue) {
+            return (elyEvkValue === undefined || elyEvkValue === null || elyEvkValue === '' || elyEvkValue === 'undefined' || elyEvkValue === 0 || elyEvkValue === '0') ? '-' : elyEvkValue;
         }
 
         // ========== Validation helpers (extracted) ==========
@@ -178,8 +178,8 @@
             for (let i = 0, len = results.length; i < len; i++) {
                 arr[++arrPointer] = `   <tr>
                                             <td>${results[i].startDate}</td>
-                                            <td>${results[i].oldEvk}</td>
-                                            <td>${formatElyValue(results[i].oldEly)}</td>
+                                            <td>${formatElyEvkValue(results[i].oldEvk)}</td>
+                                            <td>${formatElyEvkValue(results[i].oldEly)}</td>
                                             <td>${results[i].oldRoadNumber}</td>
                                             <td>${results[i].oldTrack}</td>
                                             <td>${results[i].oldRoadPartNumber}</td>
@@ -189,7 +189,7 @@
                                             <td>${results[i].oldLength}</td>
                                             <td>${EnumerationUtils.getAdministrativeClassTextValue(results[i].oldAdministrativeClass)}</td>
                                             <td>${EnumerationUtils.getChangeTypeDisplayText(results[i].changeType)}</td>
-                                            <td>${results[i].newEvk}</td>
+                                            <td>${formatElyEvkValue(results[i].newEvk)}</td>
 
                                             <td>${results[i].newRoadNumber}</td>
                                             <td>${results[i].newTrack}</td>
@@ -250,8 +250,14 @@
         }
 
         function hide() {
+            elyEvkSelector.reset();
+            roadAddressBrowserForm.resetElyEvkSelector();
             roadAddressChangesBrowserWindow.hide();
             $('.road-address-browser-modal-overlay').remove();
+        }
+
+        function resetElyEvkSelector() {
+          elyEvkSelector.reset();
         }
 
         function exportDataAsCsvFile() {
@@ -352,15 +358,20 @@
 
                 // Add end date to params
                 if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
-                    const selectedByColumn = (elyEvkSelector && elyEvkSelector.getSelectedValuesByColumn()) || {};
 
-                    // Add numeric ELY/EVK values to the corresponding backend parameters.
-                    if (selectedByColumn[1] && selectedByColumn[1].length > 0) {
-                      params.ely = selectedByColumn[1].join(',');
-                    }
-                    if (selectedByColumn[0] && selectedByColumn[0].length > 0) {
-                      params.roadMaintainer = selectedByColumn[0].join(',');
-                    }
+                const allElyValues = Object.values(ViiteEnumerations.ElyCodes || {})
+                    .map(code => code.value)
+                    .sort((a, b) => a - b);
+                const allRoadMaintainerValues = Object.values(ViiteEnumerations.EVKCodes || {})
+                    .map(code => code.value)
+                    .sort((a, b) => a - b);
+
+                const selectedByColumn = (elyEvkSelector && elyEvkSelector.getSelectedValuesByColumn()) || {};
+                const selectedElyValues = selectedByColumn[1] || [];
+                const selectedRoadMaintainerValues = selectedByColumn[0] || [];
+
+                params.ely = (selectedElyValues.length > 0 ? selectedElyValues : allElyValues).join(',');
+                params.roadMaintainer = (selectedRoadMaintainerValues.length > 0 ? selectedRoadMaintainerValues : allRoadMaintainerValues).join(',');
                 
                 if (roadNumber.value) params.roadNumber = roadNumber.value;
                 if (minRoadPartNumber.value) params.minRoadPartNumber = minRoadPartNumber.value;
@@ -394,6 +405,14 @@
         }
 
         function bindEvents() {
+
+            const dateTargetSelector = roadAddressBrowserForm.getSelectorComponents().dateTarget;
+            if (dateTargetSelector && dateTargetSelector.config) {
+                dateTargetSelector.config.onSelectionChange = function () {
+                    resetElyEvkSelector();
+                    clearResultsAndDisableCsvButton();
+                };
+            }
 
           // Bind the enter key to the search button
           $(document).on('keydown', function(e) {
