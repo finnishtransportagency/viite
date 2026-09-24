@@ -136,6 +136,11 @@ object RoadNameDAO extends BaseDAO {
     create(Seq(historyRoadName))
   }
 
+  private def sanitizeRoadName(name: String): String = {
+    name
+      .replace("–", "-")
+  }
+
   def create(roadNames: Seq[RoadName]): List[Int] = {
     logger.debug(s"Creating road names: ${roadNames.map(_.roadName).mkString(", ")}")
     val column = RoadName.column
@@ -143,7 +148,7 @@ object RoadNameDAO extends BaseDAO {
     val batchParams: Seq[Seq[Any]] = roadNames.map { roadName =>
       Seq(
         roadName.roadNumber,
-        roadName.roadName,
+        sanitizeRoadName(roadName.roadName),
         roadName.startDate.orNull,
         roadName.createdBy,
         roadName.endDate.orNull
