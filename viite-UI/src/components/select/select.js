@@ -337,6 +337,34 @@ return `<div>${selector.render()}</div>`;
       return config.multiSelect ? (config.values || []) : config.value;
     }
 
+    function reset() {
+      config.selectedItem = null;
+      config.value = config.multiSelect ? [] : null;
+      config.values = [];
+      config.selectedItemKeys = [];
+
+      const el = document.getElementById(config.id);
+      if (!el) return;
+
+      const label = el.querySelector('.modern-label');
+      if (label) label.textContent = config.placeholder;
+
+      const button = el.querySelector('.modern-button');
+      if (button) button.classList.remove('open');
+
+      const dropdown = el.querySelector('.modern-dropdown');
+      if (dropdown) {
+        dropdown.classList.add('hidden');
+        dropdown.querySelectorAll('.modern-item').forEach(item => {
+          item.classList.remove('selected');
+          const checkbox = item.querySelector('.modern-checkbox');
+          if (checkbox) checkbox.checked = false;
+          const circle = item.querySelector('.modern-circle');
+          if (circle) circle.classList.remove('filled');
+        });
+      }
+    }
+
     function getSelectedValuesByColumn() {
       if (!config.multiSelect) return {};
 
@@ -380,6 +408,7 @@ return `<div>${selector.render()}</div>`;
       setValue: setValue,
       getSelectedValue: getSelectedValue,
       getSelectedValuesByColumn: getSelectedValuesByColumn,
+      reset: reset,
       setDisabled: setDisabled,
       updateData: updateData,
       getElement: getElement,
