@@ -61,6 +61,7 @@ export function MultiColumnDropdown(options) {
   const width = options.width || '100%';
   const data = options.data || {};
   const multiple = Boolean(options.multiple);
+  const showClearButton = options.showClearButton !== false;
   let onChange = options.onChange;
 
   let selectedValues = new Set();
@@ -103,6 +104,8 @@ export function MultiColumnDropdown(options) {
       `;
     }).join('');
 
+    const hasSelection = selectedValues.size > 0;
+
     return `
       <div
         id="${id}"
@@ -111,6 +114,7 @@ export function MultiColumnDropdown(options) {
       >
         <button type="button" class="modern-button">
           <span class="modern-label">${getLabel()}</span>
+          ${hasSelection && showClearButton ? '<span class="modern-clear" title="Tyhjennä valinta">&times;</span>' : ''}
           <img src="images/chevron-down.svg" class="chevron" alt="">
         </button>
 
@@ -204,13 +208,36 @@ export function MultiColumnDropdown(options) {
       if (onChange) onChange(getValue());
     });
 
+    $(document).off(`click${ns}-clear`).on(`click${ns}-clear`, `#${id} .modern-clear`, function (e) {
+      e.stopPropagation();
+      clear();
+      $(`#${id}`).replaceWith($(render()));
+      if (onChange) onChange(getValue());
+    });
+
     $(document).off(`click${ns}-outside`).on(`click${ns}-outside`, function () {
       $(`#${id} .modern-dropdown`).addClass('hidden');
       $(`#${id} .modern-button`).removeClass('open');
     });
   }
 
+  // The dropdown's markup is re-inserted elsewhere (modals, forms) after construction, and
+  // detached again when that container closes. Once its node is no longer in the document,
+  // treat it as "gone" and drop the selection so re-opening the same form starts empty.
+  function observeDetachment() {
+    if (typeof MutationObserver === 'undefined') return;
+
+    const observer = new MutationObserver(function () {
+      if (!document.getElementById(id) && selectedValues.size > 0) {
+        clear();
+        if (onChange) onChange(getValue());
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   bindEvents();
+  observeDetachment();
 
   return {
     render: render,

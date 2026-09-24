@@ -4,6 +4,10 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { button } from '@components/button/Button.js';
 
+export function formatElyEvkValue(elyEvkValue) {
+	return (elyEvkValue === undefined || elyEvkValue === null || elyEvkValue === '' || elyEvkValue === 'undefined' || elyEvkValue === 0 || elyEvkValue === '0') ? '-' : elyEvkValue;
+}
+
 export function createElyEvkSelectorData() {
 	const evkItems = [];
 	const elyItems = [];
@@ -80,6 +84,7 @@ export function RoadAddressBrowserForm() {
 			id: 'targetValue',
 			placeholder: 'Valitse hakukohde',
 			width: 100,
+			showClearButton: false,
 			data: {
 				0: {
 					items: [

@@ -3,13 +3,8 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { RoadAddressBrowserForm } from './RoadAddressBrowserForm.js';
+import { RoadAddressBrowserForm, formatElyEvkValue } from './RoadAddressBrowserForm.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
-
-// Renders '—' for missing values instead of 'undefined'/'null' in tables and CSV exports.
-function dash(value) {
-	return value === undefined || value === null ? '—' : value;
-}
 
 function getBeforeAfterDisplayText(beforeAfterValues) {
 	let letterString = "";
@@ -24,10 +19,9 @@ function getBeforeAfterDisplayText(beforeAfterValues) {
 
 const TARGET_CONFIG = {
 	Tracks: {
-		requiresElyValidation: true,
 		columns: [
-			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
-			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Elinvoimakeskus', get: r => formatElyEvkValue(r.evk) },
+			{ header: 'Ely', get: r => formatElyEvkValue(r.ely) },
 			{ header: 'Tie', get: r => r.roadNumber },
 			{ header: 'Ajr', get: r => r.track },
 			{ header: 'Osa', get: r => r.roadPartNumber },
@@ -39,10 +33,9 @@ const TARGET_CONFIG = {
 		]
 	},
 	RoadParts: {
-		requiresElyValidation: true,
 		columns: [
-			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
-			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Elinvoimakeskus', get: r => formatElyEvkValue(r.evk) },
+			{ header: 'Ely', get: r => formatElyEvkValue(r.ely) },
 			{ header: 'Tie', get: r => r.roadNumber },
 			{ header: 'Osa', get: r => r.roadPartNumber },
 			{ header: 'Aet', get: r => r.addrMRange.start },
@@ -54,8 +47,8 @@ const TARGET_CONFIG = {
 	Nodes: {
 		lockToCurrentNetwork: true,
 		columns: [
-			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
-			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Elinvoimakeskus', get: r => formatElyEvkValue(r.evk) },
+			{ header: 'Ely', get: r => formatElyEvkValue(r.ely) },
 			{ header: 'Tie', get: r => r.roadNumber },
 			{ header: 'Osa', get: r => r.roadPartNumber },
 			{ header: 'Et', get: r => r.addrM },
@@ -86,8 +79,8 @@ const TARGET_CONFIG = {
 	},
 	RoadNames: {
 		columns: [
-			{ header: 'Elinvoimakeskus', get: r => dash(r.evk) },
-			{ header: 'Ely', get: r => dash(r.ely) },
+			{ header: 'Elinvoimakeskus', get: r => formatElyEvkValue(r.evk) },
+			{ header: 'Ely', get: r => formatElyEvkValue(r.ely) },
 			{ header: 'Tie', get: r => r.roadNumber },
 			{ header: 'Nimi', get: r => r.roadName }
 		]
@@ -226,23 +219,11 @@ export function RoadAddressBrowserWindow(backend) {
 			}
 		}
 
-		function validateElyEvkAndRoadNumber(elyValue, roadNumberElement) {
-			// If neither ELY/EVK or road number is provided, show error
-			if ((!elyValue || elyValue.length === 0) && (!roadNumberElement || !roadNumberElement.value)) {
-				if (roadNumberElement) {
-					roadNumberElement.setCustomValidity("Elinvoimakeskus, Ely tai Tie on pakollinen tieto");
-				}
-				return false;
-			}
-			return true;
-		}
-
 		function willPassValidations() {
 			validateDate(roadAddrSituationDate.value);
-			const elyEvkValid = validateElyEvkAndRoadNumber(elyEvkSelector, roadNumber);
 			const partsValid = syncPartRangeValidation();
 			const formValid = reportValidations();
-			return elyEvkValid && partsValid && formValid;
+			return partsValid && formValid;
 		}
 
 		function createParams() {
@@ -274,17 +255,11 @@ export function RoadAddressBrowserWindow(backend) {
 		roadNumber.setCustomValidity("");
 		roadAddrSituationDate.setCustomValidity("");
 
-		// Tracks/RoadParts require an ELY/EVK-or-road-number check; the other targets
-		// only need the situation date validated (see TARGET_CONFIG).
-		if (TARGET_CONFIG[targetValue].requiresElyValidation) {
-			validateElyEvkAndRoadNumber(elyEvkSelector, roadNumber);
-			if (willPassValidations())
-				fetchByTargetValue(createParams());
-		} else {
-			validateDate(roadAddrSituationDate.value);
-			if (reportValidations())
-				fetchByTargetValue(createParams());
-		}
+		// Road number/parts and ELY/EVK are all optional - an empty search sends no filters,
+		// so the backend returns everything for the selected target (see TARGET_CONFIG).
+		validateDate(roadAddrSituationDate.value);
+		if (willPassValidations())
+			fetchByTargetValue(createParams());
 	}
 
 	function showData(table) {

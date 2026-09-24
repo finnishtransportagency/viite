@@ -5,12 +5,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { RoadAddressBrowserForm, createElyEvkSelectorData } from './RoadAddressBrowserForm.js';
-
-// Renders '—' for missing values instead of 'undefined'/'null' in the table and CSV export.
-function dash(value) {
-	return value === undefined || value === null ? '—' : value;
-}
+import { RoadAddressBrowserForm, createElyEvkSelectorData, formatElyEvkValue } from './RoadAddressBrowserForm.js';
 
 function getChangeTypeDisplayText(changeTypeValue) {
 	const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
@@ -27,8 +22,8 @@ function getChangeTypeDisplayText(changeTypeValue) {
  */
 const COLUMNS = [
 	{ header: 'Voimaantulopvm', get: r => r.startDate },
-	{ header: 'Elinvoimakeskus', get: r => dash(r.oldEvk) },
-	{ header: 'Ely', get: r => dash(r.oldEly) },
+	{ header: 'Elinvoimakeskus', get: r => formatElyEvkValue(r.oldEvk) },
+	{ header: 'Ely', get: r => formatElyEvkValue(r.oldEly) },
 	{ header: 'Tie', get: r => r.oldRoadNumber },
 	{ header: 'Ajr', get: r => r.oldTrack },
 	{ header: 'Aosa', get: r => r.oldRoadPartNumber },
@@ -38,7 +33,7 @@ const COLUMNS = [
 	{ header: 'Pituus', get: r => r.oldLength },
 	{ header: 'Hall. luokka', get: r => getAdministrativeClassTextValue(r.oldAdministrativeClass) },
 	{ header: 'Muutos', get: r => getChangeTypeDisplayText(r.changeType) },
-	{ header: 'u_Elinvoimakeskus', get: r => dash(r.newEvk) },
+	{ header: 'u_Elinvoimakeskus', get: r => formatElyEvkValue(r.newEvk) },
 	{ header: 'u_Tie', get: r => r.newRoadNumber },
 	{ header: 'u_Ajr', get: r => r.newTrack },
 	{ header: 'u_Aosa', get: r => r.newRoadPartNumber },
