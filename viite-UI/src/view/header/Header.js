@@ -1,9 +1,10 @@
 import { Environment } from '@utils/EnvironmentUtils.js';
+import { getRoadLinkDate } from '@utils/BackendUtils.js';
 
-export function Header(backend, startupParameters) {
+export function Header(startupParameters) {
 	const container = jQuery('#header');
 	renderHeader(container);
-	renderHeaderInfo(container, backend, startupParameters);
+	renderHeaderInfo(container, startupParameters);
 }
 
 function renderHeader(container) {
@@ -18,13 +19,13 @@ function renderHeader(container) {
 	container.append(element);
 }
 
-function renderHeaderInfo(container, backend, startupParameters) {
+function renderHeaderInfo(container, startupParameters) {
 	const toolTip = `<i class="fas fa-info-circle" title="Versio: ${startupParameters.deploy_date}"></i>\n`;
 	const headerTooltip = container.find('#headerTooltip');
 	headerTooltip.empty();
 	headerTooltip.append(toolTip);
 
-	backend.getRoadLinkDate(function (versionData) {
+	getRoadLinkDate(function (versionData) {
 		const notification = container.find('#notification');
 		notification.append(Environment.localizedName());
 		notification.append(' Tielinkkiaineisto: ' + versionData.result);

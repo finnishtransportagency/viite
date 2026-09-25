@@ -13,7 +13,7 @@ export function createElyEvkSelectorData() {
 	const elyItems = [];
 
 	// Add Elinvoimakeskus items to first column
-	if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.EVKCodes) {
+	if (ViiteEnumerations?.EVKCodes) {
 		for (const evk in ViiteEnumerations.EVKCodes) {
 			if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.EVKCodes, evk)) {
 				const evkData = ViiteEnumerations.EVKCodes[evk];
@@ -26,7 +26,7 @@ export function createElyEvkSelectorData() {
 	}
 
 	// Add ELY items to second column
-	if (typeof ViiteEnumerations !== 'undefined' && ViiteEnumerations.ElyCodes) {
+	if (ViiteEnumerations?.ElyCodes) {
 		for (const ely in ViiteEnumerations.ElyCodes) {
 			if (Object.prototype.hasOwnProperty.call(ViiteEnumerations.ElyCodes, ely)) {
 				const elyData = ViiteEnumerations.ElyCodes[ely];

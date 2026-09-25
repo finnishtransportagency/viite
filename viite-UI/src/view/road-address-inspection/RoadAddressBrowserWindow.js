@@ -5,6 +5,7 @@ import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { RoadAddressBrowserForm, formatElyEvkValue } from './RoadAddressBrowserForm.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
+import { getDataForRoadAddressBrowser } from '@utils/BackendUtils.js';
 
 function getBeforeAfterDisplayText(beforeAfterValues) {
 	let letterString = "";
@@ -112,9 +113,8 @@ function resultsToTable(target, results) {
 /**
  * RoadAddressBrowserWindow component
  * Displays a modal for searching, viewing, and exporting road address data.
- * @param {Object} backend - Backend API wrapper
  */
-export function RoadAddressBrowserWindow(backend) {
+export function RoadAddressBrowserWindow() {
 	let searchParams = {};
 	let searchResults = [];
 	let modal = null;
@@ -278,7 +278,7 @@ export function RoadAddressBrowserWindow(backend) {
 
 	function fetchByTargetValue(params) {
 		Spinner.show();
-		backend.getDataForRoadAddressBrowser(params, function(result) {
+		getDataForRoadAddressBrowser(params, function(result) {
 			if (result.success) {
 				Spinner.hide();
 				searchParams = params;

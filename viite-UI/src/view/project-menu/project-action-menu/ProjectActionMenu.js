@@ -13,17 +13,18 @@ import { clearLinkPropertyLayer } from '@view/map/layers/LinkPropertyLayer.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { button } from '@components/button/Button.js';
+import { recalculateAndValidateProject, validateProject } from '@utils/BackendUtils.js';
 
 const changeTableByProjectCollection = new WeakMap();
 
-function getOrCreateProjectChangeTable(backend, projectCollection) {
-	if (!backend || !projectCollection) {
+function getOrCreateProjectChangeTable(projectCollection) {
+	if (!projectCollection) {
 		return null;
 	}
 
 	let changeTable = changeTableByProjectCollection.get(projectCollection);
 	if (!changeTable) {
-		changeTable = new ProjectChangeTable(backend, projectCollection);
+		changeTable = new ProjectChangeTable(projectCollection);
 		changeTableByProjectCollection.set(projectCollection, changeTable);
 	}
 	return changeTable;
@@ -33,14 +34,13 @@ export function ProjectActionMenu(options) {
 	const {
 		projectCollection,
 		map,
-		backend,
 		container = '#menu-container',
 		closeProjectMenu,
 		initialState = {},
 		onStateChange
 	} = options;
 	const mainMenu = options.mainMenu;
-	const projectChangeTable = getOrCreateProjectChangeTable(backend, projectCollection);
+	const projectChangeTable = getOrCreateProjectChangeTable(projectCollection);
 
 	const state = Object.assign({
 		hasErrors: false,
@@ -327,7 +327,7 @@ export function ProjectActionMenu(options) {
 		Spinner.show();
 		$('.validation-warning').remove();
 
-		backend.recalculateAndValidateProject(currentProject.project.id, function (response) {
+		recalculateAndValidateProject(currentProject.project.id, function (response) {
 			if (response.success) {
 				projectCollection.setAndWriteProjectErrorsToUser(response.validationErrors);
 				const hasErrors = Object.keys(response.validationErrors).length > 0;
@@ -374,7 +374,7 @@ export function ProjectActionMenu(options) {
 		Spinner.show();
 		$('.validation-warning').remove();
 
-		backend.validateProject(currentProject.project.id, function (response) {
+		validateProject(currentProject.project.id, function (response) {
 			Spinner.hide();
         
 			if (response.success) {

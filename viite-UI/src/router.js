@@ -5,6 +5,7 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { selectLayer } from '@model/ApplicationModel.js';
 import { refreshMap } from '@view/map/MapView.js';
 import { eventbus } from '@utils/eventbus.js';
+import { getProjectLinkByLinkId, getRoadAddressByLinkId, getRoadLinkByMmlId, getRoadLinkByMtkId } from '@utils/BackendUtils.js';
 
 const LAYER_LINK_PROPERTY = 'linkProperty';
 const LAYER_ROAD_ADDRESS_PROJECT = 'roadAddressProject';
@@ -12,7 +13,7 @@ const LAYER_ROAD_ADDRESS_PROJECT = 'roadAddressProject';
 // Singleton navigation API instance.
 let api = null;
 
-export function initNavigation({ map, backend, models }) {
+export function initNavigation({ map, models }) {
 	if (api) return api; // prevent double init
 
 	const openNodePointTemplate = models.nodeCollection.openNodePointTemplate;
@@ -43,7 +44,7 @@ export function initNavigation({ map, backend, models }) {
 		linkProperty(linkId) {
 			selectLayer(LAYER_LINK_PROPERTY);
 
-			backend.getRoadAddressByLinkId(linkId, response => {
+			getRoadAddressByLinkId(linkId, response => {
 				if (!response?.success) {
 					console.error(response?.reason);
 					return;
@@ -61,7 +62,7 @@ export function initNavigation({ map, backend, models }) {
 		linkPropertyByMml(mmlId) {
 			selectLayer(LAYER_LINK_PROPERTY);
 
-			backend.getRoadLinkByMmlId(mmlId, response => {
+			getRoadLinkByMmlId(mmlId, response => {
 				if (!response?.middlePoint) {
 					console.error('Failed to load MML link:', mmlId);
 					return;
@@ -79,7 +80,7 @@ export function initNavigation({ map, backend, models }) {
 		linkPropertyByMtk(mtkid) {
 			selectLayer(LAYER_LINK_PROPERTY);
 
-			backend.getRoadLinkByMtkId(mtkid, response => {
+			getRoadLinkByMtkId(mtkid, response => {
 				if (!response || response.x === undefined) {
 					console.error('Failed to load MTK link:', mtkid);
 					return;
@@ -143,7 +144,7 @@ export function initNavigation({ map, backend, models }) {
 			} else if (linkId !== undefined) {
 				selectLayer(LAYER_LINK_PROPERTY, false);
 
-				backend.getProjectLinkByLinkId(linkId, response => {
+				getProjectLinkByLinkId(linkId, response => {
 					map.getView().setCenter([
 						response.middlePoint.x,
 						response.middlePoint.y

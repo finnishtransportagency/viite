@@ -5,8 +5,9 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { button } from '@components/button/Button.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { getNavigation } from '@router.js';
+import { getTemplates } from '@utils/BackendUtils.js';
 
-export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJunctions) {
+export function NodeSearchMenu(map, nodeCollection, selectedNodesAndJunctions) {
 	const dataTable = new DataTable();
 	const ROOT = '.node-search-root';
 	let pendingSearchNodeNumber = null;
@@ -37,7 +38,7 @@ export function NodeSearchMenu(map, nodeCollection, backend, selectedNodesAndJun
 	}
 
 	function fetchAndRenderTemplates() {
-		backend.getTemplates((data) => {
+		getTemplates((data) => {
 			const nodePointTemplates = _.get(data, 'nodePointTemplates', []);
 			const junctionTemplates = _.get(data, 'junctionTemplates', []);
 			storedTemplates = { nodePoints: nodePointTemplates, junctions: junctionTemplates };

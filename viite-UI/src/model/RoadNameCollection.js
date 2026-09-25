@@ -8,7 +8,9 @@
  * - Date range management for road names
  * - Backend integration for road name operations
  */
-export function RoadNameCollection(backend) {
+import { getRoadAddressesByRoadNumber, saveRoadNamesChanges } from '@utils/BackendUtils.js';
+
+export function RoadNameCollection() {
 
 	const newId = -1000;
 	let currentRoadNumber = -1;
@@ -28,7 +30,7 @@ export function RoadNameCollection(backend) {
 	function fetchRoads(roadNumber, onFetched) {
 		changedIds = [];
 		return new Promise(function (resolve) {
-			backend.getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
+			getRoadAddressesByRoadNumber(roadNumber, function (roadData) {
 				currentRoadNumber = roadNumber;
 				const sortedRoadData = _.chain(roadData.roadNameInfo).filter(function (rd) {
 					return rd.roadNumber === parseInt(roadNumber);
@@ -87,7 +89,7 @@ export function RoadNameCollection(backend) {
 		const changedData = _.filter(currentRoadNameData.concat(newRoadName), function (roadName) {
 			return _.includes(changedIds, roadName.id);
 		});
-		backend.saveRoadNamesChanges(currentRoadNumber, changedData, function (result) {
+		saveRoadNamesChanges(currentRoadNumber, changedData, function (result) {
 			if (result.success) {
 				clear();
 				onSaveSuccess(result);

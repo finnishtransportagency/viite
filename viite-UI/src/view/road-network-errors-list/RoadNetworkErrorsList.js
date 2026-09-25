@@ -1,13 +1,13 @@
 /**
  * RoadNetworkErrorsList component
  * Displays road network validation errors in a modal window.
- * @param {Object} backend - Backend API wrapper
  */
 import { Spinner } from '@components/spinner/Spinner.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
+import { getRoadNetworkErrors } from '@utils/BackendUtils.js';
 
 // Displays a list of road network errors in a modal window
-export function RoadNetworkErrorsList(backend) {
+export function RoadNetworkErrorsList() {
 	let modalContainer;
 	let isModalActive = false;
 
@@ -46,7 +46,7 @@ export function RoadNetworkErrorsList(backend) {
 			content: '<div style="padding: 20px; text-align: center;">Ladataan...</div>'
 		});
 
-		backend.getRoadNetworkErrors(function(result) {
+		getRoadNetworkErrors(function(result) {
 			// If modal was closed while loading, ignore this callback
 			if (!isModalActive) {
 				return;

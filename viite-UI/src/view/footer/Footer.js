@@ -1,6 +1,7 @@
 import { checkbox } from '@components/checkbox/Checkbox.js';
 import { button } from '@components/button/Button.js';
 import { toggleRoadVisibility } from '@model/ApplicationModel.js';
+import { getVelhoDetourRoutes, getVelhoSpecialTransportRoutes } from '@utils/BackendUtils.js';
 
 /* Contains following elements:
 - TileMapSelector: A set of buttons used for selecting which map background to show
@@ -8,14 +9,14 @@ import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 - CrosshairToggle: A checkbox for toggling a crosshair in the center of the map and clicking on the map through it to support test automation
 */
 
-export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection, backend) {
+export function Footer(map, container, linkPropertyLayer, projectLinkLayer, tileMapCollection) {
   const footerContainer = $('<div class="map-footer"></div>').appendTo(container);
-	renderTileMapSelector(footerContainer, linkPropertyLayer, projectLinkLayer, tileMapCollection, map, backend);
+	renderTileMapSelector(footerContainer, linkPropertyLayer, projectLinkLayer, tileMapCollection, map);
 	renderCoordinatesDisplay(footerContainer, map);
 	createCrosshairToggle(footerContainer.find('.mapplugin.coordinates'), map);
 }
 
-function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, tileMapCollection, map, backend) {
+function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, tileMapCollection, map) {
 	const BREAKPOINT_PX = 1800;
 	let currentBbox = null;
 	let selectionOrder = 0;
@@ -37,10 +38,10 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 	}
 
 	const fetchSpecialTransportRoutes = _.debounce(function () {
-		fetchVelhoRoutes('specialTransportRoutes', specialTransportRoutesVisible, backend.getVelhoSpecialTransportRoutes, selectionOrder);
+		fetchVelhoRoutes('specialTransportRoutes', specialTransportRoutesVisible, getVelhoSpecialTransportRoutes, selectionOrder);
 	}, 300);
 	const fetchDetourRoutes = _.debounce(function () {
-		fetchVelhoRoutes('detourRoutes', detourRoutesVisible, backend.getVelhoDetourRoutes, selectionOrder);
+		fetchVelhoRoutes('detourRoutes', detourRoutesVisible, getVelhoDetourRoutes, selectionOrder);
 	}, 300);
 
 	updateCurrentBbox();

@@ -1,8 +1,9 @@
 // Displays changes made to the project once "avaa projektin yhteenvetotaulukko" button is clicked. It supports sorting and is used for entering project edit/creation menu
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
+import { getChangeTable } from '@utils/BackendUtils.js';
 
-export function ProjectChangeTable(backend, projectCollection) {
+export function ProjectChangeTable(projectCollection) {
 
 	let changeTableOpen = false;
 	let currentValidations = {};
@@ -170,7 +171,7 @@ export function ProjectChangeTable(backend, projectCollection) {
 
 	function getChanges() {
 		const currentProject = projectCollection.getCurrentProject();
-		backend.getChangeTable(currentProject.project.id, function (changeData) {
+		getChangeTable(currentProject.project.id, function (changeData) {
 			latestChangeData = changeData;
 			const source = changeTable.find('[id=label-source-btn]');
 			const target = changeTable.find('[id=label-target-btn]');

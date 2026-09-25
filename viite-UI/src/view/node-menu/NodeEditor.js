@@ -8,6 +8,7 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { getZoomLevel } from '@view/map/MapView.js';
 import { refreshRoadLayer } from '@view/map/layers/RoadLayer.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
+import { getJunctionPointEditableStatus } from '@utils/BackendUtils.js';
 
 /**
  * NodeEditor - Editable node form with detach, validation and save flows.
@@ -15,7 +16,6 @@ import { setNodeMenuState } from '@node-menu/NodeMenu.js';
  */
 export function NodeEditor(
 	selectedNodesAndJunctions,
-	backend,
 	roadCollection,
 	containerElement,
 	permissionToEditNodes
@@ -493,7 +493,7 @@ export function NodeEditor(
 		// Request editable status for all junction point address inputs
 		$container.find('[id^=junction-point-address-input-]').each(function () {
 			const id = $(this).attr('junctionPointId');
-			backend.getJunctionPointEditableStatus(id, function (response) {
+			getJunctionPointEditableStatus(id, function (response) {
 				const $input = $container.find(`#junction-point-address-input-${id}`);
 				if (!$input.length) return;
 				$input.attr('disabled', !response.isEditable).attr('title', response.isEditable ? '' : (response.validationMessage || ''));

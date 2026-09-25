@@ -4,11 +4,11 @@ import { UserManagagement } from './user-management/UserManagement.js';
 import { button } from '@components/button/Button.js';
 
 // Panel that contains all the tools available for users with admin role
-export function AdminPanel(backend) {
+export function AdminPanel() {
 
 
 
-	const dynamicLinkNetwork = dynamicLinkNetworkContent(backend);
+	const dynamicLinkNetwork = dynamicLinkNetworkContent();
 
 	const showAdminPanelWindow = function () {
 		const modalContainer = new ModalContainer({

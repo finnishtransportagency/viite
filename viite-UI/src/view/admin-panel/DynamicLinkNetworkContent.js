@@ -1,10 +1,11 @@
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { dateutil } from '@utils/DateUtils.js';
+import { getRoadLinkDate, startLinkNetworkUpdate } from '@utils/BackendUtils.js';
 import { button } from '@components/button/Button.js';
 import { checkbox } from '@components/checkbox/Checkbox.js';
 
 // UI elements responsible for triggering and configuring dynamic link network update process
-export function DynamicLinkNetworkContent(backend) {
+export function DynamicLinkNetworkContent() {
 
 	// Helper function to convert DD.MM.YYYY to YYYY-MM-DD for HTML5 date input
 	const finnishDateToInputDate = function(finnishDate) {
@@ -45,7 +46,7 @@ export function DynamicLinkNetworkContent(backend) {
 	}
 
 	function addDatePickersToInputFields() {
-		backend.getRoadLinkDate(function (roadLinkDate) {
+		getRoadLinkDate(function (roadLinkDate) {
 			const minimumDateObject = dateutil.parseCustomDateString(roadLinkDate.result);
 			const minimumDateFinnish = dateutil.parseDateToString(minimumDateObject);
 			const minimumDateInput = finnishDateToInputDate(minimumDateFinnish);
@@ -141,7 +142,7 @@ export function DynamicLinkNetworkContent(backend) {
 			processPerDay: document.getElementById('processPerDay').checked
 		};
 
-		backend.startLinkNetworkUpdate(jsonDateData, function (result) {
+		startLinkNetworkUpdate(jsonDateData, function (result) {
 			setInfoText(result.message);
 		});
 	}

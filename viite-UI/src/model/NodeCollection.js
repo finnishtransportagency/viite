@@ -4,6 +4,13 @@ import { zoomlevels } from '@utils/ZoomLevels.js';
 import { searchLocation } from './LocationSearch.js';
 import { fitMapToCoordinates, moveMapToCoordinates } from '@view/map/MapView.js';
 import { addNodesToMap, fetchNodesAndJunctionsFromCurrentMap } from '@view/map/layers/NodeLayer.js';
+import {
+	createNodeInfo,
+	getJunctionTemplateById,
+	getNodePointTemplateById,
+	getNodesByRoadAttributes as fetchNodesByRoadAttributes,
+	updateNodeInfo
+} from '@utils/BackendUtils.js';
 
 /**
  * NodeCollection - Manages road nodes and junctions data
@@ -15,7 +22,7 @@ import { addNodesToMap, fetchNodesAndJunctionsFromCurrentMap } from '@view/map/l
  * - Backend integration for node operations
  * - Node point and junction template handling
  */
-export function NodeCollection(backend) {
+export function NodeCollection() {
 	let nodes = [];
 	let selectedNodesAndJunctions;
 	let mapTemplates = [];
@@ -79,7 +86,7 @@ export function NodeCollection(backend) {
 
 	function getNodesByRoadAttributes(roadAttributes) {
 		return new Promise((resolve, reject) => {
-			backend.getNodesByRoadAttributes(roadAttributes, function (result) {
+			fetchNodesByRoadAttributes(roadAttributes, function (result) {
 				if (result.success) {
 					resolve(result.nodes);
 				} else {
@@ -195,7 +202,7 @@ export function NodeCollection(backend) {
 		if (!_.isUndefined(node)) {
 			Spinner.show();
 			if (node.id) {
-				backend.updateNodeInfo(node, function (result) {
+				updateNodeInfo(node, function (result) {
 					if (result.success) {
 						handleSuccess();
 					} else {
@@ -203,7 +210,7 @@ export function NodeCollection(backend) {
 					}
 				}, fail);
 			} else {
-				backend.createNodeInfo(node, function (result) {
+				createNodeInfo(node, function (result) {
 					if (result.success) {
 						handleSuccess();
 					} else {
@@ -221,7 +228,7 @@ export function NodeCollection(backend) {
 			return template.id === parseInt(id);
 		});
 		if (_.isUndefined(nodePointTemplate)) {
-			backend.getNodePointTemplateById(id, function (nodePointTemplateFetched) {
+			getNodePointTemplateById(id, function (nodePointTemplateFetched) {
 				moveToLocation(nodePointTemplateFetched);
 			});
 		} else {
@@ -267,7 +274,7 @@ export function NodeCollection(backend) {
 		};
 
 		if (_.isUndefined(fallbackJunctionTemplate)) {
-			backend.getJunctionTemplateById(id, function (junctionTemplateFetched) {
+			getJunctionTemplateById(id, function (junctionTemplateFetched) {
 				moveToLocation(templateForLocation(junctionTemplateFetched));
 			});
 		} else {

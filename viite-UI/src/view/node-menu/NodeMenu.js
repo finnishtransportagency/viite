@@ -16,7 +16,6 @@ export const setNodeMenuState = (newState, cancelTarget) => {
 export function NodeMenu(
 	map,
 	nodeCollection,
-	backend,
 	selectedNodesAndJunctions,
 	roadCollection,
 	menu
@@ -36,7 +35,6 @@ export function NodeMenu(
 	const searchMenu = new NodeSearchMenu(
 		map,
 		nodeCollection,
-		backend,
 		selectedNodesAndJunctions
 	);
 
@@ -44,7 +42,6 @@ export function NodeMenu(
 
 	const nodeEditor = new NodeEditor (
 		selectedNodesAndJunctions,
-		backend,
 		roadCollection,
 		() => menu.getBody(),
 		permissionToEditNodes

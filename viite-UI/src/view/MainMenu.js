@@ -35,7 +35,6 @@ export function MainMenu(options = {}) {
 	const {
 		selectedLinkProperty,
 		roadNameCollection,
-		backend,
 		map,
 		models = {}
 	} = options;
@@ -51,14 +50,13 @@ export function MainMenu(options = {}) {
 		linkInfo: new LinkInfo(selectedLinkProperty),
 		projectList: new ProjectList({ ...options, menu, roadCollection }),
 		roadNamingTool: new RoadNamingToolWindow(roadNameCollection),
-		roadAddressBrowser: new RoadAddressBrowserWindow(backend),
-		roadAddressChangesBrowser: new RoadAddressChangesBrowserWindow(backend),
-		roadNetworkErrorsList: new RoadNetworkErrorsList(backend, {}),
-		adminPanel: new AdminPanel(backend, {}),
+		roadAddressBrowser: new RoadAddressBrowserWindow(),
+		roadAddressChangesBrowser: new RoadAddressChangesBrowserWindow(),
+		roadNetworkErrorsList: new RoadNetworkErrorsList(),
+		adminPanel: new AdminPanel(),
 		nodeMenu: new NodeMenu(
 			map,
 			nodeCollection,
-			backend,
 			selectedNodesAndJunctions,
 			roadCollection,
 			menu

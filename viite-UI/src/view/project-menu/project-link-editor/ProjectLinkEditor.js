@@ -12,6 +12,7 @@ import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { createProjectLinkEditorLogic } from './ProjectLinkEditorLogic.js';
 import { createProjectLinkEditorHTML } from './ProjectLinkEditorHTML.js';
 import { DevAddressTool } from './DevTool.js';
+import { getPrefillValuesForLink, getRoadName } from '@utils/BackendUtils.js';
 
 export function ProjectLinkEditor(canUseDevTools) {
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
@@ -157,7 +158,7 @@ export function ProjectLinkEditor(canUseDevTools) {
 	// ==========================================
 	// EVENT LISTENERS
 	// ==========================================
-	const bindEvents = function (project, selected, backend, projectCollection, projectChangeTable, editContext = {}) {
+	const bindEvents = function (project, selected, projectCollection, projectChangeTable, editContext = {}) {
 		const rootElement = $('#menu-container');
 		// Remove all delegated listeners from previous bindEvents calls to prevent accumulation.
 		// Without this, each re-render adds a new handler closure (with a stale `selected` reference),
@@ -232,11 +233,11 @@ export function ProjectLinkEditor(canUseDevTools) {
 			FormState.setUnsavedChanges(true);
 			markSelectedLinksDirty();
 
-			if (event.target.id === "tie" && backend && projectCollection && 
+			if (event.target.id === "tie" && projectCollection && 
             (dropdown_0.val() === 'New' || dropdown_0.val() === 'Transfer' || dropdown_0.val() === 'Numbering')) {
 				rootElement.find('#saveButton').prop('disabled', true);
 				const currentProject = projectCollection.getCurrentProject();
-				backend.getRoadName($(this).val(), currentProject.project.id, function (data) {
+				getRoadName($(this).val(), currentProject.project.id, function (data) {
 					if (data.roadName) {
 						FormState.setNameEdited(false);
 						roadNameField.val(data.roadName).change();
@@ -301,10 +302,10 @@ export function ProjectLinkEditor(canUseDevTools) {
 			document.getElementById("origAddrLength").textContent = res.toString();
 		});
 
-		if (backend && selected && selected[0] && shouldAttemptPrefill(selected[0], projectCollection)) {
+		if (selected && selected[0] && shouldAttemptPrefill(selected[0], projectCollection)) {
 			const currentProject = projectCollection ? projectCollection.getCurrentProject() : null;
 			if (currentProject) {
-				backend.getPrefillValuesForLink(selected[0].linkId, currentProject.project.id, function (response) {
+				getPrefillValuesForLink(selected[0].linkId, currentProject.project.id, function (response) {
 					if (response.success) {
 						$('#tie').val(response.roadNumber);
 						$('#osa').val(response.roadPartNumber);

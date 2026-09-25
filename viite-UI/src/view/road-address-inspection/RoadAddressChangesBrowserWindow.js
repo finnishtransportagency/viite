@@ -6,6 +6,7 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
 import { RoadAddressBrowserForm, createElyEvkSelectorData, formatElyEvkValue } from './RoadAddressBrowserForm.js';
+import { getDataForRoadAddressChangesBrowser } from '@utils/BackendUtils.js';
 
 function getChangeTypeDisplayText(changeTypeValue) {
 	const changeType = _.find(ViiteEnumerations.ChangeType, function (obj) {
@@ -72,9 +73,8 @@ function resultsToArray(results) {
 /**
  * RoadAddressChangesBrowserWindow component
  * Allows users to search road address change history data and export it as CSV.
- * @param {Object} backend - Backend API wrapper
  */
-export function RoadAddressChangesBrowserWindow(backend) {
+export function RoadAddressChangesBrowserWindow() {
 	let searchParams = {};
 	let searchResults = [];
 	let elyEvkSelector;
@@ -311,7 +311,7 @@ export function RoadAddressChangesBrowserWindow(backend) {
 
 	function fetchRoadAddressChanges(params) {
 		Spinner.show();
-		backend.getDataForRoadAddressChangesBrowser(params, function(result) {
+		getDataForRoadAddressChangesBrowser(params, function(result) {
 			if (result.success) {
 				Spinner.hide();
 				searchParams = params;

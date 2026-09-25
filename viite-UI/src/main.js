@@ -4,7 +4,7 @@
  */
 
 import { setStartupParameters, setUserData } from '@model/ApplicationModel.js';
-import { Backend } from '@utils/BackendUtils.js';
+import { Backend, getStartupParametersWithCallback, getUserRoles } from '@utils/BackendUtils.js';
 import { Spinner } from '@components/spinner/Spinner.js';
 import { Footer } from '@view/footer/Footer.js';
 import { Header } from '@view/header/Header.js';
@@ -36,15 +36,15 @@ export function startApplication() {
 	document.title = Environment.browserTitle();
 	const backend = new Backend();
 
-	backend.getStartupParametersWithCallback(function (startupParameters) {
+	getStartupParametersWithCallback(function (startupParameters) {
 		setStartupParameters(startupParameters);
 
-		const roadCollection = new RoadCollection(backend);
+		const roadCollection = new RoadCollection();
 		const projectCollection = new ProjectCollection(backend, startupParameters);
-		const roadNameCollection = new RoadNameCollection(backend);
+		const roadNameCollection = new RoadNameCollection();
 		const selectedLinkProperty = new SelectedLinkProperty(roadCollection);
 		const selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
-		const nodeCollection = new NodeCollection(backend);
+		const nodeCollection = new NodeCollection();
 		const selectedNodesAndJunctions = new SelectedNodesAndJunctions(nodeCollection);
 		nodeCollection.setSelectedNodesAndJunctions(selectedNodesAndJunctions);
 
@@ -57,10 +57,10 @@ export function startApplication() {
 			selectedNodesAndJunctions: selectedNodesAndJunctions
 		};
 
-		backend.getUserRoles(function (userData) {
+		getUserRoles(function (userData) {
 			setUserData(userData);
 			setupProjections();
-			initializeApplication(backend, models, startupParameters, roadNameCollection);
+			initializeApplication(models, startupParameters, roadNameCollection);
 		});
 	});
 }
@@ -140,21 +140,20 @@ const initializeMap = function (models, startupParameters) {
 	return {map, layers, tileMaps};
 };
 
-const initializeUI = function (map, backend, startupParameters, layers, tileMaps, models, roadNameCollection) {
+const initializeUI = function (map, startupParameters, layers, tileMaps, models, roadNameCollection) {
 	const mapPluginsContainer = jQuery('#map-plugins');
-  initNotificationBanner(backend);
+	initNotificationBanner();
 
 	new ScaleBar(map, mapPluginsContainer);
 	new ZoomBox(map, mapPluginsContainer);
-	new Footer(map, mapPluginsContainer, layers.linkProperty, layers.roadAddressProject, tileMaps, backend);
-	new Header(backend, startupParameters);
+	new Footer(map, mapPluginsContainer, layers.linkProperty, layers.roadAddressProject, tileMaps);
+	new Header(startupParameters);
 	new SearchPanel(map);
 
 	new MainMenu({
 		selectedLinkProperty: models.selectedLinkProperty,
 		projectCollection: models.projectCollection,
 		map: map,
-		backend: backend,
 		selectedProjectLinkProperty: models.selectedProjectLinkProperty,
 		projectLinkLayer: models.projectLinkLayer,
 		roadNameCollection: roadNameCollection,
@@ -162,13 +161,13 @@ const initializeUI = function (map, backend, startupParameters, layers, tileMaps
 	});
 };
 
-const initializeApplication = function (backend, models, startupParameters, roadNameCollection) {
+const initializeApplication = function (models, startupParameters, roadNameCollection) {
 	const mapContext = initializeMap(
 		models,
 		startupParameters
 	);
 
-	initializeUI(mapContext.map, backend, startupParameters, mapContext.layers, mapContext.tileMaps, models, roadNameCollection);
+	initializeUI(mapContext.map, startupParameters, mapContext.layers, mapContext.tileMaps, models, roadNameCollection);
 	models.selectedLinkProperty.setLinkPropertyLayer(mapContext.layers.linkProperty);
 
 	new MapView(mapContext.map);
@@ -181,7 +180,7 @@ const initializeApplication = function (backend, models, startupParameters, road
 		});
 	}
 
-  initNavigation({ map: mapContext.map, backend, models, eventbus: startupParameters.eventbus });
+	initNavigation({ map: mapContext.map, models, eventbus: startupParameters.eventbus });
 };
 
 const setupProjections = function () {

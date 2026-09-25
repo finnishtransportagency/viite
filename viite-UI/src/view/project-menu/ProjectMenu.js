@@ -118,7 +118,6 @@ export function ProjectMenu(containerSelector, options = {}) {
 					updateUI(States.ROAD_ADDRESSING, actionData.project, false);
 				},
 				mainMenu: options.mainMenu,
-				backend: options.backend,
 				projectCollection: options.projectCollection,
 				map: options.map,
 				projectMenuInstance: {
@@ -358,7 +357,6 @@ export function ProjectMenu(containerSelector, options = {}) {
 				activeChild.bindEvents(
 					project.data,
 					additionalData.selectedLinks,
-					options.backend,
 					options.projectCollection,
 					options.projectChangeTable,
 					{

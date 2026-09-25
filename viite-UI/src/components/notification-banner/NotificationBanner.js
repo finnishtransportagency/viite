@@ -1,5 +1,7 @@
-export function initNotificationBanner(backend) {
-	backend.getNotificationBanner(function (data) {
+import { getNotificationBanner } from '@utils/BackendUtils.js';
+
+export function initNotificationBanner() {
+	getNotificationBanner(function (data) {
 		const message = data && data.message;
 		if (!message) return;
 

@@ -11,6 +11,7 @@ import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
 import { redrawLinkPropertyLayer, highlightProject, highlightReservedRoads } from '@view/map/layers/LinkPropertyLayer.js';
 import { enableCloseBtn } from '@view/project-menu/project-details/ProjectDetailsForm.js';
+import { getNodesAndJunctions, getProjectLinks, getRoadLinks, getRoadLinksOfWholeRoadPart } from '@utils/BackendUtils.js';
 
 const RoadLinkModel = function (data) {
 	const getData = function () {
@@ -22,7 +23,7 @@ const RoadLinkModel = function (data) {
 	};
 };
 
-export function RoadCollection(backend) {
+export function RoadCollection() {
 	let currentAllRoadLinks = [];
 	let roadLinkGroups = [];
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
@@ -64,7 +65,7 @@ export function RoadCollection(backend) {
 	};
 
 	function fetch(boundingBox, zoom) {
-		backend.getRoadLinks({
+		getRoadLinks({
 			boundingBox: boundingBox, zoom: zoom
 		}, function (fetchedRoadLinks) {
 			currentAllRoadLinks = fetchedRoadLinks;
@@ -73,7 +74,7 @@ export function RoadCollection(backend) {
 	}
 
 	function fetchWholeRoadPart(roadNumber, roadPart) {
-		backend.getRoadLinksOfWholeRoadPart({
+		getRoadLinksOfWholeRoadPart({
 			roadNumber: roadNumber, roadPartNumber: roadPart
 		}, function (fetchedRoadLinks) {
 			updateGroupToContainWholeRoadPart(fetchedRoadLinks);
@@ -81,7 +82,7 @@ export function RoadCollection(backend) {
 	}
 
 	function fetchWithNodes(boundingBox, zoom, callback) {
-		backend.getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
+		getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
 			currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
 			fetchProcess(currentAllRoadLinks, zoom);
 			return callback(fetchedNodesAndJunctions.fetchedNodes);
@@ -221,7 +222,7 @@ export function RoadCollection(backend) {
 	}
 
 	function findReservedProjectLinks(boundingBox, zoomLevel, projectId) {
-		backend.getProjectLinks({
+		getProjectLinks({
 			boundingBox: boundingBox,
 			zoom: zoomLevel,
 			projectId: projectId

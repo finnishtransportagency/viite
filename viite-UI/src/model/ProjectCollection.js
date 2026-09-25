@@ -14,6 +14,22 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { getUserGeoLocation } from '@view/map/MapView.js';
 import { lockProjectLinks, unlockProjectLinks } from '@view/map/layers/ProjectLinkLayer.js';
+import {
+	checkIfRoadpartReserved,
+	createProjectLinks,
+	createRoadAddressProject,
+	deleteRoadAddressProject,
+	directionChangeNewRoadlink,
+	getProjectLinks as fetchProjectLinks,
+	getProjectLinksById,
+	getRoadAddressProjects,
+	getRoadAddressProjectStates,
+	reOpenProject,
+	revertChangesRoadlink as revertChangesRoadlinkRequest,
+	saveRoadAddressProject,
+	sendProjectChangesToViite,
+	updateProjectLinks
+} from '@utils/BackendUtils.js';
 
 export function ProjectCollection(backend, startupParameters) {
 	const noop = function () {};
@@ -83,7 +99,7 @@ export function ProjectCollection(backend, startupParameters) {
 	// current map bounding box, unlike getAll()). Returns a Promise resolving to the link data.
 	function getProjectLinks() {
 		return new Promise(function (resolve) {
-			backend.getProjectLinksById(currentProject.project.id, function (data) {
+			getProjectLinksById(currentProject.project.id, function (data) {
 				resolve(data || []);
 			});
 		});
@@ -134,7 +150,7 @@ export function ProjectCollection(backend, startupParameters) {
 		}
 
 		return new Promise(function (resolve) {
-			backend.getProjectLinks({ boundingBox: boundingBox, zoom: zoom, projectId: id }, function (fetchedLinks) {
+			fetchProjectLinks({ boundingBox: boundingBox, zoom: zoom, projectId: id }, function (fetchedLinks) {
 				fetchedProjectLinks = _.map(fetchedLinks, function (projectLinkGroup) {
 					return _.map(projectLinkGroup, function (projectLink) {
 						return new ProjectLinkModel(projectLink);
@@ -148,14 +164,14 @@ export function ProjectCollection(backend, startupParameters) {
 	}
 
 	function getProjects(onlyActive, onProjectsFetched = noop) {
-		return backend.getRoadAddressProjects(onlyActive, function (projects) {
+		return getRoadAddressProjects(onlyActive, function (projects) {
 			onProjectsFetched(projects);
 		});
 	}
 
 	function getProjectStates(projectIDs, onProjectStatesFetched = noop) {
 		if (projectIDs.length > 0) {
-			return backend.getRoadAddressProjectStates(projectIDs, function (projects) {
+			return getRoadAddressProjectStates(projectIDs, function (projects) {
 				onProjectStatesFetched(projects);
 			});
 		}
@@ -246,7 +262,7 @@ export function ProjectCollection(backend, startupParameters) {
 			resolution: resolution
 		};
 
-		backend.saveRoadAddressProject(dataJson, function (result) {
+		saveRoadAddressProject(dataJson, function (result) {
 			if (result.success) {
 				projectInfo = {
 					id: result.project.id,
@@ -284,7 +300,7 @@ export function ProjectCollection(backend, startupParameters) {
 			};
 			lockProjectLinks(revertIds, revertLinkIds);
 			return new Promise(function (resolve) {
-				backend.revertChangesRoadlink(data, function (response) {
+				revertChangesRoadlinkRequest(data, function (response) {
 					if (response.success) {
 						dirtyProjectLinkIds = [];
 						publishableProject = response.publishable;
@@ -325,8 +341,8 @@ export function ProjectCollection(backend, startupParameters) {
 			ids.length === 0;
 		const operation = isCreate ? 'created' : 'updated';
 		const backendOperation = isCreate
-			? backend.createProjectLinks
-			: backend.updateProjectLinks;
+			? createProjectLinks
+			: updateProjectLinks;
 
 		lockProjectLinks(ids, dataJson.linkIds);
 
@@ -513,7 +529,7 @@ export function ProjectCollection(backend, startupParameters) {
 			resolution: resolution
 		};
 
-		backend.createRoadAddressProject(dataJson, function (result) {
+		createRoadAddressProject(dataJson, function (result) {
 			if (result.success) {
 				projectInfo = {
 					id: result.project.id,
@@ -538,7 +554,7 @@ export function ProjectCollection(backend, startupParameters) {
 	function deleteProject(projectId, callbacks = {}) {
 		const onProjectDeleteFailed = callbacks.onProjectDeleteFailed || noop;
 		const onProjectFailed = callbacks.onProjectFailed || noop;
-		backend.deleteRoadAddressProject(projectId, function (result) {
+		deleteRoadAddressProject(projectId, function (result) {
 			if (result.success) {
 				currentProject = undefined;
 			} else {
@@ -565,7 +581,7 @@ export function ProjectCollection(backend, startupParameters) {
 			coordinates: coordinates
 		};
 		resetEditedDistance();
-		backend.directionChangeNewRoadlink(dataJson, function (successObject) {
+		directionChangeNewRoadlink(dataJson, function (successObject) {
 			if (successObject.success) {
 				setAndWriteProjectErrorsToUser(successObject);
 				onChangeProjectDirectionClicked(successObject);
@@ -579,7 +595,7 @@ export function ProjectCollection(backend, startupParameters) {
 	function publishProject(callbacks = {}) {
 		const onProjectSentSuccess = callbacks.onProjectSentSuccess || noop;
 		const onProjectSentFailed = callbacks.onProjectSentFailed || noop;
-		backend.sendProjectChangesToViite(
+		sendProjectChangesToViite(
 			projectInfo.id,
 			function (result) {
 				if (result.sendSuccess) {
@@ -755,7 +771,7 @@ export function ProjectCollection(backend, startupParameters) {
 	function checkIfReserved(data, callbacks = {}) {
 		const onProjectValidationSucceed = callbacks.onProjectValidationSucceed || noop;
 		const onProjectValidationFailed = callbacks.onProjectValidationFailed || noop;
-		return backend.checkIfRoadpartReserved(
+		return checkIfRoadpartReserved(
 			data.roadNumber === '' ? 0 : parseInt(data.roadNumber),
 			data.startPart === '' ? 0 : parseInt(data.startPart),
 			data.endPart === '' ? 0 : parseInt(data.endPart),
@@ -785,7 +801,7 @@ export function ProjectCollection(backend, startupParameters) {
 	function reOpenProjectById(projectId, callbacks = {}) {
 		const onReOpenedProject = callbacks.onReOpenedProject || noop;
 		const onFailed = callbacks.onFailed || noop;
-		backend.reOpenProject(projectId, function (successObject) {
+		reOpenProject(projectId, function (successObject) {
 			onReOpenedProject(successObject);
 		}, function (errorObject) {
 			onFailed(errorObject);
