@@ -157,11 +157,16 @@ object LinearLocation extends SQLSyntaxSupport[LinearLocation] {
           typeCode      = rs.intOpt("cal_end_type").map(CalibrationPointType.apply)
         )
       ),
-      geometry = Seq(
-        Point(x = rs.double("start_x"),y = rs.double("start_y")),
-        Point(x = rs.double("end_x"),  y = rs.double("end_y")
-        )
-      ),
+      geometry = {
+        val sx = rs.doubleOpt("start_x"); val sy = rs.doubleOpt("start_y")
+        val ex = rs.doubleOpt("end_x");   val ey = rs.doubleOpt("end_y")
+        (sx, sy, ex, ey) match {
+          case (Some(x1), Some(y1), Some(x2), Some(y2)) => Seq(Point(x1, y1), Point(x2, y2))
+          case _ =>
+            privateLogger.warn(s"LinearLocation id=${rs.long("id")} has NULL geometry coordinates in the DB — skipping geometry (start_x=$sx, start_y=$sy, end_x=$ex, end_y=$ey)")
+            Seq.empty[Point]
+        }
+      },
       linkGeomSource  = LinkGeomSource(rs.int("source")),
       roadwayNumber   = rs.long("roadway_number"),
       validFrom       = rs.jodaDateTimeOpt("valid_from"),
@@ -336,11 +341,14 @@ class LinearLocationDAO extends BaseDAO {
    * @return List of Linear locations within given range, ordered by their start measures.
    *         An overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range.
    */
-  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+  /** Active linear locations of <i>linkId</i> overlapping the given M-range. The bounds may be given
+   * in either order: a change's M-range on the old link is descending when the change runs against
+   * the old link's digitization direction. */
+  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalue1: Double, filterMvalue2: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
 
-      val mustStartBefore = filterMvalueMax - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
-      val mustEndAfter = filterMvalueMin + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
+      val mustStartBefore = math.max(filterMvalue1, filterMvalue2) - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
+      val mustEndAfter = math.min(filterMvalue1, filterMvalue2) + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
 
       val query =
         sql"""
@@ -840,7 +848,10 @@ class LinearLocationDAO extends BaseDAO {
     val query =
       sql"""
             $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM roadway WHERE valid_to IS NULL AND end_date IS NULL)
+            WHERE loc.valid_to IS NULL
+              AND loc.roadway_number IN (SELECT roadway_number FROM roadway WHERE valid_to IS NULL AND end_date IS NULL)
+              AND loc.geometry IS NOT NULL
+              AND NOT ST_IsEmpty(loc.geometry)
          """
     queryList(query)
   }

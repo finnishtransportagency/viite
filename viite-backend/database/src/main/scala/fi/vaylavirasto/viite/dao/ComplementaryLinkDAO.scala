@@ -74,11 +74,14 @@ class ComplementaryLinkDAO extends BaseDAO {
       )).map(_.toString())
 
       // Handle geometry
-      val geomString = rs.string("geometry")
-      val geom = GeometryBuilder.geomFromString(geomString)
-      val geometry = (0 until geom.numPoints()).map { i =>
-        val point = geom.getPoint(i)
-        Point(point.x, point.y, point.z)
+      val geometry = rs.stringOpt("geometry") match {
+        case Some(geomString) =>
+          val geom = GeometryBuilder.geomFromString(geomString)
+          (0 until geom.numPoints()).map { i =>
+            val point = geom.getPoint(i)
+            Point(point.x, point.y, point.z)
+          }
+        case None => Seq.empty[Point]
       }
 
       new RoadLink(

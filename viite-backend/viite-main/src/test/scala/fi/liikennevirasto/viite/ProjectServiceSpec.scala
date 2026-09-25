@@ -204,9 +204,14 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
          val forcedGeom = pl.filter(l => l.id == -1000L && l.geometry.nonEmpty).sortBy(_.addrMRange.start)
          val (startFG, endFG) = (forcedGeom.headOption.map(_.startingPoint), forcedGeom.lastOption.map(_.endPoint))
          if (pl.head.id == -1000L) {
-           roadLink.copy(linkId = pl.head.linkId, geometry = Seq(startFG.get, endFG.get), sourceId = "")
-         } else
-           roadLink.copy(linkId = pl.head.linkId, geometry = Seq(startP, midP, endP), sourceId = "")
+           val geom = Seq(startFG.get, endFG.get)
+           // length must match geom, since GeometryUtils.scaleMToGeometry uses it as the M-value reference length
+           roadLink.copy(linkId = pl.head.linkId, geometry = geom, length = GeometryUtils.geometryLength(geom), sourceId = "")
+         } else {
+           val geom = Seq(startP, midP, endP)
+           // length must match geom, since GeometryUtils.scaleMToGeometry uses it as the M-value reference length
+           roadLink.copy(linkId = pl.head.linkId, geometry = geom, length = GeometryUtils.geometryLength(geom), sourceId = "")
+         }
        }.values.toSeq ++ seq
      }
    }

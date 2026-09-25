@@ -230,20 +230,32 @@ class VKMClient(endPoint: String, apiKey: String) {
       val parsedJson = parse(responseString)
       val features = (parsedJson \ "features").asInstanceOf[JArray].arr
 
-      features.map { feature =>
+      features.flatMap { feature =>
         val properties = feature \ "properties"
-        val newStartM = (properties \ "m_arvo_alku_kohdepvm").extract[Double]
-        val newEndM = (properties \ "m_arvo_loppu_kohdepvm").extract[Double]
+        val oldLinkId = (properties \ "link_id").extractOpt[String].orNull
+        val newLinkId = (properties \ "link_id_kohdepvm").extractOpt[String].orNull
 
-        TiekamuRoadLinkChange(
-          (properties \ "link_id").extract[String],
-          (properties \ "m_arvo_alku").extract[Double],
-          (properties \ "m_arvo_loppu").extract[Double],
-          (properties \ "link_id_kohdepvm").extract[String],
-          if (newStartM > newEndM) newEndM else newStartM,
-          if (newEndM < newStartM) newStartM else newEndM,
-          getDigitizationChangeValue(newStartM, newEndM)
-        )
+        // One-sided rows are kept on purpose. A row with no old link is a piece of NEW geometry on the
+        // new link, and a row with no new link is a REMOVED piece of the old link. Neither can be
+        // applied as a replacement, but both are needed to see whether a link's change is complete:
+        // without them a new link partly built from new geometry, or an old link with a removed tail,
+        // looks like a forbidden partial change. Rows with neither link id carry no information.
+        if (oldLinkId == null && newLinkId == null) {
+          logger.warn("Skipping TiekamuRoadLinkChange with both link IDs null")
+          None
+        } else {
+          val newStartM = (properties \ "m_arvo_alku_kohdepvm").extract[Double]
+          val newEndM = (properties \ "m_arvo_loppu_kohdepvm").extract[Double]
+          Some(TiekamuRoadLinkChange(
+            oldLinkId,
+            (properties \ "m_arvo_alku").extract[Double],
+            (properties \ "m_arvo_loppu").extract[Double],
+            newLinkId,
+            if (newStartM > newEndM) newEndM else newStartM,
+            if (newEndM < newStartM) newStartM else newEndM,
+            getDigitizationChangeValue(newStartM, newEndM)
+          ))
+        }
       }
     }
 
@@ -266,11 +278,14 @@ class VKMClient(endPoint: String, apiKey: String) {
       val previousDateStr = finnishDateFormatter.print(previousDate)
       val newDateStr = finnishDateFormatter.print(newDate)
 
-      Stream
+      val allChanges = Stream
         .from(1)
         .map { page =>
+          // palautusarvot=7 asks for ALL linear location changes, i.e. the changed (72), new (71) and
+          // removed (73) rows in one paginated query. Requesting only the changed rows left Viite blind
+          // to new and removed pieces of a link, which its change validation reads as a partial change.
           val params =
-            s"tilannepvm=$previousDateStr&asti=$newDateStr&palautusarvot=72&sivunkoko=$pageSize&sivu=$page"
+            s"tilannepvm=$previousDateStr&asti=$newDateStr&palautusarvot=7&sivunkoko=$pageSize&sivu=$page"
           val url = s"$endPoint/tiekamu?$params"
 
           val request = new HttpGet(url)
@@ -299,6 +314,19 @@ class VKMClient(endPoint: String, apiKey: String) {
         }
         .flatMap(_.toSeq.flatten)
         .toSeq
+
+      // Tiekamu can return the exact same change row more than once (e.g. the same row repeated across
+      // paginated responses). Identical duplicates inflate the per-old-link length sum in Viite's change
+      // validation, producing false "No partial changes allowed" errors that drop the whole road part,
+      // and would create duplicate ReplaceInfos downstream. Drop exact duplicates at the source.
+      val distinctChanges = allChanges.distinct
+      val duplicateCount = allChanges.length - distinctChanges.length
+      if (duplicateCount > 0)
+        logger.info(s"Removed $duplicateCount duplicate TiekamuRoadLinkChange row(s); ${distinctChanges.length} remain.")
+      val newGeometryRows = distinctChanges.count(_.oldLinkId == null)
+      val removedRows = distinctChanges.count(_.newLinkId == null)
+      logger.info(s"${distinctChanges.length} TiekamuRoadLinkChange row(s): $newGeometryRows with no old link (new geometry), $removedRows with no new link (removed).")
+      distinctChanges
     }
   }
 }

@@ -1,21 +1,24 @@
 package fi.liikennevirasto.digiroad2.client.kgv
 
-import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc.{combineFiltersWithAnd, withLinkIdFilter, withMunicipalityFilter, withRoadNumbersFilter}
-import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
+import fi.liikennevirasto.digiroad2.client.kgv.FilterOgc._
 import fi.liikennevirasto.digiroad2.util.LogUtils.time
+import fi.liikennevirasto.digiroad2.util.{Parallel, ViiteProperties}
+import fi.vaylavirasto.viite.dao.LinkDAO
 import fi.vaylavirasto.viite.geometry.BoundingRectangle
 import fi.vaylavirasto.viite.model.LinkGeomSource
+import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithReadOnlySession
+import org.apache.hc.client5.http.ClientProtocolException
 import org.apache.hc.client5.http.classic.methods.HttpGet
 import org.apache.hc.client5.http.impl.classic.{CloseableHttpClient, HttpClients}
-import org.apache.hc.client5.http.ClientProtocolException
 import org.apache.hc.core5.http.{ClassicHttpResponse, HttpStatus}
 import org.apache.hc.core5.http.io.HttpClientResponseHandler
 import org.apache.hc.core5.http.message.BasicHttpRequest
-import org.json4s.{DefaultFormats, StreamInput}
+import org.joda.time.DateTime
+import org.json4s.DefaultFormats
 import org.json4s.jackson.JsonMethods.parse
 
 import java.io.IOException
-import java.net.URLEncoder
+import java.net.{URLDecoder, URLEncoder}
 import java.util.concurrent.TimeUnit
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -42,7 +45,8 @@ trait KgvCollection {
 }
 
 object KgvCollection {
-  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_20251020" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
+  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   
+  case object Dynamic                 extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
   case object UnFrozen                extends KgvCollection { def value = "keskilinjavarasto:road_links" }
   case object LinkVersions            extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
@@ -53,6 +57,10 @@ trait KgvOperation extends LinkOperationsAbstract{
   type LinkType
   type Content = FeatureCollection
 
+  // versiondate joka määrittää dynaamisen tien päivitys ajankohdan
+  private lazy val versionDate: String =
+    new DateTime(runWithReadOnlySession(LinkDAO.fetchMaxAdjustedTimestamp()))
+      .toString("yyyy-MM-dd")
   protected val linkGeomSource: LinkGeomSource
   private val cqlLang                             = "cql-text"
   private val bboxCrsType                         = "EPSG%3A3067"
@@ -80,6 +88,10 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def encode(url: String): String = {
     URLEncoder.encode(url, "UTF-8")
+  }
+
+  protected def decode(url: String): String = {
+    URLDecoder.decode(url, "UTF-8")
   }
 
   protected def addHeaders(request: BasicHttpRequest): Unit = {
@@ -265,17 +277,24 @@ trait KgvOperation extends LinkOperationsAbstract{
   override protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int],
                                                         filter: Option[String]): Seq[LinkType] = {
     val bbox = s"${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y}"
-    val filterString  = if (municipalities.nonEmpty || filter.isDefined){
-      s"filter=${encode(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))}"
-    }else {
-      ""
+    val baseFilter = combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter)
+
+    // KGV's CQL engine mishandles an OR predicate combined with AND, so withVersionDateFilter's
+    // internal OR is split into two "closed"/"open" queries and merged here instead
+    def fetchVersionLayer(versionFilter: String): Seq[Feature] = {
+      val encodedFilter = encode(combineFiltersWithAnd(baseFilter, versionFilter))
+      val url = s"$restApiEndPoint/$serviceName/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&filter=$encodedFilter"
+      fetchFeatures(url) match {
+        case Right(features) => features.toSeq.flatMap(_.features)
+        case Left(error) => throw new ClientException(error.toString)
+      }
     }
-    fetchFeatures(s"$restApiEndPoint/$serviceName/items?bbox=$bbox&filter-lang=$cqlLang&bbox-crs=$bboxCrsType&crs=$crs&$filterString")
-    match {
-      case Right(features) =>features.get.features.map(feature=>
-        Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
-      case Left(error) => throw new ClientException(error.toString)
-    }
+
+    val features = (
+      fetchVersionLayer(withVersionDateClosedFilter(versionDate)) ++ fetchVersionLayer(withVersionDateOpenFilter(versionDate))
+    ).distinct
+
+    features.map(feature => Extractor.extractFeature(feature, linkGeomSource).asInstanceOf[LinkType])
   }
 
   override protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[LinkType] = {
@@ -283,6 +302,7 @@ trait KgvOperation extends LinkOperationsAbstract{
     queryWithPaginationThreaded(s"$restApiEndPoint/$serviceName/items?$filterString&filter-lang=$cqlLang&crs=$crs")
   }
 
+  // search by linkId => used without providing explicit filter
   override protected def queryByLinkIds[LinkType](linkIds: Set[String], filter: Option[String] = None): Seq[LinkType] = {
     new Parallel().operation(linkIds.grouped(BATCH_SIZE_FOR_SELECT_IN_QUERY).toList.par, 4) {
       _.flatMap(ids => {
@@ -293,6 +313,13 @@ trait KgvOperation extends LinkOperationsAbstract{
 
   protected def queryByLinkIdsUsingFilter[LinkType](linkIds: Set[String],filter: Option[String]): Seq[LinkType] = {
     queryByFilter(Some(combineFiltersWithAnd(withLinkIdFilter(linkIds), filter)))
+  }
+
+  protected def queryByLinkIdsActiveOnVersionDate[LinkType](linkIds: Set[String]): Seq[LinkType] = {
+    val idFilter = withLinkIdFilter(linkIds)
+    val closed   = queryByFilter[LinkType](Some(combineFiltersWithAnd(withVersionDateClosedFilter(versionDate), idFilter)))
+    val open     = queryByFilter[LinkType](Some(combineFiltersWithAnd(withVersionDateOpenFilter(versionDate), idFilter)))
+    (closed ++ open).distinct
   }
 
   protected def queryRoadAndPartWithFilter(linkIds: Set[String], filter: String): List[(Option[Long], Option[Long], Int)] = {
@@ -307,6 +334,7 @@ trait KgvOperation extends LinkOperationsAbstract{
   protected def queryByFilter[LinkType](filter:Option[String],pagination:Boolean = false): Seq[LinkType] = {
     val filterString  = if (filter.nonEmpty) s"&filter=${encode(filter.get)}" else ""
     val url = s"$restApiEndPoint/$serviceName/items?filter-lang=$cqlLang&crs=$crs$filterString"
+    val decodedUrl = decode(url)
     if(!pagination){
       fetchFeatures(url)
       match {

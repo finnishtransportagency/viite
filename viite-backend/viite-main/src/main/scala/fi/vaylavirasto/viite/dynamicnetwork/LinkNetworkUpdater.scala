@@ -302,15 +302,20 @@ class LinkNetworkUpdater {
 
     def Split(aReplaceChange: LinkNetworkReplaceChange) = {
       aReplaceChange.replaceInfos.foreach( ri => {
-        val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, ri.oldFromMValue, ri.oldToMValue)
+        // The replaceInfo's old M-range is descending, when the change runs against the old link's
+        // digitization direction. Splitting happens on the old link's M-values, so use the range low
+        // and high ends, not the from and to ends.
+        val oldRangeLow  = math.min(ri.oldFromMValue, ri.oldToMValue)
+        val oldRangeHigh = math.max(ri.oldFromMValue, ri.oldToMValue)
+        val oldLinearLocations = linearLocationDAO.fetchByLinkIdAndMValueRange(change.oldLink.linkId, oldRangeLow, oldRangeHigh)
         oldLinearLocations.foreach( oldll => {
-          if     ( (oldll.startMValue+GeometryUtils.DefaultEpsilon)<ri.oldFromMValue ) {
-            logger.debug(s"Splitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldFromMValue ${ri.oldFromMValue}")
-            splitLinearLocation(oldll.id, ri.oldFromMValue, changeMetaData)
+          if     ( (oldll.startMValue+GeometryUtils.DefaultEpsilon)<oldRangeLow ) {
+            logger.debug(s"Splitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at ${oldRangeLow}")
+            splitLinearLocation(oldll.id, oldRangeLow, changeMetaData)
           }
-          else if( (oldll.endMValue-GeometryUtils.DefaultEpsilon)>ri.oldToMValue   ) {
-            logger.debug(s"Splitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at oldToMValue ${ri.oldToMValue}")
-            splitLinearLocation(oldll.id, ri.oldToMValue,   changeMetaData)
+          else if( (oldll.endMValue-GeometryUtils.DefaultEpsilon)>oldRangeHigh   ) {
+            logger.debug(s"Splitting (Replace) ${oldll.id} (${oldll.startMValue}...${oldll.endMValue}) at ${oldRangeHigh}")
+            splitLinearLocation(oldll.id, oldRangeHigh,   changeMetaData)
           }
           else {
             logger.debug(s"Splitting (Replace) finished")
@@ -465,9 +470,9 @@ class LinkNetworkUpdater {
     def checksForInvalidLinkLengths(oldLink: LinkInfo, newLinks: Seq[LinkInfo], splitInfos: Seq[ReplaceInfo]) = {
       logger.debug(s"data integrity: told lengths must match sufficiently. Allowed difference: ${GeometryUtils.DefaultEpsilon} m ")
       val oldLengthFromOldLink    = GeometryUtils.scaleToThreeDigits(oldLink.linkLength) // may already be rounded to three digits, but whatever
-      val oldLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.oldToMValue-splitInfo.oldFromMValue))
+      val oldLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + (splitInfo.oldToMValue-splitInfo.oldFromMValue).abs))
       val newLengthFromNewLinks   = GeometryUtils.scaleToThreeDigits(newLinks  .foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.linkLength))
-      val newLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + splitInfo.newToMValue-splitInfo.newFromMValue))
+      val newLengthFromSplitInfos = GeometryUtils.scaleToThreeDigits(splitInfos.foldLeft(0.0)((cumulLength,splitInfo) => cumulLength + (splitInfo.newToMValue-splitInfo.newFromMValue).abs))
 
       if (oldLengthFromOldLink  != oldLengthFromSplitInfos) {  // old link lengths must always match
         throw ViiteException(s"LinkNetworkChange: Invalid SplitChange. Old link lengths do not match when splitting link $oldLink." +
@@ -521,14 +526,19 @@ class LinkNetworkUpdater {
     //TODO link.geometry vs. link.linkLength checks?
 
     logger.debug("data integrity: digitization")
-    splitInfos.foreach(ri =>
-      if (ri.digitizationChange) {
-        // TODO is digitizationChange always ok as is, or do we have to check something when it is true?
-      }
-    )
+//    splitInfos.foreach(ri =>
+//      if (ri.digitizationChange) {
+//        // TODO is digitizationChange always ok as is, or do we have to check something when it is true?
+//      }
+//    )
+    val normalizedSplitInfos = splitInfos.map { si =>
+      if (si.oldFromMValue > si.oldToMValue)
+        si.copy(oldFromMValue = si.oldToMValue, oldToMValue = si.oldFromMValue)
+      else si
+    }
 
     logger.debug("Validations for a split change passed, returning a proper LinkNetworkSplitChange")
-    Some(LinkNetworkSplitChange(oldLink, newLinks, splitInfos))
+    Some(LinkNetworkSplitChange(oldLink, newLinks, normalizedSplitInfos))
 
   }
 
@@ -747,18 +757,28 @@ class LinkNetworkUpdater {
       }
 
       val oldLlsSorted = oldLinearLocations.sortBy(_.startMValue)
+      // The linear locations run along the old link's digitization direction, but the replaceInfo's
+      // old M-range is descending when the change runs against it, so compare against the range
+      // low and high ends instead of its from and to ends.
+      val oldRangeLow  = math.min(ri.oldFromMValue, ri.oldToMValue)
+      val oldRangeHigh = math.max(ri.oldFromMValue, ri.oldToMValue)
       //tarkista, että ri:n ja oldll:ien tiedot täsmäävät
-      if(!linkLengthsConsideredTheSame(ri.oldFromMValue, oldLlsSorted.head.startMValue)) {
-        throw ViiteException(s"LinkNetworkReplaceChange: start values do not match sufficiently: ${ri.oldFromMValue} vs. ${oldLlsSorted.head.startMValue}.")
+      if(!linkLengthsConsideredTheSame(oldRangeLow, oldLlsSorted.head.startMValue)) {
+        throw ViiteException(s"LinkNetworkReplaceChange: start values do not match sufficiently: ${oldRangeLow} (of ${ri.oldFromMValue}...${ri.oldToMValue}) vs. ${oldLlsSorted.head.startMValue}.")
       }
-      if(!linkLengthsConsideredTheSame(ri.oldToMValue, oldLlsSorted.last.endMValue)  ) {
-        throw ViiteException(s"LinkNetworkReplaceChange:  end  values do not match sufficiently: ${ri.oldToMValue}   vs. ${oldLlsSorted.last.endMValue}."  )
+      if(!linkLengthsConsideredTheSame(oldRangeHigh, oldLlsSorted.last.endMValue)  ) {
+        throw ViiteException(s"LinkNetworkReplaceChange:  end  values do not match sufficiently: ${oldRangeHigh} (of ${ri.oldFromMValue}...${ri.oldToMValue}) vs. ${oldLlsSorted.last.endMValue}."  )
       }
 
       oldLlsSorted.foreach(oldLL => { // make changes linearlocation wise. Usually there is only one. But might be many.
 
-        var newLlStartMValue = GeometryUtils.getProjectedValue(ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, oldLL.startMValue)
-        var newLlEndMValue   = GeometryUtils.getProjectedValue(ri.oldFromMValue, ri.oldToMValue, ri.newFromMValue, ri.newToMValue, oldLL.endMValue  )
+        // A descending old M-range maps the old link's ends crosswise onto the new link, so the
+        // projected values may come out in either order. The linear location's own M-values must
+        // ascend along the new link; the address direction is carried by the side code.
+        val projectedLlStartMValue = projectOntoNewLink(ri, oldLL.startMValue)
+        val projectedLlEndMValue   = projectOntoNewLink(ri, oldLL.endMValue  )
+        val newLlStartMValue = math.min(projectedLlStartMValue, projectedLlEndMValue)
+        val newLlEndMValue   = math.max(projectedLlStartMValue, projectedLlEndMValue)
 
         val minMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, newLlStartMValue) // TODO snap to geometry points? Check not overflowing the link length?
         val maxMValuePointOpt = GeometryUtils.calculatePointFromLinearReference(change.newLink.geometry, newLlEndMValue)   // TODO snap to geometry points? Check not overflowing the link length?
@@ -857,6 +877,27 @@ class LinkNetworkUpdater {
      }
     )
     logger.debug("New links created")
+  }
+
+  /** Projects <i>oldMValue</i> from the old link's M-range of <i>replaceInfo</i> onto the M-range of
+   * the new link. Either M-range may be descending: the from ends map onto each other, and the to
+   * ends map onto each other, so when exactly one of the ranges descends, the ends map crosswise.
+   *
+   * @param replaceInfo the replace info telling the M-ranges to project between
+   * @param oldMValue   an M-value on the old link, within the replace info's old M-range
+   * @return the corresponding M-value on the new link
+   */
+  private def projectOntoNewLink(replaceInfo: ReplaceInfo, oldMValue: Double): Double = {
+    val oldLow  = math.min(replaceInfo.oldFromMValue, replaceInfo.oldToMValue)
+    val oldHigh = math.max(replaceInfo.oldFromMValue, replaceInfo.oldToMValue)
+    val newLow  = math.min(replaceInfo.newFromMValue, replaceInfo.newToMValue)
+    val newHigh = math.max(replaceInfo.newFromMValue, replaceInfo.newToMValue)
+
+    val projected = GeometryUtils.getProjectedValue(oldLow, oldHigh, newLow, newHigh, oldMValue)
+
+    val oldDescends = replaceInfo.oldToMValue < replaceInfo.oldFromMValue
+    val newDescends = replaceInfo.newToMValue < replaceInfo.newFromMValue
+    if (oldDescends != newDescends) newLow + newHigh - projected else projected
   }
 
   private def decideNewSideCode(digitizationChanged: Boolean, oldSideCode: SideCode) = {

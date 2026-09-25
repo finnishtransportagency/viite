@@ -61,6 +61,11 @@ class ViiteApiSpec extends AnyFunSuite with ScalatraSuite with BeforeAndAfter {
 
   when(frozenTimeRoadLinkData.fetchByLinkId("6117675")).thenReturn(Some(testRoadLink))
   when(frozenTimeRoadLinkData.fetchByLinkId("f4745622-bfed-4ebd-aa32-aadeefe6289e:1")).thenReturn(Some(mockRoadLink2))
+  // getMidPointByLinkId looks the link up with fetchByLinkIdIfActive, i.e. restricted to the links valid
+  // on the version date. Stubbed with the same links as fetchByLinkId above; without this the mock returns
+  // null and the orElse in RoadLinkService.getMidPointByLinkId throws.
+  when(frozenTimeRoadLinkData.fetchByLinkIdIfActive("6117675")).thenReturn(Some(testRoadLink))
+  when(frozenTimeRoadLinkData.fetchByLinkIdIfActive("f4745622-bfed-4ebd-aa32-aadeefe6289e:1")).thenReturn(Some(mockRoadLink2))
   when(frozenTimeRoadLinkData.fetchByLinkIds(any[Set[String]])).thenReturn(Seq(mockRoadLink))
   when(frozenTimeRoadLinkData.fetchByLinkIdsF(any[Set[String]])).thenReturn(Future(Seq(testRoadLink)))
 
