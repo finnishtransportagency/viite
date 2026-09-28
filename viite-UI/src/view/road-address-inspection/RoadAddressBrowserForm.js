@@ -50,6 +50,18 @@ export function createElyEvkSelectorData() {
 	};
 }
 
+export function getAllEvkValues() {
+	return Object.keys(ViiteEnumerations.EVKCodes || {}).map(function (evk) {
+		return String(ViiteEnumerations.EVKCodes[evk].value);
+	});
+}
+
+export function getAllElyValues() {
+	return Object.keys(ViiteEnumerations.ElyCodes || {}).map(function (ely) {
+		return String(ViiteEnumerations.ElyCodes[ely].value);
+	});
+}
+
 export function RoadAddressBrowserForm() {
 
 	// Initialize multi-column selectors

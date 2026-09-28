@@ -227,8 +227,16 @@ export function MultiColumnDropdown(options) {
   function observeDetachment() {
     if (typeof MutationObserver === 'undefined') return;
 
+    let wasAttached = Boolean(document.getElementById(id));
+
     const observer = new MutationObserver(function () {
-      if (!document.getElementById(id) && selectedValues.size > 0) {
+      const isAttached = Boolean(document.getElementById(id));
+      if (isAttached) {
+        wasAttached = true;
+        return;
+      }
+
+      if (wasAttached && selectedValues.size > 0) {
         clear();
         if (onChange) onChange(getValue());
       }
