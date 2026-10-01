@@ -88,6 +88,23 @@ const TARGET_CONFIG = {
 	}
 };
 
+const TARGET_FILENAME_LABELS = {
+	Tracks: 'ajoradat',
+	RoadParts: 'tieosat',
+	Nodes: 'solmut',
+	Junctions: 'liittymat',
+	RoadNames: 'tiennimet'
+};
+
+function sanitizeFilenameValue(value) {
+	return String(value).toLowerCase().replaceAll(',', '-').replace(/[^a-z0-9.-]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function formatFilenameDate(dateString) {
+	const [year, month, day] = dateString.split('-');
+	return `${day}.${month}.${year}`;
+}
+
 // Rows as plain arrays (header row + one row per result) for CSV export.
 function resultsToArray(target, results) {
 	const { columns } = TARGET_CONFIG[target];
@@ -136,18 +153,18 @@ export function RoadAddressBrowserWindow() {
 
 		const params = searchParams;
 
-		// Create file name
 		const parts = [
-			"Viite",
-			params.target,
-			params.situationDate,
-			params.ely || params.roadMaintainer,
-			params.roadNumber,
-			params.minRoadPartNumber,
-			params.maxRoadPartNumber
-		];
-		const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
-		const fileName = fileNameString.replaceAll("undefined", "-");
+			'viite',
+			TARGET_FILENAME_LABELS[params.target] || params.target,
+			params.situationDate && `-${formatFilenameDate(params.situationDate)}`,
+			params.ely && `ely-${params.ely}`,
+			params.roadMaintainer && `elinvoimakeskus-${params.roadMaintainer}`,
+			params.roadNumber && `tie-${params.roadNumber}`,
+			params.minRoadPartNumber && params.maxRoadPartNumber && `osa-${params.minRoadPartNumber}-${params.maxRoadPartNumber}`,
+			params.minRoadPartNumber && !params.maxRoadPartNumber && `aosa-${params.minRoadPartNumber}`,
+			!params.minRoadPartNumber && params.maxRoadPartNumber && `losa-${params.maxRoadPartNumber}`
+		].filter(Boolean);
+		const fileName = `${parts.map(sanitizeFilenameValue).join('_')}.csv`;
 
 		const data = resultsToArray(params.target, searchResults);
 		let csvContent = "\uFEFF"; // UTF-8 BOM

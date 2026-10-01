@@ -5,7 +5,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { RoadAddressBrowserForm, createElyEvkSelectorData, formatElyEvkValue, getAllEvkValues } from './RoadAddressBrowserForm.js';
+import { RoadAddressBrowserForm, createElyEvkSelectorData, formatElyEvkValue, getAllEvkValues, getAllElyValues } from './RoadAddressBrowserForm.js';
 import { getDataForRoadAddressChangesBrowser } from '@utils/BackendUtils.js';
 
 function getChangeTypeDisplayText(changeTypeValue) {
@@ -13,6 +13,15 @@ function getChangeTypeDisplayText(changeTypeValue) {
 		return obj.value === changeTypeValue;
 	});
 	return changeType.displayText;
+}
+
+function sanitizeFilenameValue(value) {
+	return String(value).toLowerCase().replaceAll(',', '-').replace(/[^a-z0-9.-]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function formatFilenameDate(dateString) {
+	const [year, month, day] = dateString.split('-');
+	return `${day}.${month}.${year}`;
 }
 
 /**
@@ -188,19 +197,21 @@ export function RoadAddressChangesBrowserWindow() {
 	function exportDataAsCsvFile() {
 		const params = searchParams;
 
-		// Create file name
+		const dateTargetLabel = params.dateTarget === 'RoadAddressStartDate' ? 'voimaantulopaiva' : 'hyvaksymispaiva';
 		const parts = [
-			"Viite",
-			params.dateTarget,
-			params.startDate,
-			params.endDate,
-			params.ely || params.roadMaintainer,
-			params.roadNumber,
-			params.minRoadPartNumber,
-			params.maxRoadPartNumber
-		];
-		const fileNameString = parts.map(val => val || '-').join('_') + ".csv";
-		const fileName = fileNameString.replaceAll("undefined", "-");
+			'viite',
+			'tiemuutokset',
+			dateTargetLabel,
+			params.startDate && `alkaen-${formatFilenameDate(params.startDate)}`,
+			params.endDate && `asti-${formatFilenameDate(params.endDate)}`,
+			params.ely && `ely-${params.ely}`,
+			params.roadMaintainer && `elinvoimakeskus-${params.roadMaintainer}`,
+			params.roadNumber && `tie-${params.roadNumber}`,
+			params.minRoadPartNumber && params.maxRoadPartNumber && `osa-${params.minRoadPartNumber}-${params.maxRoadPartNumber}`,
+			params.minRoadPartNumber && !params.maxRoadPartNumber && `aosa-${params.minRoadPartNumber}`,
+			!params.minRoadPartNumber && params.maxRoadPartNumber && `losa-${params.maxRoadPartNumber}`
+		].filter(Boolean);
+		const fileName = `${parts.map(sanitizeFilenameValue).join('_')}.csv`;
 
 		const data = resultsToArray(searchResults);
 		let csvContent = "\uFEFF"; // UTF-8 BOM
@@ -282,11 +293,15 @@ export function RoadAddressChangesBrowserWindow() {
 			const selectedValues = Array.isArray(selected) ? selected : [selected].filter(Boolean);
 
 			// Add ELY/EVK to params (multiple selections are sent as comma-separated lists).
-			// If nothing is selected, request all EVKs explicitly so the backend searches
+			// If nothing is selected, send all ELYs and EVKs explicitly so the backend searches
 			// across every maintainer instead of using an unbounded/empty maintainer query.
 			const elyValues = selectedValues.filter(v => v.startsWith('ELY_')).map(v => v.split('_')[1]).filter(Boolean);
 			const evkValues = selectedValues.filter(v => v.startsWith('EVK_')).map(v => v.split('_')[1]).filter(Boolean);
-			if (elyValues.length) params.ely = elyValues.join(',');
+			if (elyValues.length) {
+				params.ely = elyValues.join(',');
+			} else if (!evkValues.length) {
+				params.ely = getAllElyValues().join(',');
+			}
 			if (evkValues.length) {
 				params.roadMaintainer = evkValues.join(','); // Backend handles evk value as roadMaintainer, so convert evk to that
 			} else if (!elyValues.length) {
