@@ -413,7 +413,6 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 
 		if (isHoveringNode) {
 			map.getViewport().style.cursor = currentNode ? 'grab' : 'pointer';
-      console.log('Hovering over node:', featureAtPixel);
 		} else {
 			map.getViewport().style.cursor = 'default';
 		}

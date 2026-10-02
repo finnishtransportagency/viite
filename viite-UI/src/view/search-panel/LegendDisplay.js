@@ -82,7 +82,7 @@ const STATIC_ENTRIES = {
 	junction:         svgObjectEntry('images/junction.svg',          'Liittymä'),
 	junctionTemplate: svgObjectEntry('images/junction-template.svg', 'Liittymäaihio'),
 	nodeTemplate:     svgObjectEntry('images/node-point-template.svg','Solmukohta-aihio'),
-	nodeSelectHint:   '<div class="node-select-hint">Valitse solmu klikkaamalla sitä</div>'
+	nodeSelectHint:   '<div class="node-select-hint">Valitse solmu klikkaamalla</div>'
 };
 
 // Segment Builders -----------------------------------------------------------------
