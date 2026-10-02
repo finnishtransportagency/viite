@@ -37,7 +37,6 @@ export function ProjectCollection(backend, startupParameters) {
 	let projectErrors = [];
 	let reservedParts = [];
 	let formedParts = [];
-	let coordinateButtons = [];
 	let projectInfo;
 	let currentProject;
 	let fetchedProjectLinks = [];
@@ -45,7 +44,6 @@ export function ProjectCollection(backend, startupParameters) {
 	let dirtyProjectLinks = [];
 	let publishableProject = false;
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
-	const ProjectStatus = ViiteEnumerations.ProjectStatus;
 	const Track = ViiteEnumerations.Track;
 	const ALLOWED_ADDR_M_VALUE_PERCENTAGE = 0.2;
 	let editedEndDistance = false;
@@ -109,10 +107,6 @@ export function ProjectCollection(backend, startupParameters) {
 		return _.map(projectLinks(), function (projectLink) {
 			return projectLink.getData();
 		});
-	}
-
-	function reset() {
-		fetchedProjectLinks = [];
 	}
 
 	function getMultiProjectLinks(id) {
@@ -479,6 +473,7 @@ export function ProjectCollection(backend, startupParameters) {
 			reversed: reversed,
 			devToolData: devToolData
 		};
+    
 		if (dataJson.trackCode === Track.Unknown.value) {
 			new ConfirmPopup('Tarkista ajoratakoodi', { type: 'alert' });
 			return null;
@@ -610,17 +605,6 @@ export function ProjectCollection(backend, startupParameters) {
 		);
 	}
 
-	function getDeleteButton(index, roadNumber, roadPartNumber, selector) {
-		return deleteButton(index, roadNumber, roadPartNumber, selector);
-	}
-
-	const deleteButton = function (index, roadNumber, roadPartNumber, selector) {
-		const disabledInput = !_.isUndefined(currentProject) &&
-      (currentProject.project.statusCode === ProjectStatus.InUpdateQueue.value ||
-        currentProject.project.statusCode === ProjectStatus.UpdatingToRoadNetwork.value);
-		return '<i roadNumber="' + roadNumber + '" roadPartNumber="' + roadPartNumber + '" id="' + index + '" class="delete mt-1 btn-delete ' + selector + ' fas fa-trash-alt fa-lg" style="position: absolute; left: 365px;" ' + (disabledInput ? 'disabled' : '') + '></i>';
-	};
-
 	const addToReservedPartList = function (queryResult) {
 		const qRoadParts = [];
 		_.each(queryResult.reservedInfo, function (row) {
@@ -676,20 +660,8 @@ export function ProjectCollection(backend, startupParameters) {
 		projectErrors = normalizeProjectErrors(errors);
 	}
 
-	function clearProjectErrors() {
-		projectErrors = [];
-	}
-
 	function getProjectErrors() {
 		return projectErrors;
-	}
-
-	function pushCoordinates(button) {
-		coordinateButtons.push(button);
-	}
-
-	function clearCoordinates(_button) {
-		coordinateButtons = [];
 	}
 
 	function setTmpDirty(editRoadLinks) {
@@ -724,28 +696,6 @@ export function ProjectCollection(backend, startupParameters) {
 			return { success: true, validationResult: validationResult };
 		}
 		return { success: false, error: validationResult.error || validationResult.success, validationResult: validationResult };
-	}
-
-	function clearProject() {
-		clearRoadAddressProjects();
-	}
-
-	function clickCoordinates(event, map) {
-		const currentCoordinates = map.getView().getCenter();
-		const errorIndex = event.currentTarget.id;
-		const errorCoordinates = _.find(coordinateButtons, function (b) {
-			return b.index === parseInt(errorIndex);
-		}).coordinates;
-		const index = _.findIndex(errorCoordinates, function (coordinates) {
-			return coordinates.x === currentCoordinates[0] && coordinates.y === currentCoordinates[1];
-		});
-		if (index >= 0 && index + 1 < errorCoordinates.length) {
-			map.getView().setCenter([errorCoordinates[index + 1].x, errorCoordinates[index + 1].y]);
-			map.getView().setZoom(errorCoordinates[index + 1].zoom);
-		} else {
-			map.getView().setCenter([errorCoordinates[0].x, errorCoordinates[0].y]);
-			map.getView().setZoom(errorCoordinates[0].zoom);
-		}
 	}
 
 	function markEditedBeginDistance() {
@@ -859,7 +809,6 @@ export function ProjectCollection(backend, startupParameters) {
 	return {
 		getProjectLinks: getProjectLinks,
 		getAll: getAll,
-		reset: reset,
 		getMultiProjectLinks: getMultiProjectLinks,
 		getProjectLink: getProjectLink,
 		fetch: fetch,
@@ -875,7 +824,6 @@ export function ProjectCollection(backend, startupParameters) {
 		deleteProject: deleteProject,
 		changeNewProjectLinkDirection: changeNewProjectLinkDirection,
 		publishProject: publishProject,
-		getDeleteButton: getDeleteButton,
 		setDirty: setDirty,
 		getDirty: getDirty,
 		getReservedParts: getReservedParts,
@@ -885,17 +833,12 @@ export function ProjectCollection(backend, startupParameters) {
 		setFormedParts: setFormedParts,
 		setAndWriteProjectErrorsToUser: setAndWriteProjectErrorsToUser,
 		setProjectErrors: setProjectErrors,
-		clearProjectErrors: clearProjectErrors,
 		getProjectErrors: getProjectErrors,
-		pushCoordinates: pushCoordinates,
-		clearCoordinates: clearCoordinates,
 		setTmpDirty: setTmpDirty,
 		getTmpDirty: getTmpDirty,
 		isDirty: isDirty,
 		startProject: startProject,
 		handleValidationResponse: handleValidationResponse,
-		clearProject: clearProject,
-		clickCoordinates: clickCoordinates,
 		markEditedBeginDistance: markEditedBeginDistance,
 		markEditedEndDistance: markEditedEndDistance,
 		getCurrentProject: getCurrentProject,

@@ -177,9 +177,6 @@ export function TileMapCollection() {
 		layers: Object.values(tileMapLayers),
 		selectMap: selectMap,
 		setVisible: setVisible,
-		updateVelhoRoutes: updateVelhoRoutes,
-		getLayer: function(name) {
-			return tileMapLayers[name];
-		}
+		updateVelhoRoutes: updateVelhoRoutes
 	};
 }

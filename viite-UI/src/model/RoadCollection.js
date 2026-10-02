@@ -24,7 +24,6 @@ const RoadLinkModel = function (data) {
 };
 
 export function RoadCollection() {
-	let currentAllRoadLinks = [];
 	let roadLinkGroups = [];
 	const RoadAddressChangeType = ViiteEnumerations.RoadAddressChangeType;
 	const LinkSource = ViiteEnumerations.LinkGeomSource;
@@ -68,7 +67,6 @@ export function RoadCollection() {
 		getRoadLinks({
 			boundingBox: boundingBox, zoom: zoom
 		}, function (fetchedRoadLinks) {
-			currentAllRoadLinks = fetchedRoadLinks;
 			fetchProcess(fetchedRoadLinks, zoom);
 		});
 	}
@@ -83,8 +81,7 @@ export function RoadCollection() {
 
 	function fetchWithNodes(boundingBox, zoom, callback) {
 		getNodesAndJunctions({boundingBox: boundingBox, zoom: zoom}, function (fetchedNodesAndJunctions) {
-			currentAllRoadLinks = fetchedNodesAndJunctions.fetchedRoadLinks;
-			fetchProcess(currentAllRoadLinks, zoom);
+			fetchProcess(fetchedNodesAndJunctions.fetchedRoadLinks, zoom);
 			return callback(fetchedNodesAndJunctions.fetchedNodes);
 		});
 	}
