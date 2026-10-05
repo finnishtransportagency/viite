@@ -52,16 +52,90 @@ object GeometryUtils {
       val (truncatedGeometry, onSelection, previousPoint, accumulatedLength) = accu
 
       val (pointsToAdd, enteredSelection) = (measureOnSegment(startMeasure, (previousPoint, point), accumulatedLength), measureOnSegment(endMeasure, (previousPoint, point), accumulatedLength), onSelection) match {
-        case (false, false, true) => (List(point), true)
+        case (false, false, true)  => (List(point), true)
         case (false, false, false) => (Nil, false)
-        case (true, false, _) => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)), point), true)
-        case (false, true, _) => (List(newPointOnSegment(endMeasure - accumulatedLength, (previousPoint, point))), false)
-        case (true, true, _)  => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)),
-                                       newPointOnSegment(endMeasure - accumulatedLength, (previousPoint, point))), false)
+        case (true,  false, _)     => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)), point), true)
+        case (false, true,  _)     => (List(newPointOnSegment(endMeasure   - accumulatedLength, (previousPoint, point))), false)
+        case (true,  true,  _)     => (List(newPointOnSegment(startMeasure - accumulatedLength, (previousPoint, point)),
+                                           newPointOnSegment(endMeasure   - accumulatedLength, (previousPoint, point))), false)
       }
 
       (truncatedGeometry ++ pointsToAdd, enteredSelection, point, point.distance2DTo(previousPoint) + accumulatedLength)
     })._1
+  }
+
+  /**
+   * Scales a road address M-value to the equivalent Euclidean position along a geometry.
+   *
+   * Road links from KGV carry an official horizontal length (<i>linkMLength</i>) that is used
+   * as the M-value range for road addressing.  For most links this value equals the 2D Euclidean
+   * length of the geometry coordinates, but for some links ("correct m-value" links) the two
+   * differ.  Passing an unscaled M-value to [[truncateGeometry3D]] in such cases causes the
+   * geometry to be cut too short.
+   *
+   * Use this function to convert M-values to Euclidean positions before calling
+   * [[truncateGeometry3D]]:
+   * {{{
+   *   val geomLen = GeometryUtils.geometryLength(roadLink.geometry)
+   *   GeometryUtils.truncateGeometry3D(
+   *     roadLink.geometry,
+   *     GeometryUtils.scaleMToGeometry(startMValue, roadLink.length, geomLen),
+   *     GeometryUtils.scaleMToGeometry(endMValue,   roadLink.length, geomLen))
+   * }}}
+   *
+   * @param mValue      The road address M-value to convert.
+   * @param linkMLength The link's official M-length (i.e. [[RoadLink.length]], from KGV
+   *                    <i>horizontallength</i>).
+   * @param geomLength  The geometry's 2D Euclidean length.
+   * @return The Euclidean position along the geometry that corresponds to <i>mValue</i>.
+   */
+  def scaleMToGeometry(mValue: Double, linkMLength: Double, geomLength: Double): Double =
+    scaleMValue(mValue, linkMLength, geomLength)
+
+  /**
+   * Proportional remap of an M-value from one M-space into another.
+   *
+   * The same link can be measured in several M-spaces that do not agree exactly: KGV's
+   * <i>horizontallength</i>, the 2D Euclidean length of the geometry, and the M-values a source
+   * system (e.g. Tiekamu) stores for the link. Comparing M-values across those spaces directly
+   * produces spurious length mismatches, so remap first.
+   *
+   * @param mValue     The M-value to convert.
+   * @param fromLength The length of the M-space <i>mValue</i> is expressed in.
+   * @param toLength   The length of the M-space to convert into.
+   * @return The corresponding M-value in the target M-space; <i>mValue</i> when
+   *         <i>fromLength</i> is zero.
+   */
+  def scaleMValue(mValue: Double, fromLength: Double, toLength: Double): Double = {
+    if (fromLength == 0.0) mValue
+    else mValue / fromLength * toLength
+  }
+
+  /**
+   * The union of the given M-intervals: intervals that overlap or touch (within <i>tolerance</i>)
+   * are merged into one. Bounds may be given in either order. The result is sorted and disjoint,
+   * so gaps between the returned intervals are real gaps in the covered range.
+   */
+  def unionIntervals(intervals: Seq[(Double, Double)], tolerance: Double = DefaultEpsilon): Seq[(Double, Double)] = {
+    val normalised = intervals.map { case (a, b) => (math.min(a, b), math.max(a, b)) }.sortBy(_._1)
+    normalised.foldLeft(List.empty[(Double, Double)]) {
+      case ((lo, hi) :: rest, (start, end)) if start <= hi + tolerance => (lo, math.max(hi, end)) :: rest
+      case (acc, interval) => interval :: acc
+    }.reverse
+  }
+
+  /** Total length covered by the given M-intervals, counting overlapping parts only once. */
+  def unionLength(intervals: Seq[(Double, Double)], tolerance: Double = DefaultEpsilon): Double =
+    unionIntervals(intervals, tolerance).map { case (start, end) => end - start }.sum
+
+  /** The given M-intervals clipped to <i>span</i>. Intervals fully outside the span are dropped. */
+  def clampIntervals(intervals: Seq[(Double, Double)], span: (Double, Double)): Seq[(Double, Double)] = {
+    val (spanStart, spanEnd) = (math.min(span._1, span._2), math.max(span._1, span._2))
+    intervals.flatMap { case (a, b) =>
+      val start = math.max(math.min(a, b), spanStart)
+      val end = math.min(math.max(a, b), spanEnd)
+      if (end > start) Some((start, end)) else None
+    }
   }
 
   def subtractIntervalFromIntervals(intervals: Seq[(Double, Double)], interval: (Double, Double)): Seq[(Double, Double)] = {

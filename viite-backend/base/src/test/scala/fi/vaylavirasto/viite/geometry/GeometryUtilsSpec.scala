@@ -250,6 +250,55 @@ class GeometryUtilsSpec extends AnyFunSuite with Matchers {
     GeometryUtils.geometryMoved(1.0)(geometry1, geometry2) should be (true)
   }
 
+  test("Test scaleMToGeometry When link M-length equals geometry length Then return mValue unchanged") {
+    GeometryUtils.scaleMToGeometry(0.0,   600.0, 600.0) should be (0.0)
+    GeometryUtils.scaleMToGeometry(300.0, 600.0, 600.0) should be (300.0)
+    GeometryUtils.scaleMToGeometry(600.0, 600.0, 600.0) should be (600.0)
+  }
+
+  test("Test scaleMToGeometry When link M-length differs from geometry length (correct M-value link) Then scale proportionally") {
+    val linkMLength  = 583.992
+    val geomLength   = 596.9
+    GeometryUtils.scaleMToGeometry(0.0,       linkMLength, geomLength) should be (0.0)
+    GeometryUtils.scaleMToGeometry(linkMLength, linkMLength, geomLength) should be (geomLength +- 0.001)
+    GeometryUtils.scaleMToGeometry(linkMLength / 2, linkMLength, geomLength) should be (geomLength / 2 +- 0.001)
+  }
+
+  test("Test scaleMToGeometry When linkMLength is zero Then return mValue unchanged to avoid division by zero") {
+    GeometryUtils.scaleMToGeometry(100.0, 0.0, 500.0) should be (100.0)
+  }
+
+  test("Test truncateGeometry3D with scaleMToGeometry When geometry length differs from M-value range Then full-range truncation returns the full geometry") {
+    val p1 = Point(0.0, 0.0)
+    val p2 = Point(596.9, 0.0)
+    val geometry  = Seq(p1, p2)
+    val linkMLength = 583.992
+    val geomLength  = GeometryUtils.geometryLength(geometry)
+
+    val result = GeometryUtils.truncateGeometry3D(geometry,
+      GeometryUtils.scaleMToGeometry(0.0,       linkMLength, geomLength),
+      GeometryUtils.scaleMToGeometry(linkMLength, linkMLength, geomLength))
+
+    result should be (geometry)
+  }
+
+  test("Test truncateGeometry3D with scaleMToGeometry When geometry length differs from M-value range Then partial truncation is proportional") {
+    val p1 = Point(0.0, 0.0)
+    val p2 = Point(596.9, 0.0)
+    val geometry    = Seq(p1, p2)
+    val linkMLength = 583.992
+    val geomLength  = GeometryUtils.geometryLength(geometry)
+
+    val halfM  = linkMLength / 2
+    val result = GeometryUtils.truncateGeometry3D(geometry,
+      GeometryUtils.scaleMToGeometry(0.0,  linkMLength, geomLength),
+      GeometryUtils.scaleMToGeometry(halfM, linkMLength, geomLength))
+
+    result should have size 2
+    result.head.x should be (0.0 +- 0.001)
+    result.last.x should be (geomLength / 2 +- 0.001)
+  }
+
   test("Test getProjectedValue When erroneous inputs, Then throw ViiteException."){
     // negative start values are not acceptable
     assertThrows[ViiteException] { GeometryUtils.getProjectedValue( -1.0, 100,   0.0, 110,  50) }

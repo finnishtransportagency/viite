@@ -21,6 +21,8 @@ WebContent/
 revision.properties
 bonecp.properties
 .env
+/.db
+run.sh
 .env.*
 /viite-backend/base/src/main/resources/env.properties
 /.db

@@ -59,11 +59,16 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
     * Returns road links in bounding box area. Municipalities are optional.
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int] = Set(), includeAllPublicRoads: Boolean = false): Seq[LinkType] = {
-    val roadNumberFilters = if (roadNumbers.nonEmpty || includeAllPublicRoads)
-      Some(filter.withRoadNumbersFilter(roadNumbers, includeAllPublicRoads))
+    if (includeAllPublicRoads)
+      queryByMunicipalitiesAndBounds(bounds, municipalities, Some(filter.withRoadNumbersFilter(roadNumbers, includeAllPublicRoads = true)))
+    else if (roadNumbers.isEmpty)
+      queryByMunicipalitiesAndBounds(bounds, municipalities, None)
     else
-      None
-    queryByMunicipalitiesAndBounds(bounds, municipalities, roadNumberFilters)
+      // KGV's endpoint returns 500 for bbox queries whose filter contains an OR
+      // so each road number range is queried separately here instead of OR-ing them into one CQL filter.
+      roadNumbers.flatMap(range =>
+        queryByMunicipalitiesAndBounds(bounds, municipalities, Some(filter.withRoadNumbersFilter(Seq(range), includeAllPublicRoads = false)))
+      ).distinct
   }
 
   def fetchByMunicipality(municipality: Int): Seq[LinkType] = {
@@ -78,6 +83,19 @@ class KgvRoadLinkClient[T](collection: Option[KgvCollection] = None, linkGeomSou
 
   def fetchByLinkIds(linkIds: Set[String]): Seq[LinkType] = {
     queryByLinkIds[LinkType](linkIds)
+  }
+
+  def fetchByLinkIdIfActive(linkId: String): Option[LinkType] = queryByLinkIdsActiveOnVersionDate[LinkType](Set(linkId)).headOption
+
+  /**
+   * Every version of the given links, looked up by the link's identity without its version, i.e. by
+   * KGV's <i>kmtkid</i> attribute. Needed when a link id from an external source cannot be matched to
+   * KGV as-is: Tiekamu, for instance, reports the version part of a link id from its own history
+   * numbering ("<uuid>:a"), which is not a KGV link version at all.
+   */
+  def fetchByKmtkIds(kmtkIds: Set[String]): Seq[LinkType] = {
+    if (kmtkIds.isEmpty) Seq.empty
+    else queryByFilter(Some(filter.withFilter("kmtkid", kmtkIds)))
   }
 
   def fetchSuRaVaGeLinksById(linkIds: Set[String]): List[(Option[Long], Option[Long], Int)] =

@@ -27,6 +27,11 @@ trait Filter {
 
   def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String
 
+  def withVersionDateFilter(date: String): String
+
+  def withVersionDateClosedFilter(date: String): String
+
+  def withVersionDateOpenFilter(date: String): String
 }
 
 object FilterOgc extends Filter {
@@ -95,4 +100,13 @@ object FilterOgc extends Filter {
                                    higherDate:    DateTime
                                   ): String =
     s"$attributeName >= $lowerDate and $attributeName <= $higherDate"
+
+  override def withVersionDateFilter(date: String): String =
+    s"(versionstarttime <= '${date}T00:00:00Z' AND (versionendtime >= '${date}T00:00:00Z' OR versionendtime IS NULL))"
+
+  override def withVersionDateClosedFilter(date: String): String =
+    s"versionstarttime <= '${date}T00:00:00Z' AND versionendtime >= '${date}T00:00:00Z'"
+
+  override def withVersionDateOpenFilter(date: String): String =
+    s"versionstarttime <= '${date}T00:00:00Z' AND versionendtime IS NULL"
 }

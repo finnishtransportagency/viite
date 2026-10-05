@@ -1,10 +1,10 @@
 package fi.vaylavirasto.viite.dynamicnetwork
 
 //import fi.liikennevirasto.digiroad2.{LinkInfo, LinkNetworkChange, LinkNetworkUpdater, ReplaceInfo}
-import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, LinearLocationDAO}
-import fi.vaylavirasto.viite.dao.LinkDAO
+import fi.liikennevirasto.viite.dao.{CalibrationPointDAO, CalibrationPointReference, LinearLocation, LinearLocationDAO}
+import fi.vaylavirasto.viite.dao.{LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.Point
-import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart}
+import fi.vaylavirasto.viite.model.{LinkGeomSource, RoadPart, SideCode}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import fi.vaylavirasto.viite.util.ViiteException
 import org.joda.time.DateTime
@@ -358,6 +358,63 @@ class LinkNetworkUpdaterSpec extends AnyFunSuite with Matchers {
      llBefore should not be (llAfter)
 
      CalibrationPointDAO.fetchByLinkId(Seq(newLinkId)) should not be empty
+   }
+ }
+
+
+ test("Test When a replace change runs against the old link's digitization direction Then the linear locations are placed crosswise on the new link") {
+   /**
+    * The old link's M-range is descending in the replaceInfo (50...0 onto 0...50), i.e. old M 0 is
+    * new M 50 and old M 50 is new M 0. Linear location A (old 0...20) must therefore land on the far
+    * end of the new link (30...50), and B (old 20...50) on its start (0...30). Both side codes flip.
+    */
+   val oldLinkId = "testtest-test-test-flipped:1"
+   val newLinkId = "testtest-test-test-flipped:2"
+   val oldGeometry = Seq(Point(0.0, 0.0), Point(50.0, 0.0))
+   val newGeometry = Seq(Point(0.0, 0.0), Point(50.0, 0.0))
+
+   val flippedChange = LinkNetworkChange(
+     "replace",
+     LinkInfo(oldLinkId, 50.000, oldGeometry),
+     Seq(LinkInfo(newLinkId, 50.000, newGeometry)),
+     Seq(ReplaceInfo(
+       oldLinkId, 50.000, 0.000,
+       newLinkId,  0.000, 50.000,
+       digitizationChange = true,
+       dummyMeta
+     ))
+   )
+
+   val llDAO = new LinearLocationDAO
+
+   runWithRollback {
+     val roadwayNumber = Sequences.nextRoadwayNumber
+     LinkDAO.create(oldLinkId, DateTime.now().getMillis, LinkGeomSource.NormalLinkInterface.value)
+     llDAO.create(Seq(
+       LinearLocation(Sequences.nextLinearLocationId, 1.0, oldLinkId,  0.0, 20.0,
+         SideCode.TowardsDigitizing, 10000000000L,
+         (CalibrationPointReference.None, CalibrationPointReference.None),
+         Seq(Point(0.0, 0.0), Point(20.0, 0.0)), LinkGeomSource.NormalLinkInterface,
+         roadwayNumber, Some(DateTime.now().minusDays(1)), None),
+       LinearLocation(Sequences.nextLinearLocationId, 2.0, oldLinkId, 20.0, 50.0,
+         SideCode.TowardsDigitizing, 10000000000L,
+         (CalibrationPointReference.None, CalibrationPointReference.None),
+         Seq(Point(20.0, 0.0), Point(50.0, 0.0)), LinkGeomSource.NormalLinkInterface,
+         roadwayNumber, Some(DateTime.now().minusDays(1)), None)
+     ))
+
+     linkNetworkUpdater.persistLinkNetworkChanges(Seq(flippedChange), testChangeMetaData)
+
+     llDAO.fetchByLinkId(Set(oldLinkId)) shouldBe empty
+     val newLls = llDAO.fetchByLinkId(Set(newLinkId)).sortBy(_.orderNumber)
+     newLls.map(ll => (ll.orderNumber, ll.startMValue, ll.endMValue)) should be (
+       Seq((1.0, 30.0, 50.0), (2.0, 0.0, 30.0))
+     )
+     newLls.map(_.sideCode).distinct should be (Seq(SideCode.AgainstDigitizing))
+     // The geometry of a linear location runs along the new link, from its start measure to its end measure
+     newLls.map(ll => (ll.geometry.head, ll.geometry.last)) should be (
+       Seq((Point(30.0, 0.0), Point(50.0, 0.0)), (Point(0.0, 0.0), Point(30.0, 0.0)))
+     )
    }
  }
 

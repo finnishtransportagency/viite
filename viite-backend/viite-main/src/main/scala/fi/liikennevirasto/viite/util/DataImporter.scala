@@ -338,8 +338,11 @@ class DataImporter extends BaseDAO {
           val topologyLocation = unGroupedTopology.groupBy(_.linkId)
           roadLinksFromKGV.foreach(roadLink => {
             val segmentsOnViiteDatabase = topologyLocation.getOrElse(roadLink.linkId, Set())
+            val roadLinkGeomLength = GeometryUtils.geometryLength(roadLink.geometry)
             segmentsOnViiteDatabase.foreach(segment => {
-              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry,
+                GeometryUtils.scaleMToGeometry(segment.startMValue, roadLink.length, roadLinkGeomLength),
+                GeometryUtils.scaleMToGeometry(segment.endMValue,   roadLink.length, roadLinkGeomLength))
               if (!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
                 if (skipped % 100 == 0 && skipped > 0) { // print some progress info, though nothing has been changing for a while
                   println(s"Skipped geometry updates on $skipped linear locations")
