@@ -291,6 +291,25 @@ class LinkNetworkUpdater {
     }
   }
 
+  /**
+   * Runs the same validations persistLinkNetworkChanges runs for <i>change</i>, without touching the database.
+   * Lets the caller leave out a change that would otherwise abort the persisting of the whole change set.
+   *
+   * @return the reason the change would be refused, or None, if it would pass
+   */
+  def validationError(change: LinkNetworkChange): Option[String] = {
+    try {
+      change.changeType match {
+        case "replace" => convertToAValidReplaceChange(change)
+        case "split"   => convertToAValidSplitChange(change)
+        case other     => throw ViiteException(s"LinkNetworkChange: Unknown change type '$other' for old link ${change.oldLink.linkId}.")
+      }
+      None
+    } catch {
+      case e: ViiteException => Some(e.message)
+    }
+  }
+
   private def persistReplaceChange(change: LinkNetworkChange, changeMetaData: ChangeSetMetaData): Unit = {
 
     logger.debug("Going to transform to a LinkNetworkReplaceChange")

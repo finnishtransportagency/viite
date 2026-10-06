@@ -754,6 +754,18 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
     ((validTiekamuRoadLinkChanges, affectedTiekamuRoadLinkChanges), activeLinearLocationsWithoutAffected)
   }
 
+  /** The road address data of the old link <i>oldLinkId</i>, for reporting an error on it. */
+  def errorMetaData(oldLinkId: String, activeLinearLocations: Seq[LinearLocation]): TiekamuRoadLinkErrorMetaData = {
+    val linearLocations = activeLinearLocations.filter(_.linkId == oldLinkId)
+    val roadways = roadwayDAO.fetchAllByRoadwayNumbers(linearLocations.map(_.roadwayNumber).toSet)
+    TiekamuRoadLinkErrorMetaData(
+      roadways.headOption.map(_.roadPart).getOrElse(RoadPart(0, 0)),
+      roadways.headOption.map(_.roadwayNumber).getOrElse(0L),
+      linearLocations.map(_.id),
+      oldLinkId
+    )
+  }
+
   /**
    * Resolves link ids KGV does not know to the KGV link of the same identity (kmtkid) whose version is
    * valid on <i>targetDate</i>.
@@ -890,7 +902,27 @@ class DynamicRoadNetworkService(linearLocationDAO: LinearLocationDAO, roadwayDAO
       }
 
       val viiteChangeSets = createViiteLinkNetworkChanges(validTiekamuRoadLinkChanges, validActiveLinearLocations, kgvRoadLinksWithResolved, complementaryLinks)
-      (viiteChangeSets, tiekamuRoadLinkChangeErrors, skippedTiekamuRoadLinkChanges)
+
+      // LinkNetworkUpdater validates every change again when persisting, more strictly than the validation
+      // above (e.g. the old link must be covered exactly, not within MaxRelativeMSpaceDeviation), and a
+      // single refused change rolls back the whole change set. The changes it would refuse are reported
+      // as errors here, and their road parts are left out, the same way as for the errors found above.
+      val persistErrors = viiteChangeSets.flatMap(change =>
+        linkNetworkUpdater.validationError(change).toSeq.flatMap(message =>
+          validTiekamuRoadLinkChanges.filter(_.oldLinkId == change.oldLink.linkId).map(ch =>
+            TiekamuRoadLinkChangeError(s"Change would be refused when persisting: $message", ch, errorMetaData(ch.oldLinkId, validActiveLinearLocations))
+          )
+        )
+      )
+
+      if (persistErrors.isEmpty) {
+        (viiteChangeSets, tiekamuRoadLinkChangeErrors, skippedTiekamuRoadLinkChanges)
+      } else {
+        val allErrors = tiekamuRoadLinkChangeErrors ++ persistErrors
+        val ((remainingTiekamuRoadLinkChanges, affectedTiekamuRoadLinkChanges), remainingActiveLinearLocations) = filterOutErroneousParts(tiekamuRoadLinkChanges, activeLinearLocations, allErrors)
+        val remainingChangeSets = createViiteLinkNetworkChanges(remainingTiekamuRoadLinkChanges, remainingActiveLinearLocations, kgvRoadLinksWithResolved, complementaryLinks)
+        (remainingChangeSets, allErrors, affectedTiekamuRoadLinkChanges)
+      }
     }
   }
 
