@@ -198,6 +198,23 @@ class LinkNetworkUpdaterSpec extends AnyFunSuite with Matchers {
  }
 
 
+ test("Test When a change is valid Then validationError returns None") {
+   linkNetworkUpdater.validationError(getTestChange("replace")) should be (None)
+ }
+
+ test("Test When a split leaves the start of the old link unmapped Then validationError returns the reason instead of throwing") {
+   val secondNewLink = LinkInfo("newLink:3", 10.000, correctNewSegment)
+   val splitWithGap = getTestChange("split",
+     newLinks    = Seq(correctNewLink, secondNewLink),
+     replaceInfo = Seq(
+       ReplaceInfo("oldLink:1", 0.5, 2.000, "newLink:2", 0.0, 10.000, digitizationChange=false, dummyMeta), // 0.0...0.5 is not mapped anywhere
+       ReplaceInfo("oldLink:1", 2.0, 5.000, "newLink:3", 0.0, 10.000, digitizationChange=false, dummyMeta)
+     ))
+   val error = linkNetworkUpdater.validationError(splitWithGap)
+   error should not be empty
+   error.get should include ("Old link lengths do not match")
+ }
+
  test("Test When faulty/incongruent  old link ~ replaceInfo  data values Then throw ViiteException") {
 
    def assertFaultyOldIsCaught(faultyOldLink: LinkInfo) = {
