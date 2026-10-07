@@ -753,5 +753,17 @@
         console.error("Error at deleting rotatingId: " + errorObject);
       });
     };
+
+    this.cancelPendingProjectById = function (projectId, callback) {
+      backend.cancelPendingProject(projectId, function (result) {
+        if (callback) callback(result);
+      }, function (errorObject) {
+        const message = errorObject.responseJSON && errorObject.responseJSON.message
+          ? errorObject.responseJSON.message
+          : errorObject.statusText;
+        new ModalConfirm(message || "Projektin peruutus epäonnistui");
+        if (callback) callback({success: false});
+      });
+    };
   };
 }(this));

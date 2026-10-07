@@ -266,7 +266,7 @@
         formSelects.prop('disabled', true);
         updateButtons.prop('disabled', true);
         
-        if ([ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode)) {
+        if ([ProjectStatus.Pending.value, ProjectStatus.InUpdateQueue.value, ProjectStatus.UpdatingToRoadNetwork.value].includes(project.statusCode)) {
           $(':input').prop('disabled', true);
           $('.project-form button.cancelLink').prop('disabled', false);
         }
