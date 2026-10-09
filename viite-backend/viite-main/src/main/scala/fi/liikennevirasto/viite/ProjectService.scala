@@ -2609,9 +2609,19 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       throw new InvalidAddressDataException(s"There were no addresses to update in project ${project.id}")
     }
 
+    //TODO: currentRoadways taitaa jättää nyt lakkauttujen päälle luotavat roadwayt huomiotta, koska niitä ei saada suoraan projektilinkiltä napattua.
+
     val projectLinkChanges = projectLinkDAO.fetchProjectLinksChange(projectID)
     val currentRoadways = roadwayDAO.fetchAllByRoadwayId(projectLinks.map(pl => pl.roadwayId)).map(roadway => (roadway.id, roadway)).toMap
     val historyRoadways = roadwayDAO.fetchAllByRoadwayNumbers(currentRoadways.map(_._2.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isDefined).map(roadway => (roadway.id, roadway)).toMap
+
+    println(s"CURRENT ROADWAYS ___ ")
+    currentRoadways.foreach(cr => println(s"ROADWAY ::: ID: ${cr._1} ROADWAYNUMBER: ${cr._2.roadwayNumber} STARTDATE: ${cr._2.startDate} ENDDATE: ${cr._2.endDate}"))
+
+    println(s"PROJECT LINKS ::::: ")
+    projectLinks.foreach(pl => println(s"PROJECT LINK ::: ID: ${pl.id} ROADWAYID: ${pl.roadwayId} STARTDATE: ${pl.startDate} ENDDATE: ${pl.endDate} :: LinkID: ${pl.linkId}"))
+
+
 
     def findHistoryRoadways(rwnum: Long):Seq[Roadway] = {
       historyRoadways.filter(_._2.roadwayNumber == rwnum).values.toSeq
@@ -2621,7 +2631,56 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     val mappedRoadwayChanges = currentRoadways.values.map(r => RoadwayFiller.RwChanges(r, findHistoryRoadways(r.roadwayNumber), projectLinks.filter(_.roadwayId == r.id))).toList
 
     // fetch terminated link ids before moving project links to project link history
-    val terminatedLinkIDs = projectLinkDAO.fetchProjectLinks(projectID, Some(RoadAddressChangeType.Termination)).map(_.linkId)
+ //   val terminatedLinkIDs = projectLinkDAO.fetchProjectLinks(projectID, Some(RoadAddressChangeType.Termination)).map(_.linkId)
+
+
+   //    val newLinkIds = projectLinkDAO.fetchProjectLinks(projectID, Some(RoadAddressChangeType.New)).map(_.linkId)
+
+   //    println(s"ALL NEW LINK IDS ___ ${newLinkIds.size}")
+   //    newLinkIds.foreach(println)
+
+   //    val matchingLinearLocations = linearLocationDAO.fetchPreviouslyTerminatedByLinkId(newLinkIds.toSet)
+
+    //   println(s"MATCHING LINEAR LOCATIONS ___ ${matchingLinearLocations.size}")
+   //    matchingLinearLocations.foreach(ll => println(s"LINEAR LOCATION ::: ID: ${ll.id} ROADWAYNUMBER: ${ll.roadwayNumber} LINKID: ${ll.linkId} STARTMVALUE: ${ll.startMValue} ENDMVALUE: ${ll.endMValue}"))
+
+   //   val matchingLinkIds = matchingLinearLocations.map(_.linkId).toSet
+     //  val missingRoadways = roadwayDAO.fetchAllByRoadwayNumbers(projectLinks.map(_.roadwayNumber).toSet, withHistory = true).filter(_.endDate.isEmpty).filterNot(rw => currentRoadways.contains(rw.id))
+
+   //   val roadwayNumbersFromTerminatedLinearLocations = matchingLinearLocations.map(_.roadwayNumber).toSet
+
+   //   println(s"ROADWAY NUMBERS FROM TERMINATED LINEAR LOCATIONS ___ ${roadwayNumbersFromTerminatedLinearLocations.size}")
+   //   roadwayNumbersFromTerminatedLinearLocations.foreach(println)
+
+   //   val roadwaysForPreviouslyTerminatedLinearLocations = roadwayDAO.fetchAllByRoadwayNumbers(matchingLinearLocations.map(_.roadwayNumber).toSet, withHistory = true) //.filter(_.endDate.isEmpty).filterNot(rw => currentRoadways.contains(rw.id))
+
+   //   val idioottivarmatRoadwayt: Seq[Roadway] = roadwayDAO.justFetchTheEffinRoadways(roadwayNumbersFromTerminatedLinearLocations) //.filter(_.endDate.isEmpty).filterNot(rw => currentRoadways.contains(rw.id))
+
+  //  println(s"IDIOOTTIVARMAT ROADWAYS FOR PREVIOUSLY TERMINATED LINEAR LOCATIONS ___ ${idioottivarmatRoadwayt.size}")
+  //  idioottivarmatRoadwayt.foreach(rw => println(s"ROADWAY ::: ID: ${rw.id} ROADWAYNUMBER: ${rw.roadwayNumber} STARTDATE: ${rw.startDate} ENDDATE: ${rw.endDate}")) // TODO: Noniin nämä löytyy, pistetäänkö molemmat expirettavaksi?
+
+
+  //  val previouslyTerminatedRoadways = idioottivarmatRoadwayt.map(rw => (rw.roadwayNumber, rw)).toMap
+
+    //  println(s"ROADWAYS FOR PREVIOUSLY TERMINATED LINEAR LOCATIONS ___ ${roadwaysForPreviouslyTerminatedLinearLocations.size}")
+    //  roadwaysForPreviouslyTerminatedLinearLocations.foreach(rw => println(s"ROADWAY ::: ID: ${rw.id} ROADWAYNUMBER: ${rw.roadwayNumber} STARTDATE: ${rw.startDate} ENDDATE: ${rw.endDate}"))
+
+      // println(s"MISSING ROADWAYS ___ ${missingRoadways.size}")
+     //  missingRoadways.foreach(mrw => println(s"MISSING ROADWAY ::: ID: ${mrw.id} ROADWAYNUMBER: ${mrw.roadwayNumber} STARTDATE: ${mrw.startDate} ENDDATE: ${mrw.endDate}"))
+
+
+    //   val newRoadwaysOnPreviouslyTerminatedLinks = idioottivarmatRoadwayt.map(mr => (mr.id, mr))
+
+
+    //   val appendedCurrentRoadways = currentRoadways ++ newRoadwaysOnPreviouslyTerminatedLinks
+
+   //    appendedCurrentRoadways.foreach(cr => println(s"APPENDED CURRENT ROADWAYS ::: ID: ${cr._1} ROADWAYNUMBER: ${cr._2.roadwayNumber} STARTDATE: ${cr._2.startDate} ENDDATE: ${cr._2.endDate}"))
+
+
+   // val fetchedRoadLinks = roadLinkService.getRoadLinksVersionsByIds(matchingLinkIds)
+
+   // println(s"FETCHED ROAD LINKS ___ ${fetchedRoadLinks.size}")
+
 
     try {
       logger.debug(s"Moving project links to project link history.")
@@ -2663,14 +2722,30 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
       })
 
       // Separate linear locations that are terminated from the rest
-      val (terminatingLinearLocationsToInsert, nonTerminatingLinearLocationsToInsert) = linearLocationsToInsert.partition(ll => terminatedLinkIDs.contains(ll.linkId)) // linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
+   //   val nonTerminatingLinearLocationsToInsert = linearLocationsToInsert.filterNot(l => terminatedLinkIDs.contains(l.linkId))
 
-      val roadWaysAndRoadPartsInGenerated = generatedRoadways
-        .flatMap(_._1)
-        .map(rw => rw.roadwayNumber -> rw.roadPart)
-        .toMap
+  //    val roadWaysAndRoadPartsInGenerated = generatedRoadways
+  //      .flatMap(_._1)
+  //      .map(rw => rw.roadwayNumber -> rw.roadPart)
+  //      .toMap
 
-      val fetchedRoadLinks = roadLinkService.getRoadLinksVersionsByIds(terminatingLinearLocationsToInsert.map(_.linkId).toSet)
+  //    val fetchedRoadLinks = roadLinkService.getRoadLinksVersionsByIds(matchingLinkIds)
+
+      /* linkId             : String,
+                     geometry           : Seq[Point],
+                     length             : Double,
+                     administrativeClass: AdministrativeClass,
+                     trafficDirection   : TrafficDirection,
+                     modifiedAt         : Option[String] = None,
+                     modifiedBy         : Option[String],
+                     lifecycleStatus    : LifecycleStatus = LifecycleStatus.InUse,
+                     linkSource         : LinkGeomSource = LinkGeomSource.NormalLinkInterface,
+                     municipalityCode   : Int,
+                     sourceId           : String*/
+
+
+  //    println(s"FETCHED ROAD LINKS FOR TERMINATING LINEAR LOCATIONS ___ ${fetchedRoadLinks.size}")
+  //    fetchedRoadLinks.foreach(rl => println(s"ROAD LINK ::: LINKID: ${rl.linkId} :: LENGTH: ${rl.length} :: ADMINCLASS: ${rl.administrativeClass} :: TRAFFICDIRECTION: ${rl.trafficDirection} :: MODIFIEDAT: ${rl.modifiedAt} :: MODIFIEDBY: ${rl.modifiedBy} :: LIFECYCLESTATUS: ${rl.lifecycleStatus} :: LINKSOURCE: ${rl.linkSource} :: MUNICIPALITYCODE: ${rl.municipalityCode} :: SOURCEID: ${rl.sourceId}"))
 
       def parseComplementaryLinkID(linkId: String): String = {
         if (linkId == null || linkId.length < 2) return linkId
@@ -2700,68 +2775,88 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
         result
       }
 
-      val terminatingComplementaryLinks: Seq[ComplementaryLink] = terminatingLinearLocationsToInsert.flatMap(ll => {
-        val roadPart = roadWaysAndRoadPartsInGenerated.getOrElse(ll.roadwayNumber, RoadPart(roadNumber = 0, partNumber = 0))
-        val fetchedLinkOpt = fetchedRoadLinks.find(_.linkId == ll.linkId)
-        if (fetchedLinkOpt.isDefined) {
-          val fetchedLink = fetchedLinkOpt.get
-          Some(ComplementaryLink(
-            id = parseComplementaryLinkID(fetchedLink.linkId),
-            datasource = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
-            adminclass = fetchedLink.administrativeClass.value,
-            municipalitycode = fetchedLink.municipalityCode,
-            featureclass = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
-            roadclass = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
-            roadnamefin = None,
-            roadnameswe = None,
-            roadnamesme = None,
-            roadnamesmn = None,
-            roadnamesms = None,
-            roadnumber = roadPart.roadNumber.toInt,
-            roadpartnumber = roadPart.partNumber.toInt,
-            surfacetype = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
-            lifecyclestatus = fetchedLinkOpt.map(_.lifecycleStatus.value).getOrElse(0),
-            directiontype = 0,
-            surfacerelation = 0,
-            xyaccuracy = 0.0,
-            zaccuracy = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
-            horizontallength = fetchedLinkOpt.map(_.length).getOrElse(ll.endMValue - ll.startMValue),
-            addressfromleft = 0,
-            addresstoleft = 0,
-            addressfromright = 0,
-            addresstoright = 0,
-            starttime = DateTime.now(),
-            versionstarttime = DateTime.now(),
-            sourcemodificationtime = DateTime.now(),
-            geometry = fetchedLink.geometry,
-            ajorata = ll.sideCode.value,
-            vvh_id = fetchedLink.linkId // This is a bit dumb, but in order to pair the terminating linear locations with the complementary links, we need to have the original linkId in the complementary link. This will later be nullified because of database column string length restrictions.
-          ))
-        } else {
-          logger.warn(s"Could not find fetched link for terminating linear location with linkId ${ll.linkId}")
-          None
-        }
-      })
+  //    val newOnTerminatedComplementaryLinks: Seq[ComplementaryLink] = matchingLinearLocations.flatMap(ll => {
+  //      val roadPart = roadWaysAndRoadPartsInGenerated.getOrElse(ll.roadwayNumber, RoadPart(roadNumber = 0, partNumber = 0))
+  //      val fetchedLinkOpt = fetchedRoadLinks.find(_.linkId == ll.linkId)
+  //      if (fetchedLinkOpt.isDefined) {
+  //        val fetchedLink = fetchedLinkOpt.get
+  //        Some(ComplementaryLink(
+  //          id = parseComplementaryLinkID(fetchedLink.linkId),
+  //          datasource = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
+  //          adminclass = fetchedLink.administrativeClass.value,
+  //          municipalitycode = fetchedLink.municipalityCode,
+  //          featureclass = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
+  //          roadclass = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
+  //          roadnamefin = None,
+  //          roadnameswe = None,
+  //          roadnamesme = None,
+  //          roadnamesmn = None,
+  //          roadnamesms = None,
+  //          roadnumber = roadPart.roadNumber.toInt,
+  //          roadpartnumber = roadPart.partNumber.toInt,
+  //          surfacetype = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
+  //          lifecyclestatus = fetchedLinkOpt.map(_.lifecycleStatus.value).getOrElse(0),
+  //          directiontype = 0,
+  //          surfacerelation = 0,
+  //          xyaccuracy = 0.0,
+  //          zaccuracy = 0, // TODO: Should be nullified, but the case class parameter is not nullable. Should we change the case class parameter to be nullable?
+  //          horizontallength = fetchedLinkOpt.map(_.length).getOrElse(ll.endMValue - ll.startMValue),
+  //          addressfromleft = 0,
+  //          addresstoleft = 0,
+  //          addressfromright = 0,
+  //          addresstoright = 0,
+  //          starttime = DateTime.now(),
+  //          versionstarttime = DateTime.now(),
+  //          sourcemodificationtime = DateTime.now(),
+  //          geometry = fetchedLink.geometry,
+  //          ajorata = ll.sideCode.value,
+  //          vvh_id = fetchedLink.linkId // This is a bit dumb, but in order to pair the terminating linear locations with the complementary links, we need to have the original linkId in the complementary link. This will later be nullified because of database column string length restrictions.
+  //        ))
+  //      } else {
+  //        logger.warn(s"Could not find fetched link for terminating linear location with linkId ${ll.linkId}")
+  //        None
+  //      }
+  //    })
 
-      val idUpdatedTerminatingLinearLocationsToInsert: Seq[LinearLocation] = terminatingLinearLocationsToInsert.map(ll => {
-        val complementaryLinkOpt = terminatingComplementaryLinks.find(_.vvh_id == ll.linkId)
-        if (complementaryLinkOpt.isDefined) {
-          ll.copy(linkId = complementaryLinkOpt.get.id)
-        } else {
-          logger.warn(s"Could not find complementary link for terminating linear location with linkId ${ll.linkId}")
-          ll
-        }
-      })
+   //   println(s"NEW ON TERMINATED COMPLEMENTARY LINKS ___ ${newOnTerminatedComplementaryLinks.size}")
+   //   newOnTerminatedComplementaryLinks.foreach(cl => println(s"COMPLEMENTARY LINK ::: ID: ${cl.id} ::: LINKID: ${cl.vvh_id} ::: ROADNUMBER: ${cl.roadnumber} ::: ROADPARTNUMBER: ${cl.roadpartnumber} ::: HORIZONTALLENGTH: ${cl.horizontallength} ::: GEOMETRY LENGTH: ${GeometryUtils.geometryLength(cl.geometry)}"))
 
-      val reunitedLinearLocationsToInsert = nonTerminatingLinearLocationsToInsert ++ idUpdatedTerminatingLinearLocationsToInsert
+   //   val idUpdatedNewOnTerminatedLinearLocationsToInsert: Seq[LinearLocation] = matchingLinearLocations.map(ll => {
+   //     val complementaryLinkOpt = newOnTerminatedComplementaryLinks.find(_.vvh_id == ll.linkId)
+   //     if (complementaryLinkOpt.isDefined) {
+   //       ll.copy(linkId = complementaryLinkOpt.get.id)
+   //     } else {
+   //       logger.warn(s"Could not find complementary link for terminating linear location with linkId ${ll.linkId}")
+   //       ll
+   //     }
+   //   })
 
-      val vvhIdNullifiedTerminatingComplementaryLinks = terminatingComplementaryLinks.map(link => link.copy(vvh_id = null))
+   //   println(s"ID UPDATED NEW ON TERMINATED LINEAR LOCATIONS TO INSERT ___ ${idUpdatedNewOnTerminatedLinearLocationsToInsert.size}")
+   //   idUpdatedNewOnTerminatedLinearLocationsToInsert.foreach(ll => println(s"LINEAR LOCATION ::: ID: ${ll.id} ROADWAYNUMBER: ${ll.roadwayNumber} LINKID: ${ll.linkId} STARTMVALUE: ${ll.startMValue} ENDMVALUE: ${ll.endMValue}"))
+
+
+  //    val wiederVereinigteLinearLocationsToInsert = linearLocationsToInsert ++ idUpdatedNewOnTerminatedLinearLocationsToInsert
+
+      // appendedCurrentRoadways
+
+ //    println(s"REUNITED LINEAR LOCATIONS TO INSERT ___ ${wiederVereinigteLinearLocationsToInsert.size}")
+ //    wiederVereinigteLinearLocationsToInsert.foreach(ll => println(s"LINEAR LOCATION ::: ID: ${ll.id} ROADWAYNUMBER: ${ll.roadwayNumber} LINKID: ${ll.linkId} STARTMVALUE: ${ll.startMValue} ENDMVALUE: ${ll.endMValue}"))
+
+ //    println(s"APPENDED CURRENT ROADWAYS ___ ${appendedCurrentRoadways.size}")
+ //    appendedCurrentRoadways.foreach(cr => println(s"APPENDED CURRENT ROADWAY ::: ID: ${cr._1} ROADWAYNUMBER: ${cr._2.roadwayNumber} STARTDATE: ${cr._2.startDate} ENDDATE: ${cr._2.endDate}"))
+
+ //    val reunitedLinearLocationsToInsert = wiederVereinigteLinearLocationsToInsert // ++ idUpdatedTerminatingLinearLocationsToInsert
+
+ //    val vvhIdNullifiedTerminatingComplementaryLinks = newOnTerminatedComplementaryLinks.map(link => link.copy(vvh_id = null))
+
+ //     println(s"VVH ID NULLIFIED TERMINATING COMPLEMENTARY LINKS ___ ${vvhIdNullifiedTerminatingComplementaryLinks.size}")
+  //    vvhIdNullifiedTerminatingComplementaryLinks.foreach(cl => println(s"COMPLEMENTARY LINK ::: ID: ${cl.id} ::: LINKID: ${cl.vvh_id} ::: ROADNUMBER: ${cl.roadnumber} ::: ROADPARTNUMBER: ${cl.roadpartnumber} ::: HORIZONTALLENGTH: ${cl.horizontallength} ::: GEOMETRY LENGTH: ${GeometryUtils.geometryLength(cl.geometry)}"))
 
       val roadwayIds = handleRoadPrimaryTables(currentRoadways, historyRoadways, roadwaysToInsert, historyRoadwaysToKeep,
-        reunitedLinearLocationsToInsert, project)
-      handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, reunitedLinearLocationsToInsert,
+        linearLocationsToInsert, project)            //    reunitedLinearLocationsToInsert, project)
+      handleRoadComplementaryTables(roadwayChanges, projectLinkChanges, linearLocationsToInsert, // reunitedLinearLocationsToInsert,
         roadwayIds, generatedRoadways, projectLinks,
-        Some(project.startDate.minusDays(1)), nodeIds, vvhIdNullifiedTerminatingComplementaryLinks, project.createdBy)
+        Some(project.startDate.minusDays(1)), nodeIds, Seq.empty, project.createdBy)
 
       nodesAndJunctionsService.publishNodes(nodeIds, project.createdBy)
       val oldRoadParts = projectLinks.map(pl => pl.originalRoadPart)
@@ -2855,8 +2950,6 @@ def setCalibrationPoints(startCp: Long, endCp: Long, projectLinks: Seq[ProjectLi
     val result = runWithReadOnlySession {
       projectDAO.fetchProjectEvkById(projectId).map(e => ArealRoadMaintainer.getEVK(e).number.toLong)
     }
-    println(s"GETTINBG PROJECT EVK FOR PROJECT $projectId:::")
-    result.foreach(e => println(s"EVK: $e"))
     result
   }
 
