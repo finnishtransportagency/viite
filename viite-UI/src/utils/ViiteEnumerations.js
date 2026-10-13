@@ -84,6 +84,7 @@
     ErrorInViite: {value: 0, description: "Virhe Viite-sovelluksessa"},
     Incomplete: {value: 1, description: "Keskeneräinen"},
     Deleted: {value: 7, description: "Poistettu projekti"},
+    Pending: {value: 13, description: "Hyväksyntää käsitellään"},
     InUpdateQueue: {value: 10, description: "Odottaa tieverkolle päivittämistä"},
     UpdatingToRoadNetwork: {value: 11, description: "Päivitetään tieverkolle"},
     Accepted: {value: 12, description: "Hyväksytty"},
@@ -91,6 +92,7 @@
   };
 
   root.ProjectStatusToDisplay = [root.ProjectStatus.Incomplete.value,
+    root.ProjectStatus.Pending.value,
     root.ProjectStatus.InUpdateQueue.value, root.ProjectStatus.UpdatingToRoadNetwork.value,
     root.ProjectStatus.ErrorInViite.value];
 
