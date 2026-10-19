@@ -517,11 +517,6 @@
                   target: targetValue
               };
 
-              // Handle ELY/EVK selection.
-              // If no values are selected, the backend should receive the full range of allowed values.
-              const allElyValues = Object.values(ViiteEnumerations.ElyCodes || {})
-                  .map(code => code.value)
-                  .sort((a, b) => a - b);
               const allRoadMaintainerValues = Object.values(ViiteEnumerations.EVKCodes || {})
                   .map(code => code.value)
                   .sort((a, b) => a - b);
@@ -535,8 +530,12 @@
               const selectedElyValues = selectedByColumn[1] || [];
               const selectedRoadMaintainerValues = selectedByColumn[0] || [];
 
-              params.ely = (selectedElyValues.length > 0 ? selectedElyValues : allElyValues).join(',');
-              params.roadMaintainer = (selectedRoadMaintainerValues.length > 0 ? selectedRoadMaintainerValues : allRoadMaintainerValues).join(',');
+              if (selectedElyValues.length > 0) params.ely = selectedElyValues.join(',');
+              if (selectedRoadMaintainerValues.length > 0) {
+                  params.roadMaintainer = selectedRoadMaintainerValues.join(',');
+              } else if (selectedElyValues.length === 0) {
+                  params.roadMaintainer = allRoadMaintainerValues.join(',');
+              }
 
               if (roadNumber.value) params.roadNumber = roadNumber.value;
               if (minRoadPartNumber.value) params.minRoadPartNumber = minRoadPartNumber.value;
