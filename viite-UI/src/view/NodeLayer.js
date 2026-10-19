@@ -399,6 +399,11 @@
       clearHighlights();
       selectedNodesAndJunctions.openNode(node, templates);
       highlightNode(selectedNodesAndJunctions.getCurrentNode());
+
+      // If the currently selected tool is Attach, reset it to Unknown before selecting the node
+      if (applicationModel.getSelectedTool() === ViiteEnumerations.Tool.Attach.value) {
+        applicationModel.setSelectedTool(ViiteEnumerations.Tool.Unknown.value);
+      }
       applicationModel.setSelectedTool(ViiteEnumerations.Tool.Select.value);
     };
 
