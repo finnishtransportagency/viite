@@ -178,7 +178,7 @@
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched');
       if (applicationModel.isProjectButton()) {
-        // Comment out highlight to fix
+        // Comment out highlight to fix faded roads (VIITE-3961)
         //eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
         applicationModel.setProjectButton(false);
       }
