@@ -178,7 +178,8 @@
       setRoadLinkGroups(nonHistoryConstructionRoadLinkGroups);
       eventbus.trigger('roadLinks:fetched');
       if (applicationModel.isProjectButton()) {
-        eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
+        // Comment out highlight to fix
+        //eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
         applicationModel.setProjectButton(false);
       }
     };

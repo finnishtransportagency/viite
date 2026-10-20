@@ -436,7 +436,7 @@
         eventbus.trigger('roadAddressProject:openProject', currentProject);
         rootElement.html(selectedProjectLinkTemplateDisabledButtons(currentProject));
         _.defer(function () {
-          applicationModel.selectLayer('roadAddressProject');
+          //applicationModel.selectLayer('roadAddressProject'); Layer has already been selected at this point, so commented out for now
           toggleAdditionalControls();
         });
       };
