@@ -33,7 +33,6 @@
       const moveToLocation = function () {
         const showDialog = function (message) {
           resultsSection.hide();
-          clearButton.hide();
           instructionsPopup.show(_.isString(message) ? message : 'Yhteys Viitekehysmuuntimeen epäonnistui', 3000);
         };
 
