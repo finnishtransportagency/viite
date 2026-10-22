@@ -230,7 +230,6 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
-    println(s"GET ROAD ADDRESSES WITH LINEAR GEOMETRY IN ROAD ADDRESS SERVICE LINE 174")
     val roadAddresses = runWithTransaction {
       val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
