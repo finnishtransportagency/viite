@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -55,7 +55,11 @@ class RoadAddressService(
 
   val defaultStreetNumber = 1
 
+  /** Link geometry sources, whose links are not shown in the road address link views of the map. */
+  private val sourcesExcludedFromRoadAddressLinks: Set[LinkGeomSource] = Set(LinkGeomSource.DuplicateForTerminatedSection)
+
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[LinearLocation], Seq[HistoryRoadLink]) = {
+    println(s"FETCHING LINEAR LOCATIONS BY BOUNDING BOX IN ROAD ADDRESS SERVICE LINE 62")
     val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
@@ -95,7 +99,8 @@ class RoadAddressService(
   /**
     * Returns all linear locations of the given roadPart
     *
-    * @param roadPart The road part, whose linear locations are to be returned
+    * @param roadPart       The road part, whose linear locations are to be returned
+    * @param excludeSources Linear locations on links with any of these link geometry sources are left out of the result
     */
   def getLinearLocationsInRoadPart(roadPart: RoadPart): Seq[LinearLocation] = {
 
@@ -158,12 +163,16 @@ class RoadAddressService(
     */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
+    println(s"GET ROAD ADDRESS LINKS BY BOUNDING BOX IN ROAD ADDRESS SERVICE LINE 166")
+
     val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
     val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
+
+   // println(s"LINEAR LOCATIONS LINK IDS: ${linearLocationsLinkIds}")
 
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
@@ -226,6 +235,7 @@ class RoadAddressService(
     * @return Returns all the filtered road addresses
     */
   def getRoadAddressesWithLinearGeometry(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
+    println(s"GET ROAD ADDRESSES WITH LINEAR GEOMETRY IN ROAD ADDRESS SERVICE LINE 174")
     val roadAddresses = runWithTransaction {
       val linearLocations = linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       roadwayAddressMapper.getRoadAddressesByLinearLocation(linearLocations)
@@ -823,6 +833,9 @@ class RoadAddressService(
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
+
+    println(s"GET ROAD ADDRESS LINKS IN ROAD ADDRESS SERVICE LINE 835")
+
     try {
       val boundingBoxResult = BoundingBoxResult(
         Future(Seq[ChangeInfo]()),
