@@ -1820,12 +1820,14 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
    }
  }
 
- test("Test expireHistoryRows " +
-      "When link is transfered and reversed " +
-      "Then set end date to old roadway and set reverse flag relative to the current roadway.") {
+ test("Test expireHistoryRows When link is transfered and reversed then set end date to old roadway and set reverse flag relative to the current roadway.") {
    runWithRollback {
      // Create roadway
      val linkId          = 10000.toString
+     val linkId2         = "10001:1"
+     val roadLink1: RoadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId1")
+     val roadLink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 100.0), Point(0.0, 200.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId2")
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
      val oldEndAddress   = 100
      val roadwayNumber   = Sequences.nextRoadwayNumber
      val currentRoadway  = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(9999, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, oldEndAddress), reversed = false, DateTime.now().minusYears(10), None, "test", Some("Test Road"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
@@ -1851,6 +1853,7 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
      roadwayDAO.fetchAllByRoadwayId(Seq(currentRoadway.id)).head.validTo should be(None)
 
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
 
      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(projectId)
 
@@ -1882,13 +1885,12 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
    }
  }
 
- test("Test expireHistoryRows " +
-      "When an unchanged roadway with histories has administrative class change in the middle " +
-      "Then current roadway and histories are expired and three new current roadways are created with the same length history rows.") {
+ test("Test expireHistoryRows when an unchanged roadway with histories has administrative class change in the middle then current roadway and histories are expired and three new current roadways are created with the same length history rows.") {
    runWithRollback {
      /* The case "Administrative class change in the Middle of the Roadway" in https://extranet.vayla.fi/wiki/display/VIITE/Roadway+Number
      *  with history rows. */
      val linkId          = 10000.toString
+     val linkId2         = 10001.toString
      val oldEndAddress   = 300
      val roadwayNumber   = Sequences.nextRoadwayNumber
      val currentRoadway  = Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(9999, 1), AdministrativeClass.State, Track.Combined, Discontinuity.Continuous, AddrMRange(0, oldEndAddress), reversed = false, DateTime.now().minusYears(10).withTime(0, 0, 0, 0), None, "test", Some("Test Road"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination, DateTime.now().minusYears(10), None)
@@ -1896,6 +1898,10 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
        Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(9999, 1), AdministrativeClass.Municipality, Track.Combined, Discontinuity.Continuous, AddrMRange(0, oldEndAddress), reversed = false, DateTime.now().minusYears(15).withTime(0, 0, 0, 0), Some(DateTime.now().minusYears(10).withTime(0, 0, 0, 0)), "test", Some("Test Road"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination, DateTime.now().minusYears(15), None),
        Roadway(Sequences.nextRoadwayId, roadwayNumber, RoadPart(9999, 1), AdministrativeClass.State,        Track.Combined, Discontinuity.Continuous, AddrMRange(0, oldEndAddress), reversed = false, DateTime.now().minusYears(20).withTime(0, 0, 0, 0), Some(DateTime.now().minusYears(15).withTime(0, 0, 0, 0)), "test", Some("Test Road"), ArealRoadMaintainer.getEVK(1), TerminationCode.NoTermination, DateTime.now().minusYears(20), None)
      )
+     val roadLink1: RoadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId1")
+     val roadLink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 100.0), Point(0.0, 200.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId2")
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
      roadwayDAO.create(Seq(currentRoadway) ++ history_roadway)
 
      // Create project link
@@ -2187,6 +2193,15 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
          3, 3, 3, 3, 'EVK8')""")
 
      runUpdateToDb(sql"""INSERT INTO project_link_name VALUES (nextval('project_link_name_seq'), $projectId, 70001, NULL)""")
+
+     val linkId          = "10000:1"
+     val linkId2         = "10001:1"
+     val roadLink1: RoadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId1")
+     val roadLink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 100.0), Point(0.0, 200.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId2")
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
+
      val namesBeforeUpdate = RoadNameDAO.getLatestRoadName(70001)
      namesBeforeUpdate.isEmpty should be(true)
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
@@ -3226,6 +3241,15 @@ class ProjectServiceSpec extends AnyFunSuite with Matchers with BeforeAndAfter w
      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000757','1000351','1000360')""")
      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000758','1000351','1000364')""")
      runUpdateToDb(sql"""INSERT INTO roadway_changes_link (roadway_change_id,project_id,project_link_id) VALUES ('1000759','1000351','1000358')""")
+
+
+     val linkId          = "10000:1"
+     val linkId2         = "10001:1"
+     val roadLink1: RoadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(0.0, 100.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId1")
+     val roadLink2: RoadLink = RoadLink(linkId2, Seq(Point(0.0, 100.0), Point(0.0, 200.0)), 100.0, AdministrativeClass.State, TrafficDirection.BothDirections, None, None, LifecycleStatus.InUse, LinkGeomSource.NormalLinkInterface, 9999, "sourceId2")
+     val roadLinks: Seq[RoadLink] = Seq(roadLink1, roadLink2)
+     when(mockRoadLinkService.getRoadLinksVersionsByIds(any[Set[String]])).thenReturn(roadLinks)
+
      when(mockNodesAndJunctionsService.expireObsoleteNodesAndJunctions(any[Seq[ProjectLink]], any[Option[DateTime]], any[String])).thenReturn(Seq())
      projectDAO.updateProjectStatus(1000351, UpdatingToRoadNetwork)
      projectService.updateRoadwaysAndLinearLocationsWithProjectLinks(1000351)
