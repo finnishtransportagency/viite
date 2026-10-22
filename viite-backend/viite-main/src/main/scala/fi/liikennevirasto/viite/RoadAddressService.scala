@@ -59,7 +59,6 @@ class RoadAddressService(
   private val sourcesExcludedFromRoadAddressLinks: Set[LinkGeomSource] = Set(LinkGeomSource.DuplicateForTerminatedSection)
 
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[LinearLocation], Seq[HistoryRoadLink]) = {
-    println(s"FETCHING LINEAR LOCATIONS BY BOUNDING BOX IN ROAD ADDRESS SERVICE LINE 62")
     val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
@@ -163,16 +162,12 @@ class RoadAddressService(
     */
   def getRoadAddressLinksByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[RoadAddressLink] = {
 
-    println(s"GET ROAD ADDRESS LINKS BY BOUNDING BOX IN ROAD ADDRESS SERVICE LINE 166")
-
     val linearLocations = runWithReadOnlySession {
       time(logger, "Fetch addresses") {
         linearLocationDAO.fetchLinearLocationByBoundingBox(boundingRectangle, roadNumberLimits)
       }
     }
     val linearLocationsLinkIds = linearLocations.map(_.linkId).toSet
-
-   // println(s"LINEAR LOCATIONS LINK IDS: ${linearLocationsLinkIds}")
 
     val boundingBoxResult = BoundingBoxResult(
       roadLinkService.getChangeInfoFromVVHF(linearLocationsLinkIds),
@@ -833,9 +828,6 @@ class RoadAddressService(
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
-
-    println(s"GET ROAD ADDRESS LINKS IN ROAD ADDRESS SERVICE LINE 835")
-
     try {
       val boundingBoxResult = BoundingBoxResult(
         Future(Seq[ChangeInfo]()),
