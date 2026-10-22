@@ -3,7 +3,7 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { RoadAddressBrowserForm, formatElyEvkValue, getAllEvkValues, getAllElyValues } from './RoadAddressBrowserForm.js';
+import { RoadAddressBrowserForm, formatElyEvkValue, getAllEvkValues } from './RoadAddressBrowserForm.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { getDataForRoadAddressBrowser } from '@utils/BackendUtils.js';
 
@@ -263,7 +263,6 @@ export function RoadAddressBrowserWindow() {
 				if (elyValues.length || otherValues.length) params.ely = elyValues.concat(otherValues).join(',');
 			} else {
 				params.roadMaintainer = getAllEvkValues().join(',');
-        params.ely = getAllElyValues().join(',');
 			}
 
 			if (roadNumber.value)
@@ -279,8 +278,7 @@ export function RoadAddressBrowserWindow() {
 		roadNumber.setCustomValidity("");
 		roadAddrSituationDate.setCustomValidity("");
 
-		// Road number/parts and ELY/EVK are all optional - an empty search sends no filters,
-		// so the backend returns everything for the selected target (see TARGET_CONFIG).
+		// Road number/parts and ELY/EVK are all optional - an empty selection searches all EVKs.
 		validateDate(roadAddrSituationDate.value);
 		if (willPassValidations())
 			fetchByTargetValue(createParams());

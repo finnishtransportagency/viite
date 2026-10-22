@@ -5,7 +5,7 @@ import { Spinner } from '@components/spinner/Spinner.js';
 import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { dateutil } from '@utils/DateUtils.js';
-import { RoadAddressBrowserForm, createElyEvkSelectorData, formatElyEvkValue, getAllEvkValues, getAllElyValues } from './RoadAddressBrowserForm.js';
+import { RoadAddressBrowserForm, createElyEvkSelectorData, formatElyEvkValue, getAllEvkValues } from './RoadAddressBrowserForm.js';
 import { getDataForRoadAddressChangesBrowser } from '@utils/BackendUtils.js';
 
 function getChangeTypeDisplayText(changeTypeValue) {
@@ -293,14 +293,11 @@ export function RoadAddressChangesBrowserWindow() {
 			const selectedValues = Array.isArray(selected) ? selected : [selected].filter(Boolean);
 
 			// Add ELY/EVK to params (multiple selections are sent as comma-separated lists).
-			// If nothing is selected, send all ELYs and EVKs explicitly so the backend searches
-			// across every maintainer instead of using an unbounded/empty maintainer query.
+			// If nothing is selected, send all EVKs
 			const elyValues = selectedValues.filter(v => v.startsWith('ELY_')).map(v => v.split('_')[1]).filter(Boolean);
 			const evkValues = selectedValues.filter(v => v.startsWith('EVK_')).map(v => v.split('_')[1]).filter(Boolean);
 			if (elyValues.length) {
 				params.ely = elyValues.join(',');
-			} else if (!evkValues.length) {
-				params.ely = getAllElyValues().join(',');
 			}
 			if (evkValues.length) {
 				params.roadMaintainer = evkValues.join(','); // Backend handles evk value as roadMaintainer, so convert evk to that
