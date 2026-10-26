@@ -8,6 +8,14 @@
     var userJunctionTemplates = [];
     var saving = events.spinners.saving;
 
+    var coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
+
+    var isSameLocation = function (coords1, coords2) {
+      if (!coords1 || !coords2) return false;
+      return Math.abs(coords1.x - coords2.x) < coordinateToleranceMeters &&
+        Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
+    };
+
     this.setMapTemplates = function (templates) {
       mapTemplates = templates;
     };
@@ -50,14 +58,14 @@
 
     this.getNodePointTemplatesByCoordinates = function (coordinates) {
       return _.filter(mapTemplates.nodePoints, function (nodePointTemplate) {
-        return _.isEqual(nodePointTemplate.coordinates, coordinates);
+        return isSameLocation(nodePointTemplate.coordinates, coordinates);
       });
     };
 
     this.getJunctionTemplateByCoordinates = function (coordinates) {
       return _.filter(mapTemplates.junctions, function (junctionTemplate) {
         return _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
-          return _.isEqual(junctionPoint.coordinates, coordinates);
+          return isSameLocation(junctionPoint.coordinates, coordinates);
         });
       });
     };
@@ -116,14 +124,6 @@
           me.setMapTemplates(templates);
 
           // Open template form with filtered data matching reference point
-          var coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
-
-          var isSameLocation = function(coords1, coords2) {
-              if (!coords1 || !coords2) return false;
-              return Math.abs(coords1.x - coords2.x) < coordinateToleranceMeters && 
-                    Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
-          };
-
           eventbus.trigger('selectedNodesAndJunctions:openTemplates', {
               nodePoints: _.filter(templates.nodePoints, function (nodePoint) {
                   return isSameLocation(nodePoint.coordinates, referencePoint);
