@@ -5,6 +5,7 @@ import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
 import fi.vaylavirasto.viite.dao.Sequences
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, Point}
+import fi.vaylavirasto.viite.model.LinkGeomSource.DuplicateForTerminatedSection
 import fi.vaylavirasto.viite.model.{AddrMRange, AdministrativeClass, ArealRoadMaintainer, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC.runWithRollback
 import org.joda.time.DateTime

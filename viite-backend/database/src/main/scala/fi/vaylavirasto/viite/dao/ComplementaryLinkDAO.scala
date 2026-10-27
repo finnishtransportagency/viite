@@ -56,6 +56,10 @@ class ComplementaryLinkDAO extends BaseDAO {
     """
 
 
+ lazy val excludeReusedTerminated = sqls"""
+   AND NOT (datasource = 9)
+ """
+
   object RoadLink extends SQLSyntaxSupport[RoadLink] {
     private val UnknownMunicipality = -1
 
@@ -237,6 +241,28 @@ class ComplementaryLinkDAO extends BaseDAO {
     Future(fetchByLinkIdsInReadOnlySession(linkIds))
   }
 
+
+  /**
+    * Fetches the layers of the previously terminated links that have been duplicated as complementary links.
+    * A layer's id is the body of the original link id (the id without its last character) followed by a layer character.
+    *
+    * @param linkIdBodies link ids without their last character
+    */
+  def fetchReusedTerminatedByLinkIdBodies(linkIdBodies: Set[String]): Seq[RoadLink] = {
+    if (linkIdBodies.nonEmpty) {
+      time(logger, "Fetch reused terminated complementary links by link id bodies") {
+        val bodies = linkIdBodies.toSeq
+        val query =
+          sql"""
+          $selectFromComplementaryLink
+          WHERE datasource = ${LinkGeomSource.DuplicateForTerminatedSection.value}
+          AND left(id, length(id) - 1) IN ($bodies)
+          """
+        runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
+      }
+    } else List()
+  }
+
   /**
      * Returns RoadLinks by municipality.
      */
@@ -259,7 +285,7 @@ class ComplementaryLinkDAO extends BaseDAO {
       val query =
         sql"""
           $selectFromComplementaryLink
-          WHERE municipalitycode = $municipality AND roadNumberFilter
+          WHERE municipalitycode = $municipality AND roadNumberFilters
           """
       runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))
     }
@@ -278,11 +304,11 @@ class ComplementaryLinkDAO extends BaseDAO {
     val geometry = sqls"geometry && ST_MakeEnvelope(${bounds.leftBottom.x},${bounds.leftBottom.y},${bounds.rightTop.x},${bounds.rightTop.y},3067)"
     val municipalityFilter = if (municipalities.nonEmpty) Some(sqls" AND municipalitycode IN (${municipalities})") else sqls""
 
-    time(logger, "Fetch complementary data by road numbers and municipality") {
+    time(logger, "Fetch complementary data by municipalities and bounds") {
       val query = sql"""
       $selectFromComplementaryLink
       WHERE $geometry
-      $municipalityFilter ${filter.getOrElse(sqls"")}
+      $municipalityFilter ${filter.getOrElse(sqls"")} $excludeReusedTerminated
       """
 
       runWithReadOnlySession(runSelectQuery(query.map(RoadLink.apply)))

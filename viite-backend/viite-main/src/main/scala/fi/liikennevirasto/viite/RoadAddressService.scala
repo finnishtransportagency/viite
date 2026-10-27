@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.ChangeSet
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.vaylavirasto.viite.dao.MunicipalityDAO
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
-import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
+import fi.vaylavirasto.viite.model.{AddrMRange, BeforeAfter, CalibrationPointLocation, CalibrationPointType, Discontinuity, LinkGeomSource, RoadAddressChangeType, RoadLink, RoadPart, SideCode, Track}
 import fi.vaylavirasto.viite.postgis.PostGISDatabaseScalikeJDBC
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -54,6 +54,9 @@ class RoadAddressService(
   val Epsilon = 1
 
   val defaultStreetNumber = 1
+
+  /** Link geometry sources, whose links are not shown in the road address link views of the map. */
+  private val sourcesExcludedFromRoadAddressLinks: Set[LinkGeomSource] = Set(LinkGeomSource.DuplicateForTerminatedSection)
 
   private def fetchLinearLocationsByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[LinearLocation], Seq[HistoryRoadLink]) = {
     val linearLocations = runWithReadOnlySession {
@@ -95,7 +98,8 @@ class RoadAddressService(
   /**
     * Returns all linear locations of the given roadPart
     *
-    * @param roadPart The road part, whose linear locations are to be returned
+    * @param roadPart       The road part, whose linear locations are to be returned
+    * @param excludeSources Linear locations on links with any of these link geometry sources are left out of the result
     */
   def getLinearLocationsInRoadPart(roadPart: RoadPart): Seq[LinearLocation] = {
 

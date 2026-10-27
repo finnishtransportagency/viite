@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.LinearLocation.privateLogger
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, Link, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
@@ -363,6 +363,28 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
+
+  def fetchPreviouslyTerminatedByLinkId(linkIds: Set[String]): List[LinearLocation] = {
+    time(logger, "Fetch previously terminated linear locations by link id") {
+      if (linkIds.isEmpty) {
+        return List()
+      }
+      val query =
+        sql"""
+            $selectFromLinearLocation
+            WHERE loc.link_id IN ($linkIds)
+            AND loc.valid_to IS NULL
+            AND EXISTS (
+              SELECT 1 FROM roadway rw
+              WHERE rw.roadway_number = loc.roadway_number
+              AND rw.valid_to IS NULL
+              AND rw.end_date IS NOT NULL
+            )
+          """
+      queryList(query)
+    }
+  }
+
   def fetchByLinkId(linkIds: Set[String], filterIds: Set[Long] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id") {
       if (linkIds.isEmpty) {
@@ -402,7 +424,14 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
-  def fetchByRoadwayNumber(roadwayNumbers: Iterable[Long]): List[LinearLocation] = {
+
+  /**
+   * Fetch the valid linear locations of the given roadway numbers.
+   *
+   * @param roadwayNumbers The roadway numbers
+   * @param excludeSources Linear locations on links with any of these link geometry sources are left out of the result
+   */
+  def fetchByRoadwayNumber(roadwayNumbers: Iterable[Long], excludeSources: Set[LinkGeomSource] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by roadway numbers") {
       if (roadwayNumbers.isEmpty) {
         return List()
@@ -626,7 +655,6 @@ class LinearLocationDAO extends BaseDAO {
   }
 
   def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
-    println(s"Expiring linear locations with roadway numbers: ${roadwayNumbers.mkString(", ")}")
     val query =
       sql"""
           UPDATE linear_location
@@ -637,6 +665,20 @@ class LinearLocationDAO extends BaseDAO {
       0
     else
       runUpdateToDb(query)
+  }
+
+  /**
+   * Updates the link_id of the given linear locations in place, regardless of whether they are expired.
+   * The link row of the new link id is created from the given original link, if it does not exist yet.
+   *
+   * @param relinked Linear locations carrying the new link id, with the link they were originally on
+   * @return Number of updated rows
+   */
+  def updateLinkIds(relinked: Seq[(LinearLocation, Link)]): Int = {
+    relinked.map { case (ll, originalLink) =>
+      LinkDAO.createIfEmptyFetch(ll.linkId, originalLink.adjustedTimestamp, LinkGeomSource.DuplicateForTerminatedSection.value)
+      runUpdateToDb(sql"""UPDATE linear_location SET link_id = ${ll.linkId} WHERE id = ${ll.id}""")
+    }.sum
   }
 
   def update(adjustment: LinearLocationAdjustment,
@@ -776,7 +818,15 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
+  /**
+   * Fetch the valid linear locations of the roadways found in the given bounding box.
+   *
+   * @param boundingRectangle The search box
+   * @param roadNumberLimits  Upper and lower limits of road numbers
+   * @param excludeSources    Linear locations on links with any of these link geometry sources are left out of the result
+   */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
+
     time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
