@@ -545,7 +545,6 @@
         $('#nodeTypeDropdown').val() === ViiteEnumerations.NodeType.UnknownNodeType.value.toString() ||
         $('#nodeStartDate').val() === "" ||
         !selectedNodesAndJunctions.validateJunctionNumbers() ||
-        !selectedNodesAndJunctions.isDirty() ||
         !junctionInputs.every((inp) => inp.validity.valid);
     };
 
@@ -809,8 +808,6 @@
             $('.junction-address-header').append('<i id="edit-junction-point-addresses" class="btn-pencil-edit fas fa-pencil-alt"></i>');
           }
 
-          $('.btn-edit-node-save').prop('disabled', formIsInvalid());
-
           eventbus.on('node:displayCoordinates', function (coordinates) {
             $("#node-coordinates").text(
                 Math.round(coordinates.y) + ', ' + Math.round(coordinates.x)
@@ -889,6 +886,7 @@
           });
 
           selectedNodesAndJunctions.addJunctionTemplates(junctionTemplates);
+          $('.btn-edit-node-save').prop('disabled', formIsInvalid());
         }
       });
 

@@ -389,6 +389,14 @@
 
     var selectNode = function (node) {
       clearHighlights();
+
+      // If the node being selected is already the current node, do nothing
+      // Without this node attachment won't work correctly
+      var currentNode = selectedNodesAndJunctions.getCurrentNode();
+      if (currentNode && !_.isUndefined(node.id) && currentNode.id === node.id) {
+        return;
+      }
+      
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNode(node);
       highlightNode(node);
