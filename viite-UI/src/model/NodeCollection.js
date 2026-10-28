@@ -98,16 +98,24 @@ export function NodeCollection() {
 		});
 	}
 
+  var coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
+
+  var isSameLocation = function (coords1, coords2) {
+    if (!coords1 || !coords2) return false;
+    return Math.abs(coords1.x - coords2.x) < coordinateToleranceMeters &&
+      Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
+  };
+
 	function getNodePointTemplatesByCoordinates(coordinates) {
 		return _.filter(mapTemplates.nodePoints, function (nodePointTemplate) {
-			return _.isEqual(nodePointTemplate.coordinates, coordinates);
+			return isSameLocation(nodePointTemplate.coordinates, coordinates);
 		});
 	}
 
 	function getJunctionTemplateByCoordinates(coordinates) {
 		return _.filter(mapTemplates.junctions, function (junctionTemplate) {
 			return _.find(junctionTemplate.junctionPoints, function (junctionPoint) {
-				return _.isEqual(junctionPoint.coordinates, coordinates);
+				return isSameLocation(junctionPoint.coordinates, coordinates);
 			});
 		});
 	}
@@ -157,15 +165,6 @@ export function NodeCollection() {
 				const templates = {
 					nodePoints: fetchedNodesAndJunctions.nodePointTemplates,
 					junctions: fetchedNodesAndJunctions.junctionTemplates
-				};
-
-				// Open template form with filtered data matching reference point
-				const coordinateToleranceMeters = 0.01; // 1 centimeter tolerance to avoid bug VIITE-3697
-
-				const isSameLocation = function(coords1, coords2) {
-					if (!coords1 || !coords2) return false;
-					return Math.abs(coords1.x - coords2.x) < coordinateToleranceMeters && 
-                    Math.abs(coords1.y - coords2.y) < coordinateToleranceMeters;
 				};
 
 				selectedNodesAndJunctions.openTemplates({

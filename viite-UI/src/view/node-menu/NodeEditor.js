@@ -207,7 +207,7 @@ export function NodeEditor(
 			const jps   = NodeTableUtils.getJunctionPointsInfo(j);
 			const cells = [
 				...(opts.checkbox          ? [{ className: 'detach-column-left', content: detachJunctionBox(j, rowOpts) }] : []),
-				...(opts.junctionInputNumber ? [{ content: junctionNumberInput(j, rowOpts) }] : []),
+				...(opts.junctionInputNumber ? [{ content: junctionNumberInput(j, opts) }] : []),
 				{ content: NodeTableUtils.asFlexColumn(_.map(jps, 'roadNumber')) },
 				{ content: NodeTableUtils.asFlexColumn(_.map(jps, 'track')) },
 				{ content: NodeTableUtils.asFlexColumn(_.map(jps, 'roadPartNumber')) },

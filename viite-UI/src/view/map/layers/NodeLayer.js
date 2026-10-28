@@ -19,9 +19,12 @@ import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
 import { NodeMarker } from '../markers/NodeMarker.js';
 import { NodePointTemplateMarker } from '../markers/NodePointTemplateMarker.js';
 import { getSessionUserRoles } from '@model/ApplicationModel.js';
+import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import {
 	isNodeCreateModeEnabled,
-	setNodeCreateModeEnabled
+	setNodeCreateModeEnabled,
+	isNodeAttachModeEnabled,
+	setNodeAttachModeEnabled
 } from '@node-menu/NodeDataMenu.js';
 
 let _instance = null;
@@ -39,6 +42,7 @@ export function onJunctionAttach(junction) { if (!_.isUndefined(junction)) _inst
 export function onNodePointDetach(nodePoint) { if (!_.isUndefined(nodePoint)) _instance.toggleNodePointToTemplate(nodePoint, true); }
 export function onNodePointAttach(nodePoint) { if (!_.isUndefined(nodePoint)) _instance.toggleNodePointToTemplate(nodePoint); }
 export function setNodeLayerCreateMode(enabled) { if (_instance) _instance.setNodeCreateModeEnabled(enabled); }
+export function setNodeLayerAttachMode(enabled) { if (_instance) _instance.setNodeAttachModeEnabled(enabled); }
 
 export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCollection, roadCollection) {
 
@@ -238,6 +242,8 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		clearHighlights();
 		selectedNodesAndJunctions.openNode(node, templates);
 		highlightNode(selectedNodesAndJunctions.getCurrentNode());
+		selectedNodeStartingCoordinates = node.coordinates;
+		setNodeAttachModeEnabled(false);
 		setTimeout(() => { setNodeCreateModeEnabled(false); }, 10);
 	}
 
@@ -274,7 +280,11 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 			pendingMapClickHandler = null;
 		}
 		setProperty([nodeMarkerLayer], 'selectable', true);
-		setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', true);
+		setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', !isNodeAttachModeEnabled());
+	};
+
+	const applyNodeAttachMode = function (enabled) {
+		setProperty([nodePointTemplateLayer, junctionTemplateLayer], 'selectable', !enabled && !isNodeCreateModeEnabled());
 	};
 
 	const nodeLayerSelectInteraction = new ol.interaction.Select({
@@ -297,11 +307,15 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		});
 
 		if (!_.isUndefined(selectedNode) && !_.isUndefined(selectedNode.node)) {
-			selectNode(selectedNode.node);
+			if (isNodeAttachModeEnabled()) {
+				attachNode(selectedNode.node, selectedNodesAndJunctions.getCurrentTemplates());
+			} else {
+				selectNode(selectedNode.node);
+			}
 			selectedNodeStartingCoordinates = selectedNode.node.coordinates;
-		} else if (!_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
+		} else if (!isNodeAttachModeEnabled() && !_.isUndefined(selectedJunctionTemplate) && _.has(selectedJunctionTemplate, 'junctionTemplate')) {
 			selectJunctionTemplate(selectedJunctionTemplate.junctionTemplate);
-		} else if (!_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) {
+		} else if (!isNodeAttachModeEnabled() && !_.isUndefined(selectedNodePointTemplate) && _.has(selectedNodePointTemplate, 'nodePointTemplate')) {
 			selectNodePointTemplate(selectedNodePointTemplate.nodePointTemplate);
 		}
 	});
@@ -388,6 +402,23 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 	userHasPermissionToEdit = _.includes(getSessionUserRoles(), 'viite');
 	addInteractions();
 
+	// Highlighting clears the Select collection, so empty clicks need a map listener.
+	map.on('singleclick', function (event) {
+		if (!nodeLayerSelectInteraction.getActive() || isNodeAttachModeEnabled() ||
+			isNodeCreateModeEnabled() || isNodeDragged() || !selectedNodesAndJunctions.getCurrentNode()) return;
+
+		const nodeFeature = map.forEachFeatureAtPixel(event.pixel, function (feature) {
+			return feature.node || feature.junction || feature.nodePointTemplate || feature.junctionTemplate;
+		});
+		if (nodeFeature) return;
+
+		selectedNodesAndJunctions.closeNode(true);
+		selectedNodesAndJunctions.closeTemplates();
+		selectedNodeStartingCoordinates = null;
+		clearOverlay();
+		setNodeMenuState('search');
+	});
+
 	map.on('pointerdown', function (evt) {
 		const featureAtPixel = map.forEachFeatureAtPixel(evt.pixel, function (feature) {
 			return feature.node || feature.nodePointTemplate ? feature : undefined;
@@ -453,14 +484,14 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 
 	const highlightTemplates = function (templates) {
 		if (!_.isUndefined(templates.nodePoints) && !_.isEmpty(templates.nodePoints)) {
-			const nodePointTemplates = _.partition(nodePointTemplateLayer.getSource().getFeatures(), function (nodePointTemplateFeature) {
+			const nodePointTemplates = _.partition(nodePointTemplateLayer.getSource().getFeatures().concat(nodePointTemplateSelectedLayer.getSource().getFeatures()), function (nodePointTemplateFeature) {
 				return _.includes(_.map(templates.nodePoints, 'id'), nodePointTemplateFeature.nodePointTemplate.id);
 			});
 			selectFeaturesToHighlight(nodePointTemplateVector, nodePointTemplates[0], nodePointTemplates[1]);
 		}
 
 		if (!_.isUndefined(templates.junctions) && !_.isEmpty(templates.junctions)) {
-			const junctionTemplates = _.partition(junctionTemplateLayer.getSource().getFeatures(), function (junctionTemplateFeature) {
+			const junctionTemplates = _.partition(junctionTemplateLayer.getSource().getFeatures().concat(junctionTemplateSelectedLayer.getSource().getFeatures()), function (junctionTemplateFeature) {
 				return _.includes(_.map(templates.junctions, 'id'), junctionTemplateFeature.junctionTemplate.id);
 			});
 			selectFeaturesToHighlight(junctionTemplateVector, junctionTemplates[0], junctionTemplates[1]);
@@ -472,23 +503,23 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 
 	function highlightNode(node) {
 		const highlightJunctions = function () {
-			const junctions = _.partition(junctionMarkerLayer.getSource().getFeatures(), function (junctionFeature) {
+			const junctions = _.partition(junctionMarkerLayer.getSource().getFeatures().concat(junctionMarkerSelectedLayer.getSource().getFeatures()), function (junctionFeature) {
 				return node.nodeNumber && junctionFeature.junction.nodeNumber === node.nodeNumber;
 			});
 			selectFeaturesToHighlight(junctionMarkerVector, junctions[0], junctions[1]);
 			junctionMarkerLayer.setOpacity(0.2);
 		};
 
-		const nodes = _.partition(nodeMarkerLayer.getSource().getFeatures(), function (nodeFeature) {
+		const nodes = _.partition(nodeMarkerLayer.getSource().getFeatures().concat(nodeMarkerSelectedLayer.getSource().getFeatures()), function (nodeFeature) {
 			return nodeFeature.node.id === node.id;
 		});
 
 		highlightJunctions();
 		highlightTemplates({
-			nodePoints: _.map(_.filter(nodePointTemplateLayer.getSource().getFeatures(), function (nodePointTemplateFeature) {
+			nodePoints: _.map(_.filter(nodePointTemplateLayer.getSource().getFeatures().concat(nodePointTemplateSelectedLayer.getSource().getFeatures()), function (nodePointTemplateFeature) {
 				return _.includes(_.map(node.nodePoints, 'id'), nodePointTemplateFeature.nodePointTemplate.id);
 			}), 'nodePointTemplate'),
-			junctions: _.map(_.filter(junctionTemplateLayer.getSource().getFeatures(), function (junctionTemplate) {
+			junctions: _.map(_.filter(junctionTemplateLayer.getSource().getFeatures().concat(junctionTemplateSelectedLayer.getSource().getFeatures()), function (junctionTemplate) {
 				return _.includes(_.map(node.junctions, 'id'), junctionTemplate.junctionTemplate.id);
 			}), 'junctionTemplate')
 		});
@@ -743,17 +774,21 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
   });
 	
 	function hideLayer() {
+		setNodeAttachModeEnabled(false);
+		setNodeCreateModeEnabled(false);
 		clearLayers(layers);
 		toggleLayersVisibility(layers, false);
 	}
 
 	applyNodeCreateMode(isNodeCreateModeEnabled());
+	applyNodeAttachMode(isNodeAttachModeEnabled());
 
 	addLayers(map, layers);
 
 	_instance = {
 		hide: hideLayer,
 		setNodeCreateModeEnabled: applyNodeCreateMode,
+		setNodeAttachModeEnabled: applyNodeAttachMode,
 		fetchNodesAndJunctions,
 		fetchAndApplyNodesAndJunctions,
 		addNodesToMap: renderNodesToMap,

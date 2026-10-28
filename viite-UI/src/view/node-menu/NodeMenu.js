@@ -1,4 +1,4 @@
-import { NodeDataMenu } from '@node-menu/NodeDataMenu.js';
+import { NodeDataMenu, setNodeAttachModeEnabled, setNodeCreateModeEnabled } from '@node-menu/NodeDataMenu.js';
 import { NodeEditor } from '@node-menu/NodeEditor.js';
 import { NodeSearchMenu } from '@node-menu/NodeSearchMenu.js';
 import { setMainMenuState } from '@view/MainMenu.js';
@@ -9,6 +9,8 @@ const stateConfig = {};
 export const setNodeMenuState = (newState, cancelTarget) => {
 	const state = stateConfig[newState];
 	if (!state) throw new Error(`Unknown node menu state: ${newState}`);
+	setNodeAttachModeEnabled(false);
+	setNodeCreateModeEnabled(false);
 	state.render(cancelTarget);
 };
 
@@ -21,6 +23,8 @@ export function NodeMenu(
 	menu
 ) {
 	const closeNodeMenu = () => {
+		setNodeAttachModeEnabled(false);
+		setNodeCreateModeEnabled(false);
 		if (selectedNodesAndJunctions.getCurrentNode()) {
 			selectedNodesAndJunctions.closeNode(true);
 		} else {

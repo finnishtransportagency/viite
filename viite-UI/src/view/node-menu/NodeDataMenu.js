@@ -1,9 +1,25 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { button } from '@components/button/Button.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
-import { setNodeLayerCreateMode } from '@view/map/layers/NodeLayer.js';
+import { setNodeLayerCreateMode, setNodeLayerAttachMode } from '@view/map/layers/NodeLayer.js';
 
 let nodeCreateMode = false;
+let nodeAttachMode = false;
+
+export function isNodeAttachModeEnabled() {
+	return nodeAttachMode;
+}
+
+export function setNodeAttachModeEnabled(enabled) {
+	const nextValue = Boolean(enabled);
+	if (nextValue) setNodeCreateModeEnabled(false);
+	if (nodeAttachMode === nextValue) return nodeAttachMode;
+
+	nodeAttachMode = nextValue;
+	$('#attachToMapNode').toggleClass('active', nodeAttachMode);
+	setNodeLayerAttachMode(nextValue);
+	return nodeAttachMode;
+}
 
 export function isNodeCreateModeEnabled() {
 	return nodeCreateMode;
@@ -12,6 +28,7 @@ export function isNodeCreateModeEnabled() {
 // Allows user to create a new node when clicking on map
 export function setNodeCreateModeEnabled(enabled) {
 	const nextValue = Boolean(enabled);
+	if (nextValue) setNodeAttachModeEnabled(false);
 	if (nodeCreateMode === nextValue) return nodeCreateMode;
 
 	nodeCreateMode = nextValue;
@@ -164,9 +181,16 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 
 	const renderFooter = function () {
 		bindEvents();
+		const attachToMapNodeClass = isNodeAttachModeEnabled() ? ' active' : '';
 		const attachToNewNodeClass = isNodeCreateModeEnabled() ? ' active' : '';
 		return `
         <div class="form form-controls node-template-actions">
+          ${button({
+            id: 'attachToMapNode',
+            label: 'Valitse kartalta solmu, johon haluat liittää aihiot',
+            className: 'btn-primary btn-block' + attachToMapNodeClass,
+            onClick: () => { setNodeAttachModeEnabled(!nodeAttachMode); }
+          })}
           ${button({ 
             id: 'attachToNewNode',
             label: 'Luo uusi solmu, johon haluat liittää aihiot',
@@ -193,4 +217,3 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 		renderFooter
 	};
 }
-
