@@ -1343,6 +1343,41 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
  }
 
  /*
+   Closed loop of two links: #1 runs from A over the top to B, and #2 runs from B under the bottom back to A.
+   Both ends of the chain are at the same point, so findChainEndpoints returns only one entry.
+        __
+   A  (    )  B
+        --
+  */
+ test("Test findStartingPoints When the road part is a closed loop of two links and the addressed (Transfer) link is at the road part start Then the starting point is the start of the addressed link") {
+   runWithRollback {
+     val geomTransfer1 = Seq(Point(0.0, 0.0), Point(5.0, 10.0), Point(10.0, 0.0))
+     val geomNew2      = Seq(Point(10.0, 0.0), Point(5.0, -10.0), Point(0.0, 0.0))
+     val plId = Sequences.nextProjectLinkId
+
+     val projectLink1   = ProjectLink(plId + 1, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 15L), AddrMRange(0L, 15L), None, None, None, 12345L.toString, 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomTransfer1, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+     val projectLinkNew2 = ProjectLink(plId + 2, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 0L), AddrMRange(0L, 0L), None, None, None, 12346L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomNew2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+
+     val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(Seq(projectLinkNew2), Seq(projectLink1), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+     startingPointsForCalculations should be((geomTransfer1.head, geomTransfer1.head))
+   }
+ }
+
+ test("Test findStartingPoints When the road part is a closed loop of two links and the addressed (Transfer) link is not at the road part start Then the starting point is the end of the addressed link") {
+   runWithRollback {
+     val geomTransfer1 = Seq(Point(0.0, 0.0), Point(5.0, 10.0), Point(10.0, 0.0))
+     val geomNew2      = Seq(Point(10.0, 0.0), Point(5.0, -10.0), Point(0.0, 0.0))
+     val plId = Sequences.nextProjectLinkId
+
+     val projectLink1   = ProjectLink(plId + 1, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(15L, 30L), AddrMRange(15L, 30L), None, None, None, 12345L.toString, 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomTransfer1, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+     val projectLinkNew2 = ProjectLink(plId + 2, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 0L), AddrMRange(0L, 0L), None, None, None, 12346L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomNew2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+
+     val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(Seq(projectLinkNew2), Seq(projectLink1), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+     startingPointsForCalculations should be((geomTransfer1.last, geomTransfer1.last))
+   }
+ }
+
+ /*
       ^
        \    <- #2 Transfer
         \   <- #1 Transfer
