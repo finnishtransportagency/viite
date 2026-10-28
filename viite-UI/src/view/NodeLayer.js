@@ -347,7 +347,10 @@
     };
 
     var addSelectInteractions = function () {
-      map.addInteraction(nodeLayerSelectInteraction);
+      // Only add the select interaction if it hasn't been added already
+      if (!_.includes(map.getInteractions().getArray(), nodeLayerSelectInteraction)) {
+        map.addInteraction(nodeLayerSelectInteraction);
+      }
     };
 
     var removeSelectInteractions = function () {
@@ -388,6 +391,7 @@
     };
 
     var selectNode = function (node) {
+
       clearHighlights();
 
       // If the node being selected is already the current node, do nothing
