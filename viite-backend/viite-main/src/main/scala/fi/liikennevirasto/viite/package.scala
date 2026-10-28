@@ -255,6 +255,7 @@ package object viite {
     "|      0      |        ErrorInViite        |       Virhe Viite-sovelluksessa       |\n" +
     "|      1      |         Incomplete         |             Keskeneräinen             |\n" +
     "|      7      |           Deleted          |           Poistettu projekti          |\n" +
+    "|      13     |           Pending          |   Odottaa tieverkolle päivittämistä   |\n" +
     "|      10     |        InUpdateQueue       |   Odottaa tieverkolle päivittämistä   |\n" +
     "|      11     |    UpdatingToRoadNetwork   |        Päivitetään tieverkolle        |\n" +
     "|      12     |          Accepted          |               Hyväksytty              |\n" +

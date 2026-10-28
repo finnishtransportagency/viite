@@ -214,6 +214,31 @@ class ProjectDAOSpec extends AnyFunSuite with Matchers with BaseDAO{
    }
  }
 
+ test("Test cancelPendingProject When project is pending or in update queue Then project is made incomplete") {
+   runWithRollback {
+     val pendingProjectId = Sequences.nextViiteProjectId
+     val queuedProjectId = Sequences.nextViiteProjectId
+     projectDAO.create(dummyProject(pendingProjectId, ProjectState.Pending, List(), None))
+     projectDAO.create(dummyProject(queuedProjectId, ProjectState.InUpdateQueue, List(), None))
+
+     projectDAO.cancelPendingProject(pendingProjectId) should be(true)
+     projectDAO.cancelPendingProject(queuedProjectId) should be(true)
+
+     projectDAO.fetchProjectStatus(pendingProjectId) should be(Some(ProjectState.Incomplete))
+     projectDAO.fetchProjectStatus(queuedProjectId) should be(Some(ProjectState.Incomplete))
+   }
+ }
+
+ test("Test cancelPendingProject When project is being updated Then project cannot be cancelled") {
+   runWithRollback {
+     val projectId = Sequences.nextViiteProjectId
+     projectDAO.create(dummyProject(projectId, ProjectState.UpdatingToRoadNetwork, List(), None))
+
+     projectDAO.cancelPendingProject(projectId) should be(false)
+     projectDAO.fetchProjectStatus(projectId) should be(Some(ProjectState.UpdatingToRoadNetwork))
+   }
+ }
+
  test("Test updateProjectElys " +
    "When updating ELYs of a project" +
    "Then ELYs should be in increasing order within an array structure: [1,2]") {

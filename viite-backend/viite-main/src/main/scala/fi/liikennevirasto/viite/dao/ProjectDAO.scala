@@ -17,7 +17,7 @@ sealed trait ProjectState {
 
 object ProjectState {
 
-  val values: Set[ProjectState] = Set(Incomplete, Deleted, ErrorInViite, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
+  val values: Set[ProjectState] = Set(Incomplete, Deleted, ErrorInViite, Pending, InUpdateQueue, UpdatingToRoadNetwork, Accepted, Unknown)
 
   // These states are final
   val finalProjectStates: Set[Int] = Set(ProjectState.Accepted.value)
@@ -28,6 +28,7 @@ object ProjectState {
   case object ErrorInViite extends ProjectState {def value = 0; def description = "Virhe Viite-sovelluksessa"}
   case object Incomplete extends ProjectState {def value = 1; def description = "Keskeneräinen"}
   case object Deleted extends ProjectState {def value = 7; def description = "Poistettu projekti"}
+  case object Pending extends ProjectState {def value = 13; def description = "Odottaa tieverkolle päivittämistä"}
   case object InUpdateQueue extends ProjectState {def value = 10; def description = "Odottaa tieverkolle päivittämistä"}
   case object UpdatingToRoadNetwork extends ProjectState {def value = 11; def description = "Päivitetään tieverkolle"}
   case object Accepted extends ProjectState {def value = 12; def description = "Hyväksytty"}
@@ -133,6 +134,7 @@ class ProjectDAO extends BaseDAO {
       fetchProjects(query =>
         sqls"""$query
             WHERE state=${ProjectState.InUpdateQueue.value}
+            OR state=${ProjectState.Pending.value}
             OR state=${ProjectState.UpdatingToRoadNetwork.value}
             OR state=${ProjectState.ErrorInViite.value}
             OR state=${ProjectState.Incomplete.value}
@@ -222,6 +224,30 @@ class ProjectDAO extends BaseDAO {
          LIMIT 1
        """
     runSelectSingleFirstOptionWithType[Long](query)
+  }
+
+  def moveSinglePendingProjectToUpdateQueue(): Boolean = {
+    val query = sql"""
+      UPDATE project
+      SET state=${ProjectState.InUpdateQueue.value}
+      WHERE id = (
+        SELECT id FROM project
+        WHERE state=${ProjectState.Pending.value}
+        LIMIT 1
+      )
+      AND state=${ProjectState.Pending.value}
+    """
+    runUpdateToDb(query) == 1
+  }
+
+  def cancelPendingProject(projectId: Long): Boolean = {
+    val query = sql"""
+      UPDATE project
+      SET state=${ProjectState.Incomplete.value}
+      WHERE id=$projectId
+      AND state IN (${ProjectState.Pending.value}, ${ProjectState.InUpdateQueue.value})
+    """
+    runUpdateToDb(query) == 1
   }
 
   /** @return projects, that are currently at either <i>InUpdateQueue</i>, or in <i>UpdatingToRoadNetwork</i> ProjectState */

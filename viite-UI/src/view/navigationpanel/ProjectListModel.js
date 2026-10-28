@@ -60,11 +60,12 @@
           // By default sort projects based on this status order
           const statusOrder = {
             [projectStatus.ErrorInViite.value]: 1,
-            [projectStatus.InUpdateQueue.value]: 2,
-            [projectStatus.UpdatingToRoadNetwork.value]: 3,
-            [projectStatus.Incomplete.value]: 4,
-            [projectStatus.Accepted.value]: 5,
-            [projectStatus.Deleted.value]: 6,
+            [projectStatus.Pending.value]: 2,
+            [projectStatus.InUpdateQueue.value]: 3,
+            [projectStatus.UpdatingToRoadNetwork.value]: 4,
+            [projectStatus.Incomplete.value]: 5,
+            [projectStatus.Accepted.value]: 6,
+            [projectStatus.Deleted.value]: 7,
             [projectStatus.Unknown.value]: 99
           };
           // Get the numeric order value, defaulting to 99 if status not found
@@ -228,6 +229,9 @@
             const openButton = proj.statusCode === projectStatus.ErrorInViite.value
                 ? `<button style="margin-bottom: 6px !important;" class="project-open btn btn-new-error" id="reopen-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa uudelleen</button>`
                 : `<button style="margin-bottom: 6px !important;" class="project-open btn btn-new" id="open-project-${proj.id}" value="${proj.id}" data-projectStatus="${proj.statusCode}">Avaa</button>`;
+            const cancelButton = [projectStatus.Pending.value, projectStatus.InUpdateQueue.value].includes(proj.statusCode)
+              ? `<button style="margin-bottom: 6px !important;" class="project-cancel btn btn-new-error" id="cancel-project-${proj.id}" value="${proj.id}">Peruuta</button>`
+              : '';
 
             html += `<tr id="${index}" class="project-item">
               <td style="text-align: left; vertical-align: middle;">${staticFieldProjectList(proj.name)}</td>
@@ -236,7 +240,7 @@
               <td style="text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(dateutil.dateObjectToFinnishString(new Date(proj.createdDate)))}</td>
               <td style="text-align: center; vertical-align: middle;" title="${info}">${staticFieldProjectList(proj.statusDescription)}</td>
               <td style="text-align: center; vertical-align: middle;">
-                <div style="display: flex; justify-content: center; align-items: center; height: 100%;">${openButton}</div>
+                <div style="display: flex; justify-content: center; align-items: center; gap: 6px; height: 100%;">${openButton}${cancelButton}</div>
               </td>
             </tr>`;
           });
@@ -257,7 +261,7 @@
             }
           };
 
-          if (status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
+          if (status === projectStatus.Pending.value || status === projectStatus.InUpdateQueue.value || status === projectStatus.UpdatingToRoadNetwork.value) {
             new GenericConfirmPopup("Projektin muokkaaminen ei ole mahdollista, koska sitä päivitetään tieverkolle. Haluatko avata sen?", {
               successCallback: () => { clearInterval(pollProjects); triggerOpening(event, button); }
             });
@@ -265,6 +269,15 @@
             clearInterval(pollProjects);
             triggerOpening(event, button);
           }
+        });
+
+        projectList.find('[id^="cancel-project"]').click(function (event) {
+          const projectId = parseInt(event.currentTarget.value);
+          new GenericConfirmPopup("Haluatko peruuttaa projektin hyväksynnän?", {
+            successCallback: () => projectCollection.cancelPendingProjectById(projectId, function (result) {
+              if (result.success) fetchProjects();
+            })
+          });
         });
       };
 
