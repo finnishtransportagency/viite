@@ -347,7 +347,10 @@
     };
 
     var addSelectInteractions = function () {
-      map.addInteraction(nodeLayerSelectInteraction);
+      // Only add the select interaction if it hasn't been added already
+      if (!_.includes(map.getInteractions().getArray(), nodeLayerSelectInteraction)) {
+        map.addInteraction(nodeLayerSelectInteraction);
+      }
     };
 
     var removeSelectInteractions = function () {
@@ -388,15 +391,8 @@
     };
 
     var selectNode = function (node) {
-      clearHighlights();
 
-      // If the node being selected is already the current node, do nothing
-      // Without this node attachment won't work correctly
-      var currentNode = selectedNodesAndJunctions.getCurrentNode();
-      if (currentNode && !_.isUndefined(node.id) && currentNode.id === node.id) {
-        return;
-      }
-      
+      clearHighlights();
       selectedNodesAndJunctions.closeForm();
       selectedNodesAndJunctions.openNode(node);
       highlightNode(node);
