@@ -863,14 +863,19 @@ class DefaultSectionCalculatorStrategy extends RoadAddressSectionCalculatorStrat
           val (currentEndPoint, otherEndPoint) = chainEndPoints.partition(_._2.id == endPointsWithValues.head._2.id)
           val singlyConnectLinks = TrackSectionOrder.findSinglyConnectedLinks(linksWithoutValues)
           val existsCloserProjectlink = linksWithValues.filter(pl => pl.addrMRange.start < endLinkWithValues.addrMRange.start && pl.id != endLinkWithValues.id)
-          if (otherEndPoint.isEmpty) {
-            // Closed loop: the chain start and end are the same Point, so chainEndPoints holds only one entry.
-            // The road part starts from the start of the addressed link, or from where it ends if a new link precedes it.
-            if (endLinkWithValues.addrMRange.isRoadPartStart)
-              (endLinkWithValues.startingPoint, endLinkWithValues)
-            else
-              (endLinkWithValues.endPoint, endLinkWithValues)
-          } else if (endPointsWithValues.nonEmpty && singlyConnectLinks.nonEmpty && linksWithValues.nonEmpty
+       //   if (otherEndPoint.isEmpty) {
+       //     // Closed loop: the chain start and end are the same Point, so chainEndPoints holds only one entry.
+       //     // The road part starts from the start of the addressed link, or from where it ends if a new link precedes it.
+       //     if (endLinkWithValues.addrMRange.isRoadPartStart) {
+       //       (endLinkWithValues.startingPoint, endLinkWithValues)
+       //
+   //         } else {
+       //       (endLinkWithValues.endPoint, endLinkWithValues)
+       //
+       //     }
+       //   } else
+
+            if (endPointsWithValues.nonEmpty && singlyConnectLinks.nonEmpty && linksWithValues.nonEmpty
             && (oldFirst.isDefined && points.count(p => GeometryUtils.areAdjacent(p._1, oldFirst.get.startingPoint)
             || GeometryUtils.areAdjacent(p._2, oldFirst.get.startingPoint)) > 1) // New links before the old starting point
             && (singlyConnectLinks.exists(connected => GeometryUtils.areAdjacent(connected._2.getEndPoints._2, endPointsWithValues.head._2.getEndPoints._1)
