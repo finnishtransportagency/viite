@@ -45,7 +45,7 @@ trait KgvCollection {
 }
 
 object KgvCollection {
-  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_road_links_20261007" } // { def value = "keskilinjavarasto:road_links_versions" }
+  case object Frozen                  extends KgvCollection { def value = "keskilinjavarasto:road_links_20261007" } // { def value = "keskilinjavarasto:road_links_versions" }
   case object Dynamic                 extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }   // extends KgvCollection { def value = "keskilinjavarasto:road_links_versions" }
   case object Changes                 extends KgvCollection { def value = "keskilinjavarasto:change" }
   case object UnFrozen                extends KgvCollection { def value = "keskilinjavarasto:road_links" }
