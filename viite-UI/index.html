@@ -1,9 +1,6 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <link rel="stylesheet" type="text/css" href="node_modules/ol/ol.css">
-    <link rel="stylesheet" type="text/css" href="node_modules/pikaday/css/pikaday.css">
-    <link rel="stylesheet" type="text/css" href="css/viite.css">
     <link
       rel="stylesheet"
       href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
@@ -34,32 +31,19 @@
       </div>
       <footer id="map-plugins"></footer>
     </div>
-    <script type="text/javascript" src="node_modules/ol/dist/ol.js"></script>
-    <script type="text/javascript" src="node_modules/jquery/dist/jquery.min.js"></script>
-    <script type="text/javascript" src="node_modules/moment/min/moment.min.js"></script>
-    <script type="text/javascript" src="node_modules/lodash/lodash.js"></script>
-    <script type="text/javascript" src="node_modules/backbone/backbone.js"></script>
+    <script src="/node_modules/ol/dist/ol.js?v=__ol__"></script>
+    <script src="/node_modules/jquery/dist/jquery.min.js?v=__jquery__"></script>
+    <script src="/node_modules/moment/min/moment.min.js?v=__moment__"></script>
+    <script src="/node_modules/lodash/lodash.js?v=__lodash__"></script>
+    <script src="/node_modules/backbone/backbone.js?v=__backbone__"></script>
     <script type="text/javascript">
       if (window.__backboneAgent) {
         window.__backboneAgent.handleBackbone(Backbone);
       }
     </script>
-    <script type="text/javascript" src="node_modules/pikaday/pikaday.js"></script>
-    <script type="text/javascript" src="node_modules/proj4/dist/proj4.js"></script>
-    <script type="text/javascript" src="node_modules/interactjs/dist/interact.min.js"></script>
-    <script type="importmap">
-      {
-        "imports": {
-          "@router.js": "./src/router.js",
-          "@src/": "./src/",
-          "@components/": "./src/components/",
-          "@model/": "./src/model/",
-          "@node-menu/": "./src/view/node-menu/",
-          "@utils/": "./src/utils/",
-          "@view/": "./src/view/"
-        }
-      }
-    </script>
+    <script src="/node_modules/pikaday/pikaday.js?v=__pikaday__"></script>
+    <script src="/node_modules/proj4/dist/proj4.js?v=__proj4__"></script>
+    <script src="/node_modules/interactjs/dist/interact.min.js?v=__interactjs__"></script>
     <script type="module" src="src/main.js"></script>
 
   </body>

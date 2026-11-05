@@ -2,27 +2,14 @@
   "private": true,
   "name": "viite",
   "version": "0.0.1",
+  "type": "module",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.0.0",
     "eslint": "^9.0.0",
-    "grunt": "1.6.1",
-    "grunt-cache-bust": "^1.7.0",
-    "grunt-contrib-clean": "~2.0.1",
-    "grunt-contrib-concat": "2.1.0",
-    "grunt-contrib-connect": "5.0.0",
-    "grunt-contrib-copy": "^1.0.0",
-    "grunt-contrib-less": "~3.0.0",
-    "grunt-contrib-watch": "~1.1.0",
-    "grunt-env": "~1.0.1",
-    "grunt-mocha-test": "^0.13.3",
-    "grunt-preprocess": "~5.1.0",
-    "grunt-terser": "^1.0.0",
-    "gruntify-eslint": "^5.0.0",
-    "http-proxy-middleware": "^3.0.0",
-    "mocha": "10.5.2",
-    "serve-index": "^1.9.1",
-    "serve-static": "^1.14.1"
+    "less": "^4.9.1",
+    "mocha": "^12.0.3",
+    "vite": "^7.3.7"
   },
   "dependencies": {
     "backbone": "1.6.0",
@@ -32,14 +19,20 @@
     "moment": "2.30.1",
     "ol": "9.2.4",
     "pikaday": "1.8.2",
-    "proj4": "2.11.0",
-    "requirejs": "2.3.7"
+    "proj4": "2.11.0"
   },
   "engines": {
-    "node": ">=20.15.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "test": "grunt test",
-    "lint": "eslint --no-error-on-unmatched-pattern gruntfile.js viite-UI/test/**/*.js viite-UI/src/**/*.js viite-UI/test_data/*.js viite-UI/src/"
+    "prepare:public": "node scripts/prepare-public-assets.mjs",
+    "dev": "npm run prepare:public && vite --host 127.0.0.1 --port 9003 --strictPort",
+    "lint": "eslint eslint.config.cjs .eslintrc.cjs vite.config.mjs \"scripts/**/*.mjs\" \"viite-UI/src/**/*.js\" \"viite-UI/test/**/*.js\"",
+    "test:unit": "node scripts/run-unit-tests.mjs",
+    "test": "npm run lint && npm run test:unit",
+    "test:watch": "node --watch scripts/run-unit-tests.mjs",
+    "build": "npm test && npm run prepare:public && vite build",
+    "deploy": "npm run build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort"
   }
 }

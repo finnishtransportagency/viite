@@ -1,5 +1,6 @@
 node_modules
 /dist
+/viite-UI/public/
 .idea*
 *.iml
 *.swp
@@ -8,7 +9,6 @@ target/
 .DS_Store
 logs/
 project/project/
-package-lock.json
 digiroad2.boot.log
 /build/
 .classpath
@@ -21,6 +21,7 @@ bonecp.properties
 .github/
 .env
 .env*
+!/viite-UI/.env.example
 .db
 session-manager-plugin.deb
 viite-build.json

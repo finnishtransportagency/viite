@@ -1,0 +1,11 @@
+**
+!dist/
+!dist/**
+!src/
+!src/main/
+!src/main/webapp/
+!src/main/webapp/WEB-INF/
+!src/main/webapp/WEB-INF/**
+!target/
+!target/scala-2.12/
+!target/scala-2.12/Viite-assembly-1.0.0.jar

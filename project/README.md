@@ -38,7 +38,7 @@ aws codeartifact login --tool npm --repository viite_npm_packages --domain vayla
 Install dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 
 ### CodeArtifact SBT/Maven Setup 
@@ -77,7 +77,7 @@ npm config delete registry
 2. Install dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 ### SBT (Backend)
 
@@ -98,5 +98,4 @@ set CODE_ARTIFACT_AUTH_TOKEN=
 ```bash
 sbt update
 ```
-
 

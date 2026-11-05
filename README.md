@@ -22,14 +22,11 @@ Note: If you choose not to use CodeArtifact, follow the instructions below.
 
 Frontend
 ---------
-Install [node.js](https://nodejs.org/en/download/releases) (Version 20.15.0 works well. You will also get [npm](https://npmjs.org/))   
+Install [Node.js](https://nodejs.org/en/download/releases) 20.19.0 or later
+within the Node 20 line, or 22.12.0 or later. This includes [npm](https://npmjs.org/).
 Fetch and install the dependencies needed by the UI
 ```
-npm install
-```
-Install [grunt-cli](http://gruntjs.com/getting-started) if you want to run grunt from the command line
-```
-npm install -g grunt-cli
+npm ci
 ```
 
 Database
@@ -65,24 +62,25 @@ by copying the xml-files from the `local-dev/idea-run-configurations` folder to 
   - Empty the database, run the Flyway migrations, populate the database with the test data (required by the unit tests) 
 - Flyway_migrate.xml
   - Run the Flyway migration scripts
-- Grunt_Server.xml
-  - Start the frontend server
-- Grunt_Test.xml
-  - Run the frontend tests
+- Frontend_Dev.xml
+  - Start the Vite frontend server
+- Frontend_Test.xml
+  - Run frontend unit tests
 - Server.xml
   - Run the backend server
 - Test.xml
   - Run the backend unit tests (needs the fixture reset test data)
 
 Add the following environment variables to the run configurations. 
-The api keys can be found from the Viite project's Confluence page. (You need a permission to view the password page in Confluence) 
+The api keys can be found from the Viite project's Confluence page. (You need a permission to view the password page) 
 - Server & Test 
   - kgvApiKey
   - rasterServiceApiKey
   - vkmApiKey
 
-- Grunt Server
+- Frontend Dev
   - rasterServiceApiKey
+  - kgvApiKey
   
 Building and Running the Backend
 ---------------------------------
@@ -111,34 +109,57 @@ or edit run configuration and set environment variable
 
 Building and Running the Frontend
 ==================================
-Building the frontend:
+Build and validate the frontend:
 ```
-grunt
+npm run build
 ```
 
-Running the tests from Idea:
-- run the "Grunt Test" task
+Running lint and unit tests from Idea:
+- run the "Frontend Tests" task
 
 Running the tests from the command line:
 ```
-grunt test
+npm test
 ```
 
-Running the frontend server from Idea:
-- run the "Grunt Server" task
-
-Running the frontend server from the command line:
-- Set rasterServiceApiKey to environment variables
-
+Running the frontend server from Idea or the command line:
+Copy the frontend env template once, then fill in your local API keys:
+```powershell
+Copy-Item viite-UI\.env.example viite-UI\.env.local
 ```
-grunt server
+The local file is ignored by Git. Restart Vite after changing its values.
+
+Start the dev server from the repository root:
+```
+npm run dev
 ```
 
-Running the "Grunt Server" task does the build, runs the tests and runs the frontend in the watch-mode. 
+The frontend is available at <http://localhost:9003/>. Start the backend separately.
 
-Frontend server sends the requests to the backend server which needs to be running for the application to work.
+Unit tests are independent of the frontend server and backend:
+```
+npm run test:unit
+```
 
-UI will be available in this address: <http://localhost:9003/>.
+Run tests in watch mode separately from Vite development serving:
+```
+npm run test:watch
+```
+
+Production build validation runs lint, unit tests, and Vite:
+```
+npm run build
+```
+
+The deployment command runs the validated build:
+```
+npm run deploy
+```
+
+Preview a completed build at <http://localhost:4173/>:
+```
+npm run preview
+```
 
 Initializing the database
 =========================

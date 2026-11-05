@@ -3,6 +3,10 @@
  * Handles application startup, map setup, layer management, and component initialization.
  */
 
+import 'ol/ol.css';
+import 'pikaday/css/pikaday.css';
+import './less/main.less';
+
 import { setStartupParameters, setUserData } from '@model/ApplicationModel.js';
 import { Backend, getStartupParametersWithCallback, getUserRoles } from '@utils/BackendUtils.js';
 import { Spinner } from '@components/spinner/Spinner.js';

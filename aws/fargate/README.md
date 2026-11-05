@@ -22,7 +22,8 @@ It pushes the image to the **Dev** environment ECR repository by default.
 You can change the target environment to QA by setting the `ENV` variable in the script to `qa`.
 
 To have the latest code for the image, checkout the branch you want to build the image from and pull changes.
-The script does not do testing for the code so it has to be done manually if necessary.
+The image build runs `npm ci` and `npm run deploy`; deployment stops if lint,
+frontend unit tests, or the production build fail.
 
 First you need to do AWS SSO login using your configured profile:
 ```bash
@@ -38,4 +39,3 @@ cd viite
 ./aws/aws-build-and-push.sh
 ```
 This will build the Docker image and push it to the ECR repository for the specified environment (default is Dev).
-
