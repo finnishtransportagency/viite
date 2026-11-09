@@ -219,8 +219,6 @@
               roadNameField.val(response.roadName);
               roadNameField.prop('disabled', response.roadNameSource === RoadNameSource.RoadAddressSource.value);
             }
-            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20000 && response.roadNumber <= 39999)
-              $('#trackCodeDropdown').val("0");
           }
         });
       }
