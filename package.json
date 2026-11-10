@@ -6,7 +6,9 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^9.0.0",
+    "concurrently": "^10.0.7",
     "eslint": "^9.0.0",
+    "kill-port": "^2.0.1",
     "less": "^4.9.1",
     "mocha": "^12.0.3",
     "vite": "^7.3.7"
@@ -27,6 +29,7 @@
   "scripts": {
     "prepare:public": "node scripts/prepare-public-assets.mjs",
     "dev": "npm run prepare:public && vite --host 127.0.0.1 --port 9003 --strictPort",
+    "start": "kill-port 9080 && concurrently --kill-others --names docker,backend,frontend \"docker compose -f local-dev/postgis/docker-compose.yaml up\" \"sbt run\" \"npm run dev\"",
     "lint": "eslint eslint.config.cjs .eslintrc.cjs vite.config.mjs \"scripts/**/*.mjs\" \"viite-UI/src/**/*.js\" \"viite-UI/test/**/*.js\"",
     "test:unit": "node scripts/run-unit-tests.mjs",
     "test": "npm run lint && npm run test:unit",

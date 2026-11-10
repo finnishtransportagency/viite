@@ -122,19 +122,19 @@ Running the tests from the command line:
 npm test
 ```
 
-Running the frontend server from Idea or the command line:
+Running the local environment from the command line:
 Copy the frontend env template once, then fill in your local API keys:
 ```powershell
 Copy-Item viite-UI\.env.example viite-UI\.env.local
 ```
 The local file is ignored by Git. Restart Vite after changing its values.
 
-Start the dev server from the repository root:
+From the repository root, start the database, backend, and frontend:
 ```
-npm run dev
+npm run start
 ```
 
-The frontend is available at <http://localhost:9003/>. Start the backend separately.
+The frontend is available at <http://localhost:9003/>.
 
 Unit tests are independent of the frontend server and backend:
 ```
