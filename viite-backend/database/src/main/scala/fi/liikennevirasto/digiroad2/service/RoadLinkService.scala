@@ -52,7 +52,7 @@ class RoadLinkService(val kgvClient: KgvRoadLink, val eventbus: DigiroadEventBus
 
   def getMidPointByLinkId(linkId: String): Option[Point] = {
     val client = if (useFrozenLinkInterface) kgvClient.frozenTimeRoadLinkData else kgvClient.roadLinkData
-    val roadLinkOption = client.fetchByLinkId(linkId).orElse(kgvClient.complementaryData.fetchByLinkId(linkId))
+    val roadLinkOption = client.fetchByLinkIdIfActive(linkId).orElse(kgvClient.complementaryData.fetchByLinkId(linkId))
     roadLinkOption.map {
       roadLink =>
         GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, roadLink.length / 2.0).getOrElse(Point(roadLink.geometry.head.x, roadLink.geometry.head.y))

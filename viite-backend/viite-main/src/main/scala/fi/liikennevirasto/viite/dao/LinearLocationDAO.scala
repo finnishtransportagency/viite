@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.util.LogUtils.time
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.LinearLocation.privateLogger
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LinearLocationAdjustment
-import fi.vaylavirasto.viite.dao.{BaseDAO, LinkDAO, Sequences}
+import fi.vaylavirasto.viite.dao.{BaseDAO, Link, LinkDAO, Sequences}
 import fi.vaylavirasto.viite.geometry.GeometryUtils.scaleToThreeDigits
 import fi.vaylavirasto.viite.geometry.{BoundingRectangle, GeometryUtils, Point}
 import fi.vaylavirasto.viite.model.{CalibrationPointType, LinkGeomSource, RoadPart, SideCode}
@@ -157,11 +157,16 @@ object LinearLocation extends SQLSyntaxSupport[LinearLocation] {
           typeCode      = rs.intOpt("cal_end_type").map(CalibrationPointType.apply)
         )
       ),
-      geometry = Seq(
-        Point(x = rs.double("start_x"),y = rs.double("start_y")),
-        Point(x = rs.double("end_x"),  y = rs.double("end_y")
-        )
-      ),
+      geometry = {
+        val sx = rs.doubleOpt("start_x"); val sy = rs.doubleOpt("start_y")
+        val ex = rs.doubleOpt("end_x");   val ey = rs.doubleOpt("end_y")
+        (sx, sy, ex, ey) match {
+          case (Some(x1), Some(y1), Some(x2), Some(y2)) => Seq(Point(x1, y1), Point(x2, y2))
+          case _ =>
+            privateLogger.warn(s"LinearLocation id=${rs.long("id")} has NULL geometry coordinates in the DB — skipping geometry (start_x=$sx, start_y=$sy, end_x=$ex, end_y=$ey)")
+            Seq.empty[Point]
+        }
+      },
       linkGeomSource  = LinkGeomSource(rs.int("source")),
       roadwayNumber   = rs.long("roadway_number"),
       validFrom       = rs.jodaDateTimeOpt("valid_from"),
@@ -336,11 +341,14 @@ class LinearLocationDAO extends BaseDAO {
    * @return List of Linear locations within given range, ordered by their start measures.
    *         An overlap less than [[GeometryUtils.DefaultEpsilon]] is not seen as fitting the range.
    */
-  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalueMin: Double, filterMvalueMax: Double): List[LinearLocation] = {
+  /** Active linear locations of <i>linkId</i> overlapping the given M-range. The bounds may be given
+   * in either order: a change's M-range on the old link is descending when the change runs against
+   * the old link's digitization direction. */
+  def fetchByLinkIdAndMValueRange(linkId: String, filterMvalue1: Double, filterMvalue2: Double): List[LinearLocation] = {
     time(logger, "Fetch linear locations by link id, and M values") {
 
-      val mustStartBefore = filterMvalueMax - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
-      val mustEndAfter = filterMvalueMin + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
+      val mustStartBefore = math.max(filterMvalue1, filterMvalue2) - GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at max value end
+      val mustEndAfter = math.min(filterMvalue1, filterMvalue2) + GeometryUtils.DefaultEpsilon // do not count overlap less than epsilon at min value end
 
       val query =
         sql"""
@@ -350,6 +358,28 @@ class LinearLocationDAO extends BaseDAO {
             AND loc.end_measure   >= $mustEndAfter    -- The end   of a valid linear location is after  the given min value
             AND loc.valid_to IS NULL
             ORDER BY loc.start_measure
+          """
+      queryList(query)
+    }
+  }
+
+
+  def fetchPreviouslyTerminatedByLinkId(linkIds: Set[String]): List[LinearLocation] = {
+    time(logger, "Fetch previously terminated linear locations by link id") {
+      if (linkIds.isEmpty) {
+        return List()
+      }
+      val query =
+        sql"""
+            $selectFromLinearLocation
+            WHERE loc.link_id IN ($linkIds)
+            AND loc.valid_to IS NULL
+            AND EXISTS (
+              SELECT 1 FROM roadway rw
+              WHERE rw.roadway_number = loc.roadway_number
+              AND rw.valid_to IS NULL
+              AND rw.end_date IS NOT NULL
+            )
           """
       queryList(query)
     }
@@ -394,7 +424,14 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
-  def fetchByRoadwayNumber(roadwayNumbers: Iterable[Long]): List[LinearLocation] = {
+
+  /**
+   * Fetch the valid linear locations of the given roadway numbers.
+   *
+   * @param roadwayNumbers The roadway numbers
+   * @param excludeSources Linear locations on links with any of these link geometry sources are left out of the result
+   */
+  def fetchByRoadwayNumber(roadwayNumbers: Iterable[Long], excludeSources: Set[LinkGeomSource] = Set()): List[LinearLocation] = {
     time(logger, "Fetch linear locations by roadway numbers") {
       if (roadwayNumbers.isEmpty) {
         return List()
@@ -618,7 +655,6 @@ class LinearLocationDAO extends BaseDAO {
   }
 
   def expireByRoadwayNumbers(roadwayNumbers: Set[Long]): Int = {
-    println(s"Expiring linear locations with roadway numbers: ${roadwayNumbers.mkString(", ")}")
     val query =
       sql"""
           UPDATE linear_location
@@ -629,6 +665,20 @@ class LinearLocationDAO extends BaseDAO {
       0
     else
       runUpdateToDb(query)
+  }
+
+  /**
+   * Updates the link_id of the given linear locations in place, regardless of whether they are expired.
+   * The link row of the new link id is created from the given original link, if it does not exist yet.
+   *
+   * @param relinked Linear locations carrying the new link id, with the link they were originally on
+   * @return Number of updated rows
+   */
+  def updateLinkIds(relinked: Seq[(LinearLocation, Link)]): Int = {
+    relinked.map { case (ll, originalLink) =>
+      LinkDAO.createIfEmptyFetch(ll.linkId, originalLink.adjustedTimestamp, LinkGeomSource.DuplicateForTerminatedSection.value)
+      runUpdateToDb(sql"""UPDATE linear_location SET link_id = ${ll.linkId} WHERE id = ${ll.id}""")
+    }.sum
   }
 
   def update(adjustment: LinearLocationAdjustment,
@@ -768,7 +818,15 @@ class LinearLocationDAO extends BaseDAO {
     }
   }
 
+  /**
+   * Fetch the valid linear locations of the roadways found in the given bounding box.
+   *
+   * @param boundingRectangle The search box
+   * @param roadNumberLimits  Upper and lower limits of road numbers
+   * @param excludeSources    Linear locations on links with any of these link geometry sources are left out of the result
+   */
   def fetchLinearLocationByBoundingBox(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)]): Seq[LinearLocation] = {
+
     time(logger, "Fetch all the linear locations of the matching roadways by bounding box") {
       val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
         boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
@@ -840,7 +898,10 @@ class LinearLocationDAO extends BaseDAO {
     val query =
       sql"""
             $selectFromLinearLocation
-            WHERE loc.valid_to IS NULL AND loc.roadway_number IN (SELECT roadway_number FROM roadway WHERE valid_to IS NULL AND end_date IS NULL)
+            WHERE loc.valid_to IS NULL
+              AND loc.roadway_number IN (SELECT roadway_number FROM roadway WHERE valid_to IS NULL AND end_date IS NULL)
+              AND loc.geometry IS NOT NULL
+              AND NOT ST_IsEmpty(loc.geometry)
          """
     queryList(query)
   }

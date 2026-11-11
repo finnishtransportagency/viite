@@ -789,6 +789,15 @@ class RoadwayDAO extends BaseDAO {
          """
   }
 
+  private def terminatedWithRoadwayNumbers(roadwayNumbers: Set[Long])(query: SQLSyntax): SQL[Nothing, NoExtractor] = {
+    sql"""
+         $query
+         WHERE valid_to IS NOT NULL
+         AND end_date IS NULL
+         AND roadway_number in ($roadwayNumbers)
+         """
+  }
+
 
   /**
    * Defines the portion of the query that will filter the results based on the given road number, road part number and if it should include history roadways or fetch only their end parts.

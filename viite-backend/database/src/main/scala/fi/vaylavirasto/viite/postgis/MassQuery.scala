@@ -45,7 +45,11 @@ object MassQuery extends BaseDAO {
   }
 
   def withIds[T](ids: StringList)(function: SQLSyntax => T): T = {
-    LogUtils.time(logger, s"TEST LOG MassQuery withIds ${ids.list.size}") {
+    val nonNullIds = ids.list.filter(_ != null)
+    if (nonNullIds.size != ids.list.size)
+      logger.warn(s"MassQuery.withIds(StringList): filtered out ${ids.list.size - nonNullIds.size} null ID(s)")
+
+    LogUtils.time(logger, s"TEST LOG MassQuery withIds ${nonNullIds.size}") {
       LogUtils.time(logger, "TEST LOG create temp_uuid table") {
         runUpdateToDb(
           sql"""
@@ -57,19 +61,19 @@ object MassQuery extends BaseDAO {
         """)
       }
 
-      LogUtils.time(logger, s"TEST LOG insert into temp_uuid ${ids.list.size}") {
+      LogUtils.time(logger, s"TEST LOG insert into temp_uuid ${nonNullIds.size}") {
 
         //Making sure that the table is empty if called multiple times within a transaction
         //Emptied at the end of transaction as per TABLE definition above
         runUpdateToDb(sql"TRUNCATE TABLE temp_uuid")
 
         val insertQuery = sql"INSERT INTO temp_uuid (id) VALUES (?)"
-        val batchParams = ids.list.map(id => Seq(id))
+        val batchParams = nonNullIds.map(id => Seq(id))
 
         // Execute batch insert
         runBatchUpdateToDb(insertQuery, batchParams.toSeq)
 
-        logger.debug("added {} entries to temporary table", ids.list.size)
+        logger.debug("added {} entries to temporary table", nonNullIds.size)
 
         // Call the function with the temporary table name
         function(sqls"temp_uuid")

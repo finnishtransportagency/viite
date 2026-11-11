@@ -128,6 +128,7 @@ class RoadNetworkValidator {
   def validateRoadways(roadPart: RoadPart): Unit = {
     logger.info(s"Validating roadways for road part: $roadPart")
     val overlappingRoadwaysOnLinearLocations = roadNetworkDAO.fetchOverlappingRoadwaysOnLinearLocations(roadPart)
+    overlappingRoadwaysOnLinearLocations.foreach(o => println(s"Overlapping roadway on linear location: Roadway ID: ${o.roadway.id}, RoadwayNumber: ${o.roadway.roadwayNumber}, LinkId: ${o.linkId}, LinearLocationId: ${o.linearLocationId}, StartAddrM: ${o.linearLocationStartMeasure}, EndAddrM: ${o.linearLocationEndMeasure}"))
     if (overlappingRoadwaysOnLinearLocations.nonEmpty) {
         logger.warn(s"Found overlapping roadways on linear locations for road part: $roadPart\r: ${overlappingRoadwaysOnLinearLocations.mkString("\r ")}")
       throw new RoadNetworkValidationException(s"$OverlappingRoadwaysOnLinearLocation (tieosa $roadPart)")

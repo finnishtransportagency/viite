@@ -1342,6 +1342,41 @@ class DefaultSectionCalculatorStrategySpec extends AnyFunSuite with Matchers {
    }
  }
 
+///*
+//  Closed loop of two links: #1 runs from A over the top to B, and #2 runs from B under the bottom back to A.
+//  Both ends of the chain are at the same point, so findChainEndpoints returns only one entry.
+//       __
+//  A  (    )  B
+//       --
+// */
+//test("Test findStartingPoints When the road part is a closed loop of two links and the addressed (Transfer) link is at the road part start Then the starting point is the start of the addressed link") {
+//  runWithRollback {
+//    val geomTransfer1 = Seq(Point(0.0, 0.0), Point(5.0, 10.0), Point(10.0, 0.0))
+//    val geomNew2      = Seq(Point(10.0, 0.0), Point(5.0, -10.0), Point(0.0, 0.0))
+//    val plId = Sequences.nextProjectLinkId
+
+//    val projectLink1   = ProjectLink(plId + 1, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 15L), AddrMRange(0L, 15L), None, None, None, 12345L.toString, 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomTransfer1, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+//    val projectLinkNew2 = ProjectLink(plId + 2, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 0L), AddrMRange(0L, 0L), None, None, None, 12346L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomNew2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+
+//    val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(Seq(projectLinkNew2), Seq(projectLink1), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+//    startingPointsForCalculations should be((geomTransfer1.head, geomTransfer1.head))
+//  }
+//}
+
+//test("Test findStartingPoints When the road part is a closed loop of two links and the addressed (Transfer) link is not at the road part start Then the starting point is the end of the addressed link") {
+//  runWithRollback {
+//    val geomTransfer1 = Seq(Point(0.0, 0.0), Point(5.0, 10.0), Point(10.0, 0.0))
+//    val geomNew2      = Seq(Point(10.0, 0.0), Point(5.0, -10.0), Point(0.0, 0.0))
+//    val plId = Sequences.nextProjectLinkId
+
+//    val projectLink1   = ProjectLink(plId + 1, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(15L, 30L), AddrMRange(15L, 30L), None, None, None, 12345L.toString, 0.0, 15.0, SideCode.TowardsDigitizing, (NoCP, NoCP), (NoCP, NoCP), geomTransfer1, 0L, RoadAddressChangeType.Transfer, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomTransfer1), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+//    val projectLinkNew2 = ProjectLink(plId + 2, RoadPart(9999, 1), Track.Combined, Discontinuity.Continuous, AddrMRange(0L, 0L), AddrMRange(0L, 0L), None, None, None, 12346L.toString, 0.0, 0.0, SideCode.Unknown, (NoCP, NoCP), (NoCP, NoCP), geomNew2, 0L, RoadAddressChangeType.New, AdministrativeClass.State, LinkGeomSource.NormalLinkInterface, GeometryUtils.geometryLength(geomNew2), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+
+//    val startingPointsForCalculations = defaultSectionCalculatorStrategy.findStartingPoints(Seq(projectLinkNew2), Seq(projectLink1), Seq.empty[ProjectLink], Seq.empty[UserDefinedCalibrationPoint])
+//    startingPointsForCalculations should be((geomTransfer1.last, geomTransfer1.last))
+//  }
+//}
+
  /*
       ^
        \    <- #2 Transfer
@@ -2935,6 +2970,47 @@ Left     ^  ^   Right
      pls.size should be(1)
      rest.size should be(3)
 
+   }
+ }
+
+ test("EXPERIMENT two new parallel tracks growth direction from ajorata number") {
+   runWithRollback {
+     // Two parallel vertical roads: west at x=0, east at x=5, both spanning y=0..10.
+     // Try both ajorata labelings, both digitization orders per link and several sidecodes.
+     // Domain invariant: the RightSide (ajorata 1) track must lie on the RIGHT of the growth direction,
+     // i.e. the vector from the right track start toward the left track start points to the LEFT of growth
+     // (2D cross product of growth x lateral > 0).
+     def mkLink(x: Double, snOrder: Boolean, track: Track, sc: SideCode): ProjectLink = {
+       val geom = if (snOrder) Seq(Point(x, 0.0), Point(x, 10.0)) else Seq(Point(x, 10.0), Point(x, 0.0))
+       val id = Sequences.nextProjectLinkId
+       ProjectLink(id, RoadPart(9999, 1), track, Discontinuity.Continuous, AddrMRange(0L, 0L), AddrMRange(0L, 0L), None, None, None, id.toString, 0.0, 10.0, sc, (NoCP, NoCP), (NoCP, NoCP), geom, 0L, RoadAddressChangeType.New, AdministrativeClass.State, NormalLinkInterface, GeometryUtils.geometryLength(geom), 0L, 0, ArealRoadMaintainer.getEVK(0), reversed = false, None, 86400L)
+     }
+     val sides  = Seq(SideCode.Unknown, SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
+     val orders = Seq(true, false)
+     val combos = for { rightIsWest <- Seq(true, false); sc <- sides; w <- orders; e <- orders } yield (rightIsWest, sc, w, e)
+     val results = combos.map { case (rightIsWest, sc, westSN, eastSN) =>
+       val west = mkLink(0.0, westSN, if (rightIsWest) Track.RightSide else Track.LeftSide, sc)
+       val east = mkLink(5.0, eastSN, if (rightIsWest) Track.LeftSide else Track.RightSide, sc)
+       val rightLink = if (rightIsWest) west else east
+       val res = try {
+         val (rightStart, leftStart) = defaultSectionCalculatorStrategy.findStartingPoints(Seq(west, east), Seq(), Seq(), Seq.empty[UserDefinedCalibrationPoint])
+         val rightFar = Seq(rightLink.geometry.head, rightLink.geometry.last).maxBy(_.distance2DTo(rightStart))
+         val d = fi.vaylavirasto.viite.geometry.Vector3d(rightFar.x - rightStart.x, rightFar.y - rightStart.y, 0.0).normalize2D()
+         val s = fi.vaylavirasto.viite.geometry.Vector3d(leftStart.x - rightStart.x, leftStart.y - rightStart.y, 0.0)
+         val crossZ = d.x * s.y - d.y * s.x
+         (crossZ > 0, f"rStart=$rightStart lStart=$leftStart growth=(${d.x}%.0f,${d.y}%.0f) crossZ=$crossZ%.1f")
+       } catch {
+         case ex: Throwable => (false, s"EXC ${ex.getClass.getSimpleName}: ${ex.getMessage}")
+       }
+       (rightIsWest, sc, westSN, eastSN, res._1, res._2)
+     }
+     val bad = results.filterNot(_._5)
+     val report = results.map { case (rightIsWest, sc, westSN, eastSN, ok, msg) =>
+       f"${if (ok) "OK  " else "FAIL"} rightIsWest=$rightIsWest%-5s sc=$sc%-16s westSN=$westSN%-5s eastSN=$eastSN%-5s | $msg"
+     }.mkString("\n")
+     withClue(s"\n${bad.size}/${results.size} combos violate 'RightSide track on the right of growth':\n$report\n") {
+       bad shouldBe empty
+     }
    }
  }
 }
