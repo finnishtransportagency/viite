@@ -359,10 +359,6 @@
                 // Add end date to params
                 if (roadAddrChangesEndDate.value) params.endDate = dateutil.parseDateToString(roadAddrEndDateObject);
 
-                const allRoadMaintainerValues = Object.values(ViiteEnumerations.EVKCodes || {})
-                    .map(code => code.value)
-                    .sort((a, b) => a - b);
-
                 const selectedByColumn = (elyEvkSelector && elyEvkSelector.getSelectedValuesByColumn()) || {};
                 const selectedElyValues = selectedByColumn[1] || [];
                 const selectedRoadMaintainerValues = selectedByColumn[0] || [];
@@ -370,8 +366,6 @@
                 if (selectedElyValues.length > 0) params.ely = selectedElyValues.join(',');
                 if (selectedRoadMaintainerValues.length > 0) {
                     params.roadMaintainer = selectedRoadMaintainerValues.join(',');
-                } else if (selectedElyValues.length === 0) {
-                    params.roadMaintainer = allRoadMaintainerValues.join(',');
                 }
                 
                 if (roadNumber.value) params.roadNumber = roadNumber.value;
