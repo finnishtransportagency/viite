@@ -32,6 +32,7 @@ export function DatePicker(options) {
 		disabled: false,
 		required: false,
 		onChange: null,
+		editableDateInput: true,
 		containerClass: 'date-picker-container'
 	};
 
@@ -54,11 +55,31 @@ export function DatePicker(options) {
 	// Attach input/change event listeners to an element
 	const bindChangeEvents = function ($el) {
 		$el.on('input', function () {
-			$(this).change();
+			if (config.editableDateInput) {
+				const value = this.value;
+				const cursor = this.selectionStart;
+				this.value = value.replace(/[^\d.]/g, '');
+				if (cursor !== null) {
+					const position = value.slice(0, cursor).replace(/[^\d.]/g, '').length;
+					this.setSelectionRange(position, position);
+				}
+				if (config.onChange) config.onChange(this.value);
+			} else {
+				$(this).change();
+			}
 		});
 		$el.on('change', function () {
 			if (config.onChange) {
 				config.onChange($(this).val());
+			}
+		});
+	};
+
+	const bindEditableDateInput = function ($el) {
+		if (!config.editableDateInput) return;
+		$el.on('keydown', function (event) {
+			if (['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
+				event.stopPropagation();
 			}
 		});
 	};
@@ -92,6 +113,7 @@ export function DatePicker(options) {
 
 		const $input = $container.find('input');
 		$inputRef = $input;
+		bindEditableDateInput($input);
       
 		if (config.id) {
 			$input.attr('id', config.id);
@@ -112,6 +134,7 @@ export function DatePicker(options) {
 		const pickerOptions = Object.assign({
 			field: $input.get(0),
 			format: dateutil.FINNISH_DATE_FORMAT,
+			formatStrict: config.editableDateInput,
 			firstDay: 1,
 			yearRange: [1900, 2050],
 			i18n: {
@@ -138,10 +161,12 @@ export function DatePicker(options) {
 		const momentLib = window.moment;
 		const $element = $(element);
 		$inputRef = $element;
+		bindEditableDateInput($element);
       
 		const pickerOptions = Object.assign(
 			config.defaultDate ? { defaultDate: config.defaultDate, setDefaultDate: config.setDefaultDate } : {},
-			buildDateRange(momentLib)
+			buildDateRange(momentLib),
+			config.editableDateInput ? { formatStrict: true } : {}
 		);
       
 		picker = dateutil.addFinnishDatePicker($element, pickerOptions);
@@ -208,4 +233,3 @@ export function DatePicker(options) {
 		getElement
 	};
 }
-

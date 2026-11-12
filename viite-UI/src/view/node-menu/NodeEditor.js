@@ -334,14 +334,14 @@ export function NodeEditor(
 		const checks = {
 			isNodeNameEmpty: nodeEditorContainer.find('#nodeName').val() === '',
 			isUnknownNodeType: nodeEditorContainer.find('#nodeTypeDropdown').val() === String(ViiteEnumerations.NodeType.UnknownNodeType.value),
-			isStartDateEmpty: nodeEditorContainer.find('#nodeStartDate').val() === '',
+			isStartDateInvalid: !dateutil.parseDate(nodeEditorContainer.find('#nodeStartDate').val()),
 			hasEmptyEnabledJunctionNumbers: hasEmptyEnabledJunctionNumbers,
 			areJunctionNumbersValid: selectedNodesAndJunctions.validateJunctionNumbers(applyJunctionValidity)
 		};
 
 		const invalid = checks.isNodeNameEmpty
       || checks.isUnknownNodeType
-      || checks.isStartDateEmpty
+      || checks.isStartDateInvalid
       || checks.hasEmptyEnabledJunctionNumbers
       || !checks.areJunctionNumbersValid;
 
@@ -380,7 +380,9 @@ export function NodeEditor(
 			revalidate();
 		});
 
-		$container.on('change.nodeEditor', '#nodeStartDate', function () {
+		$container.on('input.nodeEditor change.nodeEditor', '#nodeStartDate', revalidate);
+
+		$container.on('blur.nodeEditor', '#nodeStartDate', function () {
 			const val = $(this).val();
 			const parts = val.split('.');
 			const d = new Date(parts[2], parts[1] - 1, parts[0]);
@@ -509,7 +511,6 @@ export function NodeEditor(
 			onChange: (value) => selectedNodesAndJunctions.setStartDate(value)
 		});
 		picker.addToElement($container.find('#nodeStartDate'));
-		$container.find('#nodeStartDate').on('input.nodeEditor', function () { $(this).change(); });
 
 		// Disable autocomplete
 		$container.find('#nodeName, #nodeStartDate').attr('autocomplete', 'off');

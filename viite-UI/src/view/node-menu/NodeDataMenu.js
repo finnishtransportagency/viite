@@ -1,5 +1,6 @@
 import { DataTable, NodeTableUtils } from './DataTable.js';
 import { button } from '@components/button/Button.js';
+import { showToast } from '@components/toast/Toast.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { setNodeLayerCreateMode, setNodeLayerAttachMode } from '@view/map/layers/NodeLayer.js';
 
@@ -65,13 +66,19 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 	const renderDataTable = function (props) {
 		return dataTable.setProps(props).render();
 	};
+	const renderCopyableDate = function (date) {
+		return date ? `<button type="button" class="node-template-copy-date" title="Kopioi päivämäärä">${_.escape(String(date))}</button>` : '';
+	};
 
 	const getTemplateJunctionRowsInfo = function (junctionTemplates) {
 		const rows = _.flatMap(junctionTemplates || [], function (junction) {
 			const junctionPointsInfo = NodeTableUtils.getJunctionPointsInfo(junction);
 
+      // Add start date to junction point data
 			if (!_.isEmpty(junctionPointsInfo)) {
-				return junctionPointsInfo;
+				return _.map(junctionPointsInfo, function (point) {
+					return _.assign({}, point, { startDate: junction.startDate });
+				});
 			}
 
 			return [{
@@ -80,7 +87,8 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 				track: junction.track,
 				roadPartNumber: junction.roadPartNumber,
 				addr: junction.addrM,
-				beforeAfter: junction.ej || 'E'
+				beforeAfter: junction.ej || 'E',
+				startDate: junction.startDate
 			}];
 		});
 
@@ -128,7 +136,8 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 					item.track,
 					item.roadPartNumber,
 					item.addr,
-					item.beforeAfter
+					item.beforeAfter,
+					renderCopyableDate(item.startDate)
 				]
 			};
 		});
@@ -136,7 +145,7 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 		if (sortedJunctionRows.length > 0) {
 			templateTables.push(renderDataTable({
 				title: 'Liittymät',
-				headers: ['TIE', 'AJR', 'OSA', 'ET', 'EJ'],
+				headers: ['TIE', 'AJR', 'OSA', 'ET', 'EJ', 'ALKUPVM'],
 				rows: sortedJunctionRows
 			}));
 		}
@@ -155,7 +164,7 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 					item.roadPartNumber,
 					item.addr,
 					item.beforeAfter,
-					item.startDate
+					renderCopyableDate(item.startDate)
 				]
 			};
 		});
@@ -210,6 +219,10 @@ export function NodeDataMenu(selectedNodesAndJunctions) {
 		panelElement.off('.nodeDataMenu');
 		panelElement.on('click.nodeDataMenu', '.btn-open-node-editor', onEditNode);
 		panelElement.on('click.nodeDataMenu', '.btn-node-display-back', onBackToSearch);
+		panelElement.on('click.nodeDataMenu', '.node-template-copy-date', async function () {
+      await navigator.clipboard.writeText($(this).text());
+      showToast('Päivämäärä kopioitu leikepöydälle.', { type: 'success' });
+		});
 	};
 
 	return {

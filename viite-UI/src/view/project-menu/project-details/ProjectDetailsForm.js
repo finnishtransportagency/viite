@@ -211,7 +211,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 		const isRoadPartInvalidResult = validationUtils.isRoadPartInvalid($reservationContainer);
 		const dateValue = $('#projectStartDate').val() || '';
 		const hasDate = dateValue.trim() !== '';
-		const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
+		const dateRegex = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
 		const isDateValid = !hasDate || dateRegex.test(dateValue);
 		const shouldDisable = isRoadPartInvalidResult || !hasDate || !isDateValid;
       
@@ -224,7 +224,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 		const hasName = nameValue.trim() !== '';
 		const hasDate = dateValue.trim() !== '';
 		const isFormIncomplete = !hasName || !hasDate;
-		const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
+		const dateRegex = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
 		const isDateValid = !hasDate || dateRegex.test(dateValue);
 		const shouldDisableButton = isFormIncomplete || !isDateValid;
 		$('#generalNext').prop('disabled', shouldDisableButton);
@@ -256,7 +256,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 		const dateValue = $('#projectStartDate').val() || '';
 		const hasName = nameValue.trim() !== '';
 		const hasDate = dateValue.trim() !== '';
-		const dateRegex = /^\d{1,2}.\d{1,2}.\d{4}$/;
+		const dateRegex = /^\d{1,2}\.\d{1,2}\.\d{4}$/;
 		const isDateValid = !hasDate || dateRegex.test(dateValue);
 		return !hasName || !hasDate || !isDateValid;
 	};
@@ -439,8 +439,7 @@ export function ProjectDetailsForm(callbacks = {}) {
 		// Clean up old listeners before binding new ones (disposable pattern)
 		if (startDatePicker) {
 			startDatePicker.addToElement($('#projectStartDate'));
-			// Unbind any previous listeners from date picker
-			startDatePicker.getElement().off('input change').on('input change', function() {
+			startDatePicker.getElement().off('.projectDate').on('input.projectDate change.projectDate', function() {
 				updateContinueButtonState(projectData);
 				updateReserveButtonState();
 				markAsChanged();

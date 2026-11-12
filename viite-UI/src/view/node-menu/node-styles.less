@@ -406,6 +406,23 @@
   .junction-template-static-row {
     color: @node-color-junction-blue;
   }
+
+  .node-template-copy-date {
+    display: block;
+    float: none;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: filter 0.2s ease;
+
+    &:hover {
+      filter: brightness(1.2);
+    }
+  }
 }
 
 .node-template-actions {
