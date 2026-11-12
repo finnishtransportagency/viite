@@ -517,10 +517,6 @@
                   target: targetValue
               };
 
-              const allRoadMaintainerValues = Object.values(ViiteEnumerations.EVKCodes || {})
-                  .map(code => code.value)
-                  .sort((a, b) => a - b);
-
               const selectorComponents = roadAddressBrowserForm.getSelectorComponents();
               const selectedByColumn = selectorComponents && selectorComponents.elyEvk &&
                   typeof selectorComponents.elyEvk.getSelectedValuesByColumn === 'function'
@@ -533,8 +529,6 @@
               if (selectedElyValues.length > 0) params.ely = selectedElyValues.join(',');
               if (selectedRoadMaintainerValues.length > 0) {
                   params.roadMaintainer = selectedRoadMaintainerValues.join(',');
-              } else if (selectedElyValues.length === 0) {
-                  params.roadMaintainer = allRoadMaintainerValues.join(',');
               }
 
               if (roadNumber.value) params.roadNumber = roadNumber.value;
