@@ -316,10 +316,6 @@ export function ProjectLinkEditor(canUseDevTools) {
 							roadNameField.val(response.roadName);
 							roadNameField.prop('disabled', response.roadNameSource === ViiteEnumerations.RoadNameSource.RoadAddressSource.value);
 						}
-              
-						if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20000 && response.roadNumber <= 39999) {
-							$('#trackCodeDropdown').val("0");
-						}
 					}
 
 					if (projectChangeTable) {

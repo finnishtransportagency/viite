@@ -6,7 +6,6 @@ export function createProjectLinkEditorHTML(dependencies) {
 	const {
 		canUseDevTools,
 		RoadAddressChangeType,
-		Track,
 		AdministrativeClass,
 		LinkSources,
 		ViiteEnumerations,
@@ -129,10 +128,7 @@ export function createProjectLinkEditorHTML(dependencies) {
 
 		const administrativeClass = link.administrativeClassId ? link.administrativeClassId : AdministrativeClass.Empty.value;
 
-		let trackCodeDropdown = track;
-		if (track === Track.Unknown.value) {
-			trackCodeDropdown = (roadNumber >= 20000 && roadNumber <= 39999) ? '0' : '';
-		}
+		const trackCodeDropdown = selected.every(selectedLink => selectedLink.id !== -1) ? track : '';
 
 		const existingTie = link.roadNumber || roadNumber || '';
 		const existingOsa = link.roadPartNumber || '';
@@ -257,21 +253,19 @@ export function createProjectLinkEditorHTML(dependencies) {
 	};
 
 	const addTrackCodeDropdown = (trackDefaultValue) => {
-		let value = trackDefaultValue;
-
-		if (trackDefaultValue === '') {
-			value = Track.Unknown.value;
-		}
+		const options = [
+			{ value: '', text: '-', disabled: true },
+			{ value: '0', text: '0' },
+			{ value: '1', text: '1' },
+			{ value: '2', text: '2' }
+		];
+		const value = options.some(option => option.value === String(trackDefaultValue)) ? trackDefaultValue : '';
 
 		return dropdown({
 			id: 'trackCodeDropdown',
 			className: 'form-select-small-control',
 			defaultValue: value,
-			options: [
-				{ value: '0', text: '0' },
-				{ value: '1', text: '1' },
-				{ value: '2', text: '2' }
-			]
+			options: options
 		});
 	};
 
