@@ -3,7 +3,7 @@ import * as ViiteConstants from '@utils/ViiteConstants.js';
 import { ConfirmPopup } from '@components/modals/ConfirmPopup.js';
 import { ModalContainer } from '@components/modals/ModalContainer.js';
 import { Spinner } from '@components/spinner/Spinner.js';
-import { RoadAddressBrowserForm, formatElyEvkValue, getAllEvkValues } from './RoadAddressBrowserForm.js';
+import { RoadAddressBrowserForm, formatElyEvkValue, getAllElyEvkValues } from './RoadAddressBrowserForm.js';
 import { ViiteEnumerations, getAdministrativeClassTextValue } from '@utils/ViiteEnumerations.js';
 import { getDataForRoadAddressBrowser } from '@utils/BackendUtils.js';
 
@@ -252,8 +252,6 @@ export function RoadAddressBrowserWindow() {
 
 
 			// Handle ELY/EVK selection (multiple selections are sent as comma-separated lists).
-			// If nothing is selected, request all EVKs explicitly; the backend requires at
-			// least one maintainer for Tracks/RoadParts unless a road number is provided.
 			const selectedValues = Array.isArray(elyEvkSelector) ? elyEvkSelector : [];
 			if (selectedValues.length) {
 				const elyValues = selectedValues.filter(v => v.startsWith('ELY_')).map(v => v.substring(4));
@@ -262,7 +260,9 @@ export function RoadAddressBrowserWindow() {
 				if (evkValues.length) params.roadMaintainer = evkValues.join(','); // Backend expects EVK as roadMaintainer
 				if (elyValues.length || otherValues.length) params.ely = elyValues.concat(otherValues).join(',');
 			} else {
-				params.roadMaintainer = getAllEvkValues().join(',');
+				const { elyValues, evkValues } = getAllElyEvkValues();
+				params.ely = elyValues.join(',');
+				params.roadMaintainer = evkValues.join(',');
 			}
 
 			if (roadNumber.value)

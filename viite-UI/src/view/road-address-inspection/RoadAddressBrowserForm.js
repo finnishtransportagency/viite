@@ -62,6 +62,13 @@ export function getAllElyValues() {
 	});
 }
 
+export function getAllElyEvkValues() {
+	return {
+		elyValues: getAllElyValues(),
+		evkValues: getAllEvkValues()
+	};
+}
+
 export function RoadAddressBrowserForm() {
 
 	// Initialize multi-column selectors
