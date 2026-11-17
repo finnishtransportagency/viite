@@ -6,7 +6,7 @@ import { button } from '@components/button/Button.js';
 const TOOLTIP = `Hae katuosoitteella (esim. 'Aputie 10', 'Aputie, Vihti', tai 'Aputie 10, Vihti'),
 tieosoitteella (esim. '2 1 1000 2', '2/1/1000/2', '2', '2/1' tai '2 1 1000'),
 linkki-id:llä (esim. '06ad934c-5241-4055-9ae6-71d63190f6d7:1')
-tai koordinaateilla ('P, I', esim. '6673830, 388774')`;
+tai koordinaateilla (esim. '388774,6673830')`;
 
 // Handles road address/location search input, result rendering, and coordinate selection events
 export function SearchBox(map) {

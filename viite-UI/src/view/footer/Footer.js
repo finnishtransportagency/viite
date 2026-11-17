@@ -2,6 +2,8 @@ import { checkbox } from '@components/checkbox/Checkbox.js';
 import { button } from '@components/button/Button.js';
 import { toggleRoadVisibility } from '@model/ApplicationModel.js';
 import { getVelhoDetourRoutes, getVelhoSpecialTransportRoutes } from '@utils/BackendUtils.js';
+import { formatCoordinatePair } from '@utils/CoordinateFormatter.js';
+import { showToast } from '@components/toast/Toast.js';
 
 /* Contains following elements:
 - TileMapSelector: A set of buttons used for selecting which map background to show
@@ -303,8 +305,7 @@ function renderCoordinatesDisplay(container, map) {
 	const element = `
     <div class="mapplugin coordinates" data-position="4">
       <span class="cbCrsLabel hide-on-medium">ETRS89-TM35FIN</span>
-      <span class="cbCoordinate" axis="lat" data-label="P:">P: lat</span>
-      <span class="cbCoordinate" axis="lon" data-label="I:">I: lon</span>
+      <span class="cbCoordinate" title="Kopioi koordinaatit">lon,lat</span>
       ${button({ id: 'mark-coordinates', label: 'Merkitse', className: 'btn-coordinate-marker', onClick: () => map.dispatchEvent({ type: 'coordinates:marked', position: centerLonLat }) })}
     </div>
   `;
@@ -313,14 +314,17 @@ function renderCoordinatesDisplay(container, map) {
 
 	let centerLonLat = map.getView().getCenter() || [0, 0];
 
+	const coordinatesElement = container.find('.cbCoordinate');
+
 	const updateCoordinates = function () {
 		centerLonLat = map.getView().getCenter() || [0, 0];
-		const latElement = container.find('.cbCoordinate[axis="lat"]');
-		const lonElement = container.find('.cbCoordinate[axis="lon"]');
-
-		latElement.text(`${latElement.data('label')} ${Math.round(centerLonLat[1])}`);
-		lonElement.text(`${lonElement.data('label')} ${Math.round(centerLonLat[0])}`);
+		coordinatesElement.text(formatCoordinatePair(centerLonLat[0], centerLonLat[1]));
 	};
+
+	coordinatesElement.on('click', async function () {
+		await navigator.clipboard.writeText($(this).text());
+		showToast('Koordinaatit kopioitu leikepöydälle.', { type: 'success' });
+	});
 
 	map.on('moveend', updateCoordinates);
 	updateCoordinates();

@@ -9,6 +9,8 @@ import { getZoomLevel } from '@view/map/MapView.js';
 import { refreshRoadLayer } from '@view/map/layers/RoadLayer.js';
 import { setNodeMenuState } from '@node-menu/NodeMenu.js';
 import { getJunctionPointEditableStatus } from '@utils/BackendUtils.js';
+import { formatCoordinatePair } from '@utils/CoordinateFormatter.js';
+import { showToast } from '@components/toast/Toast.js';
 
 /**
  * NodeEditor - Editable node form with detach, validation and save flows.
@@ -67,7 +69,7 @@ export function NodeEditor(
       <div class="wrapper form-dark">
         <div class="node-metadata-container">
           <div class="node-editor-field-row"><label>Solmunumero:</label>${nodeNumber}</div>
-          <div class="node-editor-field-row"><label>Koordinaatit (P, I):</label><span id="node-coordinates">${Math.round(node.coordinates.y)}, ${Math.round(node.coordinates.x)}</span></div>
+          <div class="node-editor-field-row"><label>Koordinaatit:</label><span id="node-coordinates" class="node-coordinates-copy" title="Kopioi koordinaatit">${formatCoordinatePair(node.coordinates.x, node.coordinates.y)}</span></div>
 
           <div class="node-editor-field-row">
             <label class="required node-editor-field-label">Solmun nimi</label>
@@ -491,6 +493,10 @@ export function NodeEditor(
 
 		const $container = getContainer();
 		$container.html(renderForm(currentNode, junctionsHtml, nodePointsHtml));
+		$container.find('#node-coordinates').on('click', async function () {
+			await navigator.clipboard.writeText($(this).text());
+			showToast('Koordinaatit kopioitu leikepöydälle.', { type: 'success' });
+		});
 
 		// Request editable status for all junction point address inputs
 		$container.find('[id^=junction-point-address-input-]').each(function () {

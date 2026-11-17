@@ -17,8 +17,10 @@ const parse = function (input) {
 	else { return {type: 'invalid'}; }
 };
 
+// Input order does not matter: the smaller value is the easting (lon), the larger is the northing (lat).
 const parseCoordinates = function (coordinates) {
-	return {type: 'coordinate', lat: _.parseInt(coordinates[1]), lon: _.parseInt(coordinates[2])};
+	const [lon, lat] = _.sortBy([_.parseInt(coordinates[1]), _.parseInt(coordinates[2])]);
+	return {type: 'coordinate', lat: lat, lon: lon};
 };
 
 export const LocationInputParser = {

@@ -183,6 +183,12 @@
 		.cbCoordinate {
 			display: inline-block;
 			white-space: nowrap;
+			cursor: pointer;
+			transition: color 0.2s ease;
+
+			&:hover {
+				color: @link-color;
+			}
 		}
 
 		.crosshair-wrapper {

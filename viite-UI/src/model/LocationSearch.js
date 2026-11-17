@@ -11,6 +11,7 @@
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { LocationInputParser } from '@utils/LocationInputParser.js';
+import { formatCoordinatePair } from '@utils/CoordinateFormatter.js';
 import { getCurrentLocation } from '@view/map/MapView.js';
 import { getSearchResults } from '@utils/BackendUtils.js';
 
@@ -124,7 +125,7 @@ const getCoordinatesFromSearchInput = function (input) {
 };
 
 const resultFromCoordinates = function (coordinates) {
-	const result = _.assign({}, coordinates, {title: coordinates.lat + ',' + coordinates.lon});
+	const result = _.assign({}, coordinates, {title: formatCoordinatePair(coordinates.lon, coordinates.lat)});
 	return $.Deferred().resolve([result]);
 };
 

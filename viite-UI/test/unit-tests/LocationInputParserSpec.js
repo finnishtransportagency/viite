@@ -7,7 +7,8 @@ globalThis._ = lodash;
 describe('Location input parser', function () {
 
 	it('parses coordinate pairs', function () {
-		assert.deepEqual(LocationInputParser.parse('123,345'), {type: 'coordinate', lat: 123, lon: 345});
+		assert.deepEqual(LocationInputParser.parse('123,345'), {type: 'coordinate', lat: 345, lon: 123});
+		assert.deepEqual(LocationInputParser.parse('345,123'), {type: 'coordinate', lat: 345, lon: 123});
 	});
 
 	it('parses linkId', function () {

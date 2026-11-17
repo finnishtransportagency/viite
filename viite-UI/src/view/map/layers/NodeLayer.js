@@ -13,6 +13,7 @@ import { eventbus } from '@utils/eventbus.js';
 import { GeometryUtils } from '@utils/GeometryUtils.js';
 import { ViiteEnumerations } from '@utils/ViiteEnumerations.js';
 import { zoomlevels } from '@utils/ZoomLevels.js';
+import { formatCoordinatePair } from '@utils/CoordinateFormatter.js';
 import { addLayers, clearLayers, toggleInteractionsActive, toggleLayersVisibility } from './LayerUtils.js';
 import { JunctionMarker } from '../markers/JunctionMarker.js';
 import { JunctionTemplateMarker } from '../markers/JunctionTemplateMarker.js';
@@ -357,7 +358,7 @@ export function initNodeLayer(map, roadLayer, selectedNodesAndJunctions, nodeCol
 		if (!startingCoordinates) return;
 
 		if (GeometryUtils.distanceBetweenPoints(startingCoordinates, coordinates) < maxNodeMovementDistance) {
-			$('#node-coordinates').text(`${Math.round(evt.coordinate[0])}, ${Math.round(evt.coordinate[1])}`);
+			$('#node-coordinates').text(formatCoordinatePair(evt.coordinate[0], evt.coordinate[1]));
 		}
 	});
 
