@@ -56,7 +56,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 	const layerOptions = [
 		{
 			id: 'propertyBoundariesVisible',
-			label: 'Näytä kiinteistörajat',
+			label: 'Kiinteistörajat',
 			checked: false,
 			onChange(checked) {
 				tileMapCollection.setVisible('propertyBorder', checked);
@@ -64,7 +64,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		},
 		{
 			id: 'unAddressedRoadsVisible',
-			label: 'Näytä tieosoitteettomat-linkit',
+			label: 'Tieosoitteettomat-linkit',
 			checked: true,
 			onChange(checked) {
 				linkPropertyLayer.setVisible('unAddressedRoadLayer', checked);
@@ -73,7 +73,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		},
 		{
 			id: 'underConstructionVisible',
-			label: 'Näytä rakenteilla-linkit',
+			label: 'Rakenteilla-linkit',
 			checked: true,
 			onChange(checked) {
 				linkPropertyLayer.setVisible('underConstructionRoadLayer', checked);
@@ -82,7 +82,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		},
 		{
 			id: 'roadsVisible',
-			label: 'Näytä tieosoiteverkko',
+			label: 'Tieosoiteverkko',
 			checked: true,
 			onChange() {
 				toggleRoadVisibility();
@@ -92,7 +92,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		},
 		{
 			id: 'regionalBordersVisible',
-			label: 'Näytä maakuntarajat',
+			label: 'Maakuntarajat',
 			checked: false,
 			onChange(checked) {
 				tileMapCollection.setVisible('regionsBorder', checked);
@@ -100,7 +100,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		},
 		{
 			id: 'specialTransportRoutesVisible',
-			label: 'Näytä erikoiskuljetusreitit',
+			label: 'Erikoiskuljetusreitit',
       tooltip: "Data haettu Velhosta",
 			checked: false,
 			onChange(checked) {
@@ -115,7 +115,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		},
 		{
 			id: 'detourRoutesVisible',
-			label: 'Näytä varareitit',
+			label: 'Varareitit',
       tooltip: "Data haettu Velhosta",
 			checked: false,
 			onChange(checked) {
@@ -136,7 +136,8 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
         id: `${option.id}Checkbox`,
         label: option.label,
         checked: option.checked,
-        tooltip: option.tooltip
+        tooltip: option.tooltip,
+        style: "font-size: 12px"
       })}
     </div>
   `;
@@ -146,7 +147,8 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 			id: `dropdown-${option.id}`,
 			label: option.label,
 			value: option.id,
-			tooltip: option.tooltip
+			tooltip: option.tooltip,
+      style: "font-weight: bold !important; text-transform: uppercase !important;"
 		});
 
 	const element = `
@@ -192,24 +194,6 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		});
 	}
 
-	function syncMainCheckboxesFromDropdownAndTrigger() {
-		$dropdownCheckboxes.each(function () {
-			const value = $(this).val();
-
-			const $mainCheckbox = container.find(
-				`#${getMainCheckboxId(value)}`
-			);
-
-			const newChecked = Boolean($(this).prop('checked'));
-			const oldChecked = Boolean($mainCheckbox.prop('checked'));
-
-			if (newChecked !== oldChecked) {
-				$mainCheckbox.prop('checked', newChecked);
-				$mainCheckbox.trigger('change');
-			}
-		});
-	}
-
 	// Register all checkbox handlers from configuration
 	layerOptions.forEach(option => {
 		container.on(
@@ -243,6 +227,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		tileMapCollection.selectMap(selectedTileMap.data('layerid'));
 	});
 
+  // Toggle dropdown containing layer checkboxes
 	$dropdownToggle.on('click', function (e) {
 		e.stopPropagation();
 
@@ -258,6 +243,7 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		}
 	});
 
+  // Close dropdown when clicking outside
 	$(document).on('click', function (e) {
 		if (!$(e.target).closest('.checkbox-dropdown-wrapper').length) {
 			$checkboxDropdownWrapper.removeClass('open');
@@ -265,8 +251,23 @@ function renderTileMapSelector(container, linkPropertyLayer, projectLinkLayer, t
 		}
 	});
 
+  // Sync main checkboxes when a dropdown checkbox changes
 	$dropdownCheckboxes.on('change', function () {
-		syncMainCheckboxesFromDropdownAndTrigger();
+		$dropdownCheckboxes.each(function () {
+			const value = $(this).val();
+
+			const $mainCheckbox = container.find(
+				`#${getMainCheckboxId(value)}`
+			);
+
+			const newChecked = Boolean($(this).prop('checked'));
+			const oldChecked = Boolean($mainCheckbox.prop('checked'));
+
+			if (newChecked !== oldChecked) {
+				$mainCheckbox.prop('checked', newChecked);
+				$mainCheckbox.trigger('change');
+			}
+		});
 	});
 
 	function updateUIForScreenSize() {
@@ -415,7 +416,8 @@ function createCrosshairToggle(parentElement, map, onFeatureClick = null) {
         ${checkbox({
           name: 'crosshair',
           label: 'Kohdistin',
-          checked: true
+          checked: true,
+          style: "font-weight: normal;"
         })}
       </div>
     `);

@@ -165,7 +165,7 @@ export function RoadAddressChangesBrowserWindow() {
 
 		const $elyContainer = $(`
           <div class="input-container">
-              <label>Elinvoimakeskus / ELY</label>
+              <label>ELINVOIMAKESKUS / ELY</label>
               ${elyEvkSelector.render()}
           </div>`);
 

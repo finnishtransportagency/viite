@@ -124,11 +124,11 @@ export function RoadAddressBrowserForm() {
 		const html = `
         <form class="road-address-browser-form" id="roadAddressChangesBrowser">
           <div class="input-container">
-            <label>Rajausperuste</label>
+            <label>RAJAUSPERUSTE</label>
             ${dateTargetSelector.render()}
           </div>
           <div class="input-container">
-            <label >Alkupvm</label>
+            <label >ALKUPVM</label>
             <div>
               <input type="text" class="modern-input road-address-browser-date-input" id="roadAddrChangesStartDate" style="width: 80px" required/>
             </div>

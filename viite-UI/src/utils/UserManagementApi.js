@@ -1,7 +1,4 @@
 // Provides API functions for user management operations such as fetching, adding, deleting, and updating users.
-const isFunction = function (candidate) {
-	return typeof candidate === 'function';
-};
 
 const extractErrorMessage = function (jqXHR, defaultMessage) {
 	try {
@@ -23,7 +20,7 @@ const extractErrorMessage = function (jqXHR, defaultMessage) {
 export const userManagementApi = {
 	getAllUsers: function(callback) {
 		return $.get('api/viite/users', function(data) {
-			if (isFunction(callback)) {
+			if (_.isFunction(callback)) {
 				return callback(data.users);
 			}
 			return undefined;
@@ -42,7 +39,7 @@ export const userManagementApi = {
 			success: success,
 			error: function(jqXHR) {
 				const errorMessage = extractErrorMessage(jqXHR, 'Virhe käyttäjän luonnissa');
-				if (isFunction(failure)) failure(errorMessage);
+				if (_.isFunction(failure)) failure(errorMessage);
 			}
 		});
 	},
@@ -52,7 +49,7 @@ export const userManagementApi = {
 			url: `api/viite/users/${encodeURIComponent(username)}`,
 			type: 'DELETE',
 			success: () => {
-				if (isFunction(success)) {
+				if (_.isFunction(success)) {
 					success({
 						success: true,
 						message: `Käyttäjä '${username}' poistettu.`
@@ -61,7 +58,7 @@ export const userManagementApi = {
 			},
 			error: (e) => {
 				const errorMsg = (e && e.responseText) || 'Virhe käyttäjän poistamisessa';
-				if (isFunction(failure)) {
+				if (_.isFunction(failure)) {
 					failure(errorMsg);
 				}
 			}
@@ -77,7 +74,7 @@ export const userManagementApi = {
 			dataType: 'json',
 			success: success,
 			error: function(jqXHR) {
-				if (isFunction(failure)) failure(extractErrorMessage(jqXHR, 'Virhe käyttäjien päivittämisessä'));
+				if (_.isFunction(failure)) failure(extractErrorMessage(jqXHR, 'Virhe käyttäjien päivittämisessä'));
 			}
 		});
 	}

@@ -242,10 +242,11 @@ export function ProjectList(options = {}) {
           </div>
           <div class="content-footer">
             ${checkbox({
-		id: 'OldAcceptedProjectsVisibleCheckbox',
-		label: 'Näytä kaikki tieverkolle päivitetyt projektit',
-		checked: !state.onlyActive
-	})}
+              id: 'OldAcceptedProjectsVisibleCheckbox',
+              label: 'Näytä kaikki tieverkolle päivitetyt projektit',
+              checked: !state.onlyActive,
+              style: "font-size: 13px; font-weight: normal;"
+            })}
             <i id="sync" class="fas refresh-button fa-sync-alt ${state.loading ? 'refresh-spin' : ''}" title="Päivitä lista"></i>
           </div>
         </div>`;

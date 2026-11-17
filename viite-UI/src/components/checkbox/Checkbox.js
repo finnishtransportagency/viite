@@ -5,7 +5,8 @@ import { checkbox } from '@/components/checkbox/Checkbox.js';
   ${checkbox({
     id,
     label,
-    checked
+    checked,
+    style: 'font-size: 13px'
   })}
 </div>
 
@@ -17,10 +18,12 @@ export function checkbox({
 	value = '', 
 	label = '', 
 	checked = false,
-	tooltip = ''
+	tooltip = '',
+	style = ''
 } = {}) {
 	const checkedAttribute = checked ? 'checked' : '';
 	const titleAttribute = tooltip ? ` title="${tooltip}"` : '';
+	const styleAttribute = style ? ` style="${style}"` : '';
 
 	return `
     <div class="checkbox">
@@ -33,7 +36,7 @@ export function checkbox({
           value="${value}"
           ${checkedAttribute}
         >
-        <span class="checkbox-text">${label}</span>
+        <span class="checkbox-text"${styleAttribute}>${label}</span>
       </label>
     </div>
   `.trim();
