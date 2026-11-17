@@ -224,7 +224,7 @@ export const UpdateUserForm = {
 		);
 
 		container.find('#toggleViiteAllButton').replaceWith(
-			$(button({ id: 'toggleViiteAllButton', label: 'Anna viite-oikeus kaikille', className: 'btn btn-secondary', onClick: toggleViiteRoleForAllUsers }))
+			$(button({ id: 'toggleViiteAllButton', label: 'Anna viite-oikeus kaikille', className: 'btn-warning', onClick: toggleViiteRoleForAllUsers }))
 		);
 
 		container.off('change', '[data-role-dropdown-id] input[type="checkbox"]');

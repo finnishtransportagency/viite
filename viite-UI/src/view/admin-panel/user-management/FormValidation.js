@@ -7,12 +7,11 @@ import { showToast } from '@components/toast/Toast.js';
 // Validation can be conditionally enabled or disabled using the `options` object.
 export function validateUserFields(fields, options) {
 	const {
-		checkUsername = true,
-		checkElinvoimakeskus = true
+		checkUsername = true
 	} = options || {};
 
 	const errors = {};
-	const { username, elinvoimakeskus } = fields;
+	const { username } = fields;
 
 	if (checkUsername) {
 		if (!username || !(/^[A-Za-zÅÄÖåäö]/).test(username))
@@ -21,10 +20,6 @@ export function validateUserFields(fields, options) {
 			errors.username = "Tunnuksessa tulee olla vähintään 4 numeroa.";
 		else if (username.length > 10)
 			errors.username = "Tunnus saa olla enintään 10 merkkiä pitkä.";
-	}
-
-	if (checkElinvoimakeskus && (!elinvoimakeskus || elinvoimakeskus.length === 0)) {
-		errors.elinvoimakeskus = "Valitse vähintään yksi Elinvoimakeskus.";
 	}
 
 	return errors;

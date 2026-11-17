@@ -235,7 +235,7 @@ export function ProjectList(options = {}) {
                     <td class="user-cell column-user">${staticField(proj.createdBy)}</td>
                     <td class="date-cell column-date">${staticField(dateutil.dateObjectToFinnishString(toComparableDate(proj.createdDate)))}</td>
                     <td class="status-cell column-status" title="${proj.statusInfo || 'Ei lisätietoja'}">${staticField(proj.statusDescription)}</td>
-                    <td class="actions-cell column-actions">${button({ id: `project-open-${proj.id}`, label: proj.statusCode === projectStatus.ErrorInViite.value ? 'Avaa uudelleen' : 'Avaa', className: `project-open ${proj.statusCode === projectStatus.ErrorInViite.value ? 'btn-new-error' : 'btn-primary'}`, onClick: () => handleProjectOpen(proj.id, proj.statusCode) })}</td>
+                    <td class="actions-cell column-actions">${button({ id: `project-open-${proj.id}`, label: proj.statusCode === projectStatus.ErrorInViite.value ? 'Avaa uudelleen' : 'Avaa', className: `project-open ${proj.statusCode === projectStatus.ErrorInViite.value ? 'btn-warning' : 'btn-primary'}`, onClick: () => handleProjectOpen(proj.id, proj.statusCode) })}</td>
                   </tr>`).join('')}
               </tbody>
             </table>

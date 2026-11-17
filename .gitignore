@@ -26,3 +26,7 @@ bonecp.properties
 session-manager-plugin.deb
 viite-build.json
 env.properties
+.metals/
+.bloop/
+.scala-build/
+metals.sbt

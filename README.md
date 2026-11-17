@@ -129,7 +129,7 @@ Copy-Item viite-UI\.env.example viite-UI\.env.local
 ```
 The local file is ignored by Git. Restart Vite after changing its values.
 
-From the repository root, start the database, backend, and frontend:
+From the repository root, start the database (Docker desktop should be open), backend, and frontend:
 ```
 npm run start
 ```
@@ -144,11 +144,6 @@ npm run test:unit
 Run tests in watch mode separately from Vite development serving:
 ```
 npm run test:watch
-```
-
-Production build validation runs lint, unit tests, and Vite:
-```
-npm run build
 ```
 
 The deployment command runs the validated build:
@@ -166,12 +161,11 @@ Initializing the database
 Empty database must be initialized for the Flyway by running the task "Flyway init"
 or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_init>.
 
-All the tables can be created and populated with the test data by running the task "Fixture reset test".
+Run the task "Fixture reset test" to run Flyway migrations and populate the database with test data.
 TODO: nodes and junctions test data must be created too.
 
-Flyway migrations can be run by running the task "Flyway migrate"
-or by calling the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrate>.
-("Fixture reset test" does this already.)
+To run Flyway migrations without resetting the fixture data, run the task "Flyway migrate"
+or call the Viite AdminAPI: <http://localhost:8080/api/admin/flyway_migrate>.
 
 [Deployment and Infra related instructions](https://github.com/finnishtransportagency/viite-infra?tab=readme-ov-file#viite-infrastructure)
 =================================================

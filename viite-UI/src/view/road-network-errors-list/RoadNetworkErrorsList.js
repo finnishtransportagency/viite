@@ -109,11 +109,11 @@ export function RoadNetworkErrorsList() {
 		calibrationPoints.forEach((cp) => {
 			const string = $(
 				`<tr>
-                  <td>${cp.roadNumber}</td>
-                  <td>${cp.roadPartNumber}</td>
-                  <td>${cp.track}</td>
-                  <td>${cp.addrM}</td>
-              </tr>`
+            <td>${cp.roadNumber}</td>
+            <td>${cp.roadPartNumber}</td>
+            <td>${cp.track}</td>
+            <td>${cp.addrM}</td>
+        </tr>`
 			);
 			table.append(string);
 		});
@@ -177,13 +177,13 @@ export function RoadNetworkErrorsList() {
 			}
 			const tableRow = (
 				`<tr>
-                  <td>${link.linkId}</td>
-                  <td>${link.roadNumber}</td>
-                  <td>${link.roadPartNumber}</td>
-                  <td>${startEndText}</td>
-                  <td>${link.calibrationPointCount + ' kpl'}</td>
-                  <td>${link.calibrationPoints}</td>
-              </tr>`
+            <td>${link.linkId}</td>
+            <td>${link.roadNumber}</td>
+            <td>${link.roadPartNumber}</td>
+            <td>${startEndText}</td>
+            <td>${link.calibrationPointCount + ' kpl'}</td>
+            <td>${link.calibrationPoints}</td>
+        </tr>`
 			);
 			table.append(tableRow);
 		});
@@ -216,13 +216,13 @@ export function RoadNetworkErrorsList() {
 			}
 			const tableRow = $(
 				`<tr>
-                  <td>${link.linkId}</td>
-                  <td>${link.roadNumber}</td>
-                  <td>${link.roadPartNumber}</td>
-                  <td>${startEndText}</td>
-                  <td>${link.calibrationPointCount + ' kpl'}</td>
-                  <td>${link.calibrationPoints}</td>
-              </tr>`
+            <td>${link.linkId}</td>
+            <td>${link.roadNumber}</td>
+            <td>${link.roadPartNumber}</td>
+            <td>${startEndText}</td>
+            <td>${link.calibrationPointCount + ' kpl'}</td>
+            <td>${link.calibrationPoints}</td>
+        </tr>`
 			);
 			table.append(tableRow);
 		});
@@ -245,11 +245,11 @@ export function RoadNetworkErrorsList() {
 		roadwayPoints.forEach((rwp) => {
 			const tableRow = $(
 				`<tr>
-                  <td>${rwp.roadNumber}</td>
-                  <td>${rwp.roadPartNumber}</td>
-                  <td>${rwp.track}</td>
-                  <td>${rwp.addrM}</td>
-              </tr>`
+            <td>${rwp.roadNumber}</td>
+            <td>${rwp.roadPartNumber}</td>
+            <td>${rwp.track}</td>
+            <td>${rwp.addrM}</td>
+        </tr>`
 			);
 			table.append(tableRow);
 		});
@@ -277,16 +277,16 @@ export function RoadNetworkErrorsList() {
 		invalidRoadways.forEach((rw) => {
 			const tableRow = $(
 				`<tr>
-                  <td>${rw.roadNumber}</td>
-                  <td>${rw.roadPartNumber}</td>
-                  <td>${rw.track}</td>
-                  <td>${rw.addrMRange.start}</td>
-                  <td>${rw.addrMRange.end}</td>
-                  <td>${rw.length}</td>
-                  <td>${rw.roadwayNumber}</td>
-                  <td>${formatDate(rw.startDate)}</td>
-                  <td>${formatDate(rw.endDate)}</td>
-              </tr>`
+            <td>${rw.roadNumber}</td>
+            <td>${rw.roadPartNumber}</td>
+            <td>${rw.track}</td>
+            <td>${rw.addrMRange.start}</td>
+            <td>${rw.addrMRange.end}</td>
+            <td>${rw.length}</td>
+            <td>${rw.roadwayNumber}</td>
+            <td>${formatDate(rw.startDate)}</td>
+            <td>${formatDate(rw.endDate)}</td>
+        </tr>`
 			);
 			table.append(tableRow);
 		});
@@ -313,15 +313,15 @@ export function RoadNetworkErrorsList() {
 		overlappingRoadways.forEach((rw) => {
 			const tableRow = $(
 				`<tr>
-                  <td>${rw.roadNumber}</td>
-                  <td>${rw.roadPartNumber}</td>
-                  <td>${rw.track}</td>
-                  <td>${rw.addrMRange.start}</td>
-                  <td>${rw.addrMRange.end}</td>
-                  <td>${rw.roadwayNumber}</td>
-                  <td>${formatDate(rw.startDate)}</td>
-                  <td>${formatDate(rw.endDate)}</td>
-              </tr>`
+            <td>${rw.roadNumber}</td>
+            <td>${rw.roadPartNumber}</td>
+            <td>${rw.track}</td>
+            <td>${rw.addrMRange.start}</td>
+            <td>${rw.addrMRange.end}</td>
+            <td>${rw.roadwayNumber}</td>
+            <td>${formatDate(rw.startDate)}</td>
+            <td>${formatDate(rw.endDate)}</td>
+        </tr>`
 			);
 			table.append(tableRow);
 		});
@@ -348,15 +348,15 @@ export function RoadNetworkErrorsList() {
 		overlappingRoadways.forEach((rw) => {
 			const tableRow = (
 				`<tr>
-                <td>${rw.roadNumber}</td>
-                <td>${rw.roadPartNumber}</td>
-                <td>${rw.track}</td>
-                <td>${rw.addrMRange.start}</td>
-                <td>${rw.addrMRange.end}</td>
-                <td>${rw.roadwayNumber}</td>
-                <td>${rw.linearLocationId}</td>
-                <td>${rw.linkId}</td>
-              </tr>`
+            <td>${rw.roadNumber}</td>
+            <td>${rw.roadPartNumber}</td>
+            <td>${rw.track}</td>
+            <td>${rw.addrMRange.start}</td>
+            <td>${rw.addrMRange.end}</td>
+            <td>${rw.roadwayNumber}</td>
+            <td>${rw.linearLocationId}</td>
+            <td>${rw.linkId}</td>
+          </tr>`
 			);
 			table.append(tableRow);
 		});
