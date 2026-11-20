@@ -167,8 +167,9 @@ object TwoTrackAverager {
             None
           } else {
             val startDiff = Math.abs(rightSection.sectionStart - leftSection.sectionStart)
+            val endDiff = Math.abs(rightSection.sectionEnd - leftSection.sectionEnd)
 
-            if (startDiff <= SynchronizationUtils.maxDiffForTracks)
+            if (startDiff <= SynchronizationUtils.maxDiffForTracks && endDiff <= SynchronizationUtils.maxDiffForTracks)
               Some((leftSection, startDiff))
             else
               None
