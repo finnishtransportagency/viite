@@ -422,13 +422,13 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
     result.find(_.id == 115).get.originalAddrMRange should be(AddrMRange(82, 100))
   }
 
-  test("Case 11 - Administrative Class Change: Asymmetric section pairing should rely on close start boundary") {
+  test("Case 11 - Administrative Class Change: Asymmetric section pairing with close boundaries") {
     /**
       * Right track changed section: one link, length 120 (4155 -> 4275)
       * Left track changed section: three links, lengths 30/50/40 (4161 -> 4191 -> 4241 -> 4281)
       *
       * Start boundary delta is 6m, while absolute end values are large.
-      * Pairing must succeed based on where averaging starts, and then slide adjacent links.
+      * Pairing must succeed when both boundaries are close, and then slide adjacent links.
       */
     val links = Seq(
       buildTestLink(120, Track.RightSide, (4000, 4155), RoadAddressChangeType.Unchanged, adminClass = AdministrativeClass.Municipality, originalAdminClass = AdministrativeClass.Municipality),
@@ -457,5 +457,29 @@ class TwoTrackSectionSynchronizerSpec extends AnyFunSuite with Matchers {
     // Following links snapped to averaged end
     result.find(_.id == 122).get.addrMRange should be(AddrMRange(4278, 4400))
     result.find(_.id == 127).get.addrMRange should be(AddrMRange(4278, 4400))
+  }
+
+  test("Case 12 - Section ends at the track difference limit are averaged") {
+    val links = Seq(
+      buildTestLink(130, Track.RightSide, (0, 100), RoadAddressChangeType.Termination),
+      buildTestLink(131, Track.LeftSide, (0, 120), RoadAddressChangeType.Termination)
+    )
+
+    val result = TwoTrackAverager.averageTwoTrackBoundaries(links)
+
+    result.map(_.addrMRange) should be(Seq(AddrMRange(0, 110), AddrMRange(0, 110)))
+    result.map(_.originalAddrMRange) should be(Seq(AddrMRange(0, 110), AddrMRange(0, 110)))
+  }
+
+  test("Case 13 - Section ends beyond the track difference limit are not averaged in either address space") {
+    val links = Seq(
+      buildTestLink(132, Track.RightSide, (0, 1000), RoadAddressChangeType.Termination),
+      buildTestLink(133, Track.LeftSide, (0, 1120), RoadAddressChangeType.Termination)
+    )
+
+    val result = TwoTrackAverager.averageTwoTrackBoundaries(links)
+
+    result.map(_.addrMRange) should be(links.map(_.addrMRange))
+    result.map(_.originalAddrMRange) should be(links.map(_.originalAddrMRange))
   }
 }
