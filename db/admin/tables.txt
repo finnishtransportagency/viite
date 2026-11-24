@@ -18,3 +18,4 @@ roadway
 roadway_changes
 roadway_changes_link
 roadway_point
+velho_geometry_cache
