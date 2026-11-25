@@ -450,6 +450,15 @@
 
           var doubleRows = _.map(doubleHomogeneousRows, function (drows) {
             var first = _.head(drows);
+            var latestRoadStartDate = first.roadStartDate;
+            _.each(drows, function (row) {
+              if (!row.roadStartDate) return;
+
+              var date = moment(row.roadStartDate, dateutil.FINNISH_DATE_FORMAT);
+              if (!latestRoadStartDate || date.isAfter(moment(latestRoadStartDate, dateutil.FINNISH_DATE_FORMAT))) {
+                latestRoadStartDate = row.roadStartDate;
+              }
+            });
             return {
               id: first.id,
               nodeNumber: first.nodeNumber,
@@ -458,7 +467,7 @@
               addr: first.addr,
               beforeAfter: "EJ",
               type: first.type,
-              roadStartDate: first.roadStartDate
+              roadStartDate: latestRoadStartDate
             };
           });
 
